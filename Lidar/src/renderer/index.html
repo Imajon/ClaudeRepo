@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>RPLiDAR A2 — Connexion</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+    :root {
+      --bg:      #080810;
+      --surface: #0f0f1c;
+      --border:  #1e1e35;
+      --cyan:    #00e5ff;
+      --green:   #00ffa3;
+      --amber:   #ffbb00;
+      --red:     #ff3860;
+      --text:    #c8d0e0;
+      --dim:     #555a7a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .container { position: relative; width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 20px; }
+
+    header {
+      display: flex; align-items: center; gap: 14px;
+      border-bottom: 1px solid var(--border); padding-bottom: 18px;
+    }
+    .logo-ring {
+      width: 44px; height: 44px;
+      border: 2px solid var(--cyan); border-radius: 50%;
+      position: relative; flex-shrink: 0;
+      animation: spin 4s linear infinite;
+    }
+    .logo-ring::after {
+      content: '';
+      position: absolute; width: 7px; height: 7px;
+      background: var(--cyan); border-radius: 50%;
+      top: 4px; left: 50%; transform: translateX(-50%);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #fff; }
+    h1 span { color: var(--cyan); }
+    .subtitle { font-size: 10px; color: var(--dim); letter-spacing: 0.12em; margin-top: 2px; }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .panel-title {
+      font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--dim); display: flex; align-items: center; gap: 8px;
+    }
+    .panel-title .step-badge {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--border); color: var(--dim);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; flex-shrink: 0;
+    }
+    .panel-title .step-badge.active { background: var(--cyan); color: var(--bg); }
+    .panel-title .step-badge.done   { background: var(--green); color: var(--bg); }
+
+    .row { display: flex; gap: 10px; align-items: center; }
+
+    select {
+      flex: 1; background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 9px 12px; font-family: 'Space Mono', monospace; font-size: 12px;
+      appearance: none; cursor: pointer; outline: none;
+    }
+    select:focus { border-color: var(--cyan); }
+    select:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    button {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--dim); border-radius: 4px;
+      padding: 9px 16px; font-family: 'Space Mono', monospace; font-size: 11px;
+      cursor: pointer; letter-spacing: 0.08em; transition: all 0.15s; white-space: nowrap;
+    }
+    button.primary { color: var(--cyan); border-color: var(--cyan); }
+    button.primary:hover:not(:disabled) { background: var(--cyan); color: var(--bg); }
+    button.success { color: var(--green); border-color: var(--green); }
+    button.success:hover:not(:disabled) { background: var(--green); color: var(--bg); }
+    button.danger  { color: var(--red); border-color: var(--red); }
+    button.danger:hover:not(:disabled)  { background: var(--red); color: #fff; }
+    button.amber   { color: var(--amber); border-color: var(--amber); }
+    button.amber:hover:not(:disabled)   { background: var(--amber); color: var(--bg); }
+    button:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* Status ligne */
+    .status-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--dim); flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .dot.ok       { background: var(--green); box-shadow: 0 0 5px var(--green); animation: pulse 2s infinite; }
+    .dot.scanning { background: var(--cyan);  box-shadow: 0 0 5px var(--cyan);  animation: pulse 0.8s infinite; }
+    .dot.warn     { background: var(--amber); }
+    .dot.err      { background: var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .baud-option {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      border: 1px solid var(--border); border-radius: 4px;
+      cursor: pointer; font-size: 13px; transition: all 0.15s;
+    }
+    .baud-option:hover { border-color: var(--amber); }
+    .baud-option input[type=radio] { accent-color: var(--amber); cursor: pointer; }
+    .baud-option:has(input:checked) {
+      border-color: var(--amber);
+      background: rgba(255,187,0,0.06);
+      color: var(--amber);
+    }
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    input[type=range] {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 4px; border-radius: 2px;
+      background: linear-gradient(to right, var(--cyan) 0%, var(--cyan) var(--pct, 58%), var(--border) var(--pct, 58%));
+      outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 14px; height: 14px;
+      border-radius: 50%; background: var(--cyan); cursor: pointer;
+    }
+    .pwm-val {
+      font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+      color: var(--cyan); width: 40px; text-align: right;
+    }
+
+    /* Info device */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .info-cell {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+      padding: 9px 12px; display: flex; flex-direction: column; gap: 2px;
+    }
+    .info-label { font-size: 8px; letter-spacing: 0.15em; color: var(--dim); text-transform: uppercase; }
+    .info-value { font-size: 13px; color: #fff; }
+
+    /* Stats scan */
+    .stats-row { display: flex; gap: 12px; }
+    .stat {
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 4px; padding: 10px; text-align: center;
+    }
+    .stat-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--cyan); }
+    .stat-lbl { font-size: 8px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.15em; margin-top: 2px; }
+
+    /* Log */
+    #log {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+      padding: 12px; height: 130px; overflow-y: auto;
+      font-size: 10px; line-height: 1.9; color: var(--dim);
+    }
+    .log-entry { display: flex; gap: 10px; }
+    .log-ts  { color: #3a3a6a; flex-shrink: 0; }
+    .c-ok    { color: var(--green); }
+    .c-err   { color: var(--red); }
+    .c-warn  { color: var(--amber); }
+    .c-info  { color: var(--text); }
+    .c-scan  { color: var(--cyan); }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-ring"></div>
+    <div>
+      <h1>RPLiDAR <span>A2</span></h1>
+      <div class="subtitle">SLAMTEC · SÉRIE USB · STUDIO EYA</div>
+    </div>
+  </header>
+
+  <!-- ÉTAPE 1 : Connexion -->
+  <div class="panel">
+    <div class="panel-title">
+      <span class="step-badge active" id="badge-1">1</span>
+      Sélection du port & connexion
+    </div>
+    <div class="row">
+      <select id="port-select"><option value="">— Recherche… —</option></select>
+      <button id="btn-refresh" class="primary">↺</button>
+    </div>
+    <div class="row">
+      <span style="font-size:10px; color:var(--dim); white-space:nowrap">Baud rate</span>
+      <label class="baud-option">
+        <input type="radio" name="baud" value="115200" checked />
+        <span>115 200</span>
+        <span style="font-size:8px; color:var(--dim)">A2M6/M7</span>
+      </label>
+      <label class="baud-option">
+        <input type="radio" name="baud" value="256000" />
+        <span>256 000</span>
+        <span style="font-size:8px; color:var(--dim)">A2M8</span>
+      </label>
+    </div>
+    <div class="row">
+      <button id="btn-connect"    class="primary"  style="flex:1">Connecter</button>
+      <button id="btn-disconnect" class="danger"   style="flex:1" disabled>Déconnecter</button>
+      <button id="btn-open-viz"   style="flex:1; font-size:10px; color:rgba(0,229,255,0.5); border-color:rgba(0,229,255,0.2)">⬡ Visualiseur 3D</button>
+    </div>
+    <div class="status-row">
+      <div class="dot" id="dot-conn"></div>
+      <span id="lbl-conn">En attente</span>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : Moteur -->
+  <div class="panel">
+    <div class="panel-title">
+      <span class="step-badge" id="badge-2">2</span>
+      Démarrage du moteur
+    </div>
+    <div class="slider-row">
+      <span style="font-size:10px; color:var(--dim); white-space:nowrap">Vitesse PWM</span>
+      <input type="range" id="pwm-slider" min="0" max="1023" value="600" disabled />
+      <span class="pwm-val" id="pwm-val">600</span>
+    </div>
+    <div class="row">
+      <button id="btn-start-motor" class="amber"  style="flex:1" disabled>▶ Démarrer le moteur</button>
+      <button id="btn-stop-motor"  class="danger" style="flex:1" disabled>■ Arrêter le moteur</button>
+    </div>
+    <div class="status-row">
+      <div class="dot" id="dot-motor"></div>
+      <span id="lbl-motor">Moteur éteint</span>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 : Scan -->
+  <div class="panel">
+    <div class="panel-title">
+      <span class="step-badge" id="badge-3">3</span>
+      Scan lidar
+    </div>
+    <div class="row">
+      <button id="btn-start-scan" class="success" style="flex:1" disabled>⬡ Lancer le scan</button>
+      <button id="btn-stop-scan"  class="danger"  style="flex:1" disabled>■ Stopper le scan</button>
+    </div>
+    <div class="status-row">
+      <div class="dot" id="dot-scan"></div>
+      <span id="lbl-scan">Scan inactif</span>
+    </div>
+    <div class="stats-row" id="stats" style="display:none">
+      <div class="stat"><div class="stat-val" id="s-pts">—</div><div class="stat-lbl">pts / tour</div></div>
+      <div class="stat"><div class="stat-val" id="s-rps">—</div><div class="stat-lbl">tours / s</div></div>
+      <div class="stat"><div class="stat-val" id="s-max">—</div><div class="stat-lbl">dist. max (m)</div></div>
+    </div>
+  </div>
+
+  <!-- Infos appareil (masqué jusqu'à connexion) -->
+  <div class="panel" id="info-panel" style="display:none">
+    <div class="panel-title"><span class="step-badge done">✓</span> Appareil identifié</div>
+    <div class="info-grid">
+      <div class="info-cell"><span class="info-label">Modèle</span><span class="info-value" id="i-model">—</span></div>
+      <div class="info-cell"><span class="info-label">Firmware</span><span class="info-value" id="i-fw">—</span></div>
+      <div class="info-cell"><span class="info-label">Hardware</span><span class="info-value" id="i-hw">—</span></div>
+      <div class="info-cell"><span class="info-label">Série</span><span class="info-value" id="i-sn" style="font-size:10px">—</span></div>
+    </div>
+  </div>
+
+  <!-- Console -->
+  <div class="panel">
+    <div class="panel-title"><span style="color:var(--dim)">▸</span> Console</div>
+    <div id="log"></div>
+  </div>
+
+</div>
+<script>
+// ── Refs ──────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const portSelect    = $('port-select');
+const pwmSlider     = $('pwm-slider');
+const pwmVal        = $('pwm-val');
+
+// ── Log ───────────────────────────────────────────────────────────────────────
+function log(msg, type = 'info') {
+  const ts  = new Date().toTimeString().slice(0,8);
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.innerHTML = `<span class="log-ts">${ts}</span><span class="c-${type}">${msg}</span>`;
+  $('log').appendChild(div);
+  $('log').scrollTop = 9999;
+  while ($('log').children.length > 120) $('log').removeChild($('log').firstChild);
+}
+
+// ── Slider PWM ────────────────────────────────────────────────────────────────
+pwmSlider.addEventListener('input', () => {
+  const v = pwmSlider.value;
+  pwmVal.textContent = v;
+  const pct = (v / 1023 * 100).toFixed(1);
+  pwmSlider.style.setProperty('--pct', pct + '%');
+});
+pwmSlider.style.setProperty('--pct', '58.7%'); // valeur initiale 600/1023
+
+// ── Ports ─────────────────────────────────────────────────────────────────────
+async function refreshPorts() {
+  portSelect.innerHTML = '<option value="">— Chargement… —</option>';
+  const ports = await window.lidar.listPorts();
+  portSelect.innerHTML = '';
+  if (!ports.length) {
+    portSelect.innerHTML = '<option value="">— Aucun port —</option>';
+    log('Aucun port série détecté', 'err'); return;
+  }
+  ports.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.path;
+    opt.textContent = p.manufacturer ? `${p.path}  (${p.manufacturer})` : p.path;
+    if (p.manufacturer && /silicon|cp210|ch340/i.test(p.manufacturer)) opt.selected = true;
+    portSelect.appendChild(opt);
+  });
+  log(`${ports.length} port(s) trouvé(s)`, 'ok');
+}
+
+// ── Connexion ─────────────────────────────────────────────────────────────────
+async function connect() {
+  const port = portSelect.value;
+  if (!port) { log('Sélectionne un port', 'warn'); return; }
+  const baud = parseInt(document.querySelector('input[name=baud]:checked').value);
+
+  $('btn-connect').disabled = true;
+  $('dot-conn').className = 'dot warn';
+  $('lbl-conn').textContent = 'Connexion…';
+  log(`Connexion sur ${port} @ ${baud.toLocaleString()} baud…`);
+
+  const res = await window.lidar.connect(port, baud);
+  if (!res.success) {
+    log(`Erreur: ${res.error}`, 'err');
+    $('dot-conn').className = 'dot err';
+    $('lbl-conn').textContent = 'Échec';
+    $('btn-connect').disabled = false;
+    return;
+  }
+
+  // Succès connexion
+  $('dot-conn').className = 'dot ok';
+  $('lbl-conn').textContent = `Connecté — ${port} @ ${baud.toLocaleString()} baud`;
+  $('badge-1').className = 'step-badge done';
+  $('badge-1').textContent = '✓';
+  $('badge-2').className = 'step-badge active';
+
+  $('btn-connect').disabled    = true;
+  $('btn-disconnect').disabled = false;
+  portSelect.disabled          = true;
+  $('btn-refresh').disabled    = true;
+
+  // Activer commandes moteur
+  $('btn-start-motor').disabled = false;
+  pwmSlider.disabled            = false;
+
+  log(`Connecté sur ${port} @ ${baud.toLocaleString()} baud`, 'ok');
+}
+
+// ── Déconnexion ───────────────────────────────────────────────────────────────
+async function disconnect() {
+  await window.lidar.disconnect();
+  window.lidar.offAll();
+  registerEvents(); // ré-enregistrer pour la prochaine connexion
+
+  $('dot-conn').className  = 'dot';  $('lbl-conn').textContent  = 'Déconnecté';
+  $('dot-motor').className = 'dot';  $('lbl-motor').textContent = 'Moteur éteint';
+  $('dot-scan').className  = 'dot';  $('lbl-scan').textContent  = 'Scan inactif';
+  $('badge-1').className = 'step-badge active'; $('badge-1').textContent = '1';
+  $('badge-2').className = 'step-badge';        $('badge-2').textContent = '2';
+  $('badge-3').className = 'step-badge';        $('badge-3').textContent = '3';
+
+  $('btn-connect').disabled    = false;
+  $('btn-disconnect').disabled = true;
+  $('btn-start-motor').disabled = true;
+  $('btn-stop-motor').disabled  = true;
+  $('btn-start-scan').disabled  = true;
+  $('btn-stop-scan').disabled   = true;
+  portSelect.disabled           = false;
+  $('btn-refresh').disabled     = false;
+  pwmSlider.disabled            = true;
+  $('stats').style.display      = 'none';
+  $('info-panel').style.display = 'none';
+  log('Déconnecté', 'warn');
+}
+
+// ── Moteur ────────────────────────────────────────────────────────────────────
+async function startMotor() {
+  const pwm = parseInt(pwmSlider.value);
+  $('btn-start-motor').disabled = true;
+  $('dot-motor').className = 'dot warn';
+  $('lbl-motor').textContent = `Démarrage moteur (PWM=${pwm})…`;
+  log(`Démarrage moteur PWM=${pwm}…`);
+
+  const res = await window.lidar.startMotor(pwm);
+  if (!res.success) {
+    log(`Erreur moteur: ${res.error}`, 'err');
+    $('dot-motor').className = 'dot err';
+    $('btn-start-motor').disabled = false;
+    return;
+  }
+  // La confirmation viendra via onMotor()
+}
+
+async function stopMotor() {
+  $('btn-stop-motor').disabled = true;
+  $('btn-start-scan').disabled = true;
+  $('btn-stop-scan').disabled  = true;
+  log('Arrêt moteur…', 'warn');
+  // stopMotor est inclus dans disconnect, on peut aussi l'appeler directement
+  // via un IPC dédié si besoin — ici on passe par disconnect partiel
+  await window.lidar.stopScan();
+  // Puis côté main le moteur sera arrêté
+}
+
+// ── Scan ──────────────────────────────────────────────────────────────────────
+async function startScan() {
+  $('btn-start-scan').disabled = true;
+  $('dot-scan').className = 'dot warn';
+  $('lbl-scan').textContent = 'Lancement du scan…';
+  log('Lancement du scan…');
+
+  const res = await window.lidar.startScan();
+  if (!res.success) {
+    log(`Erreur scan: ${res.error}`, 'err');
+    $('dot-scan').className = 'dot err';
+    $('btn-start-scan').disabled = false;
+    return;
+  }
+  $('dot-scan').className  = 'dot scanning';
+  $('lbl-scan').textContent = 'Scan actif';
+  $('badge-3').className   = 'step-badge done';
+  $('badge-3').textContent = '✓';
+  $('btn-start-scan').disabled = true;
+  $('btn-stop-scan').disabled  = false;
+  $('stats').style.display     = 'flex';
+  log('Scan démarré ✓', 'ok');
+}
+
+async function stopScan() {
+  await window.lidar.stopScan();
+  $('dot-scan').className  = 'dot';
+  $('lbl-scan').textContent = 'Scan arrêté';
+  $('badge-3').className   = 'step-badge';
+  $('badge-3').textContent = '3';
+  $('btn-start-scan').disabled = false;
+  $('btn-stop-scan').disabled  = true;
+  log('Scan arrêté', 'warn');
+}
+
+// ── Événements lidar ──────────────────────────────────────────────────────────
+let scanCount = 0, lastSec = Date.now(), rps = 0;
+
+function registerEvents() {
+  window.lidar.onInfo(info => {
+    $('info-panel').style.display = 'flex';
+    $('i-model').textContent = `0x${info.model.toString(16).toUpperCase()}`;
+    $('i-fw').textContent    = `${info.firmwareMajor}.${info.firmwareMinor}`;
+    $('i-hw').textContent    = info.hardware;
+    $('i-sn').textContent    = info.serialNumber;
+    log(`Appareil — FW ${info.firmwareMajor}.${info.firmwareMinor} / HW ${info.hardware}`, 'ok');
+  });
+
+  window.lidar.onMotor(m => {
+    if (m.running) {
+      $('dot-motor').className  = 'dot ok';
+      $('lbl-motor').textContent = `Moteur actif (PWM=${m.pwm})`;
+      $('badge-2').className    = 'step-badge done';
+      $('badge-2').textContent  = '✓';
+      $('badge-3').className    = 'step-badge active';
+      $('btn-start-motor').disabled = true;
+      $('btn-stop-motor').disabled  = false;
+      $('btn-start-scan').disabled  = false;
+      log(`Moteur actif PWM=${m.pwm}`, 'ok');
+    } else {
+      $('dot-motor').className  = 'dot';
+      $('lbl-motor').textContent = 'Moteur éteint';
+      $('btn-start-motor').disabled = false;
+      $('btn-stop-motor').disabled  = true;
+      $('btn-start-scan').disabled  = true;
+      log('Moteur arrêté', 'warn');
+    }
+  });
+
+  window.lidar.onScan(points => {
+    scanCount++;
+    const now = Date.now();
+    if (now - lastSec >= 1000) {
+      rps = scanCount; scanCount = 0; lastSec = now;
+      $('s-rps').textContent = rps;
+    }
+    $('s-pts').textContent = points.length;
+    const mx = Math.max(...points.map(p => p.distance));
+    $('s-max').textContent = (mx / 1000).toFixed(2);
+  });
+
+  window.lidar.onError(msg => {
+    log(`Erreur: ${msg}`, 'err');
+  });
+}
+
+// ── Listeners boutons ─────────────────────────────────────────────────────────
+$('btn-refresh').addEventListener('click', refreshPorts);
+$('btn-connect').addEventListener('click', connect);
+$('btn-disconnect').addEventListener('click', disconnect);
+$('btn-start-motor').addEventListener('click', startMotor);
+$('btn-stop-motor').addEventListener('click', stopMotor);
+$('btn-start-scan').addEventListener('click', startScan);
+$('btn-stop-scan').addEventListener('click', stopScan);
+$('btn-open-viz').addEventListener('click', () => window.lidar.openViz?.());
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+registerEvents();
+refreshPorts();
+log('Interface prête — RPLiDAR A2', 'ok');
+</script>
+</body>
+</html>

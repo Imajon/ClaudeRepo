@@ -1,0 +1,18 @@
+{
+  "name": "lidar-a2-app",
+  "version": "1.0.0",
+  "description": "SLAMTEC RPLiDAR A2 - Installation interactive",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "rebuild": "electron-rebuild -f -w serialport"
+  },
+  "dependencies": {
+    "serialport": "^12.0.0"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-rebuild": "^3.2.9"
+  }
+}

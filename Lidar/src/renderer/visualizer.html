@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>RPLiDAR A2 — Visualiseur</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+    :root {
+      --cyan:    #00ffe7;
+      --green:   #00ff88;
+      --amber:   #ffaa00;
+      --red:     #ff2255;
+      --dim:     #1a2a2a;
+      --bg:      #000508;
+      --hud:     rgba(0, 255, 231, 0.07);
+      --border:  rgba(0, 255, 231, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--cyan);
+      font-family: 'Share Tech Mono', monospace;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    #three-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── HUD overlay ── */
+    #hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      display: grid;
+      grid-template-rows: 48px 1fr 48px;
+      grid-template-columns: 220px 1fr 220px;
+    }
+
+    /* Coin top-left */
+    .hud-tl {
+      grid-row: 1; grid-column: 1;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hud-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      color: var(--cyan);
+    }
+    .hud-sub {
+      font-size: 9px;
+      color: rgba(0,255,231,0.4);
+      letter-spacing: 0.15em;
+    }
+
+    /* Coin top-right */
+    .hud-tr {
+      grid-row: 1; grid-column: 3;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    /* Panneau gauche */
+    .hud-left {
+      grid-row: 2; grid-column: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    /* Panneau droit */
+    .hud-right {
+      grid-row: 2; grid-column: 3;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    /* Barre du bas */
+    .hud-bottom {
+      grid-row: 3; grid-column: 1 / 4;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      background: var(--hud);
+    }
+
+    /* Lignes de coin déco */
+    .corner {
+      position: fixed;
+      width: 24px; height: 24px;
+      pointer-events: none;
+    }
+    .corner.tl { top: 8px; left: 8px; border-top: 1px solid var(--cyan); border-left: 1px solid var(--cyan); }
+    .corner.tr { top: 8px; right: 8px; border-top: 1px solid var(--cyan); border-right: 1px solid var(--cyan); }
+    .corner.bl { bottom: 8px; left: 8px; border-bottom: 1px solid var(--cyan); border-left: 1px solid var(--cyan); }
+    .corner.br { bottom: 8px; right: 8px; border-bottom: 1px solid var(--cyan); border-right: 1px solid var(--cyan); }
+
+    /* Metric card */
+    .metric {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .metric-label {
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      color: rgba(0,255,231,0.4);
+      text-transform: uppercase;
+    }
+    .metric-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--cyan);
+      line-height: 1;
+    }
+    .metric-value.amber { color: var(--amber); }
+    .metric-value.green { color: var(--green); }
+    .metric-value.small { font-size: 13px; }
+
+    /* Status dot */
+    .status-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--red);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .status-dot.active {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* Légende couleur distance */
+    .legend {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .legend-title {
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      color: rgba(0,255,231,0.4);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: rgba(0,255,231,0.6);
+    }
+    .legend-swatch {
+      width: 20px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    /* Contrôles */
+    .controls {
+      display: flex;
+      gap: 8px;
+      pointer-events: all;
+    }
+    .ctrl-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: rgba(0,255,231,0.6);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      padding: 4px 10px;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      transition: all 0.2s;
+    }
+    .ctrl-btn:hover, .ctrl-btn.active {
+      background: rgba(0,255,231,0.1);
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+
+    /* Crosshair centre */
+    #crosshair {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+    #crosshair::before, #crosshair::after {
+      content: '';
+      position: absolute;
+      background: rgba(0,255,231,0.3);
+    }
+    #crosshair::before { width: 1px; height: 100%; left: 50%; top: 0; }
+    #crosshair::after  { height: 1px; width: 100%; top: 50%; left: 0; }
+
+    /* Scan line animée */
+    #scanline-hud {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,255,231,0.06), transparent);
+      animation: scanline 6s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes scanline { from { top: 0; } to { top: 100%; } }
+
+    /* Tooltip angle/dist au survol */
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      font-size: 10px;
+      color: var(--cyan);
+      background: rgba(0,5,8,0.85);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      display: none;
+      letter-spacing: 0.05em;
+    }
+
+    .no-signal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .no-signal-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      color: rgba(0,255,231,0.25);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.8} }
+  </style>
+</head>
+<body>
+
+<canvas id="three-canvas"></canvas>
+<div id="scanline-hud"></div>
+<div id="crosshair"></div>
+
+<!-- Coins déco -->
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<!-- HUD -->
+<div id="hud">
+
+  <!-- Top Left -->
+  <div class="hud-tl">
+    <div class="hud-title">RPLiDAR A2</div>
+    <div class="hud-sub">SLAMTEC · 360° · STUDIO EYA</div>
+  </div>
+
+  <!-- Top Right -->
+  <div class="hud-tr">
+    <div style="font-size:9px; letter-spacing:0.15em; color:rgba(0,255,231,0.4)">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-label">OFFLINE</span>
+    </div>
+    <div style="font-size:9px; color:rgba(0,255,231,0.3); letter-spacing:0.1em" id="port-label">—</div>
+  </div>
+
+  <!-- Left Panel -->
+  <div class="hud-left">
+    <div class="metric">
+      <div class="metric-label">Points / tour</div>
+      <div class="metric-value" id="m-points">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Rotations / sec</div>
+      <div class="metric-value green" id="m-rps">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Dist. max</div>
+      <div class="metric-value amber" id="m-maxdist">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Dist. min</div>
+      <div class="metric-value" id="m-mindist" style="font-size:14px">—</div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="hud-right">
+    <div class="legend">
+      <div class="legend-title">Distance (couleur)</div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#00ffe7"></div>
+        <span>0 – 1 m</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#00ff88"></div>
+        <span>1 – 3 m</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#88ff00"></div>
+        <span>3 – 6 m</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#ffaa00"></div>
+        <span>6 – 10 m</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#ff4400"></div>
+        <span>> 10 m</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="hud-bottom">
+    <div style="font-size:9px; color:rgba(0,255,231,0.35); letter-spacing:0.1em" id="cursor-info">
+      CLIC GAUCHE: ORBITE · SCROLL: ZOOM · CLIC DROIT: PAN
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn active" id="btn-top">TOP</button>
+      <button class="ctrl-btn" id="btn-perspective">3D</button>
+      <button class="ctrl-btn" id="btn-trail">TRAÎNE</button>
+      <button class="ctrl-btn" id="btn-grid">GRILLE</button>
+      <button class="ctrl-btn" id="btn-freeze">PAUSE</button>
+    </div>
+    <div style="font-size:9px; color:rgba(0,255,231,0.35); letter-spacing:0.1em" id="frame-info">—</div>
+  </div>
+
+</div>
+
+<!-- No signal overlay -->
+<div class="no-signal" id="no-signal">
+  <div class="no-signal-text">▸ EN ATTENTE DU SIGNAL LIDAR ◂</div>
+  <div style="font-size:9px; color:rgba(0,255,231,0.15); letter-spacing:0.2em">CONNECTER LE CAPTEUR DEPUIS L'INTERFACE PRINCIPALE</div>
+</div>
+
+<div id="tooltip"></div>
+
+<!-- Three.js r128 (version compatible avec le projet existant) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════════════════
+const MAX_POINTS      = 4096;   // max pts dans le buffer WebGL
+const TRAIL_FRAMES    = 8;      // nb de tours conservés en traîne
+const SCALE           = 0.001;  // mm → unités Three (1 unité = 1 m)
+const GRID_SIZE       = 20;     // mètres
+const GRID_DIVISIONS  = 20;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════════════
+let showTrail  = true;
+let showGrid   = true;
+let frozen     = false;
+let viewMode   = 'top';   // 'top' | 'perspective'
+
+let scanCount  = 0;
+let lastSecond = Date.now();
+let rps        = 0;
+
+// Buffer circulaire pour la traîne
+const trailBuffer = [];   // tableau de { positions:Float32Array, colors:Float32Array, count:int }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SCENE THREE.JS
+// ══════════════════════════════════════════════════════════════════════════════
+const canvas   = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x000508, 1);
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 1000);
+camera.position.set(0, 15, 0);
+camera.lookAt(0, 0, 0);
+
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.screenSpacePanning = true;
+controls.minDistance = 0.5;
+controls.maxDistance = 80;
+
+// ── Grille ────────────────────────────────────────────────────────────────────
+const gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_DIVISIONS, 0x0a2020, 0x061515);
+scene.add(gridHelper);
+
+// Cercles de distance concentriques (1m, 3m, 5m, 10m)
+function makeCircle(radius, color, opacity = 0.3) {
+  const pts = [];
+  for (let i = 0; i <= 128; i++) {
+    const a = (i / 128) * Math.PI * 2;
+    pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
+  }
+  const geo  = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat  = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+  return new THREE.Line(geo, mat);
+}
+[1, 3, 5, 10].forEach(r => scene.add(makeCircle(r, 0x00ffe7, 0.12)));
+
+// Labels de distance sur les cercles (Text via canvas texture)
+function makeDistLabel(text, x, z) {
+  const cv = document.createElement('canvas');
+  cv.width = 128; cv.height = 32;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = 'rgba(0,255,231,0.5)';
+  ctx.font = '18px monospace';
+  ctx.fillText(text, 8, 22);
+  const tex     = new THREE.CanvasTexture(cv);
+  const mat     = new THREE.SpriteMaterial({ map: tex, transparent: true });
+  const sprite  = new THREE.Sprite(mat);
+  sprite.position.set(x, 0.05, z);
+  sprite.scale.set(0.8, 0.2, 1);
+  return sprite;
+}
+[1, 3, 5, 10].forEach(r => scene.add(makeDistLabel(`${r}m`, r + 0.1, 0.1)));
+
+// Axe origine
+const originGeo = new THREE.SphereGeometry(0.04, 8, 8);
+const originMat = new THREE.MeshBasicMaterial({ color: 0x00ffe7 });
+const origin    = new THREE.Mesh(originGeo, originMat);
+origin.position.y = 0.01;
+scene.add(origin);
+
+// Rayon de scan animé (sweep line)
+const sweepGeo = new THREE.BufferGeometry();
+sweepGeo.setAttribute('position', new THREE.Float32BufferAttribute([0,0.01,0, 12,0.01,0], 3));
+const sweepMat = new THREE.LineBasicMaterial({
+  color: 0x00ffe7, transparent: true, opacity: 0.25
+});
+const sweepLine = new THREE.Line(sweepGeo, sweepMat);
+scene.add(sweepLine);
+let sweepAngle = 0;
+
+// ── Points du scan courant ────────────────────────────────────────────────────
+const currentPositions = new Float32Array(MAX_POINTS * 3);
+const currentColors    = new Float32Array(MAX_POINTS * 3);
+const currentGeo       = new THREE.BufferGeometry();
+currentGeo.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
+currentGeo.setAttribute('color',    new THREE.BufferAttribute(currentColors,    3));
+currentGeo.setDrawRange(0, 0);
+
+const currentMat = new THREE.PointsMaterial({
+  size: 0.04,
+  vertexColors: true,
+  transparent: true,
+  opacity: 1.0,
+  sizeAttenuation: true,
+});
+const currentCloud = new THREE.Points(currentGeo, currentMat);
+scene.add(currentCloud);
+
+// ── Traîne (tours précédents, semi-transparents) ──────────────────────────────
+const trailClouds = [];
+for (let i = 0; i < TRAIL_FRAMES; i++) {
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(MAX_POINTS * 3);
+  const col = new Float32Array(MAX_POINTS * 3);
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+  geo.setDrawRange(0, 0);
+  const mat = new THREE.PointsMaterial({
+    size: 0.03,
+    vertexColors: true,
+    transparent: true,
+    opacity: (i / TRAIL_FRAMES) * 0.35,
+    sizeAttenuation: true,
+  });
+  const cloud = new THREE.Points(geo, mat);
+  scene.add(cloud);
+  trailClouds.push(cloud);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COULEUR PAR DISTANCE
+// ══════════════════════════════════════════════════════════════════════════════
+function distanceToColor(distMM) {
+  const m = distMM / 1000;
+  if (m < 1)   return [0.00, 1.00, 0.91]; // cyan
+  if (m < 3)   return [0.00, 1.00, 0.53]; // vert
+  if (m < 6)   return [0.53, 1.00, 0.00]; // vert-jaune
+  if (m < 10)  return [1.00, 0.67, 0.00]; // amber
+  return              [1.00, 0.27, 0.00];  // rouge-orange
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MISE À JOUR DU SCAN
+// ══════════════════════════════════════════════════════════════════════════════
+function updateScan(points) {
+  if (frozen) return;
+
+  const count = Math.min(points.length, MAX_POINTS);
+
+  // Sauver le tour courant dans la traîne
+  if (showTrail && count > 0) {
+    const snapPos = currentPositions.slice(0, count * 3);
+    const snapCol = currentColors.slice(0, count * 3);
+    trailBuffer.unshift({ positions: snapPos, colors: snapCol, count });
+    if (trailBuffer.length > TRAIL_FRAMES) trailBuffer.pop();
+
+    // Mettre à jour les meshes de traîne
+    trailClouds.forEach((cloud, i) => {
+      const frame = trailBuffer[i];
+      if (!frame) { cloud.geometry.setDrawRange(0, 0); return; }
+      cloud.geometry.attributes.position.array.set(frame.positions);
+      cloud.geometry.attributes.color.array.set(frame.colors);
+      cloud.geometry.setDrawRange(0, frame.count);
+      cloud.geometry.attributes.position.needsUpdate = true;
+      cloud.geometry.attributes.color.needsUpdate    = true;
+      cloud.material.opacity = showTrail ? ((TRAIL_FRAMES - i) / TRAIL_FRAMES) * 0.3 : 0;
+    });
+  } else {
+    trailClouds.forEach(c => { c.geometry.setDrawRange(0, 0); });
+  }
+
+  // Remplir le buffer courant
+  let maxDist = 0, minDist = Infinity;
+
+  for (let i = 0; i < count; i++) {
+    const p = points[i];
+    // Three.js : X = est, Z = sud (plan horizontal)
+    currentPositions[i * 3]     = p.x * SCALE;
+    currentPositions[i * 3 + 1] = 0.01;
+    currentPositions[i * 3 + 2] = p.y * SCALE;
+
+    const [r, g, b] = distanceToColor(p.distance);
+    currentColors[i * 3]     = r;
+    currentColors[i * 3 + 1] = g;
+    currentColors[i * 3 + 2] = b;
+
+    if (p.distance > maxDist) maxDist = p.distance;
+    if (p.distance < minDist && p.distance > 0) minDist = p.distance;
+
+    // Faire avancer le sweep
+    sweepAngle = (p.angle * Math.PI / 180);
+  }
+
+  currentGeo.attributes.position.needsUpdate = true;
+  currentGeo.attributes.color.needsUpdate    = true;
+  currentGeo.setDrawRange(0, count);
+
+  // HUD
+  document.getElementById('m-points').textContent  = count;
+  document.getElementById('m-maxdist').textContent  = maxDist > 0 ? (maxDist / 1000).toFixed(2) + ' m' : '—';
+  document.getElementById('m-mindist').textContent  = minDist < Infinity ? (minDist / 1000).toFixed(2) + ' m' : '—';
+
+  // RPS
+  scanCount++;
+  const now = Date.now();
+  if (now - lastSecond >= 1000) {
+    rps = scanCount;
+    scanCount = 0;
+    lastSecond = now;
+    document.getElementById('m-rps').textContent = rps;
+  }
+
+  document.getElementById('no-signal').style.display = 'none';
+  document.getElementById('status-dot').classList.add('active');
+  document.getElementById('status-label').textContent = 'ACTIF';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BOUCLE D'ANIMATION
+// ══════════════════════════════════════════════════════════════════════════════
+let frame = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  frame++;
+
+  // Rotate sweep line
+  sweepLine.rotation.y = -sweepAngle;
+
+  controls.update();
+  renderer.render(scene, camera);
+
+  // Frame info
+  if (frame % 30 === 0) {
+    document.getElementById('frame-info').textContent =
+      `FRAME ${frame} · ${window.innerWidth}×${window.innerHeight}`;
+  }
+}
+animate();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RESIZE
+// ══════════════════════════════════════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CONTRÔLES HUD
+// ══════════════════════════════════════════════════════════════════════════════
+function setView(mode) {
+  viewMode = mode;
+  if (mode === 'top') {
+    camera.position.set(0, 15, 0);
+    camera.lookAt(0, 0, 0);
+    controls.update();
+    document.getElementById('btn-top').classList.add('active');
+    document.getElementById('btn-perspective').classList.remove('active');
+  } else {
+    camera.position.set(6, 6, 6);
+    camera.lookAt(0, 0, 0);
+    controls.update();
+    document.getElementById('btn-perspective').classList.add('active');
+    document.getElementById('btn-top').classList.remove('active');
+  }
+}
+
+document.getElementById('btn-top').addEventListener('click', () => setView('top'));
+document.getElementById('btn-perspective').addEventListener('click', () => setView('perspective'));
+
+document.getElementById('btn-trail').addEventListener('click', function() {
+  showTrail = !showTrail;
+  this.classList.toggle('active', showTrail);
+  if (!showTrail) trailClouds.forEach(c => { c.geometry.setDrawRange(0, 0); });
+});
+
+document.getElementById('btn-grid').addEventListener('click', function() {
+  showGrid = !showGrid;
+  gridHelper.visible = showGrid;
+  this.classList.toggle('active', showGrid);
+});
+
+document.getElementById('btn-freeze').addEventListener('click', function() {
+  frozen = !frozen;
+  this.classList.toggle('active', frozen);
+  this.textContent = frozen ? 'REPRISE' : 'PAUSE';
+});
+
+// Init états boutons
+document.getElementById('btn-trail').classList.add('active');
+document.getElementById('btn-grid').classList.add('active');
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ÉCOUTE DES DONNÉES LIDAR via IPC
+// ══════════════════════════════════════════════════════════════════════════════
+if (window.lidar) {
+  window.lidar.onScan((points) => {
+    updateScan(points);
+  });
+
+  window.lidar.onInfo((info) => {
+    document.getElementById('port-label').textContent =
+      `FW ${info.firmwareMajor}.${info.firmwareMinor} · HW ${info.hardware}`;
+  });
+
+  window.lidar.onError((msg) => {
+    document.getElementById('status-dot').classList.remove('active');
+    document.getElementById('status-label').textContent = 'ERREUR';
+    console.error('[LidarViz] Erreur:', msg);
+  });
+} else {
+  // Mode démo (si ouvert sans Electron)
+  console.warn('[LidarViz] window.lidar non disponible — mode démo');
+  startDemo();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MODE DÉMO (test sans capteur)
+// ══════════════════════════════════════════════════════════════════════════════
+function startDemo() {
+  let demoAngle = 0;
+  setInterval(() => {
+    const points = [];
+    for (let a = 0; a < 360; a += 1.5) {
+      const noise  = (Math.random() - 0.5) * 300;
+      const base   = 3000 + Math.sin((a * Math.PI) / 60) * 1500 + noise;
+      const dist   = Math.max(200, base);
+      const rad    = (a * Math.PI) / 180;
+      points.push({
+        angle:    a,
+        distance: dist,
+        quality:  15,
+        x:        dist * Math.cos(rad),
+        y:        dist * Math.sin(rad),
+      });
+    }
+    updateScan(points);
+  }, 100);
+}
+</script>
+</body>
+</html>

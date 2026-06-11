@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>SENTINEL — THREAT MAP</title>
+<style>
+:root{
+  --c-bg:#020a14;--c-primary:#00d4ff;--c-ok:#00ffaa;
+  --c-danger:#ff3030;--c-warn:#ffb800;--c-dim:#1a3a5a;--c-dim2:#0a1828;
+  --font:'Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:var(--c-bg);color:var(--c-primary);font-family:var(--font);overflow:hidden}
+#hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 20px;border-bottom:1px solid #0d2a4a;background:#030e1a;
+  flex-shrink:0;
+}
+.logo{font-size:15px;letter-spacing:4px;font-weight:bold;text-shadow:0 0 12px var(--c-primary);}
+#ws-status{font-size:10px;letter-spacing:2px;color:var(--c-dim);}
+#ws-status.ok{color:var(--c-ok);}#ws-status.err{color:var(--c-danger);}
+#stats{display:flex;gap:28px;}
+.st{text-align:right;}
+.slbl{font-size:10px;color:var(--c-dim);letter-spacing:2px;display:block;}
+.sval{font-size:20px;font-weight:bold;}
+#map-wrap{flex:1;position:relative;overflow:hidden;min-height:0;}
+#world-svg{position:absolute;top:0;left:0;width:100%;height:100%;}
+/* Image de fond carte personnalisée */
+#map-img{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  object-fit:contain;object-position:center;
+  display:none;
+}
+#input-bar{
+  display:flex;align-items:center;gap:14px;
+  padding:10px 20px;border-top:2px solid var(--c-primary);
+  background:#02101a;flex-shrink:0;
+}
+#prm{color:var(--c-primary);font-size:16px;letter-spacing:2px;text-shadow:0 0 6px var(--c-primary);}
+#city-input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--c-primary);font-family:var(--font);font-size:20px;
+  caret-color:var(--c-primary);
+}
+#hint{font-size:13px;color:var(--c-dim);}
+#page{display:flex;flex-direction:column;height:100vh;}
+/* Waiting */
+#waiting{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;background:var(--c-bg);z-index:10;
+}
+#wt{font-size:24px;letter-spacing:6px;text-shadow:0 0 16px var(--c-primary);}
+#ws{font-size:12px;color:var(--c-dim);letter-spacing:2px;}
+#wd{color:var(--c-dim);font-size:24px;animation:db 1.2s infinite;}
+@keyframes db{0%,100%{opacity:.2}50%{opacity:1}}
+/* Scanline */
+#map-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:5;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,212,255,.015) 3px,rgba(0,212,255,.015) 6px);}
+</style>
+</head>
+<body>
+<div id="page">
+  <div id="hdr">
+    <span class="logo">◈ SENTINEL — THREAT MAP</span>
+    <span id="ws-status">● CONNEXION...</span>
+    <div id="stats">
+      <div class="st"><span class="slbl">DÉFENDUES</span><span class="sval" id="s-def" style="color:var(--c-ok)">0</span></div>
+      <div class="st"><span class="slbl">INFECTÉES</span><span class="sval" id="s-inf" style="color:var(--c-danger)">0</span></div>
+      <div class="st"><span class="slbl">TEMPS</span><span class="sval" id="s-time" style="color:var(--c-warn)">—</span></div>
+    </div>
+  </div>
+
+  <div id="map-wrap">
+    <div id="waiting">
+      <div id="wt">◈ THREAT MAP</div>
+      <div id="ws">EN ATTENTE DE LA CONSOLE PRINCIPALE</div>
+      <div id="wd">···</div>
+    </div>
+    <!-- Image de fond si CUSTOM_MAP_IMAGE renseigné -->
+    <img id="map-img" alt="carte"/>
+    <!-- SVG superposé : fond vectoriel OU simple calque points/labels -->
+    <svg id="world-svg" viewBox="0 0 900 460" preserveAspectRatio="xMidYMid meet" style="display:none"></svg>
+  </div>
+
+  <div id="input-bar">
+    <span id="prm">DÉFENSE ▶</span>
+    <input id="city-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Initiales (PA · NY · TK · LA · SP …) + ENTRÉE"/>
+    <span id="hint">Les initiales apparaissent sur la carte</span>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  CONFIGURATION CARTE
+//  '' → carte vectorielle SVG générée automatiquement (viewBox 900×460)
+//  'ma-carte.jpg' → votre image, les points SVG se superposent dessus.
+//  Les coordonnées x/y des villes dans CITIES[] du serveur sont calées
+//  sur le viewBox 900×460. Si votre image a des proportions différentes,
+//  ajustez les x/y dans server.js (ou SENTINEL_MAIN.html > CITIES[]).
+// ══════════════════════════════════════════════════════════════════
+const CUSTOM_MAP_IMAGE = '';
+// ══════════════════════════════════════════════════════════════════
+
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('world-svg');
+const mapImg=document.getElementById('map-img');
+const cityInput=document.getElementById('city-input');
+const wsStatus=document.getElementById('ws-status');
+
+let active=false, cities=[], nodeMap={}, labelMap={};
+
+// ── WebSocket ─────────────────────────────────────────────────────
+let ws;
+function connect(){
+  ws=new WebSocket('ws://localhost:3000');
+  ws.onopen=()=>{wsStatus.textContent='● CONNECTÉ';wsStatus.className='ok';};
+  ws.onclose=()=>{wsStatus.textContent='● DÉCONNECTÉ';wsStatus.className='err';setTimeout(connect,2000);};
+  ws.onerror=()=>{wsStatus.textContent='● ERREUR';wsStatus.className='err';};
+  ws.onmessage=({data})=>{try{handle(JSON.parse(data));}catch(e){}};
+}
+connect();
+function send(obj){ if(ws&&ws.readyState===1) ws.send(JSON.stringify(obj)); }
+
+// ── Paths continents (utilisés uniquement si pas d'image perso) ───
+const PATHS=[
+  'M120,52 L200,38 L262,44 L280,72 L268,110 L238,134 L198,138 L168,118 L138,96 L108,72Z',
+  'M220,132 L250,129 L265,140 L258,154 L240,157 L222,148Z',
+  'M188,142 L232,134 L258,145 L262,185 L250,222 L224,262 L194,268 L172,242 L166,205 L172,166Z',
+  'M290,16 L354,10 L382,24 L378,48 L342,58 L298,48 L284,30Z',
+  'M418,40 L488,34 L518,50 L512,80 L480,90 L448,86 L420,70 L413,52Z',
+  'M450,18 L484,14 L502,26 L496,46 L468,52 L448,40Z',
+  'M428,88 L492,82 L524,104 L528,150 L512,200 L490,238 L458,252 L424,238 L406,200 L400,150 L412,108Z',
+  'M512,32 L682,22 L762,38 L792,60 L782,104 L730,122 L668,118 L596,108 L548,92 L514,72Z',
+  'M582,106 L650,100 L690,120 L700,158 L676,184 L628,178 L596,158 L572,130Z',
+  'M660,132 L702,120 L722,142 L718,162 L692,168 L662,154Z',
+  'M698,198 L782,186 L812,210 L802,254 L770,266 L728,260 L702,242 L692,218Z',
+  'M762,44 L780,38 L788,52 L780,64 L762,60Z',
+  'M412,44 L430,38 L438,50 L432,62 L414,60Z',
+  'M380,28 L402,22 L408,32 L400,40 L382,38Z',
+  'M516,202 L528,196 L534,210 L528,228 L516,230Z',
+];
+
+function buildWorld(){
+  svg.innerHTML='';
+  const bg=document.createElementNS(NS,'rect');
+  bg.setAttribute('x','0');bg.setAttribute('y','0');
+  bg.setAttribute('width','900');bg.setAttribute('height','460');
+  // Fond transparent si image perso, sinon foncé
+  bg.setAttribute('fill', CUSTOM_MAP_IMAGE ? 'transparent' : '#020c18');
+  svg.appendChild(bg);
+
+  if(!CUSTOM_MAP_IMAGE){
+    // Grille
+    for(let x=0;x<=900;x+=90){const l=document.createElementNS(NS,'line');l.setAttribute('x1',x);l.setAttribute('y1',0);l.setAttribute('x2',x);l.setAttribute('y2',460);l.setAttribute('stroke','#081828');l.setAttribute('stroke-width','.7');svg.appendChild(l);}
+    for(let y=0;y<=460;y+=92){const l=document.createElementNS(NS,'line');l.setAttribute('x1',0);l.setAttribute('y1',y);l.setAttribute('x2',900);l.setAttribute('y2',y);l.setAttribute('stroke','#081828');l.setAttribute('stroke-width','.7');svg.appendChild(l);}
+    // Continents
+    PATHS.forEach(d=>{const p=document.createElementNS(NS,'path');p.setAttribute('d',d);p.setAttribute('fill','#0a1e30');p.setAttribute('stroke','#0e3050');p.setAttribute('stroke-width','1.2');svg.appendChild(p);});
+  }
+}
+
+function addCities(){
+  nodeMap={};labelMap={};
+  cities.forEach((c,i)=>{
+    const cx=c.x, cy=c.y;
+    const ring=document.createElementNS(NS,'circle');ring.setAttribute('cx',cx);ring.setAttribute('cy',cy);ring.setAttribute('r','12');ring.setAttribute('fill','none');ring.setAttribute('stroke','rgba(0,212,255,.15)');ring.setAttribute('stroke-width','1');svg.appendChild(ring);
+    const dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',cx);dot.setAttribute('cy',cy);dot.setAttribute('r','5');dot.setAttribute('fill','#00d4ff');dot.setAttribute('stroke','#00d4ff');dot.setAttribute('stroke-width','1.5');svg.appendChild(dot);
+    const initStr=c.init?c.init[0]:'??';
+    const lbl=document.createElementNS(NS,'text');lbl.setAttribute('x',cx);lbl.setAttribute('y',cy-12);lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','10');lbl.setAttribute('fill','#00d4ff');lbl.setAttribute('font-family','Courier New');lbl.setAttribute('font-weight','bold');lbl.textContent=`${c.n} [${initStr}]`;svg.appendChild(lbl);
+    nodeMap[i]=dot;labelMap[i]=lbl;
+  });
+}
+
+// ── Message handler ───────────────────────────────────────────────
+function handle(data){
+  switch(data.type){
+
+    case 'map_init':
+      document.getElementById('waiting').style.display='none';
+      // Afficher image perso OU SVG seul
+      if(CUSTOM_MAP_IMAGE){
+        mapImg.src=CUSTOM_MAP_IMAGE;
+        mapImg.style.display='block';
+        // SVG transparent par-dessus (juste les points)
+        svg.style.background='transparent';
+      }
+      svg.style.display='block';
+      cities=data.cities;
+      buildWorld(); addCities();
+      active=true;
+      cityInput.focus();
+      break;
+
+    case 'city_infected':{
+      const i=data.idx;
+      if(!nodeMap[i])break;
+      nodeMap[i].setAttribute('fill','#ff3030');nodeMap[i].setAttribute('stroke','#ff3030');
+      if(labelMap[i])labelMap[i].setAttribute('fill','#ff3030');
+      const gl=document.createElementNS(NS,'line');
+      gl.setAttribute('x1',cities[i].x);gl.setAttribute('y1',cities[i].y);
+      gl.setAttribute('x2',450+Math.random()*80);gl.setAttribute('y2',200+Math.random()*60);
+      gl.setAttribute('stroke','rgba(255,48,48,.2)');gl.setAttribute('stroke-width','.8');gl.setAttribute('stroke-dasharray','4 3');
+      svg.appendChild(gl);setTimeout(()=>gl.remove(),2500);
+      break;
+    }
+
+    case 'city_defended':{
+      const i=data.idx;
+      if(!nodeMap[i])break;
+      nodeMap[i].setAttribute('fill','#00ffaa');nodeMap[i].setAttribute('stroke','#00ffaa');
+      if(labelMap[i])labelMap[i].setAttribute('fill','#00ffaa');
+      const sh=document.createElementNS(NS,'circle');
+      sh.setAttribute('cx',cities[i].x);sh.setAttribute('cy',cities[i].y);
+      sh.setAttribute('r','16');sh.setAttribute('fill','none');
+      sh.setAttribute('stroke','rgba(0,255,170,.6)');sh.setAttribute('stroke-width','2');
+      svg.appendChild(sh);setTimeout(()=>sh.remove(),900);
+      break;
+    }
+
+    case 'map_timer':
+      document.getElementById('s-time').textContent=data.t+'s';
+      document.getElementById('s-time').style.color=data.t>12?'var(--c-warn)':data.t>6?'#ff8800':'var(--c-danger)';
+      break;
+
+    case 'map_status':
+      document.getElementById('s-def').textContent=data.def;
+      document.getElementById('s-inf').textContent=data.inf;
+      break;
+
+    case 'map_done':
+      active=false;
+      mapImg.style.display='none';
+      svg.style.display='none';
+      document.getElementById('waiting').style.display='flex';
+      document.getElementById('wt').textContent='◈ ÉTAPE TERMINÉE';
+      document.getElementById('ws').textContent=`DEF: ${data.def}  ·  INF: ${data.inf}`;
+      break;
+
+    case 'game_over':
+      active=false;
+      mapImg.style.display='none';
+      svg.style.display='none';
+      document.getElementById('waiting').style.display='flex';
+      document.getElementById('wt').textContent=data.win?'◈ RÉSEAU SÉCURISÉ':'◈ SYSTÈME COMPROMIS';
+      document.getElementById('wt').style.color=data.win?'var(--c-ok)':'var(--c-danger)';
+      document.getElementById('ws').textContent=`Score: ${data.score}`;
+      break;
+  }
+}
+
+// ── Input ─────────────────────────────────────────────────────────
+cityInput.addEventListener('keydown',e=>{
+  if(!active)return;
+  if(e.key==='Enter'){
+    const v=cityInput.value.trim(); cityInput.value='';
+    if(v) send({type:'map_input', initials:v});
+  }
+});
+
+// Fond pendant l'attente
+buildWorld();
+</script>
+</body>
+</html>

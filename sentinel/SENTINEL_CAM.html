@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>SENTINEL — CAM SURVEILLANCE</title>
+<style>
+:root{
+  --c-bg:#030408;--c-primary:#00d4ff;--c-ok:#00ffaa;
+  --c-danger:#ff3030;--c-warn:#ffb800;--c-dim:#1a2a3a;
+  --font:'Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:var(--c-bg);color:var(--c-primary);font-family:var(--font);overflow:hidden}
+
+#page{display:flex;flex-direction:column;height:100vh;}
+#hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 22px;border-bottom:1px solid #0a1a28;background:#020508;flex-shrink:0;
+}
+.logo{font-size:15px;letter-spacing:4px;font-weight:bold;text-shadow:0 0 10px var(--c-primary);}
+#ws-status{font-size:10px;letter-spacing:2px;color:var(--c-dim);}
+#ws-status.ok{color:var(--c-ok);}#ws-status.err{color:var(--c-danger);}
+#hdr-right{display:flex;align-items:center;gap:24px;}
+#timer-big{font-size:32px;font-weight:bold;color:var(--c-warn);font-variant-numeric:tabular-nums;}
+#status-msg{font-size:13px;color:var(--c-dim);letter-spacing:2px;}
+
+#cam-area{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  gap:28px;padding:20px;overflow:hidden;
+}
+.cam-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  flex:1;max-width:380px;
+}
+.cam-top{font-size:12px;letter-spacing:3px;color:var(--c-dim);}
+.cam-frame{
+  width:100%;aspect-ratio:16/10;
+  border:1px solid #0d2a3a;background:#000;
+  position:relative;overflow:hidden;border-radius:2px;
+}
+/* Vidéo plein cadre */
+.cam-frame video{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  object-fit:cover;z-index:0;
+}
+/* Canvas HUD par-dessus la vidéo */
+.cam-frame canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;}
+
+.cam-foot{display:flex;align-items:center;justify-content:space-between;width:100%;}
+.cam-id{font-size:11px;color:var(--c-dim);}
+.cam-stat{font-size:11px;color:var(--c-ok);letter-spacing:1px;}
+.cam-wrap.suspect .cam-frame{border-color:var(--c-danger)!important;box-shadow:0 0 20px rgba(255,48,48,.4);}
+.cam-wrap.suspect .cam-stat{color:var(--c-danger);animation:blink .4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+
+#input-bar{
+  display:flex;align-items:center;justify-content:center;gap:18px;
+  padding:12px 22px;border-top:1px solid #0a1a28;background:#020508;flex-shrink:0;
+}
+#cam-prompt{font-size:14px;color:var(--c-warn);letter-spacing:2px;}
+#cam-input{
+  background:rgba(0,212,255,.07);border:1px solid var(--c-primary);
+  outline:none;color:var(--c-primary);font-family:var(--font);
+  font-size:22px;padding:5px 18px;width:90px;text-align:center;
+  letter-spacing:4px;caret-color:var(--c-primary);
+  box-shadow:0 0 12px rgba(0,212,255,.15);
+}
+#cam-hint{font-size:12px;color:var(--c-dim);}
+
+/* Waiting */
+#waiting{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;background:var(--c-bg);z-index:10;
+}
+#wt{font-size:22px;letter-spacing:6px;text-shadow:0 0 14px var(--c-primary);}
+#ws2{font-size:12px;color:var(--c-dim);letter-spacing:2px;}
+#wd{color:var(--c-dim);font-size:22px;animation:db 1.2s infinite;}
+@keyframes db{0%,100%{opacity:.2}50%{opacity:1}}
+
+/* Glitch flash */
+#gf{position:fixed;inset:0;pointer-events:none;z-index:200;opacity:0;}
+#gf.fire{animation:gfire .5s ease-out forwards;}
+@keyframes gfire{0%{background:rgba(255,48,48,.3);opacity:1}100%{opacity:0}}
+
+/* Scanlines overlay sur chaque cam */
+.cam-frame::after{
+  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.18) 3px,rgba(0,0,0,.18) 4px);
+}
+</style>
+</head>
+<body>
+<div id="gf"></div>
+
+<div id="page">
+  <div id="hdr">
+    <span class="logo">◈ SURVEILLANCE — 3 CAMÉRAS</span>
+    <span id="ws-status">● CONNEXION...</span>
+    <div id="hdr-right">
+      <span id="status-msg">EN ATTENTE</span>
+      <span id="timer-big">—</span>
+    </div>
+  </div>
+
+  <div style="position:relative;flex:1;overflow:hidden;display:flex;">
+    <div id="waiting">
+      <div id="wt">◈ CAM SURVEILLANCE</div>
+      <div id="ws2">EN ATTENTE DE LA CONSOLE PRINCIPALE</div>
+      <div id="wd">···</div>
+    </div>
+    <div id="cam-area"></div>
+  </div>
+
+  <div id="input-bar">
+    <span id="cam-prompt">Identifiez la caméra compromise</span>
+    <input id="cam-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="1-3"/>
+    <span id="cam-hint">Tapez le numéro + ENTRÉE</span>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  CONFIGURATION VIDÉOS
+//  Renseignez le chemin (relatif ou absolu) de chaque fichier vidéo.
+//  Laisser '' pour utiliser le rendu canvas généré automatiquement.
+// ══════════════════════════════════════════════════════════════════
+const VIDEO_SOURCES = [
+  Caméra 1 — ex: 'videos/cam_route.mp4',
+  Caméra 2 — ex: 'videos/cam_route.mp4',
+  Caméra 3 — ex: 'videos/cam_route.mp4'
+  '',   // Caméra 2 — ex: 'videos/cam2.mp4'
+  '',   // Caméra 3 — ex: 'videos/cam3.mp4'
+];
+// ══════════════════════════════════════════════════════════════════
+
+let ws, active=false, suspect=-1, animIds=[], canvases=[];
+const camArea=document.getElementById('cam-area');
+const timerEl=document.getElementById('timer-big');
+const statusEl=document.getElementById('status-msg');
+const inputEl=document.getElementById('cam-input');
+const wsStatus=document.getElementById('ws-status');
+
+// ── WebSocket ─────────────────────────────────────────────────────
+function connect(){
+  ws=new WebSocket('ws://localhost:3000');
+  ws.onopen=()=>{wsStatus.textContent='● CONNECTÉ';wsStatus.className='ok';};
+  ws.onclose=()=>{wsStatus.textContent='● DÉCONNECTÉ';wsStatus.className='err';setTimeout(connect,2000);};
+  ws.onerror=()=>{wsStatus.textContent='● ERREUR';wsStatus.className='err';};
+  ws.onmessage=({data})=>{try{handle(JSON.parse(data));}catch(e){}};
+}
+connect();
+function send(obj){ if(ws&&ws.readyState===1) ws.send(JSON.stringify(obj)); }
+
+// ── HUD canvas (toujours dessiné par-dessus, vidéo ou pas) ────────
+function drawHUD(canvas, camIdx, susp, frame){
+  const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height;
+  const isSuspect=(camIdx===susp);
+  const hasVideo=!!VIDEO_SOURCES[camIdx];
+
+  ctx.clearRect(0,0,W,H);
+
+  if(!hasVideo){
+    // ── Rendu canvas complet (fallback sans vidéo) ──
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+    const id=ctx.createImageData(W,H);
+    for(let i=0;i<id.data.length;i+=4){const v=~~(Math.random()*22);id.data[i]=0;id.data[i+1]=v;id.data[i+2]=Math.min(255,v*2);id.data[i+3]=255;}
+    ctx.putImageData(id,0,0);
+    ctx.fillStyle='rgba(0,0,0,.38)';
+    for(let y=0;y<H;y+=2) ctx.fillRect(0,y,W,1);
+    const col=isSuspect?'rgba(255,60,60,.18)':'rgba(0,200,255,.09)';
+    ctx.strokeStyle=col; ctx.lineWidth=1;
+    [[0,H*.08,W*.34,H*.26],[W,H*.08,W*.66,H*.26],[0,H*.92,W*.3,H*.74],[W,H*.92,W*.7,H*.74],[W*.34,H*.26,W*.66,H*.26],[W*.3,H*.74,W*.7,H*.74]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();});
+    ctx.fillStyle=isSuspect?'rgba(255,48,48,.12)':'rgba(0,150,200,.07)';
+    ctx.fillRect(W*.42,H*.38,W*.16,H*.36);
+    ctx.strokeStyle=isSuspect?'rgba(255,48,48,.25)':'rgba(0,150,200,.15)'; ctx.lineWidth=1;
+    ctx.strokeRect(W*.42,H*.38,W*.16,H*.36);
+    ctx.fillStyle=isSuspect?'rgba(255,48,48,.07)':'rgba(0,150,200,.05)';
+    ctx.fillRect(W*.06,H*.68,W*.18,H*.1); ctx.fillRect(W*.76,H*.62,W*.15,H*.14);
+    if(isSuspect){
+      const wx=W*.44+Math.sin(frame*.05)*W*.12, wy=H*.6;
+      ctx.fillStyle='rgba(255,48,48,.75)';
+      ctx.beginPath();ctx.arc(wx,wy-20,10,0,Math.PI*2);ctx.fill();
+      ctx.fillRect(wx-9,wy-10,18,26);
+      const ls=Math.sin(frame*.12)*7;
+      ctx.fillRect(wx-10,wy+16,8,18+ls); ctx.fillRect(wx+2,wy+16,8,18-ls);
+    }
+    if(isSuspect&&frame%6<2){
+      for(let g=0;g<3;g++){ctx.fillStyle=`rgba(255,0,0,${.1+Math.random()*.12})`;ctx.fillRect(0,~~(Math.random()*(H-4)),W,2+~~(Math.random()*4));}
+    }
+  } else {
+    // ── Mode vidéo : glitch discret sur le suspect ──
+    if(isSuspect&&frame%8<2){
+      for(let g=0;g<2;g++){
+        ctx.fillStyle=`rgba(255,0,0,${.08+Math.random()*.1})`;
+        ctx.fillRect(0,~~(Math.random()*(H-4)),W,1+~~(Math.random()*3));
+      }
+    }
+  }
+
+  // ── HUD commun (vidéo ou canvas) ──
+  const fs=Math.max(9,W/28);
+  ctx.font=`${fs}px Courier New`;
+
+  // Timestamp + ID
+  ctx.fillStyle=isSuspect?'rgba(255,80,80,.9)':'rgba(0,200,255,.65)';
+  ctx.fillText(`CAM-${camIdx+1}  ${new Date().toTimeString().slice(0,8)}`,6,H-7);
+
+  // Label état
+  if(isSuspect){
+    ctx.fillStyle='rgba(255,48,48,.95)';
+    ctx.font=`bold ${fs}px Courier New`;
+    ctx.fillText('⚠ ANOMALIE',W*.52,H-7);
+  } else {
+    ctx.fillStyle='rgba(0,200,100,.65)';
+    ctx.fillText('RAS',W*.87,H-7);
+  }
+
+  // Coin sup gauche — numéro cam
+  ctx.font=`bold ${fs+1}px Courier New`;
+  ctx.fillStyle=isSuspect?'rgba(255,80,80,.7)':'rgba(0,212,255,.4)';
+  ctx.fillText(`C${100+camIdx}`,6,fs+6);
+
+  // Bordure animée suspect
+  if(isSuspect){
+    ctx.strokeStyle=`rgba(255,30,30,${.35+Math.sin(frame*.12)*.2})`;
+    ctx.lineWidth=4;
+    ctx.strokeRect(2,2,W-4,H-4);
+  }
+}
+
+function stopAnim(){ animIds.forEach(id=>cancelAnimationFrame(id)); animIds=[]; }
+
+function startCams(susp){
+  camArea.innerHTML=''; canvases=[];
+  for(let i=0;i<3;i++){
+    const hasVideo=!!VIDEO_SOURCES[i];
+    const wrap=document.createElement('div');
+    wrap.className='cam-wrap'; if(i===susp) wrap.classList.add('suspect');
+
+    const top=document.createElement('div');
+    top.className='cam-top'; top.textContent=`◈ CAMÉRA ${i+1}`;
+
+    const frame=document.createElement('div'); frame.className='cam-frame';
+
+    // Vidéo (si configurée)
+    if(hasVideo){
+      const vid=document.createElement('video');
+      vid.src=VIDEO_SOURCES[i]; vid.autoplay=true; vid.loop=true; vid.muted=true;
+      vid.playsInline=true;
+      vid.onerror=()=>{ console.warn(`CAM-${i+1} : vidéo introuvable, fallback canvas.`); };
+      frame.appendChild(vid);
+    }
+
+    // Canvas HUD toujours présent
+    const canvas=document.createElement('canvas');
+    canvas.width=480; canvas.height=300;
+    frame.appendChild(canvas);
+
+    const foot=document.createElement('div'); foot.className='cam-foot';
+    foot.innerHTML=`<span class="cam-id">ID: C${100+i} · SECT-${['A','B','C'][i]}</span><span class="cam-stat">${i===susp?'!! ANOMALIE':'EN LIGNE'}</span>`;
+
+    wrap.appendChild(top); wrap.appendChild(frame); wrap.appendChild(foot);
+    camArea.appendChild(wrap); canvases.push(canvas);
+  }
+
+  stopAnim(); let frame=0;
+  function tick(){
+    canvases.forEach((c,i)=>drawHUD(c,i,susp,frame));
+    frame++;
+    animIds.push(requestAnimationFrame(tick));
+  }
+  tick();
+}
+
+// ── Message handler ───────────────────────────────────────────────
+function handle(data){
+  switch(data.type){
+    case 'cam_start':
+      suspect=data.suspect;
+      document.getElementById('waiting').style.display='none';
+      startCams(suspect);
+      active=true;
+      statusEl.textContent='INTRUSION DÉTECTÉE — IDENTIFIEZ LA CAMÉRA';
+      statusEl.style.color='var(--c-danger)';
+      timerEl.textContent='25s';
+      inputEl.focus();
+      break;
+
+    case 'cam_timer':
+      timerEl.textContent=data.t+'s';
+      timerEl.style.color=data.t>12?'var(--c-warn)':data.t>6?'#ff8800':'var(--c-danger)';
+      break;
+
+    case 'cam_done':
+      active=false; stopAnim();
+      const gf=document.getElementById('gf');
+      gf.style.animation='none'; gf.offsetHeight;
+      if(data.result!=='correct') gf.className='fire';
+      statusEl.textContent=data.result==='correct'?'INTRUSION NEUTRALISÉE':'INTRUSION NON MAÎTRISÉE';
+      statusEl.style.color=data.result==='correct'?'var(--c-ok)':'var(--c-danger)';
+      setTimeout(()=>{
+        document.getElementById('waiting').style.display='flex';
+        document.getElementById('wt').textContent='◈ CAM SURVEILLANCE';
+        document.getElementById('ws2').textContent='EN ATTENTE DE LA PROCHAINE ÉTAPE';
+        document.getElementById('wt').style.color='var(--c-primary)';
+      },2500);
+      break;
+
+    case 'game_over':
+      stopAnim(); active=false;
+      document.getElementById('waiting').style.display='flex';
+      document.getElementById('wt').textContent=data.win?'◈ RÉSEAU SÉCURISÉ':'◈ SYSTÈME COMPROMIS';
+      document.getElementById('wt').style.color=data.win?'var(--c-ok)':'var(--c-danger)';
+      document.getElementById('ws2').textContent='';
+      break;
+  }
+}
+
+// ── Input ─────────────────────────────────────────────────────────
+inputEl.addEventListener('keydown',e=>{
+  if(!active)return;
+  if(e.key==='Enter'){
+    const v=parseInt(inputEl.value.trim());
+    inputEl.value='';
+    if(v>=1&&v<=3){
+      active=false;
+      send({type:'cam_answer', idx:v-1});
+    }
+  }
+});
+</script>
+</body>
+</html>

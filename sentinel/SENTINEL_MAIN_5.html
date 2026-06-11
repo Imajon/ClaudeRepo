@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL//OS</title>
+<style>
+/* ================================================================
+   CONFIGURATION — modifiez ici
+   USE_EXTERNAL_SCREENS (dans le JS plus bas) :
+     false → carte et cams dans la colonne centrale de cette fenêtre
+     true  → carte et cams masqués ici, affichés dans leurs fenêtres
+================================================================ */
+:root {
+  --c-bg:      #03070f;
+  --c-bg2:     #060d1a;
+  --c-bg3:     #030510;
+  --c-border:  #0d2a4a;
+  --c-border2: #0a1f38;
+  --c-primary: #00d4ff;
+  --c-p2:      #0088cc;
+  --c-p3:      #004466;
+  --c-accent:  #7b2fff;
+  --c-accent2: #ff3c78;
+  --c-warn:    #ffb800;
+  --c-danger:  #ff3030;
+  --c-ok:      #00ffaa;
+  --c-dim:     #1a3a5a;
+  --c-dim2:    #0d2035;
+  --c-text:    #7ab8d8;
+  --font: 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--c-bg); color: var(--c-text); font-family: var(--font); }
+
+/* ── LAYOUT ───────────────────────────────────────────────────── */
+#gr {
+  width: 100%; height: 100vh;
+  display: grid;
+  /* col 1: terminal  col 2: map+cam  col 3: servers */
+  grid-template-columns: 1fr 280px 220px;
+  grid-template-rows: 52px 1fr 60px;
+  gap: 5px;
+  padding: 7px;
+  overflow: hidden;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────────────── */
+.topbar {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--c-border);
+  padding-bottom: 6px;
+}
+.logo {
+  color: var(--c-primary); font-size: 16px; letter-spacing: 4px; font-weight: bold;
+  text-shadow: 0 0 14px var(--c-primary);
+}
+.logo em { color: var(--c-dim); font-style: normal; font-weight: normal; }
+.stats { display: flex; gap: 18px; align-items: center; }
+.stat { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.slbl { color: var(--c-dim); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; }
+.sval { font-size: 15px; font-weight: bold; }
+.brow { display: flex; align-items: center; gap: 5px; }
+.bout { width: 80px; height: 6px; background: var(--c-bg3); border: 1px solid var(--c-border2); border-radius: 1px; }
+.bfill { height: 100%; border-radius: 1px; transition: width .3s, background .3s; }
+
+/* ── MAIN TERMINAL ──────────────────────────────────────────── */
+#main {
+  position: relative;
+  background: var(--c-bg2); border: 1px solid var(--c-border);
+  display: flex; flex-direction: column;
+  overflow: hidden; min-height: 0;
+}
+#main::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,.012) 2px, rgba(0,212,255,.012) 4px);
+}
+#term {
+  flex: 1; overflow-y: auto; padding: 12px 14px;
+  display: flex; flex-direction: column; min-height: 0; z-index: 2; position: relative;
+}
+#term::-webkit-scrollbar { width: 3px; }
+#term::-webkit-scrollbar-thumb { background: var(--c-border); }
+.tl { line-height: 1.8; word-break: break-all; font-size: 16px; }
+.sys   { color: var(--c-dim); }
+.atk   { color: var(--c-danger); }
+.warn  { color: var(--c-warn); }
+.cmd   { color: var(--c-primary); font-weight: bold; }
+.ok    { color: var(--c-ok); font-weight: bold; }
+.inf   { color: var(--c-primary); }
+.seq   { color: var(--c-accent); }
+.face  { color: var(--c-accent2); }
+.cam   { color: #00ffcc; }
+
+/* ── MISSION BANNER ─────────────────────────────────────────── */
+#mb {
+  display: none; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 40; pointer-events: none; text-align: center;
+  padding: 22px 36px; min-width: 340px; max-width: 480px;
+  background: #040c1ef2;
+  border: 1px solid var(--c-primary);
+  box-shadow: 0 0 40px rgba(0,212,255,.2), inset 0 0 30px rgba(0,212,255,.03);
+}
+#mb.show { display: block; }
+#mb-step   { font-size: 10px; letter-spacing: 3px; color: var(--c-dim); margin-bottom: 8px; }
+#mb-action { font-size: 20px; font-weight: bold; color: var(--c-primary); letter-spacing: 2px; margin-bottom: 10px; text-shadow: 0 0 12px var(--c-primary); }
+#mb-detail { font-size: 14px; color: var(--c-warn); line-height: 1.7; }
+#mb-key    { font-size: 11px; color: var(--c-dim); margin-top: 12px; letter-spacing: 2px; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+/* ── KEYPRESS ZONE ──────────────────────────────────────────── */
+#kpzone {
+  flex-shrink: 0; padding: 9px 14px;
+  background: #04101e; border-top: 1px solid var(--c-border2);
+  display: none; z-index: 2; position: relative;
+}
+.kph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+.kpl { color: var(--c-dim); font-size: 11px; letter-spacing: 2px; }
+.kpc { font-size: 20px; font-weight: bold; font-variant-numeric: tabular-nums; }
+#kpblocks { display: flex; flex-wrap: wrap; gap: 3px; }
+.kb { width: 17px; height: 17px; border: 1px solid var(--c-border2); background: var(--c-bg3); border-radius: 2px; flex-shrink: 0; transition: background .08s, transform .08s, box-shadow .08s; }
+.kb.f   { background: var(--c-primary); border-color: var(--c-primary); transform: scale(1.1); box-shadow: 0 0 5px var(--c-primary); }
+.kb.f.r { background: var(--c-danger);  border-color: var(--c-danger);  box-shadow: 0 0 5px var(--c-danger); }
+.kb.f.p { background: var(--c-accent);  border-color: var(--c-accent);  box-shadow: 0 0 5px var(--c-accent); }
+
+/* ── DEBRIEF OVERLAY ─────────────────────────────────────────── */
+#debrief {
+  display: none; position: absolute; inset: 0; z-index: 60;
+  background: rgba(2,5,14,.97);
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; overflow-y: auto;
+}
+#debrief.show { display: flex; }
+.db-title {
+  font-size: 28px; font-weight: bold; letter-spacing: 6px;
+  text-align: center; margin-bottom: 4px;
+  text-shadow: 0 0 24px currentColor;
+}
+.db-sub { font-size: 12px; letter-spacing: 3px; color: var(--c-dim); margin-bottom: 16px; text-align: center; }
+.db-id {
+  font-size: 11px; letter-spacing: 2px; color: var(--c-dim);
+  border: 1px solid var(--c-border); padding: 4px 14px; margin-bottom: 18px;
+}
+.db-id span { color: var(--c-primary); font-weight: bold; }
+.db-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  width: 100%; max-width: 560px; margin-bottom: 18px;
+}
+.db-card {
+  background: var(--c-bg2); border: 1px solid var(--c-border2);
+  padding: 10px 14px; display: flex; flex-direction: column; gap: 3px;
+}
+.db-card-label { font-size: 10px; letter-spacing: 2px; color: var(--c-dim); }
+.db-card-value { font-size: 22px; font-weight: bold; font-variant-numeric: tabular-nums; }
+.db-steps {
+  width: 100%; max-width: 560px; margin-bottom: 18px;
+}
+.db-step-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid var(--c-dim2);
+  font-size: 12px;
+}
+.db-step-num { color: var(--c-dim); width: 22px; text-align: right; flex-shrink: 0; }
+.db-step-name { flex: 1; color: var(--c-text); }
+.db-step-result { font-weight: bold; width: 70px; text-align: right; flex-shrink: 0; }
+.db-step-pts { color: var(--c-primary); width: 60px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.db-rank {
+  font-size: 16px; letter-spacing: 3px; font-weight: bold;
+  padding: 8px 24px; border: 1px solid; margin-bottom: 16px; text-align: center;
+}
+.db-btn {
+  background: transparent; border: 1px solid var(--c-primary); color: var(--c-primary);
+  font-family: var(--font); font-size: 14px; padding: 10px 32px;
+  cursor: pointer; letter-spacing: 3px; transition: background .2s;
+}
+.db-btn:hover { background: rgba(0,212,255,.1); }
+
+/* Speed bonus (invisible, remplacé par medals) */
+.speed-badge { display: none; }
+
+/* ── MÉDAILLES ──────────────────────────────────────────────── */
+/* 1. Médaille centrale — grande, fixe, thème terminal */
+#medal-center {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 230;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  pointer-events: none;
+  opacity: 0;
+  text-align: center;
+}
+#medal-center.pop {
+  animation: mc-pop 2.2s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes mc-pop {
+  0%   { opacity:0; transform: translate(-50%,-50%) scale(.3); }
+  15%  { opacity:1; transform: translate(-50%,-50%) scale(1.12); }
+  28%  { transform: translate(-50%,-50%) scale(.96); }
+  40%  { transform: translate(-50%,-50%) scale(1); }
+  72%  { opacity:1; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity:0; transform: translate(-50%,-50%) scale(1.05); }
+}
+#medal-center svg { filter: drop-shadow(0 0 18px var(--mc-color, #00ffaa)); }
+#medal-center .mc-label {
+  font-family: var(--font); font-size: 18px; font-weight: bold;
+  letter-spacing: 4px; color: var(--mc-color, #00ffaa);
+  text-shadow: 0 0 16px var(--mc-color, #00ffaa);
+}
+#medal-center .mc-pts {
+  font-family: var(--font); font-size: 26px; font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  color: var(--mc-color, #00ffaa);
+  text-shadow: 0 0 20px var(--mc-color, #00ffaa);
+}
+
+/* 2. Colonne médaillons droite — dans la zone terminal */
+#medal-col {
+  position: absolute; right: 8px; top: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+  z-index: 15; pointer-events: none;
+  max-height: calc(100% - 16px); overflow: hidden;
+}
+.mcol-item {
+  display: flex; align-items: center; gap: 5px;
+  animation: mcol-in .35s cubic-bezier(.22,1,.36,1) forwards;
+  opacity: 0;
+}
+@keyframes mcol-in {
+  0%  { opacity:0; transform: translateX(20px); }
+  100%{ opacity:1; transform: translateX(0); }
+}
+.mcol-item.fade {
+  animation: mcol-fade .5s ease-out forwards;
+}
+@keyframes mcol-fade {
+  0%  { opacity:1; }
+  100%{ opacity:.3; }
+}
+.mcol-pts {
+  font-family: var(--font); font-size: 11px; font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── TIMER STRIP ─ masqué (pas de pression temporelle) ─────── */
+#tstrip { display: none; }
+#tfill  { height: 100%; transition: none; }
+/* Temps dans topbar aussi masqué */
+#ttxt-wrap { display: none; }
+
+/* ── OVERLAYS inside main ───────────────────────────────────── */
+.ovlay {
+  display: none; position: absolute; inset: 0; z-index: 10;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 20px;
+}
+
+/* Sequence */
+#seqp { background: rgba(8,2,18,.97); }
+.sqk {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border: 2px solid #2a1040;
+  color: #2a1040; font-size: 20px; font-weight: bold; border-radius: 3px;
+  font-family: var(--font); transition: all .15s;
+}
+.sqk.hit    { border-color: var(--c-ok);     color: var(--c-ok);     background: rgba(0,255,170,.06); }
+.sqk.active { border-color: var(--c-accent); color: var(--c-accent); background: rgba(123,47,255,.1); box-shadow: 0 0 10px rgba(123,47,255,.35); }
+.sqk.error  { border-color: var(--c-danger); color: var(--c-danger); background: rgba(255,48,48,.08); }
+
+/* Face */
+#facep { background: rgba(10,2,14,.97); }
+
+/* Cam (mode inline) */
+#camp { background: rgba(2,4,10,.97); }
+.cam-box { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.cam-screen { border: 1px solid var(--c-border); background: #000; position: relative; overflow: hidden; }
+.cam-lbl { font-size: 10px; color: var(--c-dim); letter-spacing: 2px; }
+.cam-box.suspect .cam-screen { border-color: var(--c-danger); box-shadow: 0 0 10px rgba(255,48,48,.4); }
+
+/* Start overlay */
+#ovl {
+  position: absolute; inset: 0; z-index: 50;
+  background: rgba(3,7,15,.97);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; padding: 28px; text-align: center;
+}
+.ovt { font-size: 24px; letter-spacing: 5px; font-weight: bold; color: var(--c-primary); text-shadow: 0 0 18px var(--c-primary); }
+.ovs { color: var(--c-dim); font-size: 14px; line-height: 2; max-width: 420px; }
+.btn { background: transparent; border: 1px solid var(--c-primary); color: var(--c-primary); font-family: var(--font); font-size: 14px; padding: 12px 36px; cursor: pointer; letter-spacing: 3px; transition: background .2s, box-shadow .2s; }
+.btn:hover, .btn:focus { background: rgba(0,212,255,.1); box-shadow: 0 0 18px rgba(0,212,255,.3); outline: none; }
+
+/* Score burst */
+#sburst { position: fixed; pointer-events: none; font-family: var(--font); font-weight: bold; font-size: 26px; z-index: 200; opacity: 0; left: 50%; top: 38%; transform: translateX(-50%); }
+#sburst.pop { animation: spop 1.2s ease-out forwards; }
+@keyframes spop { 0%{opacity:1;transform:translateX(-50%) scale(1)} 60%{opacity:1;transform:translateX(-50%) translateY(-55px) scale(1.5)} 100%{opacity:0;transform:translateX(-50%) translateY(-90px) scale(.8)} }
+#flov { position: fixed; inset: 0; pointer-events: none; z-index: 190; opacity: 0; }
+#flov.fok { animation: fok .4s ease-out forwards; }
+#flov.fbad { animation: fbad .4s ease-out forwards; }
+@keyframes fok  { 0%{background:var(--c-ok);opacity:.16}    100%{opacity:0} }
+@keyframes fbad { 0%{background:var(--c-danger);opacity:.22} 100%{opacity:0} }
+
+/* ── MIDDLE COLUMN — carte + cam ────────────────────────────── */
+#mid-col {
+  display: flex; flex-direction: column; gap: 5px; overflow: hidden; min-height: 0;
+}
+#map-panel {
+  flex: 1; border: 1px solid var(--c-border); background: var(--c-bg2);
+  position: relative; overflow: hidden; min-height: 0;
+  display: flex; flex-direction: column;
+}
+#map-hdr {
+  display: flex; gap: 12px; align-items: center;
+  padding: 5px 10px; border-bottom: 1px solid var(--c-border2);
+  font-size: 11px; flex-shrink: 0;
+}
+#map-content { flex: 1; position: relative; overflow: hidden; min-height: 0; }
+#map-input-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-top: 1px solid var(--c-border2);
+  background: #02101a; flex-shrink: 0;
+}
+#map-ki {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: var(--c-primary); font-family: var(--font); font-size: 14px;
+  caret-color: var(--c-primary);
+}
+#map-placeholder {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 8px;
+  color: var(--c-dim); font-size: 11px; letter-spacing: 2px; text-align: center;
+}
+
+#cam-panel {
+  flex: 0 0 150px; border: 1px solid var(--c-border); background: var(--c-bg3);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+#cam-hdr {
+  padding: 4px 10px; border-bottom: 1px solid var(--c-border2);
+  font-size: 10px; color: var(--c-dim); letter-spacing: 2px; flex-shrink: 0;
+}
+#cam-content {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: 5px; gap: 5px;
+}
+#cam-placeholder {
+  color: var(--c-dim); font-size: 10px; letter-spacing: 2px; text-align: center;
+}
+#cam-timer-inline {
+  font-size: 32px; font-weight: bold; color: var(--c-warn);
+  font-variant-numeric: tabular-nums; text-align: center; flex-shrink: 0; padding: 3px;
+  display: none;
+}
+
+/* ── MAP / CAM FULLSCREEN OVERLAY (derrière le terminal) ─────── */
+#fs-map-overlay, #fs-cam-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 5;
+  background: #020c18;
+}
+#fs-map-overlay.active, #fs-cam-overlay.active { display: block; }
+/* Terminal semi-transparent quand overlay actif */
+#main.has-overlay {
+  background: rgba(6,13,26,.72) !important;
+  backdrop-filter: none;
+}
+#main.has-overlay::before { opacity: 0.4; }
+#fs-map-overlay svg, #fs-map-overlay canvas { width:100%; height:100%; }
+#fs-cam-overlay { display: none; background: #030408; }
+#fs-cam-overlay.active { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 20px; }
+.fs-cam-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; max-width:420px; }
+.fs-cam-frame { width:100%; aspect-ratio:16/10; border:1px solid var(--c-border); background:#000; position:relative; overflow:hidden; }
+.fs-cam-lbl { font-size:11px; color:var(--c-dim); letter-spacing:2px; }
+.fs-cam-wrap.suspect .fs-cam-frame { border-color:var(--c-danger); box-shadow:0 0 14px rgba(255,48,48,.5); }
+
+
+#fs-btn {
+  background: transparent;
+  border: 1px solid var(--c-border);
+  color: var(--c-dim);
+  font-family: var(--font);
+  font-size: 15px;
+  width: 32px; height: 32px;
+  cursor: pointer;
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: color .2s, border-color .2s, box-shadow .2s;
+  user-select: none;
+  margin-left: 6px;
+}
+#fs-btn:hover { color: var(--c-primary); border-color: var(--c-primary); box-shadow: 0 0 10px rgba(0,212,255,.25); }
+:fullscreen #fs-btn, :-webkit-full-screen #fs-btn { color: var(--c-ok); border-color: var(--c-ok); }
+
+/* ── RIGHT COLUMN — servers ─────────────────────────────────── */
+#srv-panel {
+  border: 1px solid var(--c-border); background: var(--c-bg2);
+  padding: 9px; overflow-y: auto; min-height: 0;
+}
+.ptitle { color: var(--c-p2); font-size: 13px; letter-spacing: 2px; margin-bottom: 7px; border-bottom: 1px solid var(--c-border2); padding-bottom: 4px; font-weight: bold; }
+.si { display: flex; align-items: flex-start; gap: 5px; padding: 5px 2px; border-bottom: 1px solid var(--c-dim2); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.dok  { background: var(--c-ok);     box-shadow: 0 0 5px var(--c-ok); }
+.dcrit{ background: var(--c-danger); box-shadow: 0 0 5px var(--c-danger); animation: blink .35s infinite; }
+.ddead{ background: #442222; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.1} }
+.si-inf { flex: 1; }
+.sn  { color: var(--c-primary); font-size: 14px; font-weight: bold; }
+.sd  { color: var(--c-dim); font-size: 12px; }
+.sex { color: rgba(255,48,48,.5); font-size: 12px; margin-top: 1px; }
+.ss  { font-size: 12px; font-weight: bold; white-space: nowrap; }
+.sok { color: var(--c-ok); }
+.satk{ color: var(--c-danger); }
+.sded{ color: #664444; }
+
+#exfil-sec { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--c-dim2); }
+.exrow { margin-bottom: 4px; }
+.exlbl { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px; }
+.exout { height: 3px; background: #100005; border: 1px solid #200a0a; border-radius: 1px; }
+.exin  { height: 100%; border-radius: 1px; transition: width .8s; }
+
+/* ── INPUT BAR ──────────────────────────────────────────────── */
+#ibar {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 8px;
+  border-top: 1px solid var(--c-border); padding-top: 8px;
+}
+#prm { color: var(--c-primary); white-space: nowrap; font-size: 15px; text-shadow: 0 0 7px var(--c-primary); }
+#ki  { flex: 1; background: transparent; border: none; outline: none; color: var(--c-primary); font-family: var(--font); font-size: 15px; caret-color: var(--c-primary); }
+</style>
+</head>
+<body>
+<div id="flov"></div>
+<div id="sburst">+0</div>
+<div id="speed-badge" class="speed-badge"></div>
+<!-- Overlays plein écran carte et cam (derrière le terminal) -->
+<div id="fs-map-overlay"></div>
+<div id="fs-cam-overlay"></div>
+
+<div id="gr">
+
+  <!-- ══ TOPBAR ══════════════════════════════════════════════════ -->
+  <div class="topbar">
+    <div class="logo">◈ SENTINEL<em>//OS</em></div>
+    <div class="stats">
+      <button id="fs-btn" title="Plein écran (F)">⛶</button>
+      <div class="stat">
+        <span class="slbl">Étape</span>
+        <span class="sval" id="stepd" style="color:var(--c-warn)">—/10</span>
+      </div>
+      <div class="stat">
+        <span class="slbl">Intégrité</span>
+        <div class="brow">
+          <div class="bout"><div class="bfill" id="hpin" style="width:100%;background:var(--c-ok)"></div></div>
+          <span class="sval" id="hptxt" style="color:var(--c-ok)">100%</span>
+        </div>
+      </div>
+      <div class="stat">
+        <span class="slbl">Score</span>
+        <span class="sval" id="sctxt" style="color:var(--c-primary)">0</span>
+      </div>
+      <div class="stat">
+        <span class="slbl" style="color:rgba(255,48,48,.7)">Exfiltration</span>
+        <div class="brow">
+          <div class="bout"><div class="bfill" id="exfil-fill" style="width:0%;background:var(--c-danger)"></div></div>
+          <span class="sval" id="exfil-txt" style="color:var(--c-danger)">0 GB</span>
+        </div>
+      </div>
+      <div id="ttxt-wrap" class="stat" style="display:none">
+        <span class="slbl">Temps</span>
+        <span class="sval" id="ttxt" style="color:var(--c-warn);font-size:22px;font-variant-numeric:tabular-nums">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MAIN TERMINAL ══════════════════════════════════════════ -->
+  <div id="main">
+    <!-- Mission banner -->
+    <div id="mb">
+      <div id="mb-step">◈ CONSIGNE</div>
+      <div id="mb-action"></div>
+      <div id="mb-detail"></div>
+      <div id="mb-key">— ENTRÉE pour commencer —</div>
+    </div>
+
+    <!-- Terminal log -->
+    <div id="term"></div>
+    <!-- Médaille centrale -->
+    <div id="medal-center"><svg id="mc-svg" width="120" height="120" viewBox="0 0 120 120"></svg><div class="mc-label" id="mc-label"></div><div class="mc-pts" id="mc-pts"></div></div>
+    <!-- Colonne médaillons droite -->
+    <div id="medal-col"></div>
+
+    <!-- Keypress zone -->
+    <div id="kpzone">
+      <div class="kph">
+        <span class="kpl" id="kpl">NEUTRALISATION</span>
+        <span class="kpc" id="kpc" style="color:var(--c-primary)">0/0</span>
+      </div>
+      <div id="kpblocks"></div>
+    </div>
+
+    <!-- Timer strip -->
+    <div id="tstrip"><div id="tfill" style="background:var(--c-ok)"></div></div>
+
+    <!-- Sequence overlay -->
+    <div id="seqp" class="ovlay">
+      <div style="color:var(--c-accent);font-size:13px;letter-spacing:3px">◈ SÉQUENCE DE DÉCHIFFREMENT</div>
+      <div id="stbig" style="font-size:42px;font-weight:bold;color:var(--c-accent);font-variant-numeric:tabular-nums">10</div>
+      <div id="seqd" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div>
+      <div style="color:var(--c-dim);font-size:13px">Reproduisez la séquence dans l'ordre exact</div>
+      <div id="slives" style="color:var(--c-warn);font-size:13px;letter-spacing:1px">TENTATIVES: ●●●</div>
+    </div>
+
+    <!-- Face overlay -->
+    <div id="facep" class="ovlay">
+      <div style="color:var(--c-accent2);font-size:13px;letter-spacing:3px">◈ IDENTIFICATION BIOMÉTRIQUE</div>
+      <div style="display:flex;gap:24px;align-items:flex-start;justify-content:center">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+          <div style="font-size:9px;letter-spacing:2px;color:rgba(255,60,120,.5)">CIBLE</div>
+          <canvas id="fref" width="130" height="150" style="border:1px solid var(--c-accent2);background:#060010"></canvas>
+          <div style="color:var(--c-accent2);font-size:9px">PROFIL #<span id="frefid">---</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;justify-content:center;padding-top:16px">
+          <div id="ftbig" style="font-size:40px;font-weight:bold;color:var(--c-warn);font-variant-numeric:tabular-nums">20</div>
+          <div style="width:120px;height:5px;background:var(--c-bg3);border:1px solid #3a1040"><div id="fmbar" style="height:100%;background:var(--c-accent2);transition:width .2s;width:0%"></div></div>
+          <div style="color:rgba(255,60,120,.6);font-size:12px">SIM: <span id="fsim">0</span>%</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+          <div style="font-size:9px;letter-spacing:2px;color:rgba(123,47,255,.6)">BASE DE DONNÉES</div>
+          <canvas id="fstr" width="130" height="150" style="border:1px solid var(--c-accent);background:#060010"></canvas>
+          <div style="color:var(--c-accent);font-size:9px">PROFIL #<span id="fcurid">---</span> / <span id="ftot">0</span></div>
+        </div>
+      </div>
+      <div style="color:var(--c-dim);font-size:13px">← → NAVIGUER &nbsp;|&nbsp; ENTRÉE = VALIDER</div>
+    </div>
+
+    <!-- Cam overlay (inline mode only) -->
+    <div id="camp" class="ovlay">
+      <div style="color:#00ffcc;font-size:13px;letter-spacing:3px">◈ SURVEILLANCE — ANOMALIE</div>
+      <div style="color:var(--c-warn);font-size:14px">Identifiez la caméra compromise</div>
+      <div id="cam-inline-grid" style="display:flex;gap:10px"></div>
+      <div style="color:var(--c-dim);font-size:12px">Tapez le numéro ( 1 · 2 · 3 ) + ENTRÉE</div>
+      <div id="cam-inline-timer" style="font-size:36px;font-weight:bold;color:var(--c-warn);font-variant-numeric:tabular-nums">25</div>
+    </div>
+
+    <!-- Start overlay -->
+    <div id="ovl">
+      <div class="ovt">◈ SENTINEL//OS</div>
+      <div class="ovs" id="ovs">
+        Réseau critique compromis.<br>
+        10 étapes. Défendez chaque système.<br><br>
+        <span style="color:var(--c-dim);font-size:12px">⚠ Le son s'active au démarrage</span>
+      </div>
+      <button class="btn" id="startbtn">[ DÉMARRER ]</button>
+    </div>
+
+    <!-- Debrief overlay -->
+    <div id="debrief"></div>
+  </div>
+
+  <!-- ══ COLONNE CENTRALE — carte + cam ═════════════════════════ -->
+  <div id="mid-col">
+
+    <!-- Carte du monde -->
+    <div id="map-panel">
+      <div id="map-hdr">
+        <span style="color:var(--c-p2);font-size:10px;letter-spacing:2px;font-weight:bold">◈ THREAT MAP</span>
+        <span style="color:var(--c-ok);font-size:11px;font-weight:bold">DEF: <span id="m-def">0</span></span>
+        <span style="color:var(--c-danger);font-size:11px;font-weight:bold">INF: <span id="m-inf">0</span></span>
+        <span style="color:var(--c-warn);font-size:11px;font-weight:bold">T: <span id="m-time">—</span></span>
+      </div>
+      <div id="map-content">
+        <div id="map-placeholder">
+          <div>◈ THREAT MAP</div>
+          <div style="font-size:10px;color:var(--c-dim2)">EN ATTENTE</div>
+        </div>
+      </div>
+      <!-- Input bar visible only during map step (inline mode) -->
+      <div id="map-input-bar" style="display:none">
+        <span style="color:var(--c-primary);font-size:12px;letter-spacing:2px">▶</span>
+        <input id="map-ki" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="initiales (ex: PA, NY, TK…)"/>
+      </div>
+    </div>
+
+    <!-- Caméras de surveillance -->
+    <div id="cam-panel">
+      <div id="cam-hdr">◈ CAM SURVEILLANCE</div>
+      <div id="cam-content">
+        <div id="cam-placeholder">EN ATTENTE</div>
+      </div>
+      <div id="cam-timer-inline"></div>
+    </div>
+
+  </div>
+
+  <!-- ══ COLONNE DROITE — serveurs ══════════════════════════════ -->
+  <div id="srv-panel">
+    <div class="ptitle">◈ SERVEURS RÉSEAU</div>
+    <div id="srvlist"></div>
+    <div id="exfil-sec">
+      <div class="ptitle" style="color:rgba(255,48,48,.6);border-bottom-color:#2a0808">⇡ EXFILTRATION</div>
+      <div id="exfil-bars"></div>
+    </div>
+  </div>
+
+  <!-- ══ INPUT BAR ════════════════════════════════════════════════ -->
+  <div id="ibar">
+    <span id="prm">root@sentinel:~$&nbsp;</span>
+    <input type="text" id="ki" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+  </div>
+
+</div><!-- #gr -->
+
+<script>
+/* ================================================================
+   CONFIGURATION
+   USE_EXTERNAL_SCREENS = false → carte et cams dans cette fenêtre
+                                   (colonne 2 visible)
+   USE_EXTERNAL_SCREENS = true  → carte et cams dans leurs fenêtres
+                                   (colonne 2 masquée dans le main)
+
+   CUSTOM_MAP_IMAGE = '' (défaut) → carte SVG vectorielle générée
+   CUSTOM_MAP_IMAGE = 'ma-carte.png' → votre image positionnée sur
+     le même repère que les villes (viewBox 900×340).
+     Les coordonnées x/y des villes dans CITIES[] correspondent
+     à des positions dans ce repère. Adaptez-les si besoin.
+================================================================ */
+const USE_EXTERNAL_SCREENS = false;
+const CUSTOM_MAP_IMAGE = ''; // ex: 'carte.png' ou 'carte.svg'
+
+// Colonne 2 (carte + cam) : visible en mode fenêtre unique, masquée en mode externe
+if (USE_EXTERNAL_SCREENS) {
+  document.getElementById('mid-col').style.display = 'none';
+  document.getElementById('gr').style.gridTemplateColumns = '1fr 220px';
+}
+
+// ── WebSocket (si mode externe) ──────────────────────────────────
+let ws = null;
+function wsConnect() {
+  if (!USE_EXTERNAL_SCREENS) return;
+  ws = new WebSocket('ws://localhost:3000');
+  ws.onopen    = () => console.log('[WS] Connecté au serveur');
+  ws.onerror   = (e) => console.error('[WS] Erreur:', e);
+  ws.onclose   = () => { console.log('[WS] Déconnecté, reconnexion dans 2s...'); setTimeout(wsConnect, 2000); };
+  ws.onmessage = ({ data }) => {
+    try { handleMsg(JSON.parse(data)); } catch(e) {}
+  };
+}
+wsConnect();
+
+function wsSend(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+function handleMsg(data) {
+  // La carte externe peut envoyer des noms de villes tapés dans SENTINEL_MAP
+  // → On les accepte comme si c'était tapé dans la fenêtre principale
+  if (data.type === 'map_input' && mapActive && _mapDefend) {
+    _mapDefend(data.initials);
+  }
+  // cam_answer depuis SENTINEL_CAM est IGNORÉ :
+  // la saisie caméra se fait TOUJOURS depuis la fenêtre principale (#ki)
+  // La fenêtre CAM est un écran passif visuel uniquement.
+}
+
+// ── DOM refs ─────────────────────────────────────────────────────
+const term      = document.getElementById('term');
+const inp       = document.getElementById('ki');
+const mapKi     = document.getElementById('map-ki');
+const hpin      = document.getElementById('hpin');
+const hptxt     = document.getElementById('hptxt');
+const sctxt     = document.getElementById('sctxt');
+const stepd     = document.getElementById('stepd');
+const ttxt      = document.getElementById('ttxt');
+const tfill     = document.getElementById('tfill');
+const kpzone    = document.getElementById('kpzone');
+const kpblocks  = document.getElementById('kpblocks');
+const kpl       = document.getElementById('kpl');
+const kpc       = document.getElementById('kpc');
+const ovl       = document.getElementById('ovl');
+const srvlist   = document.getElementById('srvlist');
+const sburst    = document.getElementById('sburst');
+const flov      = document.getElementById('flov');
+const seqp      = document.getElementById('seqp');
+const facep     = document.getElementById('facep');
+const camp      = document.getElementById('camp');
+const mapContent= document.getElementById('map-content');
+const mapHdr    = document.getElementById('map-hdr');
+const camContent= document.getElementById('cam-content');
+const camTimerEl= document.getElementById('cam-timer-inline');
+
+// ── State ─────────────────────────────────────────────────────────
+let hp=100, score=0, step=0, alive=true;
+let chActive=false, chResolve=null, chKeyCount=0, chRequired=0, chLastKeys=[], chColor='cyan';
+let globalTimer=null, seqActive=false, faceActive=false, mapActive=false, camActive=false;
+let exfilGB=0, exfilInt=null, exfilPerSrv=[0,0,0,0,0,0,0,0];
+let audioCtx=null;
+let _mapDefend=null, _camResolve=null, _camSuspect=-1;
+let bannerResolve=null;
+
+const SRVS=[
+  {n:'SRV-ALPHA',  d:'FINANCES',    s:0},
+  {n:'SRV-BETA',   d:'IDENTITÉS',   s:0},
+  {n:'SRV-GAMMA',  d:'COMMS',       s:0},
+  {n:'SRV-DELTA',  d:'ARCHIVES',    s:0},
+  {n:'SRV-EPSILON',d:'BIOMÉDICAL',  s:0},
+  {n:'SRV-ZETA',   d:'CRYPTO',      s:0},
+  {n:'SRV-ETA',    d:'RÉSEAUX',     s:0},
+  {n:'SRV-THETA',  d:'BACKUP',      s:0},
+];
+
+function renderSrv(){
+  srvlist.innerHTML='';
+  const cols=['#ff4444','#ff5522','#ff6600','#ff8800','#ff4444','#ff5522','#ff6600','#ff8800'];
+  SRVS.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='si';
+    const dc=s.s===0?'dok':s.s===2?'dcrit':'ddead';
+    const st=s.s===0?'OK':s.s===2?'ATK':'DEAD';
+    const sc=s.s===0?'sok':s.s===2?'satk':'sded';
+    const ex=exfilPerSrv[i]>0.05?`<div class="sex">⇡ ${exfilPerSrv[i].toFixed(1)} GB</div>`:'';
+    d.innerHTML=`<div class="dot ${dc}"></div><div class="si-inf"><div class="sn">${s.n}</div><div class="sd">${s.d}</div>${ex}</div><span class="ss ${sc}">${st}</span>`;
+    srvlist.appendChild(d);
+  });
+  // Exfil bars
+  const wrap=document.getElementById('exfil-bars'); wrap.innerHTML='';
+  exfilPerSrv.forEach((v,i)=>{
+    if(v<0.1)return;
+    const pct=Math.min(100,v/20*100);
+    const r=document.createElement('div'); r.className='exrow';
+    r.innerHTML=`<div class="exlbl"><span style="color:${cols[i]}">${SRVS[i].d}</span><span style="color:${cols[i]}">${v.toFixed(1)} GB</span></div><div class="exout"><div class="exin" style="width:${pct}%;background:${cols[i]}"></div></div>`;
+    wrap.appendChild(r);
+  });
+}
+renderSrv();
+
+function setSrv(i,st){ SRVS[i].s=st; renderSrv(); }
+function burst(pts,col){sburst.textContent='+'+pts;sburst.style.color=col||'var(--c-primary)';sburst.style.animation='none';sburst.offsetHeight;sburst.className='pop';}
+function flash(t){flov.style.animation='none';flov.offsetHeight;flov.className=t==='ok'?'fok':'fbad';}
+function addScore(p,col){score+=p;sctxt.textContent=score;burst(p,col);}
+function damage(amt,why){
+  hp=Math.max(0,hp-amt);
+  hpin.style.width=hp+'%'; hpin.style.background=hp>60?'var(--c-ok)':hp>30?'var(--c-warn)':'var(--c-danger)';
+  hptxt.textContent=hp+'%'; hptxt.style.color=hp>60?'var(--c-ok)':hp>30?'var(--c-warn)':'var(--c-danger)';
+  if(why) logLine(`⚠ −${amt}%  ${why}`,'atk');
+  flash('bad'); snd('fail'); if(hp<=0) endGame(false);
+}
+function logLine(txt,cls='sys'){
+  const d=document.createElement('div'); d.className='tl '+cls; d.textContent=txt;
+  term.appendChild(d); term.scrollTop=term.scrollHeight;
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+// Exfil
+function startExfil(si,rate){
+  if(exfilInt)return;
+  exfilInt=setInterval(()=>{
+    const add=rate*.1; exfilGB+=add;
+    exfilPerSrv[si]=Math.min(20,(exfilPerSrv[si]||0)+add);
+    document.getElementById('exfil-fill').style.width=Math.min(100,exfilGB/80*100)+'%';
+    document.getElementById('exfil-txt').textContent=exfilGB.toFixed(1)+' GB';
+    renderSrv();
+  },100);
+}
+function stopExfil(){ clearInterval(exfilInt); exfilInt=null; }
+
+// ── Banner ────────────────────────────────────────────────────────
+const mbEl     = document.getElementById('mb');
+const mbAction = document.getElementById('mb-action');
+const mbDetail = document.getElementById('mb-detail');
+const mbStep   = document.getElementById('mb-step');
+
+function showBanner(n,action,detail){
+  mbStep.textContent=`ÉTAPE ${n} / 10`;
+  mbAction.textContent=action;
+  mbDetail.innerHTML=detail;
+  mbEl.classList.add('show');
+}
+function hideBanner(){ mbEl.classList.remove('show'); if(bannerResolve){bannerResolve();bannerResolve=null;} }
+function waitBanner(){ return new Promise(r=>{ bannerResolve=r; }); }
+
+// ── Timer ─────────────────────────────────────────────────────────
+function startTimer(sec){
+  ttxt.textContent=sec; const total=sec*1000; let left=total;
+  tfill.style.width='100%'; clearInterval(globalTimer);
+  return new Promise(resolve=>{
+    globalTimer=setInterval(()=>{
+      left-=50; const pct=Math.max(0,left/total*100);
+      tfill.style.width=pct+'%';
+      tfill.style.background=pct>50?'var(--c-ok)':pct>25?'var(--c-warn)':'var(--c-danger)';
+      const s=Math.ceil(left/1000); ttxt.textContent=s>0?s:'0';
+      ttxt.style.color=pct>50?'var(--c-warn)':pct>25?'#ff8800':'var(--c-danger)';
+      if(left<=0){clearInterval(globalTimer);resolve('timeout');}
+    },50);
+  });
+}
+function stopTimer(){ clearInterval(globalTimer); ttxt.textContent='—'; ttxt.style.color='var(--c-warn)'; tfill.style.width='0'; }
+
+// ── Audio ─────────────────────────────────────────────────────────
+function initAudio(){
+  if(audioCtx)return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  const bg=audioCtx.createGain(); bg.gain.value=0.06; bg.connect(audioCtx.destination);
+  const comp=audioCtx.createDynamicsCompressor(); comp.connect(bg);
+  const bn=[55,55,55,55,58,58,58,65]; let bi=0;
+  function bass(){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(comp);o.type='sawtooth';o.frequency.value=bn[bi++%bn.length];const t=audioCtx.currentTime;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.4,t+.04);g.gain.linearRampToValueAtTime(0,t+.48);o.start(t);o.stop(t+.5);setTimeout(bass,500);}
+  bass();
+  const pad=[110,138.6,164.8,220,246.9]; let pi=0;
+  function arp(){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(comp);o.type='sine';o.frequency.value=pad[pi++%pad.length];const t=audioCtx.currentTime;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.3);g.gain.exponentialRampToValueAtTime(.0001,t+1.2);o.start(t);o.stop(t+1.4);setTimeout(arp,360);}
+  setTimeout(arp,80);
+}
+function snd(type){
+  if(!audioCtx)return;
+  const t=audioCtx.currentTime;
+  const mk=(f,tp,dur,vol,att=.01)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type=tp;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.start(t);o.stop(t+dur+.05);};
+  if(type==='block'){mk(440,'square',.04,.07);mk(880,'sine',.06,.03);}
+  else if(type==='success')[440,554,659,880].forEach((f,i)=>setTimeout(()=>{if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.value=f;const tt=audioCtx.currentTime;g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(.18,tt+.03);g.gain.exponentialRampToValueAtTime(.0001,tt+.3);o.start(tt);o.stop(tt+.35);},i*70));
+  else if(type==='fail')[220,196,164].forEach((f,i)=>setTimeout(()=>{if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sawtooth';o.frequency.value=f;const tt=audioCtx.currentTime;g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(.14,tt+.02);g.gain.exponentialRampToValueAtTime(.0001,tt+.25);o.start(tt);o.stop(tt+.3);},i*100));
+  else if(type==='alert'){mk(880,'square',.08,.12);setTimeout(()=>mk(880,'square',.08,.12),160);}
+  else if(type==='sqhit')mk(660,'sine',.07,.13);
+  else if(type==='sqerr')mk(180,'sawtooth',.12,.15);
+  else if(type==='nav')  mk(330,'sine',.04,.09);
+  else if(type==='citysave'){mk(523,'sine',.07,.15);setTimeout(()=>mk(784,'sine',.09,.12),60);}
+  else if(type==='citylost')mk(196,'sawtooth',.1,.12);
+  else if(type==='cam_ok'){mk(660,'sine',.07,.15);setTimeout(()=>mk(880,'sine',.1,.12),80);}
+  else if(type==='cam_bad')mk(150,'sawtooth',.15,.18);
+}
+
+// ── Keypress game ─────────────────────────────────────────────────
+const FAKECMDS=[
+  'iptables -A INPUT -s','fail2ban-client ban','netstat -ano | grep',
+  'tcpdump -ni eth0 src','ufw deny from','nmap --script vuln',
+  'openssl verify -CAfile','ssh-keygen -R','curl -X DELETE',
+  'kill -9','pkill -f malware','iptables -D FORWARD',
+  'journalctl -u sshd | grep Failed','ss -tulpn | grep LISTEN',
+];
+const FAKEIP=()=>`${~~(Math.random()*255)}.${~~(Math.random()*255)}.${~~(Math.random()*255)}.${~~(Math.random()*255)}`;
+const fakeLine=()=>FAKECMDS[~~(Math.random()*FAKECMDS.length)]+' '+FAKEIP();
+
+// ── Step tracking for debrief ─────────────────────────────────────
+const stepLog = []; // {n, name, result, pts, speedBonus}
+
+function buildBlocks(n){
+  kpblocks.innerHTML='';
+  // Calculate block size so ALL n blocks fit in the available width
+  const zoneW = kpzone.offsetWidth || 600;
+  const maxPerRow = Math.floor((zoneW - 28) / 20); // default 17px + 3px gap
+  const totalRows = Math.ceil(n / maxPerRow);
+  // If more than 2 rows needed, shrink blocks
+  let sz = 17;
+  if(totalRows > 2){
+    sz = Math.max(8, Math.floor((zoneW - 28 - n * 3) / n));
+    // try fitting all in 1 row if possible
+  }
+  for(let i=0;i<n;i++){
+    const b=document.createElement('div');
+    b.className='kb';b.id='kb'+i;
+    b.style.width=sz+'px';b.style.height=sz+'px';
+    kpblocks.appendChild(b);
+  }
+}
+function fillBlock(i,col){
+  const b=document.getElementById('kb'+i); if(!b)return;
+  b.classList.add('f');
+  if(col==='red')b.classList.add('r');
+  if(col==='purple')b.classList.add('p');
+}
+
+// ── Système médailles ─────────────────────────────────────────────
+const MEDAL_DEFS={
+  S:      {label:'RANG S · ÉLITE', color:'#ffb800', pts_color:'#ffb800',
+           // Étoile 6 branches
+           poly:'60,4 72,42 112,42 80,66 92,104 60,80 28,104 40,66 8,42 48,42'},
+  A:      {label:'RANG A · EXPERT',color:'#00ffaa', pts_color:'#00ffaa',
+           // Hexagone
+           poly:'60,6 104,30 104,90 60,114 16,90 16,30'},
+  B:      {label:'RANG B · BON',   color:'#00d4ff', pts_color:'#00d4ff',
+           // Octogone
+           poly:'38,6 82,6 114,38 114,82 82,114 38,114 6,82 6,38'},
+  C:      {label:'RANG C · LENT',  color:'#7b2fff', pts_color:'#7b2fff',
+           // Pentagone
+           poly:'60,4 116,44 94,112 26,112 4,44'},
+  success:{label:'DÉFENSE OK',     color:'#00ffaa', pts_color:'#00ffaa',
+           poly:'60,6 104,30 104,90 60,114 16,90 16,30'},
+  fail:   {label:'ÉCHEC',          color:'#ff3030', pts_color:'#ff3030',
+           // Losange
+           poly:'60,4 116,60 60,116 4,60'},
+  timeout:{label:'TIMEOUT',        color:'#ffb800', pts_color:'#ffb800',
+           poly:'60,4 116,60 60,116 4,60'},
+};
+
+const medalCenter=document.getElementById('medal-center');
+const mcSvg=document.getElementById('mc-svg');
+const mcLabel=document.getElementById('mc-label');
+const mcPts=document.getElementById('mc-pts');
+const medalCol=document.getElementById('medal-col');
+const MCOL_SIZE=32; // px — taille des médaillons colonne
+
+function makePoly(points, color, sz){
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('width',sz);svg.setAttribute('height',sz);svg.setAttribute('viewBox','0 0 120 120');
+  // Fond
+  const bg=document.createElementNS(ns,'polygon');
+  bg.setAttribute('points',points);
+  bg.setAttribute('fill',color+'22');
+  bg.setAttribute('stroke',color);
+  bg.setAttribute('stroke-width','3');
+  svg.appendChild(bg);
+  // Glow ring
+  const glow=document.createElementNS(ns,'polygon');
+  glow.setAttribute('points',points);
+  glow.setAttribute('fill','none');
+  glow.setAttribute('stroke',color);
+  glow.setAttribute('stroke-width','1');
+  glow.setAttribute('opacity','0.4');
+  svg.appendChild(glow);
+  return svg;
+}
+
+function showMedal(type, pts){
+  const def=MEDAL_DEFS[type]||MEDAL_DEFS.success;
+
+  // ── 1. Médaille centrale grande ──────────────────────────────
+  medalCenter.style.setProperty('--mc-color', def.color);
+  // Reconstruire le SVG polygone
+  mcSvg.innerHTML='';
+  const ns='http://www.w3.org/2000/svg';
+  const bg=document.createElementNS(ns,'polygon');
+  bg.setAttribute('points',def.poly);bg.setAttribute('fill',def.color+'28');
+  bg.setAttribute('stroke',def.color);bg.setAttribute('stroke-width','3');
+  mcSvg.appendChild(bg);
+  const inner=document.createElementNS(ns,'polygon');
+  // Inner ring slightly smaller — scale via transform
+  inner.setAttribute('points',def.poly);inner.setAttribute('fill','none');
+  inner.setAttribute('stroke',def.color);inner.setAttribute('stroke-width','1');
+  inner.setAttribute('opacity','0.5');
+  inner.setAttribute('transform','scale(0.82) translate(10,10)');
+  mcSvg.appendChild(inner);
+  mcLabel.textContent=def.label;
+  mcPts.textContent=pts?'+'+pts:'';
+  // Reset animation
+  medalCenter.className='';
+  medalCenter.offsetHeight; // reflow
+  medalCenter.className='pop';
+
+  // ── 2. Médaillon colonne droite ──────────────────────────────
+  const item=document.createElement('div');
+  item.className='mcol-item';
+  const polySvg=makePoly(def.poly, def.color, MCOL_SIZE);
+  const ptsSpan=document.createElement('span');
+  ptsSpan.className='mcol-pts';
+  ptsSpan.style.color=def.color;
+  ptsSpan.textContent=pts?'+'+pts:def.label.split('·')[0].trim();
+  item.appendChild(polySvg);item.appendChild(ptsSpan);
+  medalCol.insertBefore(item, medalCol.firstChild);
+  // Fade les anciens
+  Array.from(medalCol.children).forEach((c,i)=>{ if(i>0) c.classList.add('fade'); });
+  // Nettoyer si trop
+  if(medalCol.children.length>8) medalCol.removeChild(medalCol.lastChild);
+}
+
+function showSpeedBonus(bonus,tier){ showMedal(tier,bonus); }
+
+function calcSpeedBonus(timeLeft, timeTotal, baseScore){
+  const ratio = timeLeft / timeTotal;
+  let tier, mult;
+  if(ratio > 0.7)     { tier='S'; mult=1.5; }
+  else if(ratio > 0.4){ tier='A'; mult=1.25; }
+  else if(ratio > 0.15){tier='B'; mult=1.0; }
+  else                { tier='C'; mult=0.75; }
+  const bonus = Math.round(baseScore * (mult - 1));
+  return {tier, mult, bonus};
+}
+
+// ── runKey — Enter requis pour valider + fix fillBlock > 40 ────────
+async function runKey({keys,time,label,col,stepName,basePoints}){
+  chActive=true; chKeyCount=0; chRequired=keys; chLastKeys=[]; chColor=col||'cyan';
+  let enterRequired=false; // devient true quand tous les blocs sont remplis
+  kpzone.style.display='block';
+  kpl.textContent=label||'NEUTRALISATION';
+  const dc=col==='red'?'var(--c-danger)':col==='purple'?'var(--c-accent)':'var(--c-primary)';
+  kpc.textContent=`0/${keys}`; kpc.style.color=dc;
+  buildBlocks(keys);
+  inp.value=''; inp.focus();
+  const startMs=Date.now();
+  const tp=startTimer(time);
+  return new Promise(resolve=>{
+    chResolve=r=>{
+      chActive=false; enterRequired=false; kpzone.style.display='none'; stopTimer();
+      if(r==='success' && basePoints){
+        const elapsed=(Date.now()-startMs)/1000;
+        const timeLeft=Math.max(0, time-elapsed);
+        const {tier,bonus}=calcSpeedBonus(timeLeft,time,basePoints);
+        showMedal(tier, bonus>0?bonus:null);
+        if(bonus>0) addScore(bonus,'#ffb800');
+        stepLog.push({name:stepName||label||'—',result:'success',pts:(basePoints||0)+bonus,tier});
+      } else if(r==='timeout'){
+        showMedal('timeout');
+        stepLog.push({name:stepName||label||'—',result:'timeout',pts:0,tier:'—'});
+      } else {
+        showMedal('fail');
+        stepLog.push({name:stepName||label||'—',result:'fail',pts:0,tier:'—'});
+      }
+      resolve(r);
+    };
+    tp.then(r=>{if(chActive)chResolve(r);});
+  });
+}
+
+document.addEventListener('keydown',e=>{
+  // Démarrage via Entrée
+  if(ovl.style.display!=='none'){ if(e.key==='Enter') document.getElementById('startbtn').click(); return; }
+  // Dismiss banner
+  if(mbEl.classList.contains('show')){ hideBanner(); return; }
+  // Ignore si un autre mode actif
+  if(seqActive||faceActive||mapActive||camActive) return;
+  if(!chActive) return;
+  const k=e.key;
+
+  // Entrée = valider quand tous les blocs sont remplis
+  if(k==='Enter'){
+    if(chKeyCount>=chRequired&&chResolve) chResolve('success');
+    inp.value=''; return;
+  }
+
+  if(['Shift','Control','Alt','Meta','CapsLock','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(k))return;
+  // Anti-répétition
+  const rec=chLastKeys.slice(-3);
+  if(rec.length>=3&&rec.every(x=>x===k)){logLine('⚠  Variez les touches !','warn');inp.value='';return;}
+  chLastKeys.push(k); if(chLastKeys.length>8)chLastKeys.shift();
+  chKeyCount++;
+  // Fix bug : fillBlock sans plafonnement à 39
+  fillBlock(chKeyCount-1, chColor);
+  kpc.textContent=`${chKeyCount}/${chRequired}`; snd('block');
+  if(chKeyCount<=6) logLine('$ '+fakeLine(),'cmd');
+  // Séquence complète — attendre Entrée pour valider
+  if(chKeyCount>=chRequired){
+    kpl.textContent='↵ ENTRÉE POUR VALIDER';
+    kpc.style.color='var(--c-warn)';
+  }
+  inp.value='';
+});
+
+// ── Sequence ──────────────────────────────────────────────────────
+async function runSeq(len,spk,lives){
+  seqp.style.display='flex'; seqActive=true; inp.value=''; inp.focus();
+  const KEYS='QWERTASDFGZXCVB1234567890';
+  const seq=Array.from({length:len},()=>KEYS[~~(Math.random()*KEYS.length)]);
+  let pos=0, rem=lives;
+  function rdr(err=-1){
+    document.getElementById('seqd').innerHTML='';
+    seq.forEach((k,i)=>{
+      const el=document.createElement('div'); el.className='sqk';
+      if(i<pos)el.classList.add('hit');
+      else if(i===pos)el.classList.add(err===i?'error':'active');
+      el.textContent=k; document.getElementById('seqd').appendChild(el);
+    });
+  }
+  rdr();
+  function ul(){document.getElementById('slives').textContent='TENTATIVES: '+'●'.repeat(rem)+'○'.repeat(lives-rem);}
+  ul();
+  let cd=spk*len; document.getElementById('stbig').textContent=Math.ceil(cd);
+  return new Promise(resolve=>{
+    const ti=setInterval(()=>{
+      cd-=.1; const s=Math.max(0,Math.ceil(cd));
+      document.getElementById('stbig').textContent=s;
+      document.getElementById('stbig').style.color=s>len*spk*.5?'var(--c-accent)':s>len*spk*.25?'var(--c-warn)':'var(--c-danger)';
+      if(cd<=0){clearInterval(ti);seqp.style.display='none';seqActive=false;resolve('timeout');}
+    },100);
+    function onK(e){
+      if(!seqActive)return;
+      const k=e.key.toUpperCase();
+      if(['SHIFT','CONTROL','ALT','META','CAPSLOCK','TAB'].includes(k))return;
+      if(k===seq[pos]){snd('sqhit');pos++;rdr();if(pos>=seq.length){clearInterval(ti);seqp.style.display='none';seqActive=false;document.removeEventListener('keydown',onK);resolve('success');}}
+      else{snd('sqerr');rdr(pos);rem--;ul();setTimeout(()=>{if(rem<=0){clearInterval(ti);seqp.style.display='none';seqActive=false;document.removeEventListener('keydown',onK);resolve('fail');}else rdr();},350);}
+    }
+    document.addEventListener('keydown',onK);
+  });
+}
+
+// ── Face ──────────────────────────────────────────────────────────
+const FP=[
+  {id:'F-0391',eyes:[30,65,100,65],nose:[65,92],mouth:[45,122,85,122],jaw:[18,78,112,78,122,108,106,138,65,150,24,138,8,108,18,78],hair:'short',eL:[10,78,20,98,10,118],eR:[110,78,120,98,110,118]},
+  {id:'F-1127',eyes:[32,60,98,60],nose:[65,88],mouth:[42,116,88,116],jaw:[20,73,110,73,120,103,104,133,65,145,22,133,10,103,20,73],hair:'long',eL:[12,73,22,93,12,113],eR:[108,73,118,93,108,113]},
+  {id:'F-2084',eyes:[28,68,102,68],nose:[65,96],mouth:[48,126,82,126],jaw:[16,82,114,82,124,112,108,142,65,154,20,142,6,112,16,82],hair:'bald',eL:[8,82,18,102,8,122],eR:[112,82,122,102,112,122]},
+  {id:'F-3312',eyes:[34,62,96,62],nose:[65,90],mouth:[44,118,86,118],jaw:[22,76,108,76,118,106,102,136,65,148,26,136,12,106,22,76],hair:'medium',eL:[14,76,24,96,14,116],eR:[106,76,116,96,106,116]},
+  {id:'F-4456',eyes:[30,70,100,70],nose:[65,95],mouth:[50,124,80,124],jaw:[18,86,112,86,122,116,106,146,65,158,22,146,8,116,18,86],hair:'curly',eL:[10,86,20,106,10,126],eR:[110,86,120,106,110,126]},
+  {id:'F-5571',eyes:[36,63,94,63],nose:[65,91],mouth:[46,117,84,117],jaw:[24,79,106,79,116,109,100,139,65,151,28,139,14,109,24,79],hair:'short',eL:[16,79,26,99,16,119],eR:[104,79,114,99,104,119]},
+  {id:'F-6688',eyes:[29,66,101,66],nose:[65,93],mouth:[47,121,83,121],jaw:[19,81,111,81,121,111,105,141,65,153,23,141,9,111,19,81],hair:'long',eL:[11,81,21,101,11,121],eR:[109,81,119,101,109,121]},
+  {id:'F-7704',eyes:[33,64,97,64],nose:[65,90],mouth:[45,119,85,119],jaw:[21,77,109,77,119,107,103,137,65,149,25,137,11,107,21,77],hair:'medium',eL:[13,77,23,97,13,117],eR:[107,77,117,97,107,117]},
+];
+function drawFace(canvas,p,tint,seed){
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#060010';ctx.fillRect(0,0,canvas.width,canvas.height);
+  const n=(x,y,s)=>Math.sin(x*.3+s)*3+Math.cos(y*.2+s*1.3)*2;ctx.strokeStyle=tint;ctx.lineWidth=1.5;
+  const j=p.jaw;ctx.beginPath();for(let i=0;i<j.length;i+=2){i===0?ctx.moveTo(j[i]+n(j[i],j[i+1],seed),j[i+1]+n(j[i],j[i+1],seed+10)):ctx.lineTo(j[i]+n(j[i],j[i+1],seed),j[i+1]+n(j[i],j[i+1],seed+10));}ctx.closePath();ctx.stroke();
+  p.eyes.forEach((v,i)=>{if(i%2===0){const ex=p.eyes[i]+n(p.eyes[i],p.eyes[i+1],seed+20),ey=p.eyes[i+1]+n(p.eyes[i],p.eyes[i+1],seed+21);ctx.beginPath();ctx.ellipse(ex,ey,8,5,0,0,Math.PI*2);ctx.stroke();}});
+  const[nx,ny]=[p.nose[0]+n(p.nose[0],p.nose[1],seed+40),p.nose[1]+n(p.nose[0],p.nose[1],seed+41)];ctx.beginPath();ctx.moveTo(nx,ny-12);ctx.lineTo(nx-7,ny+4);ctx.lineTo(nx+7,ny+4);ctx.stroke();
+  const m=p.mouth;ctx.beginPath();ctx.moveTo(m[0],m[1]);ctx.quadraticCurveTo((m[0]+m[2])/2,(m[1]+m[3])/2+6,m[2],m[3]);ctx.stroke();
+  [[p.eL],[p.eR]].forEach(([e])=>{ctx.beginPath();ctx.moveTo(e[0],e[1]);ctx.quadraticCurveTo(e[0]-8,e[2],e[4],e[5]);ctx.stroke();});
+  if(p.hair==='short'){ctx.beginPath();ctx.ellipse(65,62,47,20,0,Math.PI,0);ctx.stroke();}
+  else if(p.hair==='long'){ctx.beginPath();ctx.ellipse(65,62,47,20,0,Math.PI,0);ctx.stroke();ctx.beginPath();ctx.moveTo(18,73);ctx.quadraticCurveTo(10,110,18,145);ctx.stroke();ctx.beginPath();ctx.moveTo(112,73);ctx.quadraticCurveTo(120,110,112,145);ctx.stroke();}
+  else if(p.hair==='curly'){for(let cx=26;cx<=104;cx+=13){ctx.beginPath();ctx.arc(cx,60,6,0,Math.PI,true);ctx.stroke();}}
+  else if(p.hair==='medium'){ctx.beginPath();ctx.ellipse(65,62,47,20,0,Math.PI,0);ctx.stroke();ctx.beginPath();ctx.moveTo(18,73);ctx.quadraticCurveTo(12,105,20,125);ctx.stroke();ctx.beginPath();ctx.moveTo(112,73);ctx.quadraticCurveTo(118,105,110,125);ctx.stroke();}
+  else{ctx.beginPath();ctx.ellipse(65,55,50,15,0,Math.PI,0);ctx.stroke();}
+  ctx.fillStyle=tint+'18';for(let y=0;y<canvas.height;y+=3)ctx.fillRect(0,y,canvas.width,1);
+}
+async function runFace(ti){
+  facep.style.display='flex'; faceActive=true;
+  const tgt=FP[ti],sh=[...FP].sort(()=>Math.random()-.5),cor=sh.findIndex(p=>p.id===tgt.id);
+  let cur=0;
+  document.getElementById('frefid').textContent=tgt.id;
+  document.getElementById('ftot').textContent=sh.length;
+  drawFace(document.getElementById('fref'),tgt,'#ff3c78',42);
+  function rc(){drawFace(document.getElementById('fstr'),sh[cur],'#7b2fff',cur*7+13);document.getElementById('fcurid').textContent=sh[cur].id;const sim=sh[cur].id===tgt.id?93:~~(28+Math.random()*35);document.getElementById('fsim').textContent=sim;document.getElementById('fmbar').style.width=sim+'%';document.getElementById('fmbar').style.background=sim>80?'#ff3c78':sim>55?'var(--c-warn)':'var(--c-accent)';}
+  rc(); let tl=20; const te=document.getElementById('ftbig'); te.textContent=tl;
+  const tid=setInterval(()=>{tl--;te.textContent=tl;te.style.color=tl>10?'var(--c-warn)':tl>5?'#ff8800':'var(--c-danger)';if(tl<=0)clearInterval(tid);},1000);
+  return new Promise(resolve=>{
+    let done=false;
+    function onK(e){if(!faceActive||done)return;if(e.key==='ArrowLeft'){cur=Math.max(0,cur-1);rc();snd('nav');}else if(e.key==='ArrowRight'){cur=Math.min(sh.length-1,cur+1);rc();snd('nav');}else if(e.key==='Enter'){done=true;faceActive=false;clearInterval(tid);document.removeEventListener('keydown',onK);facep.style.display='none';const r=cur===cor?'correct':'wrong';if(r==='correct')snd('success');resolve(r);}}
+    document.addEventListener('keydown',onK);
+    setTimeout(()=>{if(!done){done=true;faceActive=false;clearInterval(tid);document.removeEventListener('keydown',onK);facep.style.display='none';resolve('timeout');}},20000);
+  });
+}
+
+// ── World Map ─────────────────────────────────────────────────────
+// Villes avec initiales pour saisie rapide
+// initials = tableau de codes acceptés (insensible à la casse)
+const CITIES=[
+  {n:'Paris',       x:452,y:85,  init:['PA','PAR']},
+  {n:'Berlin',      x:482,y:75,  init:['BE','BER']},
+  {n:'Londres',     x:422,y:78,  init:['LO','LON']},
+  {n:'Madrid',      x:430,y:100, init:['MA','MAD']},
+  {n:'Rome',        x:476,y:100, init:['RO','ROM']},
+  {n:'Moscou',      x:538,y:65,  init:['MO','MOS']},
+  {n:'Istanbul',    x:514,y:95,  init:['IS','IST']},
+  {n:'Amsterdam',   x:456,y:70,  init:['AM','AMS']},
+  {n:'New York',    x:196,y:95,  init:['NY','NEW']},
+  {n:'Chicago',     x:170,y:88,  init:['CH','CHI']},
+  {n:'Los Angeles', x:122,y:108, init:['LA','LAX']},
+  {n:'Toronto',     x:188,y:82,  init:['TO','TOR']},
+  {n:'Miami',       x:196,y:118, init:['MI','MIA']},
+  {n:'São Paulo',   x:228,y:248, init:['SP','SAO']},
+  {n:'Tokyo',       x:774,y:88,  init:['TK','TOK','TKY']},
+  {n:'Beijing',     x:720,y:78,  init:['BJ','PEK','BEI']},
+  {n:'Shanghai',    x:740,y:100, init:['SH','SHA']},
+  {n:'Séoul',       x:754,y:80,  init:['SE','SEO','SEL']},
+  {n:'Singapour',   x:682,y:192, init:['SI','SIN','SG']},
+  {n:'Mumbai',      x:602,y:148, init:['MU','BOM','MUM']},
+  {n:'Dubai',       x:572,y:122, init:['DU','DXB','DUB']},
+  {n:'Sydney',      x:778,y:310, init:['SY','SYD']},
+  {n:'Lagos',       x:450,y:180, init:['LG','LAG','LOS']},
+  {n:'Le Caire',    x:512,y:128, init:['CA','CAI','LC']},
+  {n:'Johannesburg',x:490,y:290, init:['JO','JHB','JNB']},
+  {n:'Nairobi',     x:522,y:208, init:['NA','NBO','NAI']},
+];
+
+// ── Vraie carte du monde (Natural Earth simplifié, viewBox 900×340) ─
+const MAP_PATHS=[
+  // Amérique du Nord
+  "M96,44 L108,38 L124,36 L148,32 L168,28 L196,24 L218,22 L234,26 L248,30 L258,34 L270,40 L278,50 L282,62 L280,74 L274,84 L264,94 L256,104 L248,114 L240,124 L234,132 L228,138 L222,142 L214,144 L206,146 L196,148 L188,148 L180,146 L172,142 L164,138 L156,132 L150,126 L144,120 L138,112 L132,104 L126,96 L118,88 L110,78 L102,68 L96,58 Z",
+  // Alaska
+  "M54,30 L66,24 L80,20 L94,22 L102,30 L104,40 L96,44 L86,46 L74,46 L62,42 Z",
+  // Amérique Centrale
+  "M222,142 L230,140 L238,142 L244,148 L248,156 L244,162 L238,166 L232,164 L226,158 L220,152 Z",
+  // Caraïbes (Cuba)
+  "M218,152 L228,150 L236,152 L240,158 L234,162 L222,160 Z",
+  // Amérique du Sud
+  "M224,166 L236,162 L250,160 L262,162 L272,168 L278,178 L280,192 L278,208 L274,222 L268,236 L260,250 L250,262 L240,272 L228,280 L216,284 L206,282 L196,276 L188,266 L182,254 L178,240 L176,226 L178,212 L182,198 L188,186 L196,176 L206,168 Z",
+  // Groenland
+  "M272,8 L290,4 L310,2 L328,4 L342,10 L350,18 L348,28 L340,36 L326,40 L310,40 L296,36 L282,28 L272,18 Z",
+  // Islande
+  "M340,28 L350,24 L360,24 L368,28 L366,36 L356,40 L344,38 Z",
+  // Europe occidentale
+  "M390,44 L402,38 L416,34 L432,32 L446,34 L458,38 L466,44 L470,52 L468,60 L462,66 L454,70 L444,72 L434,70 L424,66 L414,60 L406,54 Z",
+  // Péninsule ibérique
+  "M390,62 L402,58 L414,60 L418,70 L414,80 L404,84 L394,80 L388,70 Z",
+  // Scandinavie
+  "M432,18 L444,14 L456,12 L468,16 L474,24 L470,34 L460,40 L448,42 L436,38 L428,30 Z",
+  // Îles britanniques
+  "M400,38 L410,34 L418,36 L420,44 L414,50 L404,50 L398,44 Z",
+  // Europe centrale + Est
+  "M446,34 L466,28 L490,26 L512,28 L530,34 L540,42 L538,52 L528,60 L514,66 L498,68 L482,66 L468,60 L458,52 Z",
+  // Péninsule balkanique + Grèce
+  "M458,60 L472,58 L484,62 L488,72 L480,80 L468,80 L460,72 Z",
+  // Afrique du Nord
+  "M390,80 L420,76 L450,74 L480,74 L508,76 L530,80 L538,88 L534,98 L520,104 L498,108 L472,110 L446,110 L420,108 L398,104 L386,96 Z",
+  // Afrique de l'Ouest
+  "M390,104 L420,108 L446,110 L456,120 L458,134 L452,148 L440,160 L424,168 L408,170 L394,166 L382,156 L376,142 L376,128 L380,116 Z",
+  // Afrique centrale
+  "M456,120 L480,118 L504,120 L520,128 L524,142 L518,156 L506,166 L490,172 L474,170 L460,162 L452,148 Z",
+  // Afrique de l'Est
+  "M520,104 L538,106 L552,112 L558,124 L554,138 L544,150 L530,156 L518,156 L506,166 L504,152 L508,138 L516,124 Z",
+  // Corne de l'Afrique
+  "M552,112 L566,108 L576,112 L578,122 L566,130 L554,126 Z",
+  // Afrique australe
+  "M456,170 L490,172 L516,168 L530,174 L534,188 L528,204 L514,218 L496,228 L478,230 L460,224 L446,212 L438,196 L438,180 Z",
+  // Madagascar
+  "M540,170 L550,166 L558,170 L558,184 L550,194 L540,196 L534,188 Z",
+  // Russie (Europe + Sibérie)
+  "M470,26 L502,18 L540,12 L580,8 L620,6 L660,8 L696,12 L724,18 L742,26 L748,36 L740,46 L720,54 L694,60 L662,64 L628,64 L596,60 L566,54 L540,48 L516,44 L496,40 L474,36 Z",
+  // Sibérie Est
+  "M742,26 L768,18 L792,14 L810,18 L818,28 L810,38 L792,44 L770,48 L748,44 Z",
+  // Kamtchatka
+  "M800,38 L812,34 L820,40 L818,52 L808,56 L798,50 Z",
+  // Asie centrale + Proche-Orient
+  "M516,44 L540,48 L566,54 L596,60 L610,70 L614,82 L606,92 L590,98 L570,100 L550,98 L530,92 L514,84 L508,72 Z",
+  // Péninsule arabique
+  "M530,92 L550,88 L568,88 L580,96 L582,110 L572,122 L556,128 L540,122 L528,110 Z",
+  // Inde
+  "M610,70 L634,66 L652,68 L662,78 L660,92 L650,104 L636,112 L620,114 L608,108 L604,96 Z",
+  // Sri Lanka
+  "M638,116 L644,114 L648,120 L642,124 L636,120 Z",
+  // Asie du Sud-Est continentale
+  "M662,64 L690,60 L710,62 L720,72 L716,84 L702,92 L684,96 L668,94 L656,84 L652,72 Z",
+  // Péninsule malaise + Singapour
+  "M694,92 L704,88 L712,92 L712,106 L700,114 L690,110 L686,98 Z",
+  // Indonésie (Sumatra + Java)
+  "M696,112 L716,108 L734,106 L744,112 L740,120 L724,122 L706,120 Z",
+  // Bornéo
+  "M726,104 L744,100 L758,104 L760,116 L748,122 L730,120 Z",
+  // Philippines
+  "M752,72 L762,68 L770,72 L770,82 L760,86 L752,82 Z",
+  // Chine
+  "M662,36 L694,30 L720,28 L742,32 L752,42 L748,54 L734,62 L710,66 L690,66 L668,62 L652,54 L648,44 Z",
+  // Corée
+  "M748,44 L760,40 L768,44 L766,54 L756,58 L748,54 Z",
+  // Japon (Honshu)
+  "M764,42 L776,38 L784,42 L784,52 L774,58 L764,56 Z",
+  // Hokkaido
+  "M774,34 L784,30 L792,34 L790,42 L778,44 Z",
+  // Australie
+  "M716,194 L740,186 L766,182 L792,182 L812,188 L824,200 L826,216 L820,230 L806,242 L786,250 L762,254 L736,252 L714,244 L700,232 L696,216 L700,202 Z",
+  // Nouvelle-Zélande (Nord)
+  "M832,232 L840,228 L846,234 L842,244 L832,246 Z",
+  // Tasmanie
+  "M800,256 L808,252 L814,258 L808,266 L800,264 Z",
+  // Nouvelle Guinée
+  "M762,158 L784,152 L806,150 L816,158 L814,170 L798,176 L776,176 L762,168 Z",
+];
+
+
+function buildMapSVG(cities, W=900, H=340){
+  const NS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  svg.style.cssText='width:100%;height:100%;display:block;';
+  // Ocean
+  const bg=document.createElementNS(NS,'rect');bg.setAttribute('x','0');bg.setAttribute('y','0');bg.setAttribute('width',W);bg.setAttribute('height',H);bg.setAttribute('fill','#020c18');svg.appendChild(bg);
+
+  if(CUSTOM_MAP_IMAGE){
+    // Image personnalisée — même repère viewBox 900×340
+    const img=document.createElementNS(NS,'image');
+    img.setAttribute('href',CUSTOM_MAP_IMAGE);
+    img.setAttribute('x','0');img.setAttribute('y','0');
+    img.setAttribute('width',W);img.setAttribute('height',H);
+    img.setAttribute('preserveAspectRatio','xMidYMid meet');
+    img.setAttribute('opacity','0.85');
+    svg.appendChild(img);
+  } else {
+    // Grid
+    for(let x=0;x<=W;x+=90){const l=document.createElementNS(NS,'line');l.setAttribute('x1',x);l.setAttribute('y1',0);l.setAttribute('x2',x);l.setAttribute('y2',H);l.setAttribute('stroke','#091828');l.setAttribute('stroke-width','.6');svg.appendChild(l);}
+    for(let y=0;y<=H;y+=68){const l=document.createElementNS(NS,'line');l.setAttribute('x1',0);l.setAttribute('y1',y);l.setAttribute('x2',W);l.setAttribute('y2',y);l.setAttribute('stroke','#091828');l.setAttribute('stroke-width','.6');svg.appendChild(l);}
+    // Continents
+    MAP_PATHS.forEach(d=>{const p=document.createElementNS(NS,'path');p.setAttribute('d',d);p.setAttribute('fill','#0a1e30');p.setAttribute('stroke','#0e3050');p.setAttribute('stroke-width','1');svg.appendChild(p);});
+  }
+  // Cities
+  const nodeMap={}, labelMap={};
+  cities.forEach((c,i)=>{
+    const cx=c.x, cy=c.y;
+    // Ring
+    const ring=document.createElementNS(NS,'circle');ring.setAttribute('cx',cx);ring.setAttribute('cy',cy);ring.setAttribute('r','10');ring.setAttribute('fill','none');ring.setAttribute('stroke','rgba(0,212,255,.15)');ring.setAttribute('stroke-width','1');svg.appendChild(ring);
+    // Dot
+    const dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',cx);dot.setAttribute('cy',cy);dot.setAttribute('r','4');dot.setAttribute('fill','#00d4ff');dot.setAttribute('stroke','#00d4ff');dot.setAttribute('stroke-width','1');svg.appendChild(dot);
+    // Init label (top)
+    const initStr=c.init[0];
+    const lbl=document.createElementNS(NS,'text');lbl.setAttribute('x',cx);lbl.setAttribute('y',cy-8);lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','8');lbl.setAttribute('fill','#00d4ff');lbl.setAttribute('font-family','Courier New');lbl.setAttribute('font-weight','bold');lbl.textContent=`${c.n} [${initStr}]`;svg.appendChild(lbl);
+    nodeMap[i]=dot; labelMap[i]=lbl;
+  });
+  return {svg, nodeMap, labelMap};
+}
+
+function matchCity(input, cities){
+  const v=input.trim().toUpperCase();
+  if(!v) return -1;
+  return cities.findIndex(c=>{
+    if(c.inf||c.def) return false;
+    // Match initials
+    if(c.init.some(code=>code.toUpperCase()===v)) return true;
+    // Match full name (cas insensible, accents tolérés)
+    if(c.n.toUpperCase()===v) return true;
+    return false;
+  });
+}
+
+async function runMap(difficulty=1){
+  const cc=Math.min(26, 12+Math.round(difficulty*2));
+  const sel=[...CITIES].sort(()=>Math.random()-.5).slice(0,cc);
+  const cities=sel.map((c,i)=>({...c,inf:false,green:true,idx:i}));
+  mapActive=true;
+  const NS_='http://www.w3.org/2000/svg';
+  let nodeMap={}, labelMap={}, mapSVGel=null;
+
+  function injectMap(container){
+    container.innerHTML='';
+    const {svg,nodeMap:nm,labelMap:lm}=buildMapSVG(cities);
+    container.appendChild(svg);
+    return {svg,nm,lm};
+  }
+
+  const fsMapEl=document.getElementById('fs-map-overlay');
+
+  if(!USE_EXTERNAL_SCREENS){
+    const {svg,nm,lm}=injectMap(fsMapEl);
+    fsMapEl.classList.add('active');
+    document.getElementById('main').classList.add('has-overlay');
+    nodeMap=nm; labelMap=lm; mapSVGel=svg;
+    document.getElementById('map-input-bar').style.display='flex';
+    mapKi.focus();
+  } else {
+    document.getElementById('map-content').innerHTML=`<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#020c18;"><div style="color:var(--c-primary);font-size:11px;letter-spacing:3px">◈ THREAT MAP — ÉCRAN 2</div><div style="display:flex;gap:20px;margin-top:8px"><div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:var(--c-ok)" id="m-def-ext">0</div><div style="font-size:9px;color:var(--c-dim)">VERTES</div></div><div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:var(--c-danger)" id="m-inf-ext">0</div><div style="font-size:9px;color:var(--c-dim)">INFECTÉES</div></div></div></div>`;
+    inp.focus();
+  }
+  wsSend({type:'map_init', cities:cities.map(c=>({n:c.n,x:c.x,y:c.y,init:c.init,idx:c.idx}))});
+
+  let greenCount=cc, redCount=0;
+  function setNodeColor(i,color){
+    if(!USE_EXTERNAL_SCREENS&&nodeMap[i]){nodeMap[i].setAttribute('fill',color);nodeMap[i].setAttribute('stroke',color);if(labelMap[i])labelMap[i].setAttribute('fill',color);}
+  }
+  function updateStats(){
+    document.getElementById('m-def').textContent=greenCount;
+    document.getElementById('m-inf').textContent=redCount;
+    const ed=document.getElementById('m-def-ext'),ei=document.getElementById('m-inf-ext');
+    if(ed)ed.textContent=greenCount; if(ei)ei.textContent=redCount;
+    wsSend({type:'map_status',def:greenCount,inf:redCount});
+  }
+  const mapExfil=setInterval(()=>{
+    const rate=0.04+redCount*.04;
+    exfilGB+=rate; exfilPerSrv[6]=Math.min(20,(exfilPerSrv[6]||0)+rate);
+    document.getElementById('exfil-fill').style.width=Math.min(100,exfilGB/80*100)+'%';
+    document.getElementById('exfil-txt').textContent=exfilGB.toFixed(1)+' GB';
+    renderSrv();
+  },200);
+
+  const infectDelay=Math.max(800,2200-difficulty*300);
+  const its=cities.map((c,i)=>setTimeout(()=>{
+    if(!c.green)return;
+    c.inf=true; c.green=false; c.infectedAt=Date.now(); redCount++; greenCount--;
+    setNodeColor(i,'#ff3030');
+    if(mapSVGel){const gl=document.createElementNS(NS_,'line');gl.setAttribute('x1',c.x);gl.setAttribute('y1',c.y);gl.setAttribute('x2',450+Math.random()*80);gl.setAttribute('y2',170+Math.random()*60);gl.setAttribute('stroke','rgba(255,48,48,.2)');gl.setAttribute('stroke-width','.8');gl.setAttribute('stroke-dasharray','4 3');mapSVGel.appendChild(gl);setTimeout(()=>gl.remove(),2000);}
+    wsSend({type:'city_infected',idx:i}); snd('citylost'); updateStats();
+  },infectDelay+(i*infectDelay*.6)+Math.random()*infectDelay*.5));
+
+  let mtl=Math.max(20,35-Math.round(difficulty*3)), mdone=false;
+  let _mapResolve=null;
+  wsSend({type:'map_timer',t:mtl});
+  document.getElementById('m-time').textContent=mtl+'s';
+  const mtid=setInterval(()=>{
+    mtl--;
+    document.getElementById('m-time').textContent=mtl+'s';
+    document.getElementById('m-time').style.color=mtl>12?'var(--c-warn)':mtl>6?'#ff8800':'var(--c-danger)';
+    wsSend({type:'map_timer',t:mtl});
+    if(mtl<=0){clearInterval(mtid);if(!mdone){mdone=true;_mapResolve&&_mapResolve({greenCount,redCount,cc,cities});}}
+  },1000);
+
+  // Compteurs pour le stepLog map
+  let citiesDefended=[], citiesLost=[];
+
+  function defend(input){
+    const v=input.trim().toUpperCase(); if(!v)return;
+    const idx=cities.findIndex(c=>{
+      if(c.green)return false; // déjà verte
+      return c.init.some(code=>code.toUpperCase()===v)||c.n.toUpperCase()===v;
+    });
+    if(idx>=0){
+      const comprTimeMs=cities[idx].infectedAt?Date.now()-cities[idx].infectedAt:0;
+      const comprSec=Math.round(comprTimeMs/100)/10;
+      cities[idx].inf=false; cities[idx].green=true; cities[idx].comprSec=comprSec;
+      redCount=Math.max(0,redCount-1); greenCount++;
+      setNodeColor(idx,'#00ffaa');
+      if(mapSVGel){const ring=document.createElementNS(NS_,'circle');ring.setAttribute('cx',cities[idx].x);ring.setAttribute('cy',cities[idx].y);ring.setAttribute('r','14');ring.setAttribute('fill','none');ring.setAttribute('stroke','rgba(0,255,170,.6)');ring.setAttribute('stroke-width','2');mapSVGel.appendChild(ring);setTimeout(()=>ring.remove(),800);}
+      logLine(`  ✓ ${cities[idx].n} libérée${comprTimeMs>0?' — compromise '+comprSec+'s':''}`,'ok');
+      wsSend({type:'city_defended',idx}); snd('citysave'); addScore(70,'#00ffaa'); updateStats();
+    }
+    if(greenCount>=cc&&!mdone){mdone=true;clearInterval(mtid);_mapResolve&&_mapResolve({greenCount,redCount,cc,cities});}
+  }
+
+  _mapDefend=defend;
+  function onKiMap(e){if(!mapActive)return;if(e.key==='Enter'){defend(inp.value.trim());inp.value='';}}
+  function onMapKi(e){if(!mapActive)return;if(e.key==='Enter'){defend(mapKi.value.trim());mapKi.value='';}}
+  inp.addEventListener('keydown',onKiMap);
+  if(!USE_EXTERNAL_SCREENS) mapKi.addEventListener('keydown',onMapKi);
+
+  const res=await new Promise(resolve=>{
+    _mapResolve=resolve;
+    setTimeout(()=>{if(!mdone){mdone=true;resolve({greenCount,redCount,cc,cities});}},Math.max(30000,(mtl+5)*1000));
+  });
+
+  its.forEach(t=>clearTimeout(t));
+  clearInterval(mtid); clearInterval(mapExfil);
+  mapActive=false; _mapDefend=null;
+  inp.removeEventListener('keydown',onKiMap);
+  fsMapEl.classList.remove('active');
+  document.getElementById('main').classList.remove('has-overlay');
+  if(!USE_EXTERNAL_SCREENS){
+    document.getElementById('map-input-bar').style.display='none';
+    mapKi.removeEventListener('keydown',onMapKi);
+    document.getElementById('map-content').innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--c-dim);font-size:11px;letter-spacing:2px;text-align:center"><div>◈ THREAT MAP</div><div style="font-size:10px;color:var(--c-dim2)">TERMINÉE</div></div>';
+  }
+  document.getElementById('m-time').textContent='—';
+  wsSend({type:'map_done',def:res.greenCount,inf:res.redCount});
+  return res;
+}
+
+// ── Cam ───────────────────────────────────────────────────────────
+let camAnimIds=[];
+function drawCamFeed(canvas, camIdx, suspect, frame){
+  const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height;
+  const isSuspect=(camIdx===suspect);
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  // Noise
+  const id=ctx.createImageData(W,H);
+  for(let i=0;i<id.data.length;i+=4){const v=~~(Math.random()*20);id.data[i]=0;id.data[i+1]=v;id.data[i+2]=Math.min(255,v*2);id.data[i+3]=255;}
+  ctx.putImageData(id,0,0);
+  // Scanlines
+  ctx.fillStyle='rgba(0,0,0,.38)';
+  for(let y=0;y<H;y+=2) ctx.fillRect(0,y,W,1);
+  // Room
+  const col=isSuspect?'rgba(255,60,60,.18)':'rgba(0,200,255,.09)';
+  ctx.strokeStyle=col; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H*.08);ctx.lineTo(W*.35,H*.26);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W,H*.08);ctx.lineTo(W*.65,H*.26);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,H*.92);ctx.lineTo(W*.3,H*.74);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W,H*.92);ctx.lineTo(W*.7,H*.74);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W*.35,H*.26);ctx.lineTo(W*.65,H*.26);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W*.3,H*.74);ctx.lineTo(W*.7,H*.74);ctx.stroke();
+  // Door
+  ctx.fillStyle=isSuspect?'rgba(255,48,48,.12)':'rgba(0,150,200,.07)';
+  ctx.fillRect(W*.42,H*.38,W*.16,H*.36);
+  ctx.strokeStyle=isSuspect?'rgba(255,48,48,.25)':'rgba(0,150,200,.15)';
+  ctx.strokeRect(W*.42,H*.38,W*.16,H*.36);
+  // Furniture
+  ctx.fillStyle=isSuspect?'rgba(255,48,48,.07)':'rgba(0,150,200,.05)';
+  ctx.fillRect(W*.06,H*.68,W*.18,H*.1);
+  ctx.fillRect(W*.76,H*.62,W*.15,H*.14);
+  // Intruder
+  if(isSuspect){
+    const wx=W*.44+Math.sin(frame*.05)*W*.12, wy=H*.6;
+    ctx.fillStyle='rgba(255,48,48,.72)';
+    ctx.beginPath();ctx.arc(wx,wy-18,9,0,Math.PI*2);ctx.fill();
+    ctx.fillRect(wx-8,wy-9,16,24);
+    const ls=Math.sin(frame*.12)*7;
+    ctx.fillRect(wx-9,wy+15,8,16+ls);ctx.fillRect(wx+1,wy+15,8,16-ls);
+    ctx.fillStyle='rgba(255,48,48,.1)';ctx.fillRect(wx-20,wy-18,18,46);
+  }
+  // Glitch
+  if(isSuspect&&frame%6<2){
+    for(let g=0;g<3;g++){ctx.fillStyle=`rgba(255,0,0,${.1+Math.random()*.12})`;ctx.fillRect(0,~~(Math.random()*(H-4)),W,2+~~(Math.random()*4));}
+  }
+  // Timestamp
+  ctx.fillStyle=isSuspect?'rgba(255,80,80,.75)':'rgba(0,200,255,.5)';
+  const fs=Math.max(8,W/22); ctx.font=`${fs}px Courier New`;
+  ctx.fillText(`CAM-${camIdx+1} ${new Date().toTimeString().slice(0,8)}`,4,H-6);
+  if(isSuspect){ctx.fillStyle='rgba(255,48,48,.9)';ctx.font=`bold ${fs}px Courier New`;ctx.fillText('⚠ ANOMALIE',W*.5,H-6);}
+  // Border
+  if(isSuspect){ctx.strokeStyle=`rgba(255,30,30,${.3+Math.sin(frame*.12)*.2})`;ctx.lineWidth=3;ctx.strokeRect(1,1,W-2,H-2);}
+}
+
+function stopCamAnims(){ camAnimIds.forEach(id=>cancelAnimationFrame(id)); camAnimIds=[]; }
+
+async function runCam(){
+  camActive=true;
+  const suspect=~~(Math.random()*3);
+  _camSuspect=suspect;
+
+  // Broadcaster à SENTINEL_CAM.html — la fenêtre externe gère ses propres visuels
+  wsSend({type:'cam_start', suspect});
+
+  if(!USE_EXTERNAL_SCREENS){
+    // Visuels inline dans l'overlay du terminal
+    camp.style.display='flex';
+    const grid=document.getElementById('cam-inline-grid');
+    grid.innerHTML='';
+    const canvases=[];
+    for(let i=0;i<3;i++){
+      const box=document.createElement('div');box.className='cam-box';
+      if(i===suspect)box.classList.add('suspect');
+      const sc=document.createElement('div');sc.className='cam-screen';sc.style.cssText='width:155px;height:105px;';
+      const cv=document.createElement('canvas');cv.width=155;cv.height=105;
+      sc.appendChild(cv);
+      const lbl=document.createElement('div');lbl.className='cam-lbl';lbl.textContent=`CAM-${i+1}`;
+      box.appendChild(sc);box.appendChild(lbl);grid.appendChild(box);
+      canvases.push(cv);
+    }
+    stopCamAnims();
+    let frame=0;
+    function tick(){canvases.forEach((c,i)=>drawCamFeed(c,i,suspect,frame));frame++;camAnimIds.push(requestAnimationFrame(tick));}
+    tick();
+  } else {
+    // Mode externe : le slot cam dans la colonne centrale affiche le statut
+    // Les vrais visuels sont dans SENTINEL_CAM.html
+    const camContent=document.getElementById('cam-content');
+    if(camContent){
+      camContent.innerHTML=`
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;width:100%">
+          <div style="color:var(--c-danger);font-size:10px;letter-spacing:2px;animation:blink .4s infinite">⚠ INTRUSION DÉTECTÉE</div>
+          <div style="color:var(--c-dim);font-size:9px;letter-spacing:1px;text-align:center">
+            Visuels dans la fenêtre CAM<br>
+            Tapez 1 · 2 · 3 + ENTRÉE ici
+          </div>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            ${[1,2,3].map(n=>`<div style="width:36px;height:26px;border:1px solid ${n-1===suspect?'var(--c-danger)':'var(--c-border)'};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;color:${n-1===suspect?'var(--c-danger)':'var(--c-dim)'};${n-1===suspect?'animation:blink .4s infinite':''}">${n}</div>`).join('')}
+          </div>
+          <div style="font-size:9px;color:var(--c-dim2);margin-top:2px">Une caméra cache l'intrus</div>
+        </div>`;
+    }
+  }
+
+  // Timer — affiché dans le slot cam et broadcasté
+  let tl=25;
+  const timerEl=document.getElementById('cam-timer-inline');
+  if(timerEl){timerEl.style.display='block';timerEl.textContent=tl;}
+  const tid=setInterval(()=>{
+    tl--;
+    if(timerEl){
+      timerEl.textContent=tl;
+      timerEl.style.color=tl>12?'var(--c-warn)':tl>6?'#ff8800':'var(--c-danger)';
+    }
+    wsSend({type:'cam_timer',t:tl});
+    if(tl<=0)clearInterval(tid);
+  },1000);
+
+  // INPUT : TOUJOURS dans la fenêtre principale (#ki)
+  inp.value=''; inp.focus();
+  const res=await new Promise(resolve=>{
+    // Stocké pour que le WS handler puisse aussi résoudre (réponse depuis fenêtre CAM ignorée — saisie main seulement)
+    _camResolve=r=>{clearInterval(tid);stopCamAnims();resolve(r);};
+
+    function onKey(e){
+      if(!camActive)return;
+      if(e.key!=='Enter')return;
+      const v=parseInt(inp.value.trim())-1;
+      inp.value='';
+      if(v>=0&&v<=2){
+        const ok=(v===suspect);
+        clearInterval(tid); stopCamAnims();
+        _camResolve=null;
+        document.removeEventListener('keydown',onKey);
+        resolve(ok?'correct':'wrong');
+      }
+    }
+    document.addEventListener('keydown',onKey);
+    setTimeout(()=>{
+      clearInterval(tid); stopCamAnims();
+      document.removeEventListener('keydown',onKey);
+      if(camActive){_camResolve=null;camActive=false;resolve('timeout');}
+    },26000);
+  });
+
+  camActive=false; _camResolve=null;
+  camp.style.display='none';
+  if(timerEl) timerEl.style.display='none';
+  // Réinitialiser le slot cam
+  const camContent=document.getElementById('cam-content');
+  if(camContent) camContent.innerHTML='<div id="cam-placeholder">EN ATTENTE</div>';
+  wsSend({type:'cam_done',result:res,suspect});
+  return res;
+}
+
+// ── Step helpers ──────────────────────────────────────────────────
+async function si(n,action,detail,cls='inf'){
+  step=n; stepd.textContent=n+'/10';
+  logLine('','sys');
+  logLine('─────────────────────────────────','sys');
+  logLine(action,cls);
+  snd('alert'); await sleep(500);
+  showBanner(n,action,detail);
+  await waitBanner();
+  await sleep(150);
+}
+async function sr(ok,msg){
+  logLine('');
+  if(ok){logLine('✓  '+msg,'ok');flash('ok');}
+  else    logLine('✗  '+msg,'atk');
+  await sleep(1300);
+}
+
+// ── Steps — pool aléatoire + difficulté adaptative ───────────────
+async function stepBruteForce(n,d){
+  const srvIdx=~~(Math.random()*8); setSrv(srvIdx,2); startExfil(srvIdx,.25+d*.08);
+  await si(n,'BRUTE-FORCE SSH',`Frappez <strong style="color:var(--c-primary)">${Math.round(15+d*5)} touches variées</strong> puis ENTRÉE`,'atk');
+  const r=await runKey({keys:Math.round(15+d*5),time:90,label:'BLOCAGE SSH',col:'cyan',stepName:'Brute-force SSH',basePoints:150});
+  if(r==='success'){logLine('✓  Connexion bloquée.','ok');setSrv(srvIdx,0);stopExfil();snd('success');addScore(150,'#00d4ff');}
+  else{setSrv(srvIdx,3);stopExfil();damage(15,'Brute-force SSH');}
+  await sr(r==='success','SSH');
+}
+async function stepRansomware(n,d){
+  const srvIdx=~~(Math.random()*8); setSrv(srvIdx,2); startExfil(srvIdx,.35+d*.1);
+  await si(n,'RANSOMWARE ACTIF',`Frappez <strong style="color:var(--c-danger)">${Math.round(24+d*7)} touches</strong> pour la contre-clé`,'atk');
+  const r=await runKey({keys:Math.round(24+d*7),time:90,label:'CONTRE-CLÉ',col:'red',stepName:'Ransomware',basePoints:260});
+  if(r==='success'){logLine(`✓  Clé: ${Array.from({length:16},()=>'0123456789ABCDEF'[~~(Math.random()*16)]).join('')}`,'ok');setSrv(srvIdx,0);stopExfil();snd('success');addScore(260,'#ff3030');}
+  else{setSrv(srvIdx,3);stopExfil();damage(18,'Ransomware');}
+  await sr(r==='success','Ransomware');
+}
+async function stepSeq(n,d){
+  await si(n,'SÉQUENCE DE DÉCHIFFREMENT','Reproduisez la <strong style="color:var(--c-accent)">séquence exacte</strong>','seq');
+  const len=Math.min(14,Math.round(5+d*2)); const t0=Date.now();
+  const r=await runSeq(len,5,3);
+  if(r==='success'){logLine('✓  Séquence validée.','ok');snd('success');addScore(220,'#7b2fff');
+    const {tier,bonus}=calcSpeedBonus(Math.max(0,len*5-(Date.now()-t0)/1000),len*5,220);
+    if(bonus>0){addScore(bonus,'#ffb800');}showMedal(tier,bonus>0?bonus:null);
+    stepLog.push({name:'Séquence',result:'success',pts:220+bonus,tier});
+  }else{damage(14,'Séquence échouée');showMedal('fail');stepLog.push({name:'Séquence',result:'fail',pts:0,tier:'—'});}
+  await sr(r==='success','Séquence');
+}
+async function stepFace(n,d){
+  await si(n,'IDENTIFICATION BIOMÉTRIQUE','← → naviguer | <strong style="color:var(--c-accent2)">ENTRÉE</strong> valider','face');
+  const t0=Date.now(); const r=await runFace(~~(Math.random()*FP.length));
+  if(r==='correct'){logLine('✓  Profil identifié.','ok');addScore(300,'#ff3c78');
+    const {tier,bonus}=calcSpeedBonus(Math.max(0,20-(Date.now()-t0)/1000),20,300);
+    if(bonus>0){addScore(bonus,'#ffb800');}showMedal(tier,bonus>0?bonus:null);
+    stepLog.push({name:'Biométrie',result:'success',pts:300+bonus,tier});
+  }else if(r==='wrong'){damage(16,'Fausse ID');showMedal('fail');stepLog.push({name:'Biométrie',result:'fail',pts:0,tier:'—'});}
+  else{damage(14,'Timeout biométrie');showMedal('timeout');stepLog.push({name:'Biométrie',result:'timeout',pts:0,tier:'—'});}
+  await sr(r==='correct','Biométrie');
+}
+async function stepScan(n,d){
+  await si(n,'VULNÉRABILITÉ CRITIQUE','Repérez le serveur <strong style="color:var(--c-warn)">⚠ CRITIQUE</strong> et tapez son nom','warn');
+  const sn=['SRV-ALPHA','SRV-BETA','SRV-GAMMA','SRV-DELTA','SRV-EPSILON','SRV-ZETA','SRV-ETA','SRV-THETA'];
+  const ci=~~(Math.random()*8); startExfil(ci,.35+d*.08);
+  for(let i=0;i<8;i++){logLine(`  ${sn[i].padEnd(12)} vuln:${i===ci?~~(Math.random()*4)+9:~~(Math.random()*3)}  ${i===ci?'⚠ CRITIQUE':'——'}`,i===ci?'atk':'sys');setSrv(i,i===ci?2:0);await sleep(35);}
+  logLine('[ACTION]  Tapez le nom exact + ENTRÉE','inf'); inp.value='';inp.focus();
+  const tp=startTimer(12);
+  const r=await new Promise(resolve=>{
+    const tid=setTimeout(()=>resolve('timeout'),12000);
+    function onK(e){if(mbEl.classList.contains('show'))return;if(e.key!=='Enter')return;const v=inp.value.trim().toUpperCase();inp.value='';if(v===sn[ci]){clearTimeout(tid);document.removeEventListener('keydown',onK);resolve('correct');}else if(sn.includes(v)){clearTimeout(tid);document.removeEventListener('keydown',onK);resolve('wrong');}}
+    document.addEventListener('keydown',onK);
+    tp.then(t=>{if(t==='timeout'){clearTimeout(tid);document.removeEventListener('keydown',onK);resolve('timeout');}});
+  });
+  stopTimer();stopExfil();
+  if(r==='correct'){logLine(`✓  ${sn[ci]} isolé.`,'ok');setSrv(ci,0);snd('success');addScore(350,'#ffb800');showMedal('B',350);stepLog.push({name:'Scan réseau',result:'success',pts:350,tier:'B'});}
+  else{setSrv(ci,3);damage(r==='wrong'?20:18,r==='wrong'?'Mauvais serveur':'Timeout');showMedal('fail');stepLog.push({name:'Scan réseau',result:'fail',pts:0,tier:'—'});}
+  await sr(r==='correct','Scan');
+}
+async function stepMap(n,d){
+  await si(n,'PROPAGATION MONDIALE','Repassez toutes les villes au <strong style="color:var(--c-ok)">vert</strong> — initiales + ENTRÉE','inf');
+  logLine('[EX] PA=Paris · NY=New York · TK=Tokyo · LA=Los Angeles · SP=São Paulo ...','sys'); await sleep(400);
+  const res=await runMap(d);
+  const ok=res.greenCount>=res.cc*.8;
+  if(ok){logLine(`✓  ${res.greenCount}/${res.cc} villes sécurisées.`,'ok');flash('ok');addScore(res.greenCount*60,'#00ffaa');const t=res.greenCount>=res.cc?'S':res.greenCount>=res.cc*.9?'A':'B';showMedal(t,res.greenCount*60);stepLog.push({name:'Propagation mondiale',result:'success',pts:res.greenCount*60,tier:t,mapData:{defended:res.greenCount,total:res.cc,cities:res.cities}});}
+  else{damage(Math.min(25,res.redCount*4),'Propagation non contenue');showMedal('fail');stepLog.push({name:'Propagation mondiale',result:'fail',pts:0,tier:'—',mapData:{defended:res.greenCount,total:res.cc,cities:res.cities}});}
+  await sr(ok,'Carte');
+}
+async function stepCam(n,d){
+  await si(n,'SURVEILLANCE — ANOMALIE','Identifiez la <strong style="color:#00ffcc">caméra compromise</strong> ( 1 · 2 · 3 ) + ENTRÉE','cam');
+  logLine('[CAM] Une seule montre une intrusion','warn');
+  const r=await runCam();
+  if(r==='correct'){logLine('✓  Caméra identifiée.','ok');snd('cam_ok');addScore(320,'#00ffcc');showMedal('A',320);stepLog.push({name:'Surveillance CAM',result:'success',pts:320,tier:'A'});}
+  else if(r==='wrong'){snd('cam_bad');damage(18,'Mauvaise caméra');showMedal('fail');stepLog.push({name:'Surveillance CAM',result:'fail',pts:0,tier:'—'});}
+  else{damage(16,'Timeout surveillance');showMedal('timeout');stepLog.push({name:'Surveillance CAM',result:'timeout',pts:0,tier:'—'});}
+  await sr(r==='correct','Surveillance');
+}
+async function stepBoss(n,d){
+  for(let i=0;i<8;i++)setSrv(i,2); startExfil(0,.9);
+  await si(n,'OPÉRATION ECLIPSE — BOSS FINAL','Trois phases consécutives','atk');
+  logLine('[ ALERTE MAXIMALE — TOUS SYSTÈMES CIBLÉS ]','atk'); await sleep(300);
+  const kBoss=Math.round(45+d*12);
+  logLine(`[1/3]  ${kBoss} frappes variées + ENTRÉE`,'atk');
+  const r1=await runKey({keys:kBoss,time:120,label:'CONTAINMENT',col:'red',stepName:'Boss — Containment',basePoints:500});
+  if(r1==='success'){logLine('✓  Périmètre scellé.','ok');snd('success');addScore(500,'#ff3030');for(let i=0;i<3;i++)setSrv(i,0);}
+  else{damage(15,'Containment');stepLog.push({name:'Boss — Containment',result:'fail',pts:0,tier:'—'});}
+  await sleep(300);
+  const seqLen=Math.min(14,Math.round(7+d*2));
+  logLine(`[2/3]  Séquence ${seqLen} touches`,'seq');
+  const t2=Date.now(); const r2=await runSeq(seqLen,5,2);
+  if(r2==='success'){logLine('✓  Malware purgé.','ok');snd('success');addScore(500,'#7b2fff');for(let i=3;i<6;i++)setSrv(i,0);const{tier,bonus}=calcSpeedBonus(Math.max(0,seqLen*5-(Date.now()-t2)/1000),seqLen*5,500);if(bonus>0){addScore(bonus,'#ffb800');showMedal(tier,bonus);}}
+  else damage(15,'Purge malware');
+  await sleep(300);
+  logLine('[3/3]  Identification agent','face');
+  const t3=Date.now(); const r3=await runFace(~~(Math.random()*FP.length));
+  if(r3==='success'||r3==='correct'){logLine('✓  Agent neutralisé.','ok');snd('success');addScore(500,'#ff3c78');for(let i=6;i<8;i++)setSrv(i,0);const{tier,bonus}=calcSpeedBonus(Math.max(0,20-(Date.now()-t3)/1000),20,500);if(bonus>0){addScore(bonus,'#ffb800');showMedal(tier,bonus);}}
+  else damage(15,'ID agent');
+  stopExfil();
+  const ph=[r1,r2,r3].filter(r=>r==='success'||r==='correct').length;
+  if(ph===3){addScore(1500,'#ffb800');showMedal('S',1500);logLine('','ok');logLine('╔══════════════════════════════╗','ok');logLine('║  OPÉRATION ECLIPSE REPOUSSÉE ║','ok');logLine('╚══════════════════════════════╝','ok');}
+  else logLine(`⚠  ${ph}/3 phases.`,'warn');
+  stepLog.push({name:'Boss Final',result:ph>=2?'success':'fail',pts:ph*500,tier:ph===3?'S':ph===2?'A':'C'});
+  await sleep(1500);
+}
+
+// ── End Game — panneau de score final ─────────────────────────────
+async function endGame(won){
+  alive=false;
+  stopExfil();
+  wsSend({type:'game_over',won,score,hp});
+  await sleep(won?1800:800);
+
+  // Calculer le rang global
+  const totalPts=score;
+  let globalRank, rankColor, rankLabel;
+  if(!won)           { globalRank='FAIL';  rankColor='#ff3030'; rankLabel='RÉSEAU COMPROMIS'; }
+  else if(totalPts>=8000){ globalRank='S'; rankColor='#ffb800'; rankLabel='ÉLITE — DÉFENSE PARFAITE'; }
+  else if(totalPts>=5000){ globalRank='A'; rankColor='#00ffaa'; rankLabel='EXPERT — EXCELLENT TRAVAIL'; }
+  else if(totalPts>=2500){ globalRank='B'; rankColor='#00d4ff'; rankLabel='CONFIRMÉ — RÉSEAU SAUVÉ'; }
+  else                   { globalRank='C'; rankColor='#7b2fff'; rankLabel='NOVICE — JUSTE SUFFISANT'; }
+
+  // Données carte (si étape jouée)
+  const mapEntry=stepLog.find(e=>e.mapData);
+  const mapHtml=mapEntry?`
+    <div style="width:100%;max-width:560px;margin-bottom:16px;">
+      <div style="font-size:10px;letter-spacing:3px;color:var(--c-dim);margin-bottom:8px;border-bottom:1px solid var(--c-dim2);padding-bottom:4px;">◈ RAPPORT — PROPAGATION MONDIALE</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+        <div style="font-size:28px;font-weight:bold;color:${mapEntry.result==='success'?'var(--c-ok)':'var(--c-danger)'};">${mapEntry.mapData.defended}<span style="font-size:14px;color:var(--c-dim)">/${mapEntry.mapData.total}</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:bold;letter-spacing:2px;color:${mapEntry.result==='success'?'var(--c-ok)':'var(--c-danger)'};">${mapEntry.mapData.defended} VILLE${mapEntry.mapData.defended>1?'S':''} DÉFENDUE${mapEntry.mapData.defended>1?'S':''} / ${mapEntry.mapData.total} ATTAQUÉE${mapEntry.mapData.total>1?'S':''}</div>
+          <div style="font-size:10px;color:var(--c-dim);margin-top:2px;">${mapEntry.mapData.total-mapEntry.mapData.defended} non sécurisée${(mapEntry.mapData.total-mapEntry.mapData.defended)>1?'s':''}</div>
+        </div>
+      </div>
+      ${(()=>{
+        if(!mapEntry.mapData.cities)return '';
+        const defended=mapEntry.mapData.cities.filter(c=>c.comprSec!==undefined&&c.green);
+        if(!defended.length)return '';
+        return `<div style="display:flex;flex-wrap:wrap;gap:5px;">`+defended.map(c=>`<div style="background:var(--c-bg2);border:1px solid var(--c-ok)22;padding:3px 8px;font-size:10px;display:flex;gap:6px;align-items:center;"><span style="color:var(--c-ok)">✓</span><span style="color:var(--c-text)">${c.n}</span><span style="color:var(--c-dim);font-variant-numeric:tabular-nums;">${c.comprSec}s</span></div>`).join('')+`</div>`;
+      })()}
+    </div>
+  `:'';
+
+  // Construire le debrief
+  const dbEl=document.getElementById('debrief');
+  const victoryLine=won
+    ?`<div style="font-size:11px;letter-spacing:3px;color:var(--c-ok);margin-bottom:6px;animation:pulse 1.4s infinite;">◈ RÉSEAU SÉCURISÉ — MISSION ACCOMPLIE ◈</div>`
+    :`<div style="font-size:11px;letter-spacing:3px;color:var(--c-danger);margin-bottom:6px;animation:pulse 1.4s infinite;">◈ DÉFENSE BRISÉE — INTÉGRITÉ ZÉRO ◈</div>`;
+
+  dbEl.innerHTML=`
+    <!-- Scan lines -->
+    <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,212,255,.015) 3px,rgba(0,212,255,.015) 6px);z-index:0;"></div>
+
+    <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;max-height:100%;overflow-y:auto;padding:8px;">
+
+      ${victoryLine}
+
+      <!-- Titre rang -->
+      <div class="db-title" style="color:${rankColor};font-size:${won?'34':'28'}px;margin-bottom:2px;">${won?'◈ OPÉRATION ECLIPSE':'◈ RÉSEAU COMPROMIS'}</div>
+      <div class="db-sub">${rankLabel}</div>
+
+      <!-- Polygone rang central -->
+      <div style="margin:10px 0 14px;">
+        <svg width="90" height="90" viewBox="0 0 120 120" style="filter:drop-shadow(0 0 18px ${rankColor});">
+          ${globalRank==='S'?`<polygon points="60,4 72,42 112,42 80,66 92,104 60,80 28,104 40,66 8,42 48,42" fill="${rankColor}28" stroke="${rankColor}" stroke-width="3"/><polygon points="60,4 72,42 112,42 80,66 92,104 60,80 28,104 40,66 8,42 48,42" fill="none" stroke="${rankColor}" stroke-width="1" opacity="0.4" transform="scale(0.82) translate(10,10)"/>`:
+           globalRank==='A'?`<polygon points="60,6 104,30 104,90 60,114 16,90 16,30" fill="${rankColor}28" stroke="${rankColor}" stroke-width="3"/><polygon points="60,6 104,30 104,90 60,114 16,90 16,30" fill="none" stroke="${rankColor}" stroke-width="1" opacity="0.4" transform="scale(0.82) translate(10,10)"/>`:
+           globalRank==='B'?`<polygon points="38,6 82,6 114,38 114,82 82,114 38,114 6,82 6,38" fill="${rankColor}28" stroke="${rankColor}" stroke-width="3"/><polygon points="38,6 82,6 114,38 114,82 82,114 38,114 6,82 6,38" fill="none" stroke="${rankColor}" stroke-width="1" opacity="0.4" transform="scale(0.82) translate(10,10)"/>`:
+           globalRank==='C'?`<polygon points="60,4 116,44 94,112 26,112 4,44" fill="${rankColor}28" stroke="${rankColor}" stroke-width="3"/><polygon points="60,4 116,44 94,112 26,112 4,44" fill="none" stroke="${rankColor}" stroke-width="1" opacity="0.4" transform="scale(0.82) translate(10,10)"/>`:
+                             `<polygon points="60,4 116,60 60,116 4,60" fill="${rankColor}28" stroke="${rankColor}" stroke-width="3"/><polygon points="60,4 116,60 60,116 4,60" fill="none" stroke="${rankColor}" stroke-width="1" opacity="0.4" transform="scale(0.82) translate(10,10)"/>`}
+          <text x="60" y="68" text-anchor="middle" font-family="Courier New" font-size="28" font-weight="bold" fill="${rankColor}">${globalRank==='FAIL'?'✗':globalRank}</text>
+        </svg>
+      </div>
+
+      <!-- Stats globales -->
+      <div class="db-grid" style="max-width:480px;">
+        <div class="db-card">
+          <div class="db-card-label">SCORE FINAL</div>
+          <div class="db-card-value" style="color:var(--c-primary);">${score.toLocaleString()}</div>
+        </div>
+        <div class="db-card">
+          <div class="db-card-label">INTÉGRITÉ RÉSEAU</div>
+          <div class="db-card-value" style="color:${hp>60?'var(--c-ok)':hp>30?'var(--c-warn)':'var(--c-danger)'};">${hp}%</div>
+        </div>
+        <div class="db-card">
+          <div class="db-card-label">DONNÉES EXFILTRÉES</div>
+          <div class="db-card-value" style="color:var(--c-danger);">${exfilGB.toFixed(1)} GB</div>
+        </div>
+        <div class="db-card">
+          <div class="db-card-label">ÉTAPES RÉUSSIES</div>
+          <div class="db-card-value" style="color:var(--c-ok);">${stepLog.filter(s=>s.result==='success').length}<span style="font-size:14px;color:var(--c-dim)">/${stepLog.length}</span></div>
+        </div>
+      </div>
+
+      <!-- Rapport carte si disponible -->
+      ${mapHtml}
+
+      <!-- Tableau étapes -->
+      <div class="db-steps">
+        <div style="font-size:10px;letter-spacing:3px;color:var(--c-dim);margin-bottom:6px;border-bottom:1px solid var(--c-dim2);padding-bottom:4px;">◈ JOURNAL OPÉRATIONNEL</div>
+        ${stepLog.map((s,i)=>`
+          <div class="db-step-row">
+            <span class="db-step-num">${i+1}</span>
+            <span class="db-step-name">${s.name}</span>
+            <span class="db-step-result" style="color:${s.result==='success'?'var(--c-ok)':s.result==='timeout'?'var(--c-warn)':'var(--c-danger)'};">${s.result==='success'?'✓ OK':s.result==='timeout'?'⏱ TIMEOUT':'✗ ÉCHEC'}</span>
+            <span class="db-step-pts">${s.pts>0?'+'+s.pts:'—'}</span>
+          </div>`).join('')}
+      </div>
+
+      <button class="db-btn" onclick="location.reload()">[ REJOUER ]</button>
+    </div>
+  `;
+  dbEl.classList.add('show');
+}
+async function runGame(){
+  ovl.style.display='none'; inp.focus();
+  logLine('[SENTINEL//OS]  Initialisation du système de défense...','sys');
+  logLine('[RÉSEAU]  8 serveurs en ligne — données critiques surveillées.','sys');
+  logLine('[THREAT-INTEL]  Offensive coordonnée détectée.','warn');
+  await sleep(900);
+  const POOL=[stepBruteForce, stepRansomware, stepSeq, stepFace, stepScan,
+              stepMap, stepCam, stepSeq, stepBruteForce, stepRansomware];
+  const shuffled=[...POOL].sort(()=>Math.random()-.5).slice(0,9);
+  let difficulty=1.0, lastScore=0;
+  for(let i=0;i<shuffled.length;i++){
+    if(!alive)return;
+    difficulty=i===0?1.0:score>lastScore?Math.min(3.5,difficulty+0.25):Math.max(0.8,difficulty-0.1);
+    lastScore=score;
+    await shuffled[i](i+1, difficulty);
+  }
+  if(!alive)return;
+  await stepBoss(10, difficulty);
+  if(!alive)return;
+  await endGame(true);
+}
+
+
+document.getElementById('startbtn').onclick=()=>{initAudio();runGame();};
+inp.focus();
+
+// ── Fullscreen ────────────────────────────────────────────────────
+const fsBtn = document.getElementById('fs-btn');
+function toggleFS(){
+  if(!document.fullscreenElement && !document.webkitFullscreenElement){
+    (document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);
+    fsBtn.textContent='✕';
+    fsBtn.title='Quitter plein écran (Échap)';
+  } else {
+    (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    fsBtn.textContent='⛶';
+    fsBtn.title='Plein écran (F)';
+  }
+}
+fsBtn.addEventListener('click', toggleFS);
+document.addEventListener('fullscreenchange',()=>{
+  if(!document.fullscreenElement){fsBtn.textContent='⛶';fsBtn.title='Plein écran';}
+});
+</script>
+</body>
+</html>

@@ -23,250 +23,126 @@
       background: var(--bg);
       color: var(--cyan);
       font-family: 'Share Tech Mono', monospace;
-      width: 100vw;
-      height: 100vh;
+      width: 100vw; height: 100vh;
       overflow: hidden;
       cursor: crosshair;
     }
 
-    #three-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
+    #three-canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
 
     /* ── HUD overlay ── */
     #hud {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       pointer-events: none;
       display: grid;
       grid-template-rows: 48px 1fr 48px;
-      grid-template-columns: 220px 1fr 220px;
+      grid-template-columns: 220px 1fr 240px;
     }
 
-    /* Coin top-left */
-    .hud-tl {
-      grid-row: 1; grid-column: 1;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .hud-title {
-      font-family: 'Orbitron', monospace;
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: 0.2em;
-      color: var(--cyan);
-    }
-    .hud-sub {
-      font-size: 9px;
-      color: rgba(0,255,231,0.4);
-      letter-spacing: 0.15em;
-    }
+    .hud-tl { grid-row:1; grid-column:1; padding:12px 16px; display:flex; flex-direction:column; gap:2px; }
+    .hud-title { font-family:'Orbitron',monospace; font-size:13px; font-weight:900; letter-spacing:0.2em; color:var(--cyan); }
+    .hud-sub   { font-size:9px; color:rgba(0,255,231,0.4); letter-spacing:0.15em; }
 
-    /* Coin top-right */
-    .hud-tr {
-      grid-row: 1; grid-column: 3;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
+    .hud-tr { grid-row:1; grid-column:3; padding:12px 16px; display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
 
-    /* Panneau gauche */
     .hud-left {
-      grid-row: 2; grid-column: 1;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      justify-content: center;
+      grid-row:2; grid-column:1;
+      padding:16px; display:flex; flex-direction:column; gap:12px; justify-content:center;
     }
 
-    /* Panneau droit */
     .hud-right {
-      grid-row: 2; grid-column: 3;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      justify-content: center;
-      align-items: flex-end;
+      grid-row:2; grid-column:3;
+      padding:12px 16px; display:flex; flex-direction:column; gap:10px;
+      justify-content:flex-start; align-items:flex-end;
+      overflow-y:auto;
     }
 
-    /* Barre du bas */
     .hud-bottom {
-      grid-row: 3; grid-column: 1 / 4;
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-top: 1px solid var(--border);
-      background: var(--hud);
+      grid-row:3; grid-column:1/4;
+      padding:0 20px; display:flex; align-items:center; justify-content:space-between;
+      border-top:1px solid var(--border); background:var(--hud);
     }
 
-    /* Lignes de coin déco */
-    .corner {
-      position: fixed;
-      width: 24px; height: 24px;
-      pointer-events: none;
-    }
-    .corner.tl { top: 8px; left: 8px; border-top: 1px solid var(--cyan); border-left: 1px solid var(--cyan); }
-    .corner.tr { top: 8px; right: 8px; border-top: 1px solid var(--cyan); border-right: 1px solid var(--cyan); }
-    .corner.bl { bottom: 8px; left: 8px; border-bottom: 1px solid var(--cyan); border-left: 1px solid var(--cyan); }
-    .corner.br { bottom: 8px; right: 8px; border-bottom: 1px solid var(--cyan); border-right: 1px solid var(--cyan); }
+    .corner { position:fixed; width:24px; height:24px; pointer-events:none; }
+    .corner.tl { top:8px;    left:8px;  border-top:1px solid var(--cyan); border-left:1px solid var(--cyan); }
+    .corner.tr { top:8px;    right:8px; border-top:1px solid var(--cyan); border-right:1px solid var(--cyan); }
+    .corner.bl { bottom:8px; left:8px;  border-bottom:1px solid var(--cyan); border-left:1px solid var(--cyan); }
+    .corner.br { bottom:8px; right:8px; border-bottom:1px solid var(--cyan); border-right:1px solid var(--cyan); }
 
-    /* Metric card */
-    .metric {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-    .metric-label {
-      font-size: 8px;
-      letter-spacing: 0.2em;
-      color: rgba(0,255,231,0.4);
-      text-transform: uppercase;
-    }
-    .metric-value {
-      font-family: 'Orbitron', monospace;
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--cyan);
-      line-height: 1;
-    }
-    .metric-value.amber { color: var(--amber); }
-    .metric-value.green { color: var(--green); }
-    .metric-value.small { font-size: 13px; }
+    .metric { display:flex; flex-direction:column; gap:1px; }
+    .metric-label { font-size:8px; letter-spacing:0.2em; color:rgba(0,255,231,0.4); text-transform:uppercase; }
+    .metric-value { font-family:'Orbitron',monospace; font-size:20px; font-weight:700; color:var(--cyan); line-height:1; }
+    .metric-value.amber { color:var(--amber); }
+    .metric-value.green { color:var(--green); }
+    .metric-value.small { font-size:13px; }
 
-    /* Status dot */
-    .status-dot {
-      display: inline-block;
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--red);
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-    .status-dot.active {
-      background: var(--green);
-      box-shadow: 0 0 6px var(--green);
-      animation: blink 1.2s infinite;
-    }
+    .status-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--red); margin-right:6px; vertical-align:middle; }
+    .status-dot.active { background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 1.2s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    /* Légende couleur distance */
-    .legend {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .legend-title {
-      font-size: 8px;
-      letter-spacing: 0.2em;
-      color: rgba(0,255,231,0.4);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .legend-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 10px;
-      color: rgba(0,255,231,0.6);
-    }
-    .legend-swatch {
-      width: 20px;
-      height: 3px;
-      border-radius: 2px;
-    }
+    .legend { display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+    .legend-title { font-size:8px; letter-spacing:0.2em; color:rgba(0,255,231,0.4); text-transform:uppercase; margin-bottom:2px; }
+    .legend-row { display:flex; align-items:center; gap:8px; font-size:10px; color:rgba(0,255,231,0.6); }
+    .legend-swatch { width:20px; height:3px; border-radius:2px; }
 
-    /* Contrôles */
-    .controls {
-      display: flex;
-      gap: 8px;
-      pointer-events: all;
+    /* ── Panneaux détection / OSC ── */
+    .side-panel { display:flex; flex-direction:column; gap:5px; align-items:flex-end; pointer-events:all; width:100%; }
+    .side-panel-title { font-size:8px; letter-spacing:0.2em; color:rgba(0,255,231,0.4); text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:3px; width:100%; text-align:right; }
+    .prow { display:flex; align-items:center; gap:6px; font-size:9px; color:rgba(0,255,231,0.5); justify-content:flex-end; }
+    .prow input[type=number], .prow input[type=text] {
+      width:58px; background:rgba(0,255,231,0.05); border:1px solid var(--border);
+      color:var(--cyan); font-family:'Share Tech Mono',monospace; font-size:10px; padding:2px 4px;
     }
+    .prow input[type=checkbox] { accent-color:var(--amber); cursor:pointer; width:14px; height:14px; }
+    .prow span.val { color:var(--cyan); }
+    .prow.osc-addr { font-size:8px; color:rgba(255,170,0,0.4); }
+
+    /* ── Contrôles ── */
+    .controls { display:flex; gap:6px; flex-wrap:wrap; pointer-events:all; justify-content:flex-end; }
     .ctrl-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: rgba(0,255,231,0.6);
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 10px;
-      padding: 4px 10px;
-      cursor: pointer;
-      letter-spacing: 0.1em;
-      transition: all 0.2s;
+      background:transparent; border:1px solid var(--border);
+      color:rgba(0,255,231,0.6); font-family:'Share Tech Mono',monospace;
+      font-size:9px; padding:4px 8px; cursor:pointer; letter-spacing:0.1em; transition:all 0.2s;
     }
     .ctrl-btn:hover, .ctrl-btn.active {
-      background: rgba(0,255,231,0.1);
-      color: var(--cyan);
-      border-color: var(--cyan);
+      background:rgba(0,255,231,0.1); color:var(--cyan); border-color:var(--cyan);
+    }
+    .ctrl-btn.zone-active { border-color:var(--amber); color:var(--amber); background:rgba(255,170,0,0.08); }
+
+    /* ── Crosshair ── */
+    #crosshair { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:16px; height:16px; pointer-events:none; }
+    #crosshair::before,#crosshair::after { content:''; position:absolute; background:rgba(0,255,231,0.3); }
+    #crosshair::before { width:1px; height:100%; left:50%; top:0; }
+    #crosshair::after  { height:1px; width:100%; top:50%; left:0; }
+
+    /* ── Scan line ── */
+    #scanline-hud { position:fixed; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(0,255,231,0.06),transparent); animation:scanline 6s linear infinite; pointer-events:none; }
+    @keyframes scanline { from{top:0} to{top:100%} }
+
+    /* ── Zone hint ── */
+    #zone-hint {
+      position:fixed; top:56px; left:50%; transform:translateX(-50%);
+      font-size:10px; letter-spacing:0.15em; color:var(--amber);
+      background:rgba(0,5,8,0.88); border:1px solid rgba(255,170,0,0.35);
+      padding:6px 16px; display:none; pointer-events:none;
+    }
+    #zone-hint.active { display:block; }
+
+    /* ── Labels blobs ── */
+    #blob-labels { position:fixed; inset:0; pointer-events:none; }
+    .blob-label {
+      position:absolute; transform:translate(-50%,-130%);
+      font-family:'Orbitron',monospace; font-size:10px; font-weight:700;
+      color:var(--amber); text-shadow:0 0 6px rgba(0,0,0,1);
+      white-space:nowrap; display:none;
     }
 
-    /* Crosshair centre */
-    #crosshair {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%,-50%);
-      width: 16px;
-      height: 16px;
-      pointer-events: none;
-    }
-    #crosshair::before, #crosshair::after {
-      content: '';
-      position: absolute;
-      background: rgba(0,255,231,0.3);
-    }
-    #crosshair::before { width: 1px; height: 100%; left: 50%; top: 0; }
-    #crosshair::after  { height: 1px; width: 100%; top: 50%; left: 0; }
+    /* ── Tooltip ── */
+    #tooltip { position:fixed; pointer-events:none; font-size:10px; color:var(--cyan); background:rgba(0,5,8,0.85); border:1px solid var(--border); padding:4px 8px; display:none; }
 
-    /* Scan line animée */
-    #scanline-hud {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(0,255,231,0.06), transparent);
-      animation: scanline 6s linear infinite;
-      pointer-events: none;
-    }
-    @keyframes scanline { from { top: 0; } to { top: 100%; } }
-
-    /* Tooltip angle/dist au survol */
-    #tooltip {
-      position: fixed;
-      pointer-events: none;
-      font-size: 10px;
-      color: var(--cyan);
-      background: rgba(0,5,8,0.85);
-      border: 1px solid var(--border);
-      padding: 4px 8px;
-      display: none;
-      letter-spacing: 0.05em;
-    }
-
-    .no-signal {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 12px;
-      pointer-events: none;
-    }
-    .no-signal-text {
-      font-family: 'Orbitron', monospace;
-      font-size: 11px;
-      letter-spacing: 0.3em;
-      color: rgba(0,255,231,0.25);
-      animation: pulse 2s infinite;
-    }
+    /* ── No signal ── */
+    .no-signal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; pointer-events:none; }
+    .no-signal-text { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:0.3em; color:rgba(0,255,231,0.25); animation:pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.8} }
   </style>
 </head>
@@ -275,14 +151,14 @@
 <canvas id="three-canvas"></canvas>
 <div id="scanline-hud"></div>
 <div id="crosshair"></div>
+<div id="zone-hint">CLIC + GLISSER POUR DÉFINIR LA ZONE DE DÉTECTION</div>
+<div id="blob-labels"></div>
 
-<!-- Coins déco -->
 <div class="corner tl"></div>
 <div class="corner tr"></div>
 <div class="corner bl"></div>
 <div class="corner br"></div>
 
-<!-- HUD -->
 <div id="hud">
 
   <!-- Top Left -->
@@ -293,11 +169,11 @@
 
   <!-- Top Right -->
   <div class="hud-tr">
-    <div style="font-size:9px; letter-spacing:0.15em; color:rgba(0,255,231,0.4)">
+    <div style="font-size:9px;letter-spacing:0.15em;color:rgba(0,255,231,0.4)">
       <span class="status-dot" id="status-dot"></span>
       <span id="status-label">OFFLINE</span>
     </div>
-    <div style="font-size:9px; color:rgba(0,255,231,0.3); letter-spacing:0.1em" id="port-label">—</div>
+    <div style="font-size:9px;color:rgba(0,255,231,0.3);letter-spacing:0.1em" id="port-label">—</div>
   </div>
 
   <!-- Left Panel -->
@@ -316,63 +192,72 @@
     </div>
     <div class="metric">
       <div class="metric-label">Dist. min</div>
-      <div class="metric-value" id="m-mindist" style="font-size:14px">—</div>
+      <div class="metric-value small" id="m-mindist">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Objets détectés</div>
+      <div class="metric-value amber" id="m-blobs">—</div>
     </div>
   </div>
 
   <!-- Right Panel -->
   <div class="hud-right">
-    <div class="legend">
-      <div class="legend-title">Distance (couleur)</div>
-      <div class="legend-row">
-        <div class="legend-swatch" style="background:#00ffe7"></div>
-        <span>0 – 1 m</span>
-      </div>
-      <div class="legend-row">
-        <div class="legend-swatch" style="background:#00ff88"></div>
-        <span>1 – 3 m</span>
-      </div>
-      <div class="legend-row">
-        <div class="legend-swatch" style="background:#88ff00"></div>
-        <span>3 – 6 m</span>
-      </div>
-      <div class="legend-row">
-        <div class="legend-swatch" style="background:#ffaa00"></div>
-        <span>6 – 10 m</span>
-      </div>
-      <div class="legend-row">
-        <div class="legend-swatch" style="background:#ff4400"></div>
-        <span>> 10 m</span>
-      </div>
+
+    <!-- Détection -->
+    <div class="side-panel">
+      <div class="side-panel-title">Détection zone</div>
+      <div class="prow"><span>Zone</span><span class="val" id="d-zone">—</span></div>
+      <div class="prow"><span>Cluster (m)</span><input type="number" id="d-cluster" step="0.01" min="0.02" max="2" value="0.18"></div>
+      <div class="prow"><span>Pts min</span><input type="number" id="d-minpts" step="1" min="1" max="50" value="3"></div>
     </div>
+
+    <!-- OSC -->
+    <div class="side-panel" style="margin-top:4px">
+      <div class="side-panel-title">Sortie OSC (UDP)</div>
+      <div class="prow"><span>Activer</span><input type="checkbox" id="osc-enabled"></div>
+      <div class="prow"><span>Host</span><input type="text" id="osc-host" value="127.0.0.1" style="width:100px"></div>
+      <div class="prow"><span>Port</span><input type="number" id="osc-port" step="1" min="1" max="65535" value="9000"></div>
+      <div class="prow osc-addr">/lidar/blob &nbsp;i,f,f,f → id,x,z,r</div>
+    </div>
+
+    <!-- Légende distance -->
+    <div class="legend" style="margin-top:4px">
+      <div class="legend-title">Distance</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#00ffe7"></div><span>0–1 m</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#00ff88"></div><span>1–3 m</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#88ff00"></div><span>3–6 m</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#ffaa00"></div><span>6–10 m</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#ff4400"></div><span>>10 m</span></div>
+    </div>
+
   </div>
 
   <!-- Bottom bar -->
   <div class="hud-bottom">
-    <div style="font-size:9px; color:rgba(0,255,231,0.35); letter-spacing:0.1em" id="cursor-info">
-      CLIC GAUCHE: ORBITE · SCROLL: ZOOM · CLIC DROIT: PAN
+    <div style="font-size:9px;color:rgba(0,255,231,0.35);letter-spacing:0.1em" id="cursor-info">
+      ORBITE · SCROLL: ZOOM · CLIC DROIT: PAN
     </div>
     <div class="controls">
       <button class="ctrl-btn active" id="btn-top">TOP</button>
       <button class="ctrl-btn" id="btn-perspective">3D</button>
       <button class="ctrl-btn" id="btn-trail">TRAÎNE</button>
       <button class="ctrl-btn" id="btn-grid">GRILLE</button>
+      <button class="ctrl-btn" id="btn-zone">ZONE</button>
+      <button class="ctrl-btn" id="btn-zone-clear">✕ ZONE</button>
+      <button class="ctrl-btn" id="btn-blobs">BLOBS</button>
       <button class="ctrl-btn" id="btn-freeze">PAUSE</button>
     </div>
-    <div style="font-size:9px; color:rgba(0,255,231,0.35); letter-spacing:0.1em" id="frame-info">—</div>
+    <div style="font-size:9px;color:rgba(0,255,231,0.35);letter-spacing:0.1em" id="frame-info">—</div>
   </div>
 
 </div>
 
-<!-- No signal overlay -->
 <div class="no-signal" id="no-signal">
   <div class="no-signal-text">▸ EN ATTENTE DU SIGNAL LIDAR ◂</div>
-  <div style="font-size:9px; color:rgba(0,255,231,0.15); letter-spacing:0.2em">CONNECTER LE CAPTEUR DEPUIS L'INTERFACE PRINCIPALE</div>
+  <div style="font-size:9px;color:rgba(0,255,231,0.15);letter-spacing:0.2em">CONNECTER LE CAPTEUR DEPUIS L'INTERFACE PRINCIPALE</div>
 </div>
-
 <div id="tooltip"></div>
 
-<!-- Three.js r128 (version compatible avec le projet existant) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
@@ -380,38 +265,101 @@
 // ══════════════════════════════════════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════════════════════════════════════
-const MAX_POINTS      = 4096;   // max pts dans le buffer WebGL
-const TRAIL_FRAMES    = 8;      // nb de tours conservés en traîne
-const SCALE           = 0.001;  // mm → unités Three (1 unité = 1 m)
-const GRID_SIZE       = 20;     // mètres
+const MAX_POINTS      = 4096;
+const TRAIL_FRAMES    = 8;
+const SCALE           = 0.001;   // mm → m
+const GRID_SIZE       = 20;
 const GRID_DIVISIONS  = 20;
+const MAX_BLOBS       = 24;
+const BLOB_MATCH_DIST = 0.4;     // m, distance max réassociation inter-tours
 
 // ══════════════════════════════════════════════════════════════════════════════
-// STATE
+// STATE GENERAL
 // ══════════════════════════════════════════════════════════════════════════════
 let showTrail  = true;
 let showGrid   = true;
 let frozen     = false;
-let viewMode   = 'top';   // 'top' | 'perspective'
+let viewMode   = 'top';
+let scanCount  = 0, lastSecond = Date.now(), rps = 0;
+const trailBuffer = [];
 
-let scanCount  = 0;
-let lastSecond = Date.now();
-let rps        = 0;
+// ── Zone de détection ─────────────────────────────────────────────────────────
+let zone          = null;   // chargé async via restoreSettings()
+let zoneEditing   = false;
+let zoneDragging  = false;
+let zoneDragStart = null;
 
-// Buffer circulaire pour la traîne
-const trailBuffer = [];   // tableau de { positions:Float32Array, colors:Float32Array, count:int }
+// ── Blobs ─────────────────────────────────────────────────────────────────────
+let showBlobs    = true;
+let clusterDist  = 0.18;
+let minBlobPts   = 3;
+let trackedBlobs = [];
+let nextBlobId   = 1;
+
+// ── OSC ───────────────────────────────────────────────────────────────────────
+let oscConfig = { enabled: false, host: '127.0.0.1', port: 9000 }; // chargé async
+
+// ── Persistance double couche : fichier disque (IPC) + localStorage (fallback) ─
+// Le fichier est écrit immédiatement → survit aux crashs et redémarrages.
+// localStorage sert de fallback si le fichier n'est pas encore disponible au boot.
+
+function buildSettings() {
+  return { zone, clusterDist, minBlobPts, osc: oscConfig };
+}
+
+async function persistSettings() {
+  const s = buildSettings();
+  // 1. Fichier disque via IPC (prioritaire)
+  if (window.lidar && window.lidar.saveSettings) {
+    window.lidar.saveSettings(s);
+  }
+  // 2. localStorage (fallback navigateur / mode démo)
+  try { localStorage.setItem('lidarSettingsV2', JSON.stringify(s)); } catch(e) {}
+}
+
+async function restoreSettings() {
+  let s = null;
+
+  // 1. Essayer le fichier disque d'abord
+  if (window.lidar && window.lidar.loadSettings) {
+    const res = await window.lidar.loadSettings();
+    if (res && res.settings) s = res.settings;
+  }
+
+  // 2. Fallback localStorage
+  if (!s) {
+    try { const r = localStorage.getItem('lidarSettingsV2'); if(r) s = JSON.parse(r); } catch(e) {}
+  }
+
+  if (!s) return; // première fois, pas de settings sauvegardés
+
+  if (s.zone)         zone        = s.zone;
+  if (s.clusterDist)  clusterDist = s.clusterDist;
+  if (s.minBlobPts)   minBlobPts  = s.minBlobPts;
+  if (s.osc)          oscConfig   = { enabled:false, host:'127.0.0.1', port:9000, ...s.osc };
+}
+
+// Raccourcis (appellent persistSettings)
+function saveZone()       { persistSettings(); }
+function saveBlobParams() { persistSettings(); }
+function saveOscConfig()  {
+  if (window.lidar && window.lidar.setOscConfig) window.lidar.setOscConfig(oscConfig);
+  persistSettings();
+}
+
+const _bp = { clusterDist: 0.18, minBlobPts: 3 }; // valeurs par défaut avant restoreSettings()
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SCENE THREE.JS
 // ══════════════════════════════════════════════════════════════════════════════
 const canvas   = document.getElementById('three-canvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000508, 1);
 
 const scene  = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 1000);
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.01, 1000);
 camera.position.set(0, 15, 0);
 camera.lookAt(0, 0, 0);
 
@@ -422,106 +370,220 @@ controls.screenSpacePanning = true;
 controls.minDistance = 0.5;
 controls.maxDistance = 80;
 
-// ── Grille ────────────────────────────────────────────────────────────────────
+// Grille
 const gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_DIVISIONS, 0x0a2020, 0x061515);
 scene.add(gridHelper);
 
-// Cercles de distance concentriques (1m, 3m, 5m, 10m)
-function makeCircle(radius, color, opacity = 0.3) {
+// Cercles concentriques
+function makeCircle(radius, color, opacity) {
   const pts = [];
   for (let i = 0; i <= 128; i++) {
-    const a = (i / 128) * Math.PI * 2;
-    pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
+    const a = (i/128)*Math.PI*2;
+    pts.push(new THREE.Vector3(Math.cos(a)*radius, 0, Math.sin(a)*radius));
   }
-  const geo  = new THREE.BufferGeometry().setFromPoints(pts);
-  const mat  = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
-  return new THREE.Line(geo, mat);
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  return new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent:true, opacity }));
 }
-[1, 3, 5, 10].forEach(r => scene.add(makeCircle(r, 0x00ffe7, 0.12)));
+[1,3,5,10].forEach(r => scene.add(makeCircle(r, 0x00ffe7, 0.12)));
 
-// Labels de distance sur les cercles (Text via canvas texture)
 function makeDistLabel(text, x, z) {
-  const cv = document.createElement('canvas');
-  cv.width = 128; cv.height = 32;
+  const cv = document.createElement('canvas'); cv.width=128; cv.height=32;
   const ctx = cv.getContext('2d');
-  ctx.fillStyle = 'rgba(0,255,231,0.5)';
-  ctx.font = '18px monospace';
-  ctx.fillText(text, 8, 22);
-  const tex     = new THREE.CanvasTexture(cv);
-  const mat     = new THREE.SpriteMaterial({ map: tex, transparent: true });
-  const sprite  = new THREE.Sprite(mat);
-  sprite.position.set(x, 0.05, z);
-  sprite.scale.set(0.8, 0.2, 1);
-  return sprite;
+  ctx.fillStyle='rgba(0,255,231,0.5)'; ctx.font='18px monospace'; ctx.fillText(text,8,22);
+  const mat = new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(cv), transparent:true });
+  const s = new THREE.Sprite(mat);
+  s.position.set(x,0.05,z); s.scale.set(0.8,0.2,1);
+  return s;
 }
-[1, 3, 5, 10].forEach(r => scene.add(makeDistLabel(`${r}m`, r + 0.1, 0.1)));
+[1,3,5,10].forEach(r => scene.add(makeDistLabel(`${r}m`, r+0.1, 0.1)));
 
-// Axe origine
-const originGeo = new THREE.SphereGeometry(0.04, 8, 8);
-const originMat = new THREE.MeshBasicMaterial({ color: 0x00ffe7 });
-const origin    = new THREE.Mesh(originGeo, originMat);
-origin.position.y = 0.01;
-scene.add(origin);
+// Origine
+const origin = new THREE.Mesh(new THREE.SphereGeometry(0.04,8,8), new THREE.MeshBasicMaterial({color:0x00ffe7}));
+origin.position.y = 0.01; scene.add(origin);
 
-// Rayon de scan animé (sweep line)
+// Sweep line
 const sweepGeo = new THREE.BufferGeometry();
-sweepGeo.setAttribute('position', new THREE.Float32BufferAttribute([0,0.01,0, 12,0.01,0], 3));
-const sweepMat = new THREE.LineBasicMaterial({
-  color: 0x00ffe7, transparent: true, opacity: 0.25
-});
-const sweepLine = new THREE.Line(sweepGeo, sweepMat);
+sweepGeo.setAttribute('position', new THREE.Float32BufferAttribute([0,0.01,0,12,0.01,0],3));
+const sweepLine = new THREE.Line(sweepGeo, new THREE.LineBasicMaterial({color:0x00ffe7,transparent:true,opacity:0.25}));
 scene.add(sweepLine);
 let sweepAngle = 0;
 
-// ── Points du scan courant ────────────────────────────────────────────────────
-const currentPositions = new Float32Array(MAX_POINTS * 3);
-const currentColors    = new Float32Array(MAX_POINTS * 3);
-const currentGeo       = new THREE.BufferGeometry();
-currentGeo.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
-currentGeo.setAttribute('color',    new THREE.BufferAttribute(currentColors,    3));
-currentGeo.setDrawRange(0, 0);
+// ── Zone rectangle ────────────────────────────────────────────────────────────
+const zoneFillMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(1,1),
+  new THREE.MeshBasicMaterial({color:0xffaa00,transparent:true,opacity:0.10,side:THREE.DoubleSide,depthWrite:false})
+);
+zoneFillMesh.rotation.x = -Math.PI/2;
+zoneFillMesh.position.y = 0.015;
+zoneFillMesh.visible = false;
+scene.add(zoneFillMesh);
 
-const currentMat = new THREE.PointsMaterial({
-  size: 0.04,
-  vertexColors: true,
-  transparent: true,
-  opacity: 1.0,
-  sizeAttenuation: true,
-});
-const currentCloud = new THREE.Points(currentGeo, currentMat);
+function makeRectLine(color, opacity) {
+  const geo = new THREE.BufferGeometry().setFromPoints([0,1,2,3,4].map(()=>new THREE.Vector3()));
+  const line = new THREE.Line(geo, new THREE.LineBasicMaterial({color,transparent:true,opacity}));
+  line.position.y = 0.02; line.visible = false;
+  scene.add(line); return line;
+}
+const zoneOutline    = makeRectLine(0xffaa00, 0.7);
+const zonePreview    = makeRectLine(0xffaa00, 0.9);
+
+function setRectOutline(line, xMin, xMax, zMin, zMax) {
+  line.geometry.setFromPoints([
+    new THREE.Vector3(xMin,0,zMin), new THREE.Vector3(xMax,0,zMin),
+    new THREE.Vector3(xMax,0,zMax), new THREE.Vector3(xMin,0,zMax),
+    new THREE.Vector3(xMin,0,zMin),
+  ]);
+}
+
+function updateZoneMesh() {
+  if (!zone) {
+    zoneFillMesh.visible = zoneOutline.visible = false;
+    document.getElementById('d-zone').textContent = '—';
+    return;
+  }
+  const {xMin,xMax,zMin,zMax} = zone;
+  const w = xMax-xMin, d = zMax-zMin;
+  zoneFillMesh.scale.set(Math.max(w,0.001), Math.max(d,0.001), 1);
+  zoneFillMesh.position.set((xMin+xMax)/2, 0.015, (zMin+zMax)/2);
+  zoneFillMesh.visible = true;
+  setRectOutline(zoneOutline, xMin, xMax, zMin, zMax);
+  zoneOutline.visible = true;
+  document.getElementById('d-zone').textContent = `${w.toFixed(2)}×${d.toFixed(2)} m`;
+}
+updateZoneMesh();
+
+// ── Raycaster pour dessin de la zone ─────────────────────────────────────────
+const raycaster   = new THREE.Raycaster();
+const mouseNDC    = new THREE.Vector2();
+const groundPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+
+function getGroundPoint(clientX, clientY) {
+  mouseNDC.x = (clientX/window.innerWidth)*2-1;
+  mouseNDC.y = -(clientY/window.innerHeight)*2+1;
+  raycaster.setFromCamera(mouseNDC, camera);
+  const pt = new THREE.Vector3();
+  return raycaster.ray.intersectPlane(groundPlane, pt) ? pt : null;
+}
+
+// ── Pool de marqueurs blobs ───────────────────────────────────────────────────
+const blobMarkers = [];
+const blobLabelsContainer = document.getElementById('blob-labels');
+
+for (let i = 0; i < MAX_BLOBS; i++) {
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.85, 1.0, 32),
+    new THREE.MeshBasicMaterial({color:0xffaa00,transparent:true,opacity:0.85,side:THREE.DoubleSide,depthWrite:false})
+  );
+  ring.rotation.x = -Math.PI/2; ring.visible = false; scene.add(ring);
+
+  const label = document.createElement('div');
+  label.className = 'blob-label'; blobLabelsContainer.appendChild(label);
+  blobMarkers.push({ ring, label });
+}
+
+function projectToScreen(x, y, z) {
+  const v = new THREE.Vector3(x,y,z).project(camera);
+  return { x:(v.x*.5+.5)*window.innerWidth, y:(-v.y*.5+.5)*window.innerHeight, behind:v.z>1 };
+}
+
+// ── Points courant + traîne ───────────────────────────────────────────────────
+const currentPositions = new Float32Array(MAX_POINTS*3);
+const currentColors    = new Float32Array(MAX_POINTS*3);
+const currentGeo       = new THREE.BufferGeometry();
+currentGeo.setAttribute('position', new THREE.BufferAttribute(currentPositions,3));
+currentGeo.setAttribute('color',    new THREE.BufferAttribute(currentColors,3));
+currentGeo.setDrawRange(0,0);
+const currentCloud = new THREE.Points(currentGeo, new THREE.PointsMaterial({size:0.04,vertexColors:true,transparent:true,opacity:1,sizeAttenuation:true}));
 scene.add(currentCloud);
 
-// ── Traîne (tours précédents, semi-transparents) ──────────────────────────────
 const trailClouds = [];
 for (let i = 0; i < TRAIL_FRAMES; i++) {
   const geo = new THREE.BufferGeometry();
-  const pos = new Float32Array(MAX_POINTS * 3);
-  const col = new Float32Array(MAX_POINTS * 3);
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
-  geo.setDrawRange(0, 0);
-  const mat = new THREE.PointsMaterial({
-    size: 0.03,
-    vertexColors: true,
-    transparent: true,
-    opacity: (i / TRAIL_FRAMES) * 0.35,
-    sizeAttenuation: true,
-  });
-  const cloud = new THREE.Points(geo, mat);
-  scene.add(cloud);
-  trailClouds.push(cloud);
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAX_POINTS*3),3));
+  geo.setAttribute('color',    new THREE.BufferAttribute(new Float32Array(MAX_POINTS*3),3));
+  geo.setDrawRange(0,0);
+  const mat = new THREE.PointsMaterial({size:0.03,vertexColors:true,transparent:true,opacity:0,sizeAttenuation:true});
+  const cloud = new THREE.Points(geo,mat); scene.add(cloud); trailClouds.push(cloud);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // COULEUR PAR DISTANCE
 // ══════════════════════════════════════════════════════════════════════════════
 function distanceToColor(distMM) {
-  const m = distMM / 1000;
-  if (m < 1)   return [0.00, 1.00, 0.91]; // cyan
-  if (m < 3)   return [0.00, 1.00, 0.53]; // vert
-  if (m < 6)   return [0.53, 1.00, 0.00]; // vert-jaune
-  if (m < 10)  return [1.00, 0.67, 0.00]; // amber
-  return              [1.00, 0.27, 0.00];  // rouge-orange
+  const m = distMM/1000;
+  if (m<1)  return [0.00,1.00,0.91];
+  if (m<3)  return [0.00,1.00,0.53];
+  if (m<6)  return [0.53,1.00,0.00];
+  if (m<10) return [1.00,0.67,0.00];
+  return           [1.00,0.27,0.00];
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BLOB DETECTION
+// ══════════════════════════════════════════════════════════════════════════════
+function detectBlobs(points, threshold, minPoints) {
+  const n = points.length; if (!n) return [];
+  const parent = Array.from({length:n},(_,i)=>i);
+  function find(a){ while(parent[a]!==a){parent[a]=parent[parent[a]];a=parent[a];}return a;}
+  function union(a,b){const ra=find(a),rb=find(b);if(ra!==rb)parent[ra]=rb;}
+
+  const cell = threshold;
+  const grid = new Map();
+  for (let i=0;i<n;i++){
+    const cx=Math.floor(points[i].x/cell), cz=Math.floor(points[i].z/cell);
+    const k=cx+'_'+cz; if(!grid.has(k))grid.set(k,[]); grid.get(k).push(i);
+  }
+  const thr2=threshold*threshold;
+  for (let i=0;i<n;i++){
+    const cx=Math.floor(points[i].x/cell), cz=Math.floor(points[i].z/cell);
+    for(let dx=-1;dx<=1;dx++){for(let dz=-1;dz<=1;dz++){
+      const bucket=grid.get((cx+dx)+'_'+(cz+dz)); if(!bucket)continue;
+      for(const j of bucket){
+        if(j<=i)continue;
+        const ddx=points[j].x-points[i].x, ddz=points[j].z-points[i].z;
+        if(ddx*ddx+ddz*ddz<=thr2)union(i,j);
+      }
+    }}
+  }
+  const groups=new Map();
+  for(let i=0;i<n;i++){const r=find(i);if(!groups.has(r))groups.set(r,[]);groups.get(r).push(points[i]);}
+  const blobs=[];
+  groups.forEach(pts=>{
+    if(pts.length<minPoints)return;
+    let sx=0,sz=0,minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+    pts.forEach(p=>{sx+=p.x;sz+=p.z;if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.z<minZ)minZ=p.z;if(p.z>maxZ)maxZ=p.z;});
+    blobs.push({x:sx/pts.length,z:sz/pts.length,radius:Math.max(0.05,Math.max(maxX-minX,maxZ-minZ)/2),count:pts.length});
+  });
+  return blobs;
+}
+
+function trackBlobs(newBlobs) {
+  const matched=new Array(newBlobs.length).fill(false); const result=[];
+  trackedBlobs.forEach(tb=>{
+    let best=-1,bestD=BLOB_MATCH_DIST*BLOB_MATCH_DIST;
+    newBlobs.forEach((nb,i)=>{if(matched[i])return;const d=(nb.x-tb.x)**2+(nb.z-tb.z)**2;if(d<bestD){bestD=d;best=i;}});
+    if(best>=0){matched[best]=true;const nb=newBlobs[best];result.push({id:tb.id,x:nb.x,z:nb.z,radius:nb.radius,count:nb.count});}
+  });
+  newBlobs.forEach((nb,i)=>{if(!matched[i])result.push({id:nextBlobId++,x:nb.x,z:nb.z,radius:nb.radius,count:nb.count});});
+  trackedBlobs=result; return result;
+}
+
+function updateBlobMarkers(blobs) {
+  for (let i=0;i<MAX_BLOBS;i++){
+    const m=blobMarkers[i], b=blobs[i];
+    if(!showBlobs||!b){m.ring.visible=false;m.label.style.display='none';continue;}
+    m.ring.visible=true;
+    m.ring.position.set(b.x,0.025,b.z);
+    const r=b.radius+0.06; m.ring.scale.set(r,r,1);
+    const s=projectToScreen(b.x,0.025,b.z);
+    m.label.style.display=s.behind?'none':'block';
+    m.label.style.left=s.x+'px'; m.label.style.top=s.y+'px';
+    m.label.textContent=`#${b.id}`;
+  }
+  document.getElementById('m-blobs').textContent = blobs.length || '0';
+  window.lidarBlobs = blobs;
+  window.dispatchEvent(new CustomEvent('lidar:blobs',{detail:blobs}));
+  if(window.lidar && window.lidar.sendBlobs) window.lidar.sendBlobs(blobs);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -529,199 +591,264 @@ function distanceToColor(distMM) {
 // ══════════════════════════════════════════════════════════════════════════════
 function updateScan(points) {
   if (frozen) return;
-
   const count = Math.min(points.length, MAX_POINTS);
 
-  // Sauver le tour courant dans la traîne
-  if (showTrail && count > 0) {
-    const snapPos = currentPositions.slice(0, count * 3);
-    const snapCol = currentColors.slice(0, count * 3);
-    trailBuffer.unshift({ positions: snapPos, colors: snapCol, count });
-    if (trailBuffer.length > TRAIL_FRAMES) trailBuffer.pop();
-
-    // Mettre à jour les meshes de traîne
-    trailClouds.forEach((cloud, i) => {
-      const frame = trailBuffer[i];
-      if (!frame) { cloud.geometry.setDrawRange(0, 0); return; }
+  // Traîne
+  if (showTrail && count>0) {
+    const snapPos=currentPositions.slice(0,count*3), snapCol=currentColors.slice(0,count*3);
+    trailBuffer.unshift({positions:snapPos,colors:snapCol,count});
+    if(trailBuffer.length>TRAIL_FRAMES)trailBuffer.pop();
+    trailClouds.forEach((cloud,i)=>{
+      const frame=trailBuffer[i];
+      if(!frame){cloud.geometry.setDrawRange(0,0);return;}
       cloud.geometry.attributes.position.array.set(frame.positions);
       cloud.geometry.attributes.color.array.set(frame.colors);
-      cloud.geometry.setDrawRange(0, frame.count);
-      cloud.geometry.attributes.position.needsUpdate = true;
-      cloud.geometry.attributes.color.needsUpdate    = true;
-      cloud.material.opacity = showTrail ? ((TRAIL_FRAMES - i) / TRAIL_FRAMES) * 0.3 : 0;
+      cloud.geometry.setDrawRange(0,frame.count);
+      cloud.geometry.attributes.position.needsUpdate=true;
+      cloud.geometry.attributes.color.needsUpdate=true;
+      cloud.material.opacity=showTrail?((TRAIL_FRAMES-i)/TRAIL_FRAMES)*0.3:0;
     });
+  } else { trailClouds.forEach(c=>{c.geometry.setDrawRange(0,0);}); }
+
+  // Points courants
+  let maxDist=0, minDist=Infinity;
+  const zonePoints=[];
+
+  for(let i=0;i<count;i++){
+    const p=points[i];
+    const x=p.x*SCALE, z=p.y*SCALE;
+    currentPositions[i*3]=x; currentPositions[i*3+1]=0.01; currentPositions[i*3+2]=z;
+
+    let [r,g,b]=distanceToColor(p.distance);
+
+    if(zone && x>=zone.xMin && x<=zone.xMax && z>=zone.zMin && z<=zone.zMax){
+      zonePoints.push({x,z});
+      r=r*0.3+0.7; g=g*0.3+0.7; b=b*0.3+0.7; // teinte blanche pour les points dans la zone
+    }
+    currentColors[i*3]=r; currentColors[i*3+1]=g; currentColors[i*3+2]=b;
+
+    if(p.distance>maxDist)maxDist=p.distance;
+    if(p.distance<minDist&&p.distance>0)minDist=p.distance;
+    sweepAngle=(p.angle*Math.PI/180);
+  }
+
+  currentGeo.attributes.position.needsUpdate=true;
+  currentGeo.attributes.color.needsUpdate=true;
+  currentGeo.setDrawRange(0,count);
+
+  // Blobs
+  if(zone){
+    updateBlobMarkers(trackBlobs(detectBlobs(zonePoints,clusterDist,minBlobPts)));
   } else {
-    trailClouds.forEach(c => { c.geometry.setDrawRange(0, 0); });
+    trackedBlobs=[]; updateBlobMarkers([]);
   }
 
-  // Remplir le buffer courant
-  let maxDist = 0, minDist = Infinity;
-
-  for (let i = 0; i < count; i++) {
-    const p = points[i];
-    // Three.js : X = est, Z = sud (plan horizontal)
-    currentPositions[i * 3]     = p.x * SCALE;
-    currentPositions[i * 3 + 1] = 0.01;
-    currentPositions[i * 3 + 2] = p.y * SCALE;
-
-    const [r, g, b] = distanceToColor(p.distance);
-    currentColors[i * 3]     = r;
-    currentColors[i * 3 + 1] = g;
-    currentColors[i * 3 + 2] = b;
-
-    if (p.distance > maxDist) maxDist = p.distance;
-    if (p.distance < minDist && p.distance > 0) minDist = p.distance;
-
-    // Faire avancer le sweep
-    sweepAngle = (p.angle * Math.PI / 180);
-  }
-
-  currentGeo.attributes.position.needsUpdate = true;
-  currentGeo.attributes.color.needsUpdate    = true;
-  currentGeo.setDrawRange(0, count);
-
-  // HUD
+  // HUD métriques
   document.getElementById('m-points').textContent  = count;
-  document.getElementById('m-maxdist').textContent  = maxDist > 0 ? (maxDist / 1000).toFixed(2) + ' m' : '—';
-  document.getElementById('m-mindist').textContent  = minDist < Infinity ? (minDist / 1000).toFixed(2) + ' m' : '—';
+  document.getElementById('m-maxdist').textContent = maxDist>0?(maxDist/1000).toFixed(2)+' m':'—';
+  document.getElementById('m-mindist').textContent = minDist<Infinity?(minDist/1000).toFixed(2)+' m':'—';
 
-  // RPS
   scanCount++;
-  const now = Date.now();
-  if (now - lastSecond >= 1000) {
-    rps = scanCount;
-    scanCount = 0;
-    lastSecond = now;
-    document.getElementById('m-rps').textContent = rps;
-  }
+  const now=Date.now();
+  if(now-lastSecond>=1000){ rps=scanCount;scanCount=0;lastSecond=now; document.getElementById('m-rps').textContent=rps; }
 
-  document.getElementById('no-signal').style.display = 'none';
+  document.getElementById('no-signal').style.display='none';
   document.getElementById('status-dot').classList.add('active');
-  document.getElementById('status-label').textContent = 'ACTIF';
+  document.getElementById('status-label').textContent='ACTIF';
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BOUCLE D'ANIMATION
 // ══════════════════════════════════════════════════════════════════════════════
-let frame = 0;
-function animate() {
-  requestAnimationFrame(animate);
-  frame++;
-
-  // Rotate sweep line
-  sweepLine.rotation.y = -sweepAngle;
-
+let frame=0;
+function animate(){
+  requestAnimationFrame(animate); frame++;
+  sweepLine.rotation.y=-sweepAngle;
   controls.update();
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 
-  // Frame info
-  if (frame % 30 === 0) {
-    document.getElementById('frame-info').textContent =
-      `FRAME ${frame} · ${window.innerWidth}×${window.innerHeight}`;
+  // Repositionner labels blobs chaque frame (caméra mobile)
+  if(showBlobs && trackedBlobs.length){
+    trackedBlobs.forEach((b,i)=>{
+      const m=blobMarkers[i]; if(!m||!m.ring.visible)return;
+      const s=projectToScreen(b.x,0.025,b.z);
+      m.label.style.display=s.behind?'none':'block';
+      m.label.style.left=s.x+'px'; m.label.style.top=s.y+'px';
+    });
   }
+
+  if(frame%30===0) document.getElementById('frame-info').textContent=`FRAME ${frame} · ${window.innerWidth}×${window.innerHeight}`;
 }
 animate();
 
 // ══════════════════════════════════════════════════════════════════════════════
 // RESIZE
 // ══════════════════════════════════════════════════════════════════════════════
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+window.addEventListener('resize',()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(window.innerWidth,window.innerHeight);
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONTRÔLES HUD
 // ══════════════════════════════════════════════════════════════════════════════
-function setView(mode) {
-  viewMode = mode;
-  if (mode === 'top') {
-    camera.position.set(0, 15, 0);
-    camera.lookAt(0, 0, 0);
-    controls.update();
-    document.getElementById('btn-top').classList.add('active');
-    document.getElementById('btn-perspective').classList.remove('active');
-  } else {
-    camera.position.set(6, 6, 6);
-    camera.lookAt(0, 0, 0);
-    controls.update();
-    document.getElementById('btn-perspective').classList.add('active');
-    document.getElementById('btn-top').classList.remove('active');
-  }
+function setView(mode){
+  viewMode=mode;
+  if(mode==='top'){ camera.position.set(0,15,0);camera.lookAt(0,0,0); }
+  else { camera.position.set(6,6,6);camera.lookAt(0,0,0); }
+  controls.update();
+  document.getElementById('btn-top').classList.toggle('active',mode==='top');
+  document.getElementById('btn-perspective').classList.toggle('active',mode==='perspective');
 }
 
-document.getElementById('btn-top').addEventListener('click', () => setView('top'));
-document.getElementById('btn-perspective').addEventListener('click', () => setView('perspective'));
+document.getElementById('btn-top').addEventListener('click',()=>setView('top'));
+document.getElementById('btn-perspective').addEventListener('click',()=>setView('perspective'));
 
-document.getElementById('btn-trail').addEventListener('click', function() {
-  showTrail = !showTrail;
-  this.classList.toggle('active', showTrail);
-  if (!showTrail) trailClouds.forEach(c => { c.geometry.setDrawRange(0, 0); });
+document.getElementById('btn-trail').addEventListener('click',function(){
+  showTrail=!showTrail; this.classList.toggle('active',showTrail);
+  if(!showTrail)trailClouds.forEach(c=>{c.geometry.setDrawRange(0,0);});
 });
 
-document.getElementById('btn-grid').addEventListener('click', function() {
-  showGrid = !showGrid;
-  gridHelper.visible = showGrid;
-  this.classList.toggle('active', showGrid);
+document.getElementById('btn-grid').addEventListener('click',function(){
+  showGrid=!showGrid; gridHelper.visible=showGrid; this.classList.toggle('active',showGrid);
 });
 
-document.getElementById('btn-freeze').addEventListener('click', function() {
-  frozen = !frozen;
-  this.classList.toggle('active', frozen);
-  this.textContent = frozen ? 'REPRISE' : 'PAUSE';
+document.getElementById('btn-freeze').addEventListener('click',function(){
+  frozen=!frozen; this.classList.toggle('active',frozen); this.textContent=frozen?'REPRISE':'PAUSE';
 });
 
-// Init états boutons
+// ── Zone ──────────────────────────────────────────────────────────────────────
+document.getElementById('btn-zone').addEventListener('click',function(){
+  zoneEditing=!zoneEditing;
+  this.classList.toggle('zone-active',zoneEditing);
+  document.getElementById('zone-hint').classList.toggle('active',zoneEditing);
+  controls.enabled=!zoneEditing;
+  if(!zoneEditing){zoneDragging=false;zonePreview.visible=false;}
+});
+
+document.getElementById('btn-zone-clear').addEventListener('click',()=>{
+  zone=null; zoneDragging=false; zonePreview.visible=false;
+  saveZone(); updateZoneMesh(); trackedBlobs=[]; updateBlobMarkers([]);
+});
+
+canvas.addEventListener('pointerdown',(e)=>{
+  if(!zoneEditing)return;
+  const pt=getGroundPoint(e.clientX,e.clientY); if(!pt)return;
+  zoneDragging=true; zoneDragStart={x:pt.x,z:pt.z};
+});
+
+canvas.addEventListener('pointermove',(e)=>{
+  if(!zoneEditing||!zoneDragging)return;
+  const pt=getGroundPoint(e.clientX,e.clientY); if(!pt)return;
+  setRectOutline(zonePreview,Math.min(zoneDragStart.x,pt.x),Math.max(zoneDragStart.x,pt.x),Math.min(zoneDragStart.z,pt.z),Math.max(zoneDragStart.z,pt.z));
+  zonePreview.visible=true;
+});
+
+window.addEventListener('pointerup',(e)=>{
+  if(!zoneEditing||!zoneDragging)return;
+  zoneDragging=false; zonePreview.visible=false;
+  const pt=getGroundPoint(e.clientX,e.clientY); if(!pt)return;
+  const xMin=Math.min(zoneDragStart.x,pt.x),xMax=Math.max(zoneDragStart.x,pt.x);
+  const zMin=Math.min(zoneDragStart.z,pt.z),zMax=Math.max(zoneDragStart.z,pt.z);
+  if(Math.abs(xMax-xMin)<0.05||Math.abs(zMax-zMin)<0.05)return;
+  zone={xMin,xMax,zMin,zMax}; saveZone(); updateZoneMesh();
+});
+
+// ── Blobs ─────────────────────────────────────────────────────────────────────
+document.getElementById('btn-blobs').addEventListener('click',function(){
+  showBlobs=!showBlobs; this.classList.toggle('active',showBlobs);
+  if(!showBlobs)blobMarkers.forEach(m=>{m.ring.visible=false;m.label.style.display='none';});
+});
+
+// ── Réglages détection ────────────────────────────────────────────────────────
+const dCluster=document.getElementById('d-cluster');
+const dMinPts=document.getElementById('d-minpts');
+dCluster.value=clusterDist; dMinPts.value=minBlobPts;
+dCluster.addEventListener('change',()=>{ clusterDist=Math.max(0.02,parseFloat(dCluster.value)||0.18); saveBlobParams(); });
+dMinPts.addEventListener('change',()=>{  minBlobPts=Math.max(1,parseInt(dMinPts.value,10)||3); saveBlobParams(); });
+
+// ── OSC ───────────────────────────────────────────────────────────────────────
+const oscEnabledEl=document.getElementById('osc-enabled');
+const oscHostEl=document.getElementById('osc-host');
+const oscPortEl=document.getElementById('osc-port');
+oscEnabledEl.checked=oscConfig.enabled;
+oscHostEl.value=oscConfig.host;
+oscPortEl.value=oscConfig.port;
+
+if(!window.lidar||!window.lidar.setOscConfig){
+  oscEnabledEl.disabled=true;
+} else {
+  window.lidar.setOscConfig(oscConfig);
+}
+
+function updateOscConfig(){
+  oscConfig={enabled:oscEnabledEl.checked,host:oscHostEl.value||'127.0.0.1',port:Math.max(1,parseInt(oscPortEl.value,10)||9000)};
+  saveOscConfig();
+}
+oscEnabledEl.addEventListener('change',updateOscConfig);
+oscHostEl.addEventListener('change',updateOscConfig);
+oscPortEl.addEventListener('change',updateOscConfig);
+
+// ── Init états boutons ────────────────────────────────────────────────────────
 document.getElementById('btn-trail').classList.add('active');
 document.getElementById('btn-grid').classList.add('active');
+document.getElementById('btn-blobs').classList.add('active');
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ÉCOUTE DES DONNÉES LIDAR via IPC
+// IPC LIDAR
 // ══════════════════════════════════════════════════════════════════════════════
 if (window.lidar) {
-  window.lidar.onScan((points) => {
-    updateScan(points);
+  window.lidar.onScan(points=>updateScan(points));
+  window.lidar.onInfo(info=>{
+    document.getElementById('port-label').textContent=`FW ${info.firmwareMajor}.${info.firmwareMinor} · HW ${info.hardware}`;
   });
-
-  window.lidar.onInfo((info) => {
-    document.getElementById('port-label').textContent =
-      `FW ${info.firmwareMajor}.${info.firmwareMinor} · HW ${info.hardware}`;
-  });
-
-  window.lidar.onError((msg) => {
+  window.lidar.onError(()=>{
     document.getElementById('status-dot').classList.remove('active');
-    document.getElementById('status-label').textContent = 'ERREUR';
-    console.error('[LidarViz] Erreur:', msg);
+    document.getElementById('status-label').textContent='ERREUR';
   });
 } else {
-  // Mode démo (si ouvert sans Electron)
-  console.warn('[LidarViz] window.lidar non disponible — mode démo');
   startDemo();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// MODE DÉMO (test sans capteur)
+// RESTAURATION DES RÉGLAGES AU DÉMARRAGE
 // ══════════════════════════════════════════════════════════════════════════════
-function startDemo() {
-  let demoAngle = 0;
-  setInterval(() => {
-    const points = [];
-    for (let a = 0; a < 360; a += 1.5) {
-      const noise  = (Math.random() - 0.5) * 300;
-      const base   = 3000 + Math.sin((a * Math.PI) / 60) * 1500 + noise;
-      const dist   = Math.max(200, base);
-      const rad    = (a * Math.PI) / 180;
-      points.push({
-        angle:    a,
-        distance: dist,
-        quality:  15,
-        x:        dist * Math.cos(rad),
-        y:        dist * Math.sin(rad),
-      });
+(async () => {
+  await restoreSettings();
+
+  // Mettre à jour l'UI avec les valeurs restaurées
+  document.getElementById('d-cluster').value  = clusterDist;
+  document.getElementById('d-minpts').value   = minBlobPts;
+
+  const oscEn   = document.getElementById('osc-enabled');
+  const oscHost = document.getElementById('osc-host');
+  const oscPort = document.getElementById('osc-port');
+  oscEn.checked  = oscConfig.enabled;
+  oscHost.value  = oscConfig.host;
+  oscPort.value  = oscConfig.port;
+
+  // Appliquer la config OSC au main process
+  if (window.lidar && window.lidar.setOscConfig) window.lidar.setOscConfig(oscConfig);
+
+  // Afficher la zone si elle a été restaurée
+  updateZoneMesh();
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MODE DÉMO
+// ══════════════════════════════════════════════════════════════════════════════
+function startDemo(){
+  setInterval(()=>{
+    const points=[];
+    for(let a=0;a<360;a+=1.5){
+      const noise=(Math.random()-.5)*300;
+      const dist=Math.max(200,3000+Math.sin(a*Math.PI/60)*1500+noise);
+      const rad=a*Math.PI/180;
+      points.push({angle:a,distance:dist,quality:15,x:dist*Math.cos(rad),y:dist*Math.sin(rad)});
     }
     updateScan(points);
-  }, 100);
+  },100);
 }
 </script>
 </body>

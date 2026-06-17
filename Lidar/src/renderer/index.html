@@ -194,6 +194,26 @@
     </div>
   </header>
 
+  <!-- DÉMARRAGE AUTOMATIQUE -->
+  <div class="panel" style="border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.04)">
+    <div class="panel-title">
+      <span style="color:var(--cyan)">⚡</span>
+      Démarrage automatique
+    </div>
+    <div class="row">
+      <button id="btn-auto" class="primary" style="flex:1; font-size:13px; padding:12px">
+        ⚡ Connecter + Moteur + Scan
+      </button>
+    </div>
+    <div class="row" style="gap:14px; justify-content:space-between">
+      <label style="display:flex; align-items:center; gap:8px; font-size:10px; color:var(--dim); cursor:pointer">
+        <input type="checkbox" id="chk-autostart" style="accent-color:var(--cyan)">
+        Lancer automatiquement au démarrage
+      </label>
+      <span id="auto-status" style="font-size:10px; color:var(--dim)"></span>
+    </div>
+  </div>
+
   <!-- ÉTAPE 1 : Connexion -->
   <div class="panel">
     <div class="panel-title">
@@ -515,6 +535,53 @@ function registerEvents() {
   });
 }
 
+// ── Démarrage automatique (3 étapes enchaînées) ───────────────────────────────
+async function autoStart() {
+  const port = portSelect.value;
+  if (!port) { log('Aucun port sélectionné — impossible de démarrer', 'err'); return; }
+
+  // Forcer 256 000 baud pour le démarrage automatique (A2M8)
+  document.querySelector('input[name=baud][value="256000"]').checked = true;
+
+  $('btn-auto').disabled = true;
+  $('auto-status').textContent = '';
+
+  // Étape 1 : connexion
+  $('auto-status').textContent = '① Connexion…';
+  await connect();
+  await new Promise(r => setTimeout(r, 600));
+
+  // Vérifier que la connexion a réussi
+  if ($('btn-start-motor').disabled === false) {
+    // Étape 2 : moteur
+    $('auto-status').textContent = '② Démarrage moteur…';
+    await startMotor();
+
+    // Attendre la confirmation moteur (onMotor event active le btn-start-scan)
+    await new Promise(resolve => {
+      const check = setInterval(() => {
+        if (!$('btn-start-scan').disabled) { clearInterval(check); resolve(); }
+      }, 200);
+      setTimeout(() => { clearInterval(check); resolve(); }, 8000); // timeout 8s
+    });
+
+    // Étape 3 : scan
+    $('auto-status').textContent = '③ Lancement scan…';
+    await startScan();
+    $('auto-status').textContent = '✓ Opérationnel';
+  } else {
+    $('auto-status').textContent = '✗ Échec connexion';
+    $('btn-auto').disabled = false;
+  }
+}
+
+// ── Checkbox mémorisation ──────────────────────────────────────────────────────
+const chkAuto = $('chk-autostart');
+chkAuto.checked = localStorage.getItem('lidarAutoStart') === '1';
+chkAuto.addEventListener('change', () => {
+  localStorage.setItem('lidarAutoStart', chkAuto.checked ? '1' : '0');
+});
+
 // ── Listeners boutons ─────────────────────────────────────────────────────────
 $('btn-refresh').addEventListener('click', refreshPorts);
 $('btn-connect').addEventListener('click', connect);
@@ -524,11 +591,20 @@ $('btn-stop-motor').addEventListener('click', stopMotor);
 $('btn-start-scan').addEventListener('click', startScan);
 $('btn-stop-scan').addEventListener('click', stopScan);
 $('btn-open-viz').addEventListener('click', () => window.lidar.openViz?.());
+$('btn-auto').addEventListener('click', autoStart);
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 registerEvents();
-refreshPorts();
-log('Interface prête — RPLiDAR A2', 'ok');
+(async () => {
+  await refreshPorts();
+  log('Interface prête — RPLiDAR A2', 'ok');
+
+  // Lancement auto si coché
+  if (chkAuto.checked && portSelect.value) {
+    log('Démarrage automatique…', 'info');
+    setTimeout(autoStart, 800);
+  }
+})();
 </script>
 </body>
 </html>

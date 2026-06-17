@@ -274,9 +274,108 @@ async startMotor(pwm = 600) {
 
 ---
 
-## Prochaine étape prévue
+## Étape 3 (juin 2026) — Zone de détection · Blob detection · OSC · Auto-démarrage
 
-**Étape 3** : détection de présences et zones interactives
-- Zones polygonales configurables
-- Tracking de personnes (clustering de points)
-- Événements déclenchables pour l'installation (OSC, WebSocket, callbacks)
+### Fichiers modifiés / ajoutés
+
+| Fichier | Rôle |
+|---|---|
+| `src/renderer/visualizer.html` | Zone, blobs, OSC UI, persistance |
+| `src/renderer/index.html` | Bouton + case "Démarrage automatique" |
+| `src/main.js` | Relais OSC UDP, persistance fichier disque |
+| `src/preload.js` | Exposition `saveSettings`, `loadSettings`, `sendBlobs`, `setOscConfig` |
+| `src/osc.js` | Encodeur OSC 1.0 maison (pas de dépendance npm) |
+| `start-lidar.bat` | Lance `C:\LidarApp\node_modules\electron\dist\electron.exe .` (hors Dropbox) |
+
+> **Problème Dropbox** : `node_modules` dans Dropbox crée des verrous EBUSY qui
+> empêchent `npm install`. Solution : dépendances installées dans `C:\LidarApp\`
+> (hors Dropbox). Le bat copie `src/` depuis Dropbox vers `C:\LidarApp\src\`
+> à chaque lancement via `xcopy`.
+
+---
+
+### Zone de détection rectangulaire (visualizer.html)
+
+- Bouton **ZONE** (barre du bas) → mode édition : clic + glisser sur le canvas
+  (vue TOP) → raycast sur le plan Y=0 → rectangle `{xMin, xMax, zMin, zMax}` en
+  mètres (repère Three.js : X = est, Z = sud, origine = capteur).
+- Bouton **✕ ZONE** pour effacer. Zone affichée : plan ambre semi-transparent +
+  contour, dimensions dans le panneau "Détection zone" (HUD droit).
+- Points du scan situés dans la zone : teintés en blanc/clair pour feedback visuel.
+- OrbitControls désactivé pendant le dessin de la zone.
+
+---
+
+### Blob detection (visualizer.html)
+
+- Algorithme : grille + union-find sur les points dans la zone (O(n) pratique).
+- Paramètres réglables dans le HUD droit :
+  - **Cluster (m)** : distance max entre deux points du même objet (défaut 0.18 m).
+  - **Pts min** : nombre de points minimum pour valider un blob (défaut 3).
+- Tracking inter-tours : chaque blob reçoit un **id stable** réassocié par
+  appariement au plus proche voisin (seuil 0.4 m) → suivi cohérent d'un ballon
+  ou d'une main en mouvement.
+- Affichage : anneaux ambre + labels `#id` positionnés en espace écran à chaque
+  frame (repositionnement même si la caméra bouge). Bouton **BLOBS** pour masquer.
+- Compteur "Objets détectés" dans le HUD gauche.
+
+---
+
+### Sortie OSC UDP (src/osc.js + src/main.js)
+
+- Encodeur OSC 1.0 minimal sans dépendance npm (`dgram` Node.js natif).
+- Flux : `visualizer.html` → `ipcRenderer.send('lidar:blobs', blobs)` →
+  `ipcMain.on('lidar:blobs')` → `OSCSender.send()` (UDP).
+- **Messages émis à chaque tour** (si OSC activé) :
+  - `/lidar/blob` `,ifff` → `[id(int), x(float), z(float), radius(float)]`
+    — un message par blob détecté (mètres, repère Three.js)
+  - `/lidar/blobs/count` `,i` → nombre de blobs du tour
+- Config dans le HUD droit (panneau "Sortie OSC") : case Activer, Host, Port
+  (défaut `127.0.0.1:9000`). Compatible TouchDesigner, Max/MSP, Unity, Processing.
+- `window.lidarBlobs` et `CustomEvent('lidar:blobs')` aussi disponibles pour
+  intégration JS directe dans la page.
+
+---
+
+### Persistance des réglages (double couche)
+
+Les réglages survivent aux crashs et aux redémarrages Windows :
+
+1. **Fichier JSON disque** (prioritaire) :
+   `%APPDATA%\lidar-a2-app\lidar-settings.json` — écrit via `fs.writeFileSync`
+   immédiatement à chaque changement (IPC `lidar:save-settings`).
+2. **localStorage Electron** (fallback) — en cas d'indisponibilité du fichier.
+
+Contenu sauvegardé : `{ zone, clusterDist, minBlobPts, osc: {enabled, host, port} }`
+
+Restauration au démarrage : IIFE async dans `visualizer.html`, charge le fichier
+via IPC, met à jour zone + inputs UI + config OSC du main process.
+
+---
+
+### Démarrage automatique (index.html)
+
+- Panel **"⚡ Démarrage automatique"** en haut de l'interface de connexion.
+- Bouton **"⚡ Connecter + Moteur + Scan"** : enchaîne les 3 étapes en séquence
+  (connexion → moteur → scan), force automatiquement **256 000 baud** (A2M8).
+- Case **"Lancer automatiquement au démarrage"** mémorisée dans `localStorage`
+  (`lidarAutoStart`). Si cochée, le démarrage auto se déclenche 800 ms après
+  l'ouverture de l'interface, dès qu'un port est détecté.
+
+---
+
+### Workflow de développement
+
+```
+Éditer les sources dans :
+  C:\Users\info\Dropbox\...\Lidar\src\
+
+Lancer l'app :
+  double-clic start-lidar.bat
+  → xcopy src\ vers C:\LidarApp\src\
+  → C:\LidarApp\node_modules\electron\dist\electron.exe .
+```
+
+`node_modules` est installé définitivement dans `C:\LidarApp\` (hors Dropbox).
+Electron global (`npm install -g electron`) échoue car binaire non téléchargé
+avec Node 18 + ESM — utiliser l'electron local de `C:\LidarApp\node_modules\`.

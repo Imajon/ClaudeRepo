@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Échecs Magiques — Apprends à jouer !</title>
+<style>
+  :root{
+    --light: #f1d9b5;
+    --dark: #6e8a44;
+    --accent: #ff6b6b;
+    --accent2: #4ecdc4;
+    --gold: #ffd93d;
+    --bg: #2b2250;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+    background: radial-gradient(circle at top, #4b3f8f, #1b1438);
+    color:white;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px;
+    overflow-x:hidden;
+  }
+  h1{
+    font-size: 2em;
+    margin: 8px 0;
+    text-shadow: 3px 3px 0 #ff6b6b;
+    text-align:center;
+  }
+  #topbar{
+    display:flex;
+    gap:16px;
+    align-items:center;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-bottom:8px;
+  }
+  .badge{
+    background: rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-weight:bold;
+    font-size: 1em;
+  }
+  #stars-count{ color: var(--gold); }
+  #level-name{ color: var(--accent2); }
+  #board-wrap{
+    position:relative;
+    margin: 12px 0;
+  }
+  #board{
+    display:grid;
+    grid-template-columns: repeat(8, min(11vw, 56px));
+    grid-template-rows: repeat(8, min(11vw, 56px));
+    border: 6px solid #3a2d6e;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    overflow:hidden;
+  }
+  .cell{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: min(8vw, 40px);
+    position:relative;
+    cursor:pointer;
+    user-select:none;
+    transition: filter 0.15s;
+  }
+  .cell.light{ background: var(--light); }
+  .cell.dark{ background: var(--dark); }
+  .cell.selected{ box-shadow: inset 0 0 0 4px var(--accent2); }
+  .cell.hint::after{
+    content:'';
+    position:absolute;
+    width: 26%; height:26%;
+    border-radius:50%;
+    background: rgba(46, 134, 222, 0.55);
+  }
+  .cell.hint-capture::after{
+    content:'';
+    position:absolute;
+    width: 80%; height:80%;
+    border-radius:50%;
+    border: 5px solid rgba(255,107,107,0.7);
+    background:none;
+  }
+  .cell .piece{
+    z-index:2;
+    filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.5));
+    transition: transform 0.15s;
+  }
+  .cell.selected .piece{ transform: scale(1.15); }
+  .star{
+    animation: twinkle 1.2s infinite ease-in-out;
+  }
+  @keyframes twinkle{
+    0%,100%{ transform: scale(1) rotate(0deg); }
+    50%{ transform: scale(1.2) rotate(15deg); }
+  }
+  #controls{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  button{
+    font-family: inherit;
+    font-size: 1em;
+    font-weight:bold;
+    padding: 10px 18px;
+    border-radius: 14px;
+    border: none;
+    cursor:pointer;
+    background: linear-gradient(180deg, var(--accent2), #2e9c92);
+    color:white;
+    box-shadow: 0 4px 0 #1f6b63;
+    transition: transform 0.1s;
+  }
+  button:active{ transform: translateY(3px); box-shadow: 0 1px 0 #1f6b63; }
+  button.secondary{
+    background: linear-gradient(180deg, #888, #555);
+    box-shadow: 0 4px 0 #333;
+  }
+  #message{
+    min-height: 1.6em;
+    font-size: 1.1em;
+    text-align:center;
+    margin: 8px 0;
+    font-weight:bold;
+  }
+  #progress-track{
+    display:flex;
+    gap:6px;
+    margin: 6px 0 2px;
+    flex-wrap:wrap;
+    justify-content:center;
+    max-width: 600px;
+  }
+  .step-dot{
+    width: 16px; height:16px;
+    border-radius:50%;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+  .step-dot.done{ background: var(--gold); border-color: var(--gold); }
+  .step-dot.current{ background: var(--accent2); border-color:white; }
+  .step-dot.fail{ background: var(--accent); border-color:white; }
+
+  /* Confetti */
+  .confetti{
+    position:fixed;
+    top:-10px;
+    width:10px; height:10px;
+    border-radius:2px;
+    pointer-events:none;
+    z-index:999;
+    animation: fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform: translateY(110vh) rotate(720deg); opacity: 0.3; }
+  }
+
+  #success-banner{
+    position:fixed;
+    top:40%;
+    left:50%;
+    transform: translate(-50%,-50%) scale(0);
+    background: linear-gradient(135deg, var(--gold), var(--accent));
+    color:#2b2250;
+    padding: 24px 40px;
+    border-radius: 24px;
+    font-size: 1.8em;
+    font-weight:bold;
+    text-align:center;
+    box-shadow: 0 0 0 8px rgba(255,255,255,0.3), 0 20px 50px rgba(0,0,0,0.5);
+    z-index: 1000;
+    transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+  }
+  #success-banner.show{
+    transform: translate(-50%,-50%) scale(1);
+  }
+  #fail-banner{
+    position:fixed;
+    top:40%;
+    left:50%;
+    transform: translate(-50%,-50%) scale(0);
+    background: linear-gradient(135deg, #555, #333);
+    color:white;
+    padding: 20px 36px;
+    border-radius: 24px;
+    font-size: 1.4em;
+    font-weight:bold;
+    text-align:center;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+  }
+  #fail-banner.show{
+    transform: translate(-50%,-50%) scale(1);
+  }
+  .bounce{ animation: bounce 0.6s ease; }
+  @keyframes bounce{
+    0%,100%{ transform: scale(1); }
+    30%{ transform: scale(1.3) rotate(-8deg); }
+    60%{ transform: scale(0.9) rotate(5deg); }
+  }
+  #intro{
+    max-width: 520px;
+    text-align:center;
+    font-size: 1.05em;
+    line-height:1.4;
+    background: rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 6px;
+  }
+  footer{
+    margin-top: 10px;
+    opacity:0.6;
+    font-size: 0.8em;
+  }
+</style>
+</head>
+<body>
+
+<h1>♟️ Échecs Magiques ✨</h1>
+
+<div id="topbar">
+  <div class="badge">⭐ <span id="stars-count">0</span></div>
+  <div class="badge">Niveau : <span id="level-name">-</span></div>
+  <div class="badge">Étape <span id="step-num">1</span>/<span id="step-total">1</span></div>
+</div>
+
+<div id="intro"></div>
+
+<div id="progress-track"></div>
+
+<div id="message">Clique sur "Commencer" pour jouer !</div>
+
+<div id="board-wrap">
+  <div id="board"></div>
+</div>
+
+<div id="controls">
+  <button id="btn-start">▶️ Commencer</button>
+  <button id="btn-retry" class="secondary">🔄 Recommencer l'étape</button>
+  <button id="btn-help" class="secondary">💡 Indice</button>
+</div>
+
+<div id="success-banner"></div>
+<div id="fail-banner"></div>
+
+<footer>Conçu pour apprendre les échecs en s'amusant 🎉</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  const SIZE = 8;
+  const PIECE_GLYPHS = {
+    P: '♙', N: '♘', B: '♗', R: '♖', Q: '♕', K: '♔'
+  };
+
+  // ---------- Curriculum definition ----------
+  // Each level: a piece focus, with multiple steps of increasing difficulty.
+  // Each step: board size used (always 8x8 board but piece + star placed),
+  // start position(s), target star position(s), max allowed moves.
+  // Difficulty increases via distance / obstacles / number of stars / move limit.
+
+  function sq(file, rank){ return {f:file, r:rank}; } // f:0-7 (a-h), r:0-7 (1-8 => index 0 = rank1)
+
+  function dist(a,b){ return Math.max(Math.abs(a.f-b.f), Math.abs(a.r-b.r)); }
+
+  const LEVELS = [
+    {
+      name: "Le Pion 🛡️",
+      piece: "P",
+      tip: "Le Pion avance d'une case tout droit. Il peut manger une étoile seulement en avançant en diagonale d'une case !",
+      steps: [
+        { start: sq(3,1), stars: [sq(3,3)], moves: 2, obstacles: [] },
+        { start: sq(1,1), stars: [sq(2,2)], moves: 2, obstacles: [] },
+        { start: sq(4,2), stars: [sq(5,3)], moves: 2, obstacles: [] },
+        { start: sq(2,1), stars: [sq(2,4)], moves: 3, obstacles: [] },
+        { start: sq(1,1), stars: [sq(0,2)], moves: 2, obstacles: [] },
+      ]
+    },
+    {
+      name: "Le Cavalier 🐴",
+      piece: "N",
+      tip: "Le Cavalier se déplace en forme de 'L' : 2 cases dans un sens, 1 case sur le côté. Il peut sauter par-dessus les autres pièces !",
+      steps: [
+        { start: sq(1,0), stars: [sq(2,2)], moves: 1, obstacles: [] },
+        { start: sq(1,0), stars: [sq(3,1)], moves: 2, obstacles: [] },
+        { start: sq(0,0), stars: [sq(5,5)], moves: 3, obstacles: [] },
+        { start: sq(3,3), stars: [sq(6,4)], moves: 2, obstacles: [] },
+        { start: sq(0,0), stars: [sq(7,7)], moves: 4, obstacles: [] },
+      ]
+    },
+    {
+      name: "Le Fou 🔮",
+      piece: "B",
+      tip: "Le Fou se déplace en diagonale, aussi loin qu'il veut, mais toujours sur les cases de la même couleur !",
+      steps: [
+        { start: sq(2,2), stars: [sq(5,5)], moves: 1, obstacles: [] },
+        { start: sq(0,0), stars: [sq(7,7)], moves: 1, obstacles: [] },
+        { start: sq(0,2), stars: [sq(5,7)], moves: 2, obstacles: [] },
+        { start: sq(0,0), stars: [sq(3,3),sq(6,6)], moves: 2, obstacles: [] },
+        { start: sq(7,0), stars: [sq(2,5)], moves: 2, obstacles: [] },
+      ]
+    },
+    {
+      name: "La Tour 🏰",
+      piece: "R",
+      tip: "La Tour se déplace tout droit, en ligne ou en colonne, aussi loin qu'elle veut !",
+      steps: [
+        { start: sq(0,0), stars: [sq(0,5)], moves: 1, obstacles: [] },
+        { start: sq(0,0), stars: [sq(6,0)], moves: 1, obstacles: [] },
+        { start: sq(3,3), stars: [sq(3,7),sq(7,3)], moves: 2, obstacles: [] },
+        { start: sq(0,0), stars: [sq(0,7)], moves: 1, obstacles: [sq(0,4)] },
+        { start: sq(0,0), stars: [sq(4,4)], moves: 2, obstacles: [] },
+      ]
+    },
+    {
+      name: "La Dame 👑",
+      piece: "Q",
+      tip: "La Dame est la plus puissante : elle bouge comme la Tour ET comme le Fou !",
+      steps: [
+        { start: sq(3,3), stars: [sq(3,7)], moves: 1, obstacles: [] },
+        { start: sq(3,3), stars: [sq(6,6)], moves: 1, obstacles: [] },
+        { start: sq(0,0), stars: [sq(7,7),sq(0,7)], moves: 2, obstacles: [] },
+        { start: sq(0,0), stars: [sq(4,4)], moves: 2, obstacles: [sq(2,2)] },
+        { start: sq(4,0), stars: [sq(0,4),sq(7,4),sq(4,7)], moves: 3, obstacles: [] },
+      ]
+    },
+    {
+      name: "Le Roi 🤴",
+      piece: "K",
+      tip: "Le Roi se déplace d'une seule case, dans toutes les directions ! Il faut le protéger, c'est le plus précieux.",
+      steps: [
+        { start: sq(3,3), stars: [sq(4,4)], moves: 1, obstacles: [] },
+        { start: sq(3,3), stars: [sq(3,5)], moves: 2, obstacles: [] },
+        { start: sq(0,0), stars: [sq(2,2)], moves: 2, obstacles: [] },
+        { start: sq(3,3), stars: [sq(1,1),sq(5,5)], moves: 4, obstacles: [] },
+        { start: sq(0,0), stars: [sq(3,3)], moves: 3, obstacles: [] },
+      ]
+    },
+    {
+      name: "Toutes les pièces ! 🌟",
+      piece: "MIX",
+      tip: "Maintenant, mélange tout ce que tu as appris ! Choisis la bonne pièce, au bon moment.",
+      steps: [
+        {
+          pieces: [ {type:'P', at: sq(2,1)}, {type:'N', at: sq(6,0)} ],
+          stars: [sq(2,3), sq(4,1)],
+          moves: 3, obstacles: []
+        },
+        {
+          pieces: [ {type:'R', at: sq(0,0)}, {type:'B', at: sq(0,7)} ],
+          stars: [sq(0,4), sq(4,3)],
+          moves: 2, obstacles: []
+        },
+        {
+          pieces: [ {type:'Q', at: sq(3,0)}, {type:'K', at: sq(3,7)} ],
+          stars: [sq(3,4), sq(2,6)],
+          moves: 2, obstacles: []
+        },
+        {
+          pieces: [ {type:'P', at: sq(1,1)}, {type:'N', at: sq(5,0)}, {type:'R', at: sq(7,0)} ],
+          stars: [sq(2,2), sq(6,2), sq(7,5)],
+          moves: 4, obstacles: []
+        },
+        {
+          pieces: [ {type:'Q', at: sq(0,0)}, {type:'K', at: sq(7,7)}, {type:'N', at: sq(4,4)} ],
+          stars: [sq(0,7), sq(6,6), sq(5,2)],
+          moves: 4, obstacles: []
+        },
+      ]
+    }
+  ];
+
+  // ---------- Game state ----------
+  let levelIdx = 0;
+  let stepIdx = 0;
+  let totalStars = parseInt(localStorage.getItem('echecs_stars')||'0', 10);
+  let movesUsed = 0;
+  let boardState = []; // 8x8 array of {type, color} or null
+  let starsLeft = [];
+  let obstacles = [];
+  let selected = null; // {f,r}
+  let movesAllowed = 1;
+  let consecutiveFails = 0;
+
+  const boardEl = document.getElementById('board');
+  const messageEl = document.getElementById('message');
+  const starsCountEl = document.getElementById('stars-count');
+  const levelNameEl = document.getElementById('level-name');
+  const stepNumEl = document.getElementById('step-num');
+  const stepTotalEl = document.getElementById('step-total');
+  const introEl = document.getElementById('intro');
+  const progressTrack = document.getElementById('progress-track');
+  const successBanner = document.getElementById('success-banner');
+  const failBanner = document.getElementById('fail-banner');
+
+  document.getElementById('btn-start').addEventListener('click', () => startStep());
+  document.getElementById('btn-retry').addEventListener('click', () => startStep());
+  document.getElementById('btn-help').addEventListener('click', showHint);
+
+  function saveStars(){
+    localStorage.setItem('echecs_stars', String(totalStars));
+    starsCountEl.textContent = totalStars;
+  }
+
+  function currentLevel(){ return LEVELS[levelIdx]; }
+  function currentStep(){ return currentLevel().steps[stepIdx]; }
+
+  function buildEmptyBoard(){
+    const b = [];
+    for(let r=0;r<SIZE;r++){ b.push(new Array(SIZE).fill(null)); }
+    return b;
+  }
+
+  function startStep(){
+    const level = currentLevel();
+    const step = currentStep();
+    boardState = buildEmptyBoard();
+    selected = null;
+    movesUsed = 0;
+    movesAllowed = step.moves;
+    obstacles = (step.obstacles||[]).map(o => ({...o}));
+
+    if(step.pieces){
+      step.pieces.forEach(p => {
+        boardState[p.at.r][p.at.f] = { type: p.type, color: 'w' };
+      });
+    } else {
+      boardState[step.start.r][step.start.f] = { type: level.piece, color: 'w' };
+    }
+    obstacles.forEach(o => {
+      boardState[o.r][o.f] = { type: 'OBST', color: 'x' };
+    });
+
+    starsLeft = step.stars.map(s => ({...s}));
+
+    levelNameEl.textContent = level.name;
+    introEl.textContent = level.tip;
+    stepNumEl.textContent = stepIdx+1;
+    stepTotalEl.textContent = level.steps.length;
+    messageEl.textContent = `Coups disponibles : ${movesAllowed}. Mange toutes les étoiles ⭐ !`;
+
+    renderProgress();
+    render();
+  }
+
+  function renderProgress(){
+    progressTrack.innerHTML = '';
+    const level = currentLevel();
+    level.steps.forEach((s, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'step-dot';
+      if(i < stepIdx) dot.classList.add('done');
+      else if(i === stepIdx) dot.classList.add('current');
+      progressTrack.appendChild(dot);
+    });
+  }
+
+  function render(){
+    boardEl.innerHTML = '';
+    for(let r=SIZE-1; r>=0; r--){
+      for(let f=0; f<SIZE; f++){
+        const cell = document.createElement('div');
+        cell.className = 'cell ' + (((f+r)%2===0) ? 'dark' : 'light');
+        cell.dataset.f = f;
+        cell.dataset.r = r;
+
+        const piece = boardState[r][f];
+        const isStar = starsLeft.some(s => s.f===f && s.r===r);
+
+        if(piece && piece.type !== 'OBST'){
+          const span = document.createElement('span');
+          span.className = 'piece';
+          span.textContent = PIECE_GLYPHS[piece.type];
+          cell.appendChild(span);
+        } else if(piece && piece.type === 'OBST'){
+          const span = document.createElement('span');
+          span.textContent = '🪨';
+          cell.appendChild(span);
+        } else if(isStar){
+          const span = document.createElement('span');
+          span.className = 'star';
+          span.textContent = '⭐';
+          cell.appendChild(span);
+        }
+
+        if(selected && selected.f===f && selected.r===r){
+          cell.classList.add('selected');
+        }
+
+        if(selected){
+          const moves = legalMoves(selected);
+          if(moves.some(m => m.f===f && m.r===r)){
+            const targetIsStar = isStar;
+            cell.classList.add(targetIsStar ? 'hint-capture' : 'hint');
+          }
+        }
+
+        cell.addEventListener('click', () => onCellClick(f,r));
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  function inBounds(f,r){ return f>=0 && f<8 && r>=0 && r<8; }
+
+  function legalMoves(pos){
+    const piece = boardState[pos.r][pos.f];
+    if(!piece) return [];
+    const moves = [];
+    const type = piece.type;
+
+    function tryDir(df, dr, sliding){
+      let f = pos.f + df, r = pos.r + dr;
+      while(inBounds(f,r)){
+        const occ = boardState[r][f];
+        if(occ && occ.type === 'OBST') break;
+        moves.push({f,r});
+        if(occ) break; // can't go further if occupied (no real captures of pieces in this game)
+        if(!sliding) break;
+        f += df; r += dr;
+      }
+    }
+
+    if(type === 'P'){
+      // simplistic: forward 1, or diagonal capture-of-star 1 (white pawn moves up the board)
+      const dr = 1;
+      if(inBounds(pos.f, pos.r+dr) && !boardState[pos.r+dr][pos.f]){
+        moves.push({f:pos.f, r:pos.r+dr});
+      }
+      [-1,1].forEach(df => {
+        const nf = pos.f+df, nr = pos.r+dr;
+        if(inBounds(nf,nr)){
+          const isStar = starsLeft.some(s=>s.f===nf && s.r===nr);
+          const occ = boardState[nr][nf];
+          if(isStar && !occ) moves.push({f:nf, r:nr});
+        }
+      });
+    } else if(type === 'N'){
+      const deltas = [[1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1],[-2,1],[-1,2]];
+      deltas.forEach(([df,dr]) => {
+        const nf = pos.f+df, nr = pos.r+dr;
+        if(inBounds(nf,nr)){
+          const occ = boardState[nr][nf];
+          if(!occ || occ.type !== 'OBST') moves.push({f:nf,r:nr});
+        }
+      });
+    } else if(type === 'B'){
+      [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df,dr]) => tryDir(df,dr,true));
+    } else if(type === 'R'){
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([df,dr]) => tryDir(df,dr,true));
+    } else if(type === 'Q'){
+      [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df,dr]) => tryDir(df,dr,true));
+    } else if(type === 'K'){
+      [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df,dr]) => tryDir(df,dr,false));
+    }
+
+    return moves;
+  }
+
+  function onCellClick(f,r){
+    const clickedPiece = boardState[r][f];
+
+    if(selected){
+      const moves = legalMoves(selected);
+      const move = moves.find(m => m.f===f && m.r===r);
+      if(move){
+        doMove(selected, {f,r});
+        selected = null;
+        render();
+        return;
+      }
+      // reselect if clicking another own piece
+      if(clickedPiece && clickedPiece.color === 'w'){
+        selected = {f,r};
+        render();
+        return;
+      }
+      selected = null;
+      render();
+      return;
+    }
+
+    if(clickedPiece && clickedPiece.color === 'w'){
+      selected = {f,r};
+      render();
+    }
+  }
+
+  function doMove(from, to){
+    const piece = boardState[from.r][from.f];
+    boardState[from.r][from.f] = null;
+    boardState[to.r][to.f] = piece;
+    movesUsed++;
+
+    // eat star?
+    const starIdx = starsLeft.findIndex(s => s.f===to.f && s.r===to.r);
+    if(starIdx >= 0){
+      starsLeft.splice(starIdx, 1);
+      spawnStarBurst(to.f, to.r);
+    }
+
+    checkOutcome();
+  }
+
+  function checkOutcome(){
+    if(starsLeft.length === 0){
+      onSuccess();
+      return;
+    }
+    if(movesUsed >= movesAllowed){
+      onFail();
+      return;
+    }
+    messageEl.textContent = `Coups restants : ${movesAllowed - movesUsed}. Étoiles restantes : ${starsLeft.length} ⭐`;
+  }
+
+  function onSuccess(){
+    consecutiveFails = 0;
+    const earned = 1;
+    totalStars += earned;
+    saveStars();
+    showSuccessBanner();
+    launchConfetti();
+    messageEl.textContent = "Bravo, bien joué ! 🎉";
+
+    setTimeout(() => {
+      const level = currentLevel();
+      if(stepIdx < level.steps.length - 1){
+        stepIdx++;
+      } else if(levelIdx < LEVELS.length - 1){
+        levelIdx++;
+        stepIdx = 0;
+      } else {
+        messageEl.textContent = "Tu as terminé tous les niveaux ! Tu es un champion d'échecs ! 🏆";
+      }
+      startStep();
+    }, 1600);
+  }
+
+  function onFail(){
+    consecutiveFails++;
+    showFailBanner();
+    messageEl.textContent = "Pas grave, on réessaye avec un peu moins de difficulté !";
+    setTimeout(() => {
+      regressDifficulty();
+      startStep();
+    }, 1400);
+  }
+
+  function regressDifficulty(){
+    // Regress one notch: go back a step within level, or to easier step of previous level
+    if(stepIdx > 0){
+      stepIdx--;
+    } else if(levelIdx > 0){
+      // stay at first step of current level but it IS the easiest;
+      // optionally drop back into previous level's last step for a refresher
+      levelIdx = Math.max(0, levelIdx - (consecutiveFails > 1 ? 1 : 0));
+      stepIdx = 0;
+    }
+  }
+
+  function showHint(){
+    if(!selected){
+      // auto select the (first) own piece
+      for(let r=0;r<8;r++) for(let f=0;f<8;f++){
+        const p = boardState[r][f];
+        if(p && p.color==='w'){ selected = {f,r}; break; }
+      }
+    }
+    render();
+    messageEl.textContent = "Regarde les ronds bleus : ce sont les cases où tu peux aller !";
+  }
+
+  function showSuccessBanner(){
+    const phrases = ["Super ! ⭐", "Magnifique ! 🎉", "Trop fort ! 🏆", "Génial ! ✨", "Bravo champion ! 👑"];
+    successBanner.textContent = phrases[Math.floor(Math.random()*phrases.length)];
+    successBanner.classList.add('show');
+    setTimeout(() => successBanner.classList.remove('show'), 1300);
+  }
+
+  function showFailBanner(){
+    const phrases = ["On réessaye ! 💪", "Presque ! 🙂", "Encore un essai !"];
+    failBanner.textContent = phrases[Math.floor(Math.random()*phrases.length)];
+    failBanner.classList.add('show');
+    setTimeout(() => failBanner.classList.remove('show'), 1200);
+  }
+
+  function spawnStarBurst(f, r){
+    const cellIndex = (7-r)*8 + f;
+    const cellEl = boardEl.children[cellIndex];
+    if(cellEl){
+      cellEl.classList.add('bounce');
+      setTimeout(() => cellEl.classList.remove('bounce'), 600);
+    }
+  }
+
+  function launchConfetti(){
+    const colors = ['#ff6b6b','#4ecdc4','#ffd93d','#a685e2','#ff9f43'];
+    for(let i=0;i<40;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random()*100 + 'vw';
+      c.style.background = colors[Math.floor(Math.random()*colors.length)];
+      c.style.animationDuration = (1.5 + Math.random()*1.5) + 's';
+      c.style.opacity = 1;
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 3200);
+    }
+  }
+
+  // init
+  starsCountEl.textContent = totalStars;
+  levelNameEl.textContent = currentLevel().name;
+  introEl.textContent = currentLevel().tip;
+  stepNumEl.textContent = 1;
+  stepTotalEl.textContent = currentLevel().steps.length;
+
+})();
+</script>
+</body>
+</html>

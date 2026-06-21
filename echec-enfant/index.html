@@ -90,12 +90,27 @@
     border: 5px solid rgba(255,107,107,0.7);
     background:none;
   }
-  .cell .piece{
+  .piece-wrap{
     z-index:2;
-    filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.5));
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(255,255,255,0.6);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.35), inset 0 0 0 2px rgba(255,255,255,0.4);
     transition: transform 0.15s;
   }
-  .cell.selected .piece{ transform: scale(1.15); }
+  .piece-wrap.enemy-king{
+    background: rgba(255,107,107,0.35);
+    box-shadow: 0 0 0 3px rgba(255,80,80,0.85), 0 3px 6px rgba(0,0,0,0.35);
+  }
+  .cell .piece{
+    color: #15152b;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.45));
+  }
+  .cell.selected .piece-wrap{ transform: scale(1.15); }
   .star{
     animation: twinkle 1.2s infinite ease-in-out;
   }
@@ -264,7 +279,7 @@
 
   const SIZE = 8;
   const PIECE_GLYPHS = {
-    P: '♙', N: '♘', B: '♗', R: '♖', Q: '♕', K: '♔'
+    P: '♟', N: '♞', B: '♝', R: '♜', Q: '♛', K: '♚'
   };
 
   // ---------- Curriculum definition ----------
@@ -281,13 +296,15 @@
     {
       name: "Le Pion 🛡️",
       piece: "P",
-      tip: "Le Pion avance d'une case tout droit. Il peut manger une étoile seulement en avançant en diagonale d'une case !",
+      tip: "Le Pion avance d'une case tout droit, sur une case vide. Mais pour manger une étoile, il doit toujours se déplacer en diagonale d'une case, jamais tout droit !",
       steps: [
-        { start: sq(3,1), stars: [sq(3,3)], moves: 2, obstacles: [] },
-        { start: sq(1,1), stars: [sq(2,2)], moves: 2, obstacles: [] },
-        { start: sq(4,2), stars: [sq(5,3)], moves: 2, obstacles: [] },
-        { start: sq(2,1), stars: [sq(2,4)], moves: 3, obstacles: [] },
-        { start: sq(1,1), stars: [sq(0,2)], moves: 2, obstacles: [] },
+        { start: sq(3,1), stars: [sq(4,2)], moves: 1, obstacles: [] },
+        { start: sq(3,1), stars: [sq(2,2)], moves: 1, obstacles: [] },
+        { start: sq(3,1), stars: [sq(4,3)], moves: 2, obstacles: [] },
+        { start: sq(2,1), stars: [sq(1,4)], moves: 3, obstacles: [] },
+        { start: sq(3,1), stars: [sq(4,2),sq(3,3)], moves: 2, obstacles: [] },
+        { start: sq(3,1), stars: [sq(4,3)], moves: 2, obstacles: [], enemyKing: sq(5,4), check: true },
+        { start: sq(2,1), stars: [sq(1,4)], moves: 3, obstacles: [], enemyKing: sq(0,5), check: true },
       ]
     },
     {
@@ -300,6 +317,8 @@
         { start: sq(0,0), stars: [sq(5,5)], moves: 4, obstacles: [] },
         { start: sq(3,3), stars: [sq(6,4)], moves: 2, obstacles: [] },
         { start: sq(0,0), stars: [sq(7,7)], moves: 6, obstacles: [] },
+        { start: sq(0,0), stars: [sq(4,2)], moves: 2, obstacles: [], enemyKing: sq(6,3), check: true },
+        { start: sq(0,0), stars: [sq(4,3)], moves: 3, obstacles: [], enemyKing: sq(6,4), check: true },
       ]
     },
     {
@@ -308,10 +327,12 @@
       tip: "Le Fou se déplace en diagonale, aussi loin qu'il veut, mais toujours sur les cases de la même couleur !",
       steps: [
         { start: sq(2,2), stars: [sq(5,5)], moves: 1, obstacles: [] },
-        { start: sq(0,0), stars: [sq(7,7)], moves: 1, obstacles: [] },
-        { start: sq(0,2), stars: [sq(5,7)], moves: 2, obstacles: [] },
+        { start: sq(0,0), stars: [sq(2,4)], moves: 2, obstacles: [] },
+        { start: sq(0,2), stars: [sq(4,4)], moves: 2, obstacles: [] },
         { start: sq(0,0), stars: [sq(3,3),sq(6,6)], moves: 2, obstacles: [] },
         { start: sq(7,0), stars: [sq(2,5)], moves: 2, obstacles: [] },
+        { start: sq(0,0), stars: [sq(3,3)], moves: 1, obstacles: [], enemyKing: sq(6,6), check: true },
+        { start: sq(7,7), stars: [sq(4,2)], moves: 2, obstacles: [], enemyKing: sq(0,6), check: true },
       ]
     },
     {
@@ -324,6 +345,8 @@
         { start: sq(3,3), stars: [sq(3,7),sq(7,3)], moves: 3, obstacles: [] },
         { start: sq(0,0), stars: [sq(0,7)], moves: 3, obstacles: [sq(0,4)] },
         { start: sq(0,0), stars: [sq(4,4)], moves: 2, obstacles: [] },
+        { start: sq(0,0), stars: [sq(0,5)], moves: 1, obstacles: [], enemyKing: sq(3,5), check: true },
+        { start: sq(0,0), stars: [sq(4,4)], moves: 2, obstacles: [], enemyKing: sq(4,7), check: true },
       ]
     },
     {
@@ -336,28 +359,32 @@
         { start: sq(0,0), stars: [sq(7,7),sq(0,7)], moves: 2, obstacles: [] },
         { start: sq(0,0), stars: [sq(4,4)], moves: 2, obstacles: [sq(2,2)] },
         { start: sq(4,0), stars: [sq(0,4),sq(7,4),sq(4,7)], moves: 3, obstacles: [] },
+        { start: sq(4,0), stars: [sq(0,4)], moves: 1, obstacles: [], enemyKing: sq(0,0), check: true },
+        { start: sq(4,0), stars: [sq(2,0)], moves: 1, obstacles: [], enemyKing: sq(2,5), check: true },
       ]
     },
     {
       name: "Le Roi 🤴",
       piece: "K",
-      tip: "Le Roi se déplace d'une seule case, dans toutes les directions ! Il faut le protéger, c'est le plus précieux.",
+      tip: "Le Roi se déplace d'une seule case, dans toutes les directions ! Et il ne peut JAMAIS s'approcher du Roi adverse : les cases juste autour de lui sont interdites.",
       steps: [
         { start: sq(3,3), stars: [sq(4,4)], moves: 1, obstacles: [] },
         { start: sq(3,3), stars: [sq(3,5)], moves: 2, obstacles: [] },
         { start: sq(0,0), stars: [sq(2,2)], moves: 2, obstacles: [] },
         { start: sq(3,3), stars: [sq(1,1),sq(5,5)], moves: 6, obstacles: [] },
         { start: sq(0,0), stars: [sq(3,3)], moves: 3, obstacles: [] },
+        { start: sq(0,0), stars: [sq(4,3)], moves: 6, obstacles: [], enemyKing: sq(2,2), safety: true },
+        { start: sq(0,0), stars: [sq(6,4)], moves: 7, obstacles: [], enemyKing: sq(3,3), safety: true },
       ]
     },
     {
       name: "Toutes les pièces ! 🌟",
       piece: "MIX",
-      tip: "Maintenant, mélange tout ce que tu as appris ! Choisis la bonne pièce, au bon moment.",
+      tip: "Maintenant, mélange tout ce que tu as appris ! Choisis la bonne pièce, au bon moment, et termine en donnant échec et mat !",
       steps: [
         {
           pieces: [ {type:'P', at: sq(2,1)}, {type:'N', at: sq(6,0)} ],
-          stars: [sq(2,3), sq(4,1)],
+          stars: [sq(3,2), sq(4,1)],
           moves: 3, obstacles: []
         },
         {
@@ -380,6 +407,16 @@
           stars: [sq(0,7), sq(6,6), sq(5,2)],
           moves: 4, obstacles: []
         },
+        {
+          pieces: [ {type:'R', at: sq(0,0)}, {type:'K', at: sq(5,6)} ],
+          stars: [sq(7,3)],
+          moves: 2, obstacles: [], enemyKing: sq(7,7), check: true
+        },
+        {
+          pieces: [ {type:'K', at: sq(5,6)}, {type:'R', at: sq(3,3)} ],
+          stars: [sq(7,3)],
+          moves: 1, obstacles: [], enemyKing: sq(7,7), mate: true
+        },
       ]
     }
   ];
@@ -395,6 +432,7 @@
   let selected = null; // {f,r}
   let movesAllowed = 1;
   let consecutiveFails = 0;
+  let enemyKings = [];
 
   const boardEl = document.getElementById('board');
   const messageEl = document.getElementById('message');
@@ -445,13 +483,27 @@
       boardState[o.r][o.f] = { type: 'OBST', color: 'x' };
     });
 
+    enemyKings = step.enemyKing ? [{...step.enemyKing}] : [];
+    enemyKings.forEach(ek => {
+      boardState[ek.r][ek.f] = { type: 'EK', color: 'b' };
+    });
+
     starsLeft = step.stars.map(s => ({...s}));
 
     levelNameEl.textContent = level.name;
     introEl.textContent = level.tip;
     stepNumEl.textContent = stepIdx+1;
     stepTotalEl.textContent = level.steps.length;
-    messageEl.textContent = `Coups disponibles : ${movesAllowed}. Mange toutes les étoiles ⭐ !`;
+
+    if(step.mate){
+      messageEl.textContent = `Coups disponibles : ${movesAllowed}. Trouve le coup qui met le Roi noir ÉCHEC ET MAT ! ♚`;
+    } else if(step.check){
+      messageEl.textContent = `Coups disponibles : ${movesAllowed}. Déplace-toi sur la case qui donne ÉCHEC au Roi noir ! ♚`;
+    } else if(step.safety){
+      messageEl.textContent = `Coups disponibles : ${movesAllowed}. Attention : tu ne peux jamais t'approcher du Roi noir ! ♚`;
+    } else {
+      messageEl.textContent = `Coups disponibles : ${movesAllowed}. Mange toutes les étoiles ⭐ !`;
+    }
 
     renderProgress();
     render();
@@ -481,11 +533,22 @@
         const piece = boardState[r][f];
         const isStar = starsLeft.some(s => s.f===f && s.r===r);
 
-        if(piece && piece.type !== 'OBST'){
+        if(piece && piece.type === 'EK'){
+          const wrap = document.createElement('div');
+          wrap.className = 'piece-wrap enemy-king';
+          const span = document.createElement('span');
+          span.className = 'piece';
+          span.textContent = PIECE_GLYPHS.K;
+          wrap.appendChild(span);
+          cell.appendChild(wrap);
+        } else if(piece && piece.type !== 'OBST'){
+          const wrap = document.createElement('div');
+          wrap.className = 'piece-wrap';
           const span = document.createElement('span');
           span.className = 'piece';
           span.textContent = PIECE_GLYPHS[piece.type];
-          cell.appendChild(span);
+          wrap.appendChild(span);
+          cell.appendChild(wrap);
         } else if(piece && piece.type === 'OBST'){
           const span = document.createElement('span');
           span.textContent = '🪨';
@@ -527,19 +590,20 @@
       let f = pos.f + df, r = pos.r + dr;
       while(inBounds(f,r)){
         const occ = boardState[r][f];
-        if(occ && occ.type === 'OBST') break;
+        if(occ) break; // blocked by anything: own piece, obstacle, or enemy king
         moves.push({f,r});
-        if(occ) break; // can't go further if occupied (no real captures of pieces in this game)
         if(!sliding) break;
         f += df; r += dr;
       }
     }
 
     if(type === 'P'){
-      // simplistic: forward 1, or diagonal capture-of-star 1 (white pawn moves up the board)
+      // forward 1 onto an empty, non-star square; diagonal 1 only to capture a star (real pawn rule)
       const dr = 1;
-      if(inBounds(pos.f, pos.r+dr) && !boardState[pos.r+dr][pos.f]){
-        moves.push({f:pos.f, r:pos.r+dr});
+      const fwd = {f:pos.f, r:pos.r+dr};
+      const fwdIsStar = starsLeft.some(s=>s.f===fwd.f && s.r===fwd.r);
+      if(inBounds(fwd.f,fwd.r) && !boardState[fwd.r][fwd.f] && !fwdIsStar){
+        moves.push(fwd);
       }
       [-1,1].forEach(df => {
         const nf = pos.f+df, nr = pos.r+dr;
@@ -553,10 +617,7 @@
       const deltas = [[1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1],[-2,1],[-1,2]];
       deltas.forEach(([df,dr]) => {
         const nf = pos.f+df, nr = pos.r+dr;
-        if(inBounds(nf,nr)){
-          const occ = boardState[nr][nf];
-          if(!occ || occ.type !== 'OBST') moves.push({f:nf,r:nr});
-        }
+        if(inBounds(nf,nr) && !boardState[nr][nf]) moves.push({f:nf,r:nr});
       });
     } else if(type === 'B'){
       [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df,dr]) => tryDir(df,dr,true));
@@ -565,7 +626,14 @@
     } else if(type === 'Q'){
       [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df,dr]) => tryDir(df,dr,true));
     } else if(type === 'K'){
-      [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df,dr]) => tryDir(df,dr,false));
+      [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df,dr]) => {
+        const nf = pos.f+df, nr = pos.r+dr;
+        if(!inBounds(nf,nr)) return;
+        if(boardState[nr][nf]) return;
+        const tooCloseToEnemyKing = enemyKings.some(ek => Math.max(Math.abs(nf-ek.f), Math.abs(nr-ek.r)) <= 1);
+        if(tooCloseToEnemyKing) return;
+        moves.push({f:nf, r:nr});
+      });
     }
 
     return moves;
@@ -633,9 +701,16 @@
     const earned = 1;
     totalStars += earned;
     saveStars();
-    showSuccessBanner();
+    const step = currentStep();
+    showSuccessBanner(step);
     launchConfetti();
-    messageEl.textContent = "Bravo, bien joué ! 🎉";
+    if(step.mate){
+      messageEl.textContent = "Échec et mat ! Bravo champion ! 👑🎉";
+    } else if(step.check){
+      messageEl.textContent = "Échec ! Bien joué ! 🎉";
+    } else {
+      messageEl.textContent = "Bravo, bien joué ! 🎉";
+    }
 
     setTimeout(() => {
       const level = currentLevel();
@@ -685,8 +760,10 @@
     messageEl.textContent = "Regarde les ronds bleus : ce sont les cases où tu peux aller !";
   }
 
-  function showSuccessBanner(){
-    const phrases = ["Super ! ⭐", "Magnifique ! 🎉", "Trop fort ! 🏆", "Génial ! ✨", "Bravo champion ! 👑"];
+  function showSuccessBanner(step){
+    let phrases = ["Super ! ⭐", "Magnifique ! 🎉", "Trop fort ! 🏆", "Génial ! ✨", "Bravo champion ! 👑"];
+    if(step && step.mate) phrases = ["ÉCHEC ET MAT ! 👑🏆"];
+    else if(step && step.check) phrases = ["ÉCHEC ! ♚", "Bien vu ! ♚"];
     successBanner.textContent = phrases[Math.floor(Math.random()*phrases.length)];
     successBanner.classList.add('show');
     setTimeout(() => successBanner.classList.remove('show'), 1300);

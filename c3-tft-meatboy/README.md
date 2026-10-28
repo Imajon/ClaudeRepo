@@ -2,7 +2,7 @@
 
 <p align="center"><img src="docs/pcb-console.jpg" width="480"></p>
 
-**Brique** est une petite console de jeu portable à base d'**ESP32-C3** et d'un **écran TFT 2"**, conçue pour des ateliers avec des enfants (CM1 → 4ᵉ). Chaque enfant monte et soude sa propre console, puis joue à **MEAT RUN**, un jeu de plateforme façon *Super Meat Boy* écrit pour la console.
+**Brique** est une petite console de jeu portable à base d'**ESP32-C3** et d'un **écran TFT 2"**, conçue pour des ateliers avec des enfants (CM1 → 4ᵉ). Chaque enfant monte et soude sa propre console, puis joue à **Pixel Run**, un jeu de plateforme écrit pour la console.
 
 Prochaine étape : laisser les enfants **créer leurs propres niveaux et règles avec une IA**, depuis un navigateur, sans rien installer.
 
@@ -56,8 +56,7 @@ Câblage fil à fil au dos, écran et boutons en façade.
   <img src="docs/console-proto.jpg" width="45%">
 </p>
 <p align="center">
-  <img src="docs/proto-ecran-titre.jpg" width="30%">
-  <img src="docs/proto-jeu.jpg" width="45%">
+  <img src="docs/proto-jeu.jpg" width="60%">
 </p>
 
 ## Version 2 — PCB hexagonal
@@ -76,13 +75,13 @@ Un PCB dédié en forme de briques hexagonales : moins de fils, montage plus rap
 
 Fichiers KiCad et SVG du boîtier : [`materiel/`](materiel/).
 
-## Le jeu : MEAT RUN
+## Le jeu : Pixel Run
 
 - **100 niveaux** variés (ressorts, pics, blocs tombants, ennemis, scies…), étoiles à collecter, drapeau final.
 - **Mode 2 joueurs** sans fil (ESP-NOW) : course avec le fantôme de l'adversaire.
 - **Mini-jeux** bonus toutes les 10 étapes : Pong, Casse-brique, Invaders.
 - **Quiz CM2** (maths, français, anglais) entre les niveaux, avec récompenses visuelles.
-- **Classement partagé** entre consoles, boutique de skins, mascotte « Steak ».
+- **Classement partagé** entre consoles, boutique de skins, mascotte animée.
 - Progression sauvegardée en mémoire flash.
 
 ## Compiler et flasher

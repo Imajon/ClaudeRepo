@@ -1,0 +1,21 @@
+%TF.GenerationSoftware,KiCad,Pcbnew,10.0.6*%
+%TF.CreationDate,2026-09-28T07:25:44+02:00*%
+%TF.ProjectId,c3-tft-meatboy-esp32mini,63332d74-6674-42d6-9d65-6174626f792d,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,AssemblyDrawing,Bot*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+G04 Created by KiCad (PCBNEW 10.0.6) date 2026-09-28 07:25:44*
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+%ADD10C,0.100000*%
+G04 APERTURE END LIST*
+D10*
+X41430000Y-49740000D02*
+X75630000Y-49740000D01*
+X75630000Y-75240000D01*
+X41430000Y-75240000D01*
+X41430000Y-49740000D01*
+M02*

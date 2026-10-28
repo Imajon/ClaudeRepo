@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -40 1080 900" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef3f8"/><stop offset="1" stop-color="#dfe7f0"/>
+    </linearGradient>
+    <linearGradient id="pcb" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1d3a63"/><stop offset="1" stop-color="#142744"/>
+    </linearGradient>
+    <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect x="-40" y="-40" width="1080" height="900" fill="url(#bg)"/>
+  <text x="460" y="0" text-anchor="middle" font-size="30" font-weight="800" fill="#12233a">Proposition — forme "manette", 90 x 70mm</text>
+
+  <!-- ================= PCB SHAPE (10px = 1mm, echelle x10) ================= -->
+  <g filter="url(#sh)" transform="translate(10,40)">
+    <!-- Contour manette : corps arrondi + poignees en bas -->
+    <path d="
+      M 60,0
+      L 840,0
+      Q 900,0 900,60
+      L 900,470
+      Q 900,530 860,560
+      L 820,610
+      Q 800,650 750,650
+      Q 700,650 680,610
+      L 640,540
+      L 260,540
+      L 220,610
+      Q 200,650 150,650
+      Q 100,650 80,610
+      L 40,560
+      Q 0,530 0,470
+      L 0,60
+      Q 0,0 60,0
+      Z"
+      fill="url(#pcb)" stroke="#0a1830" stroke-width="4"/>
+
+    <!-- Trous de fixation -->
+    <circle cx="60" cy="60" r="16" fill="#0a1830" stroke="#3a5578" stroke-width="2"/>
+    <circle cx="840" cy="60" r="16" fill="#0a1830" stroke="#3a5578" stroke-width="2"/>
+    <circle cx="150" cy="600" r="16" fill="#0a1830" stroke="#3a5578" stroke-width="2"/>
+    <circle cx="750" cy="600" r="16" fill="#0a1830" stroke="#3a5578" stroke-width="2"/>
+
+    <!-- Ecran (50mm centre, x=200 a 700 sur l'echelle x10) -->
+    <rect x="200" y="50" width="500" height="330" rx="10" fill="#0b1220" stroke="#33507f" stroke-width="3"/>
+    <rect x="220" y="70" width="440" height="270" fill="#12233a" stroke="#1c3155"/>
+    <text x="440" y="215" text-anchor="middle" font-size="26" fill="#7fd7ff">ECRAN ST7789</text>
+    <text x="440" y="250" text-anchor="middle" font-size="18" fill="#5a8fb0">50mm, centre</text>
+    <!-- broches ecran, a 2mm (=20px) du bord droit du module -->
+    <g font-size="14" fill="#ffd23c">
+      <line x1="680" y1="60" x2="680" y2="370" stroke="#ffd23c" stroke-width="4" stroke-dasharray="4 4"/>
+      <text x="690" y="55" fill="#ffd23c">broches (2mm du bord droit)</text>
+    </g>
+
+    <!-- Boutons GAUCHE / DROITE : colonne gauche, hauteur de l'ecran -->
+    <g filter="url(#sh)">
+      <circle cx="100" cy="150" r="45" fill="#ffe37a" stroke="#b59300" stroke-width="4"/>
+      <text x="100" y="157" text-anchor="middle" font-size="20" font-weight="800" fill="#5c4700">D</text>
+      <text x="100" y="225" text-anchor="middle" font-size="17" font-weight="700" fill="#ffd23c">DROITE</text>
+    </g>
+    <g filter="url(#sh)">
+      <circle cx="100" cy="300" r="45" fill="#a9f0a9" stroke="#2c8f2c" stroke-width="4"/>
+      <text x="100" y="307" text-anchor="middle" font-size="20" font-weight="800" fill="#1c5a1c">G</text>
+      <text x="100" y="375" text-anchor="middle" font-size="17" font-weight="700" fill="#6ee36e">GAUCHE</text>
+    </g>
+
+    <!-- Bouton SAUT : droite, hauteur ecran -->
+    <g filter="url(#sh)">
+      <circle cx="800" cy="225" r="55" fill="#ffc266" stroke="#b35c00" stroke-width="4"/>
+      <text x="800" y="233" text-anchor="middle" font-size="22" font-weight="800" fill="#5c2f00">S</text>
+      <text x="800" y="305" text-anchor="middle" font-size="17" font-weight="700" fill="#ff9500">SAUT</text>
+    </g>
+
+    <!-- SuperMini + USB-C, bas centre -->
+    <rect x="330" y="420" width="240" height="180" rx="8" fill="#16264a" stroke="#33507f" stroke-width="3"/>
+    <text x="450" y="500" text-anchor="middle" font-size="18" font-weight="700" fill="#eaf2ff">ESP32-C3</text>
+    <text x="450" y="525" text-anchor="middle" font-size="15" fill="#9aa0a6">SuperMini (SMD)</text>
+    <rect x="410" y="595" width="80" height="30" rx="6" fill="#c9ccd1" stroke="#8a8d92" stroke-width="2"/>
+    <text x="450" y="616" text-anchor="middle" font-size="13" fill="#333">USB-C</text>
+    <text x="450" y="660" text-anchor="middle" font-size="15" fill="#9ab6d8">USB-C accessible entre les 2 poignees</text>
+  </g>
+
+  <!-- ================= LEGENDE ================= -->
+  <g font-size="16">
+    <rect x="0" y="700" width="920" height="140" rx="10" fill="#fff" stroke="#c3ccd6"/>
+    <text x="20" y="730" font-size="18" font-weight="800" fill="#12233a">Notes</text>
+    <text x="20" y="755" fill="#333">- Echelle : 10px = 1mm. Contour "manette" avec 2 poignees arrondies en bas (comme une manette compacte).</text>
+    <text x="20" y="778" fill="#333">- GAUCHE/DROITE a gauche de l'ecran (empiles), SAUT a droite -&gt; prise en main pouce gauche/pouce droit.</text>
+    <text x="20" y="801" fill="#333">- SuperMini + USB-C au centre-bas, entre les 2 poignees (zone la plus large et la plus solide du contour).</text>
+    <text x="20" y="824" fill="#333">- Hauteur d'ecran supposee ~33mm (a confirmer) ; les poignees ajoutent de la place sans agrandir le rectangle utile.</text>
+  </g>
+</svg>

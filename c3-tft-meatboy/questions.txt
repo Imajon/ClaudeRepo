@@ -1,0 +1,370 @@
+# Questions du quiz "entre deux niveaux" (niveau CM2).
+# Une question par ligne, champs separes par des " | " (espace-pipe-espace) :
+#   categorie | question | option1 | option2 | option3 | index_bonne_reponse(0,1 ou 2) | difficulte(1-5)
+# difficulte : 1 tres facile, 2 facile, 3 moyen (CM2), 4 difficile (6e), 5 tres difficile. Le jeu adapte la difficulte par matiere.
+# categorie = maths / francais / anglais / chimie
+# Les lignes vides ou commencant par # sont ignorees.
+# Pas d'accents (la police de l'ecran ne les affiche pas correctement).
+# Ce fichier est relu automatiquement a chaque compilation (voir compiler-upload-c3-tft-meatboy.bat) :
+# modifie-le, sauvegarde, puis relance la compilation.
+
+# --- maths ---
+maths | Combien font 7 x 8 ? | 54 | 56 | 64 | 1 | 2
+maths | Combien font 9 x 6 ? | 45 | 54 | 56 | 1 | 2
+maths | La moitie de 48 ? | 20 | 24 | 26 | 1 | 1
+maths | 1 kg = combien de g ? | 10 | 100 | 1000 | 2 | 1
+maths | Un carre a combien de cotes ? | 3 | 4 | 5 | 1 | 1
+maths | Combien font 100 - 37 ? | 63 | 67 | 73 | 0 | 2
+maths | Le double de 15 ? | 25 | 30 | 35 | 1 | 1
+maths | Combien font 12 x 5 ? | 50 | 60 | 65 | 1 | 2
+maths | Un triangle a combien de cotes ? | 3 | 4 | 5 | 0 | 1
+maths | 1 m = combien de cm ? | 10 | 100 | 1000 | 1 | 1
+maths | Combien font 81 / 9 ? | 8 | 9 | 11 | 1 | 2
+maths | Le quart de 100 ? | 20 | 25 | 30 | 1 | 2
+
+# --- francais ---
+francais | Pluriel de 'cheval' ? | chevals | chevaux | chevos | 1 | 2
+francais | 'Il ___ beau' (verbe faire) | fait | fais | font | 0 | 2
+francais | Synonyme de 'content' ? | triste | joyeux | fache | 1 | 1
+francais | Contraire de 'jour' ? | nuit | matin | soir | 0 | 1
+francais | Contraire de 'grand' ? | petit | large | haut | 0 | 1
+francais | Feminin de 'acteur' ? | acteure | actrice | actere | 1 | 3
+francais | 'son' ou 'sont' : Ils __ contents | son | sont | sonts | 1 | 2
+francais | Combien de syllabes dans 'ordinateur' ? | 3 | 4 | 5 | 2 | 3
+francais | Le verbe dans 'Le chat dort.' ? | chat | dort | le | 1 | 2
+francais | Pluriel de 'journal' ? | journals | journaux | journeaux | 1 | 3
+francais | 'et' ou 'est' : Il __ midi | et | est | ait | 1 | 2
+francais | Pluriel de 'animal' ? | animals | animaux | animales | 1 | 3
+
+# --- anglais ---
+anglais | Comment dit-on 'j'ai' ? | I am | I have | I has | 1 | 1
+anglais | Comment dit-on 'je suis' ? | I am | I have | I is | 0 | 1
+anglais | 'I am happy.' veut dire ? | je suis content | j'ai content | je veux | 0 | 1
+anglais | 'I have a cat.' veut dire ? | je suis un chat | j'ai un chat | je vois un chat | 1 | 1
+anglais | 'I am tall.' veut dire ? | j'ai grand | je suis grand | je suis petit | 1 | 2
+anglais | 'I have a red bike.' = ? | j'ai un velo rouge | je suis un velo | j'ai un velo bleu | 0 | 2
+anglais | 'I am tired.' veut dire ? | j'ai faim | je suis fatigue | j'ai froid | 1 | 2
+anglais | J'ai froid = ? | I have cold | I am cold | I is cold | 1 | 3
+anglais | J'ai 10 ans = ? | I have 10 years | I am 10 | I is 10 | 1 | 3
+anglais | J'ai soif = ? | I am thirsty | I have thirsty | I thirsty | 0 | 3
+anglais | Je suis a l'ecole = ? | I have at school | I am at school | I at school | 1 | 2
+anglais | J'ai un frere = ? | I am a brother | I have a brother | I has a brother | 1 | 2
+anglais | 'I am not sad.' veut dire ? | je suis triste | je ne suis pas triste | je n'ai pas | 1 | 3
+anglais | Je ne suis pas = ? | I am not | I don't am | I have not | 0 | 3
+anglais | 'I have got a dog.' = ? | j'ai un chien | je suis un chien | j'avais un chien | 0 | 4
+anglais | J'ai peur = ? | I have fear | I am scared | I scared | 1 | 4
+anglais | J'ai raison = ? | I have right | I am right | I right | 1 | 5
+anglais | 'I am late.' veut dire ? | je suis en retard | j'ai tard | je suis tot | 0 | 4
+anglais | J'ai mal a la tete = ? | I have a headache | I am a headache | I have head | 0 | 5
+anglais | Comment dit-on 'la fenetre' ? | door | window | wall | 1 | 3
+anglais | 'Butterfly' veut dire ? | papillon | beurre | mouche | 0 | 3
+anglais | Comment dit-on 'la boulangerie' ? | bakery | butcher | library | 0 | 4
+anglais | 'Library' veut dire ? | librairie | bibliotheque | laboratoire | 1 | 4
+anglais | Comment dit-on 'le genou' ? | knee | knife | nose | 0 | 4
+anglais | 'Cousin' veut dire ? | cousin | coussin | voisin | 0 | 2
+anglais | 'Strawberry' veut dire ? | fraise | paille | framboise | 0 | 4
+anglais | Comment dit-on 'l'ecureuil' ? | squirrel | snail | spider | 0 | 5
+anglais | 'Thunderstorm' veut dire ? | orage | tonnerre | tempete de neige | 0 | 5
+anglais | Comment dit-on 'aujourd'hui' ? | today | tomorrow | yesterday | 0 | 3
+anglais | 'Tomorrow' veut dire ? | hier | demain | ce soir | 1 | 3
+anglais | Comment dit-on 'la cuillere' ? | spoon | fork | knife | 0 | 4
+anglais | 'Hedgehog' veut dire ? | herisson | haie | cochon | 0 | 5
+anglais | Comment dit-on 'chat' en anglais ? | dog | cat | cow | 1 | 1
+anglais | Comment dit-on 'rouge' en anglais ? | red | blue | green | 0 | 1
+anglais | 'Dog' veut dire ? | chat | chien | cheval | 1 | 1
+anglais | Comment dit-on 'un' en anglais ? | one | two | ten | 0 | 1
+anglais | Comment dit-on 'merci' en anglais ? | please | thank you | sorry | 1 | 1
+anglais | 'Monday' veut dire ? | lundi | mardi | dimanche | 0 | 2
+anglais | Comment dit-on 'ecole' en anglais ? | school | house | shop | 0 | 1
+anglais | 'Apple' veut dire ? | pomme | poire | banane | 0 | 1
+anglais | Comment dit-on 'grand' en anglais ? | big | small | tall | 0 | 2
+anglais | Comment dit-on 'sept' en anglais ? | six | seven | eight | 1 | 2
+
+# --- maths (ajout 2026-09-28 : priorite maths/anglais) ---
+maths | Combien font 8 x 7 + 4 ? | 60 | 58 | 64 | 0 | 3
+maths | Combien font 6 x 9 ? | 54 | 56 | 48 | 0 | 2
+maths | Combien font 11 x 11 ? | 111 | 121 | 122 | 1 | 2
+maths | Combien font 25 x 4 ? | 100 | 90 | 125 | 0 | 2
+maths | Combien font 72 / 8 ? | 8 | 9 | 7 | 1 | 2
+maths | Combien font 144 / 12 ? | 11 | 12 | 14 | 1 | 3
+maths | Combien font 356 + 247 ? | 593 | 603 | 613 | 1 | 3
+maths | Combien font 1000 - 458 ? | 542 | 552 | 642 | 0 | 3
+maths | Combien font 0,5 + 0,25 ? | 0,30 | 0,75 | 0,7 | 1 | 3
+maths | Combien font 3,2 x 10 ? | 32 | 0,32 | 320 | 0 | 3
+maths | Combien font 45 / 10 ? | 45 | 4,5 | 0,45 | 1 | 3
+maths | 1/2 = combien en decimal ? | 0,2 | 0,5 | 1,2 | 1 | 2
+maths | 3/4 de 20 ? | 12 | 15 | 16 | 1 | 3
+maths | 1/3 de 27 ? | 9 | 7 | 3 | 0 | 3
+maths | Plus grand : 0,8 ou 0,75 ? | 0,8 | 0,75 | egaux | 0 | 3
+maths | Arrondi de 4,6 a l'unite ? | 4 | 5 | 4,5 | 1 | 3
+maths | 2 h = combien de minutes ? | 100 | 120 | 200 | 1 | 1
+maths | 1 km = combien de m ? | 100 | 1000 | 10000 | 1 | 1
+maths | 1 L = combien de cL ? | 10 | 100 | 1000 | 1 | 2
+maths | 3 m 50 cm = combien de cm ? | 350 | 305 | 3050 | 0 | 2
+maths | Perimetre carre de cote 5 cm ? | 20 cm | 25 cm | 10 cm | 0 | 2
+maths | Aire rectangle 4 cm x 6 cm ? | 20 cm2 | 24 cm2 | 10 cm2 | 1 | 3
+maths | Un angle droit mesure ? | 45 deg | 90 deg | 180 deg | 1 | 1
+maths | Un hexagone a combien de cotes ? | 5 | 6 | 8 | 1 | 2
+maths | Combien de faces a un cube ? | 4 | 6 | 8 | 1 | 1
+maths | Le triple de 13 ? | 36 | 39 | 33 | 1 | 2
+maths | Combien de minutes dans 1/4 h ? | 15 | 25 | 45 | 0 | 2
+maths | 12 est un multiple de ? | 5 | 7 | 4 | 2 | 3
+maths | Quel nombre est pair ? | 37 | 58 | 91 | 1 | 1
+maths | 3 stylos a 2 euros = ? | 5 euros | 6 euros | 8 euros | 1 | 1
+maths | 10% de 50 ? | 5 | 10 | 15 | 0 | 3
+maths | Combien font 9 x 9 ? | 81 | 72 | 99 | 0 | 2
+maths | Combien font 7 x 7 ? | 47 | 49 | 56 | 1 | 2
+maths | Combien font 15 x 3 ? | 35 | 45 | 55 | 1 | 2
+maths | Combien font 8 x 12 ? | 86 | 96 | 108 | 1 | 3
+maths | Combien font 63 / 7 ? | 9 | 8 | 7 | 0 | 2
+maths | 50 + 50 + 50 + 50 = ? | 150 | 200 | 250 | 1 | 1
+maths | Le chiffre des dizaines de 4827 ? | 8 | 2 | 7 | 1 | 2
+maths | 2 x (3 + 4) = ? | 10 | 14 | 24 | 1 | 3
+maths | 1 jour = combien d'heures ? | 12 | 24 | 48 | 1 | 1
+
+# --- anglais (ajout 2026-09-28) ---
+anglais | Comment dit-on 'bleu' ? | blue | black | brown | 0 | 1
+anglais | Comment dit-on 'vert' ? | grey | green | pink | 1 | 1
+anglais | Comment dit-on 'jaune' ? | white | orange | yellow | 2 | 1
+anglais | Comment dit-on 'noir' ? | black | blue | brown | 0 | 1
+anglais | 'Purple' veut dire ? | violet | rose | gris | 0 | 1
+anglais | Comment dit-on 'trois' ? | tree | three | thirty | 1 | 1
+anglais | Comment dit-on 'douze' ? | twelve | twenty | two | 0 | 1
+anglais | 'Fifteen' = quel nombre ? | 50 | 15 | 5 | 1 | 1
+anglais | 'Twenty' = quel nombre ? | 12 | 20 | 2 | 1 | 1
+anglais | Comment dit-on 'cent' ? | hundred | thousand | ten | 0 | 2
+anglais | 'Friday' veut dire ? | jeudi | vendredi | samedi | 1 | 2
+anglais | Comment dit-on 'dimanche' ? | Saturday | Sunday | Monday | 1 | 2
+anglais | 'Wednesday' veut dire ? | mardi | mercredi | jeudi | 1 | 2
+anglais | Comment dit-on 'janvier' ? | June | January | July | 1 | 2
+anglais | 'December' veut dire ? | decembre | novembre | octobre | 0 | 2
+anglais | Comment dit-on 'l'hiver' ? | summer | winter | spring | 1 | 2
+anglais | Comment dit-on 'cheval' ? | horse | house | mouse | 0 | 2
+anglais | 'Bird' veut dire ? | ours | oiseau | poisson | 1 | 1
+anglais | Comment dit-on 'poisson' ? | fish | fox | frog | 0 | 1
+anglais | 'Rabbit' veut dire ? | rat | lapin | renard | 1 | 2
+anglais | Comment dit-on 'la tete' ? | hand | head | hair | 1 | 1
+anglais | 'Foot' veut dire ? | pied | main | genou | 0 | 1
+anglais | Comment dit-on 'les yeux' ? | ears | eyes | nose | 1 | 2
+anglais | Comment dit-on 'la mere' ? | mother | father | sister | 0 | 1
+anglais | 'Brother' veut dire ? | soeur | frere | pere | 1 | 1
+anglais | Comment dit-on 'manger' ? | drink | eat | sleep | 1 | 2
+anglais | 'To run' veut dire ? | courir | nager | sauter | 0 | 2
+anglais | Comment dit-on 'nager' ? | swim | sing | sit | 0 | 2
+anglais | 'I am hungry' veut dire ? | j'ai soif | j'ai faim | j'ai froid | 1 | 2
+anglais | 'I ___ ten years old.' | is | am | are | 1 | 3
+anglais | 'Kitchen' veut dire ? | chambre | cuisine | salon | 1 | 2
+anglais | Comment dit-on 'la pluie' ? | snow | wind | rain | 2 | 2
+anglais | 'Goodbye' veut dire ? | bonjour | au revoir | merci | 1 | 1
+anglais | Comment dit-on 's'il te plait' ? | please | sorry | thanks | 0 | 2
+
+# --- anglais : "I have / I don't have" ---
+anglais | 'I have a dog.' veut dire ? | j'ai un chien | je veux un chien | je vois un chien | 0 | 1
+anglais | 'I don't have a cat.' veut dire ? | j'ai un chat | je n'ai pas de chat | je veux un chat | 1 | 3
+anglais | Comment dit-on 'je n'ai pas' ? | I have | I don't have | I am not | 1 | 3
+anglais | 'I have two brothers.' veut dire ? | j'ai deux freres | j'ai deux soeurs | j'ai dix freres | 0 | 2
+anglais | Negation de 'I have' ? | I not have | I don't have | I haven't have | 1 | 3
+anglais | 'I have no money.' veut dire ? | j'ai de l'argent | je n'ai pas d'argent | je perds de l'argent | 1 | 3
+
+# --- francais : conjugaison du verbe METTRE ---
+francais | Mettre : 'Je ___ la table' | mets | mette | met | 0 | 2
+francais | Mettre : 'Tu ___ ton manteau' | met | mets | mette | 1 | 2
+francais | Mettre : 'Il ___ ses chaussures' | met | mets | mettes | 0 | 2
+francais | Mettre : 'Nous ___ le couvert' | mettons | mettont | metons | 0 | 2
+francais | Mettre : 'Vous ___ la table' | mettez | mettes | metez | 0 | 2
+francais | Mettre : 'Ils ___ leurs gants' | mettent | metent | mets | 0 | 2
+francais | Mettre, futur : 'Demain, je ___ ma veste' | mettrai | mettera | metrai | 0 | 3
+francais | Mettre, imparfait : 'Il ___ son bonnet' | mettait | metait | mettais | 0 | 3
+francais | Mettre, passe compose : 'J'ai ___ mon sac' | mis | mit | mettu | 0 | 3
+francais | Mettre, passe compose : 'Elle a ___ la table' | mise | mis | mettue | 1 | 4
+francais | Mettre, imperatif : '___ ton manteau !' | Mets | Met | Mette | 0 | 3
+francais | Mettre : 'Elles ___ la table' | mettent | mettes | mets | 0 | 2
+
+# --- questions moyennes / difficiles (difficulte progressive par matiere) ---
+maths | Combien font 17 x 6 ? | 102 | 96 | 112 | 0 | 3
+maths | 25% de 80 ? | 20 | 25 | 40 | 0 | 3
+maths | Combien font 2,5 x 4 ? | 8 | 10 | 12 | 1 | 3
+maths | 3/5 de 40 ? | 24 | 20 | 30 | 0 | 4
+maths | Combien font 1,2 + 3,85 ? | 4,95 | 5,05 | 4,05 | 1 | 4
+maths | Perimetre rectangle 8 cm x 3 cm ? | 22 cm | 24 cm | 11 cm | 0 | 4
+maths | Combien font 15 x 15 ? | 215 | 225 | 235 | 1 | 4
+maths | Combien font 2 x 2 x 2 x 2 x 2 ? | 10 | 25 | 32 | 2 | 4
+maths | Combien font 3 + 4 x 5 ? | 35 | 23 | 27 | 1 | 4
+maths | 0,25 = quelle fraction ? | 1/2 | 1/4 | 1/5 | 1 | 4
+maths | Somme des angles d'un triangle ? | 90 deg | 180 deg | 360 deg | 1 | 4
+maths | Combien font 1000 / 8 ? | 125 | 120 | 150 | 0 | 4
+maths | Racine carree de 81 ? | 8 | 9 | 7 | 1 | 4
+maths | Combien font 7 x 13 ? | 91 | 81 | 93 | 0 | 4
+maths | 20% de 150 ? | 20 | 30 | 25 | 1 | 4
+maths | Quel nombre est premier ? | 21 | 23 | 27 | 1 | 4
+maths | Aire triangle base 10 cm hauteur 6 cm ? | 60 cm2 | 30 cm2 | 16 cm2 | 1 | 5
+maths | PGCD de 12 et 18 ? | 3 | 6 | 9 | 1 | 5
+maths | PPCM de 4 et 6 ? | 12 | 24 | 10 | 0 | 5
+maths | Combien font 1/2 + 1/4 ? | 2/6 | 3/4 | 1/6 | 1 | 5
+maths | Distance a 60 km/h pendant 2 h 30 ? | 120 km | 150 km | 180 km | 1 | 5
+maths | Combien font 3,5 x 1,2 ? | 4,2 | 3,7 | 4,7 | 0 | 5
+maths | Combien font 4,8 / 0,4 ? | 1,2 | 12 | 120 | 1 | 5
+maths | Volume d'un cube d'arete 3 cm ? | 9 cm3 | 27 cm3 | 18 cm3 | 1 | 5
+maths | Combien font -5 + 8 ? | 3 | -3 | 13 | 0 | 5
+
+francais | 'Ils ___ a l'ecole' (aller) | vont | vons | vond | 0 | 2
+francais | 'a' ou 'as' : Tu ___ raison | a | as | at | 1 | 2
+francais | Un adjectif : lequel ? | courir | joli | table | 1 | 2
+francais | Participe passe de 'prendre' ? | prendu | pris | prit | 1 | 3
+francais | Nous (finir) : 'Nous ___' | finissons | finisons | finissont | 0 | 3
+francais | Futur de 'avoir' : 'Tu ___' | auras | aura | avras | 0 | 3
+francais | Synonyme de 'rapide' ? | lent | vif | calme | 1 | 3
+francais | Contraire de 'courageux' ? | brave | peureux | fort | 1 | 3
+francais | Feminin de 'gentil' ? | gentille | gentile | gentil | 0 | 3
+francais | Un mot de la famille de 'terre' ? | terrain | tere | tarte | 0 | 3
+francais | 'Mes parents ___ partis' | sont | ont | est | 0 | 3
+francais | Dans 'Le petit chat dort', petit est ? | adjectif | verbe | adverbe | 0 | 3
+francais | Pluriel de 'travail' ? | travails | travaux | travaulx | 1 | 4
+francais | 'ces' ou 'ses' : Il aime ___ amis (les siens) | ces | ses | c'est | 1 | 4
+francais | Conditionnel : 'Je ___ (vouloir)' | voudrais | voudrai | voulais | 0 | 4
+francais | Nature de 'rapidement' ? | adjectif | adverbe | nom | 1 | 4
+francais | Le COD dans 'Paul mange une pomme.' ? | Paul | une pomme | mange | 1 | 4
+francais | Plus-que-parfait : 'J'___ fini' | avais | avait | avez | 0 | 4
+francais | Pluriel de 'oeil' ? | oeils | yeux | oeux | 1 | 4
+francais | Pluriel de 'bijou' ? | bijous | bijoux | bijouxs | 1 | 4
+francais | 'Nous ___ (manger)' | mangons | mangeons | mangont | 1 | 4
+francais | Passe simple : 'il (chanter)' | chanta | chantat | chantit | 0 | 5
+francais | Subjonctif : 'Il faut que tu ___' (aller) | ailles | ira | vas | 0 | 5
+francais | 'Les fleurs que j'ai ___' (cueillir) | cueilli | cueillies | cueillis | 1 | 5
+francais | Pluriel de 'bal' ? | bals | baux | bales | 0 | 5
+
+anglais | Comment dit-on 'chaussures' ? | shoes | shirts | shorts | 0 | 2
+anglais | 'Thursday' veut dire ? | jeudi | mardi | mercredi | 0 | 2
+anglais | 'Thirty' = quel nombre ? | 13 | 30 | 3 | 1 | 2
+anglais | 'Beautiful' veut dire ? | joli | laid | grand | 0 | 3
+anglais | 'Weather' veut dire ? | meteo | semaine | tempete | 0 | 3
+anglais | 'Third' veut dire ? | troisieme | trois | tiers | 0 | 3
+anglais | 'I can't swim' veut dire ? | je ne peux pas nager | je peux nager | je veux nager | 0 | 3
+anglais | 'Which' veut dire ? | quand | quel | pourquoi | 1 | 4
+anglais | 'Between' veut dire ? | entre | derriere | devant | 0 | 4
+anglais | 'Neighbour' veut dire ? | voisin | ami | cousin | 0 | 5
+anglais | 'Although' veut dire ? | bien que | toujours | aussi | 0 | 5
+
+# --- chimie : tableau periodique (symboles <-> noms) et molecules essentielles a la vie ---
+chimie | Symbole de l'oxygene ? | O | Ox | Oy | 0 | 1
+chimie | Symbole de l'hydrogene ? | H | Hy | Hd | 0 | 1
+chimie | Symbole du carbone ? | Ca | C | Cb | 1 | 1
+chimie | H2O, c'est quoi ? | l'eau | l'oxygene | le sel | 0 | 1
+chimie | Quel gaz respire-t-on pour vivre ? | oxygene | azote | helium | 0 | 1
+chimie | CO2 s'appelle ? | dioxyde de carbone | dioxygene | monoxyde d'azote | 0 | 2
+chimie | Symbole de l'azote ? | Az | N | Na | 1 | 2
+chimie | Symbole du sodium ? | So | Na | S | 1 | 2
+chimie | Symbole du fer ? | Fe | F | Fr | 0 | 2
+chimie | Symbole de l'or ? | Or | Au | Ag | 1 | 2
+chimie | Symbole de l'argent ? | Ar | Ag | Au | 1 | 2
+chimie | Symbole du calcium ? | Ca | C | Cl | 0 | 2
+chimie | Symbole de l'helium ? | H | He | Hl | 1 | 2
+chimie | 'N' = quel element ? | azote | nickel | neon | 0 | 2
+chimie | 'Fe' = quel element ? | fer | fluor | francium | 0 | 2
+chimie | 'Au' = quel element ? | argent | or | aluminium | 1 | 2
+chimie | 'Na' = quel element ? | sodium | azote | nickel | 0 | 2
+chimie | 'He' = quel element ? | helium | hydrogene | mercure | 0 | 2
+chimie | Formule de l'eau ? | H2O | HO2 | H2O2 | 0 | 2
+chimie | Formule du dioxygene ? | O | O2 | O3 | 1 | 2
+chimie | Combien d'atomes H dans H2O ? | 1 | 2 | 3 | 1 | 2
+chimie | Quel element rend les os durs ? | calcium | fer | sodium | 0 | 2
+chimie | Formule du sel de cuisine ? | NaCl | NaOH | KCl | 0 | 3
+chimie | Gaz le plus abondant dans l'air ? | azote | oxygene | CO2 | 0 | 3
+chimie | Quel metal est dans l'hemoglobine ? | fer | or | cuivre | 0 | 3
+chimie | Symbole du potassium ? | P | K | Po | 1 | 3
+chimie | Symbole du chlore ? | Cl | C | Ch | 0 | 3
+chimie | Symbole du cuivre ? | Cu | Co | Cr | 0 | 3
+chimie | Symbole du zinc ? | Zi | Zn | Z | 1 | 3
+chimie | Symbole du magnesium ? | Mg | Ma | Mn | 0 | 3
+chimie | Symbole du soufre ? | S | So | Sf | 0 | 3
+chimie | Symbole du phosphore ? | Ph | P | Po | 1 | 3
+chimie | Symbole du silicium ? | Si | S | Sl | 0 | 3
+chimie | Symbole du neon ? | N | Ne | No | 1 | 3
+chimie | Symbole de l'argon ? | Ar | Ag | A | 0 | 3
+chimie | Symbole du plomb ? | Pl | Pb | Po | 1 | 3
+chimie | Symbole du mercure ? | Me | Hg | Mc | 1 | 3
+chimie | Symbole de l'etain ? | Et | Sn | Ti | 1 | 3
+chimie | 'K' = quel element ? | potassium | krypton | calcium | 0 | 3
+chimie | 'Cl' = quel element ? | chlore | calcium | cuivre | 0 | 3
+chimie | 'Cu' = quel element ? | cuivre | cobalt | curium | 0 | 3
+chimie | 'Hg' = quel element ? | mercure | hydrogene | helium | 0 | 3
+chimie | 'Pb' = quel element ? | plomb | phosphore | platine | 0 | 3
+chimie | 'Mg' = quel element ? | magnesium | manganese | mercure | 0 | 3
+chimie | 'Zn' = quel element ? | zinc | zirconium | azote | 0 | 3
+chimie | 'S' = quel element ? | soufre | sodium | silicium | 0 | 3
+chimie | Formule du glucose (sucre) ? | C6H12O6 | CO2 | H2O | 0 | 3
+chimie | Formule de l'ozone ? | O2 | O3 | O4 | 1 | 3
+chimie | L'ozone nous protege contre ? | les UV | le vent | la pluie | 0 | 3
+chimie | Gaz absorbe par les plantes ? | CO2 | O2 | N2 | 0 | 3
+chimie | Gaz rejete par les plantes ? | oxygene | azote | methane | 0 | 3
+chimie | Element le plus leger ? | hydrogene | helium | lithium | 0 | 3
+chimie | Quel gaz fait voler les ballons ? | helium | oxygene | azote | 0 | 3
+chimie | Quelle molecule rend les plantes vertes ? | chlorophylle | hemoglobine | keratine | 0 | 3
+chimie | Quel sucre nourrit nos cellules ? | glucose | cellulose | chitine | 0 | 3
+chimie | L'ADN sert a ? | stocker les genes | digerer | respirer | 0 | 3
+chimie | Un atome contient ? | protons, neutrons, electrons | cellules | molecules | 0 | 3
+chimie | Quel element est la base de la vie ? | carbone | argon | neon | 0 | 3
+chimie | Numero atomique de l'hydrogene ? | 1 | 2 | 8 | 0 | 3
+chimie | Combien d'atomes dans CO2 ? | 2 | 3 | 4 | 1 | 3
+chimie | Combien d'atomes O dans CO2 ? | 1 | 2 | 3 | 1 | 3
+chimie | Symbole du tungstene ? | T | W | Tu | 1 | 4
+chimie | Symbole du titane ? | Ti | T | Tn | 0 | 4
+chimie | Symbole du lithium ? | Li | L | Lt | 0 | 4
+chimie | Symbole du fluor ? | Fl | F | Fu | 1 | 4
+chimie | Symbole de l'iode ? | I | Io | Id | 0 | 4
+chimie | Symbole de l'aluminium ? | Al | A | Am | 0 | 4
+chimie | Symbole du nickel ? | Ni | N | Nk | 0 | 4
+chimie | Symbole du platine ? | Pt | Pl | P | 0 | 4
+chimie | Symbole de l'uranium ? | Ur | U | Un | 1 | 4
+chimie | Symbole du bore ? | Bo | B | Br | 1 | 4
+chimie | Symbole du brome ? | Br | B | Bm | 0 | 4
+chimie | Symbole du chrome ? | Cr | Ch | C | 0 | 4
+chimie | Symbole du cobalt ? | Cb | Co | C | 1 | 4
+chimie | Symbole du manganese ? | Mn | Mg | Ma | 0 | 4
+chimie | 'W' = quel element ? | tungstene | vanadium | tantale | 0 | 4
+chimie | 'Ti' = quel element ? | titane | tantale | etain | 0 | 4
+chimie | 'Li' = quel element ? | lithium | lanthane | plomb | 0 | 4
+chimie | 'I' = quel element ? | iode | iridium | indium | 0 | 4
+chimie | 'Al' = quel element ? | aluminium | argent | argon | 0 | 4
+chimie | 'Pt' = quel element ? | platine | plomb | polonium | 0 | 4
+chimie | 'U' = quel element ? | uranium | iridium | vanadium | 0 | 4
+chimie | 'F' = quel element ? | fluor | fer | francium | 0 | 4
+chimie | 'B' = quel element ? | bore | brome | baryum | 0 | 4
+chimie | 'Br' = quel element ? | brome | bore | baryum | 0 | 4
+chimie | Formule du methane ? | CH4 | CO2 | C2H6 | 0 | 4
+chimie | Formule du monoxyde de carbone ? | CO | CO2 | C2O | 0 | 4
+chimie | Les proteines sont des chaines de ? | acides amines | sucres | graisses | 0 | 4
+chimie | Quelle molecule transporte l'oxygene ? | hemoglobine | chlorophylle | collagene | 0 | 4
+chimie | L'ATP apporte aux cellules ? | de l'energie | de l'eau | de la lumiere | 0 | 4
+chimie | L'insuline regule ? | le sucre du sang | la vue | le sommeil | 0 | 4
+chimie | Metal liquide a temperature ambiante ? | mercure | fer | plomb | 0 | 4
+chimie | Lequel est un gaz noble ? | neon | azote | chlore | 0 | 4
+chimie | Numero atomique du carbone ? | 6 | 12 | 8 | 0 | 4
+chimie | Numero atomique de l'oxygene ? | 6 | 8 | 16 | 1 | 4
+chimie | Numero atomique de l'helium ? | 1 | 2 | 4 | 1 | 4
+chimie | Numero atomique de l'azote ? | 7 | 14 | 8 | 0 | 4
+chimie | Symbole de l'antimoine ? | An | Sb | Am | 1 | 5
+chimie | Symbole du rubidium ? | Ru | Rb | Rd | 1 | 5
+chimie | Symbole du cesium ? | Ce | Cs | Cm | 1 | 5
+chimie | Symbole du strontium ? | St | Sr | S | 1 | 5
+chimie | Symbole du baryum ? | Ba | B | Br | 0 | 5
+chimie | Symbole du krypton ? | Kr | K | Ky | 0 | 5
+chimie | Symbole du xenon ? | Xe | X | Xn | 0 | 5
+chimie | Symbole du radon ? | Ra | Rn | Rd | 1 | 5
+chimie | Symbole du plutonium ? | Pl | Pu | Pt | 1 | 5
+chimie | Symbole de l'osmium ? | Os | O | Om | 0 | 5
+chimie | Symbole de l'iridium ? | Ir | I | Id | 0 | 5
+chimie | 'Sb' = quel element ? | antimoine | strontium | soufre | 0 | 5
+chimie | 'Rb' = quel element ? | rubidium | radium | ruthenium | 0 | 5
+chimie | 'Cs' = quel element ? | cesium | calcium | cerium | 0 | 5
+chimie | 'Sr' = quel element ? | strontium | scandium | silicium | 0 | 5
+chimie | 'Xe' = quel element ? | xenon | zinc | yttrium | 0 | 5
+chimie | 'Kr' = quel element ? | krypton | potassium | carbone | 0 | 5
+chimie | 'Rn' = quel element ? | radon | radium | rhodium | 0 | 5
+chimie | Numero atomique de l'or ? | 47 | 79 | 80 | 1 | 5
+chimie | Numero atomique du fer ? | 26 | 56 | 16 | 0 | 5
+chimie | Numero atomique du sodium ? | 11 | 23 | 10 | 0 | 5
+chimie | Formule de l'acide chlorhydrique ? | HCl | NaCl | H2SO4 | 0 | 5
+chimie | Formule de l'ammoniac ? | NH3 | NO2 | N2O | 0 | 5
+chimie | Formule de l'eau oxygenee ? | H2O2 | HO | H2O | 0 | 5
+chimie | Lequel est un metal alcalin ? | sodium | calcium | fer | 0 | 5

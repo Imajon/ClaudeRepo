@@ -1,0 +1,22 @@
+** Drc report for c3-tft-meatboy-polygon-ajoure-C.kicad_pcb **
+** Created on 2026-10-27T18:22:18 **
+** Report includes: Errors, Warnings **
+
+** Found 1 DRC violations **
+[starved_thermal]: Connexion de frein thermique à la zone incomplète (couche B.Cu ; 1 rayons connectés à des ilots isolés)
+    Local override; error
+    @(14.9751 mm, 54.1769 mm): Zone [GND] on B.Cu, priority 0
+    @(85.5500 mm, 20.4200 mm): PTH pad 1 [GND] of J3
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - Footprint component type doesn't match footprint pads
+
+** End of Report **

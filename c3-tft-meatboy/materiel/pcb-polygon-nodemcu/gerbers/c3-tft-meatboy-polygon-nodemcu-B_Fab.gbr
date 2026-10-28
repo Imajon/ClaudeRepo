@@ -1,0 +1,21 @@
+%TF.GenerationSoftware,KiCad,Pcbnew,10.0.6*%
+%TF.CreationDate,2026-09-30T17:33:12+02:00*%
+%TF.ProjectId,c3-tft-meatboy-polygon-nodemcu,63332d74-6674-42d6-9d65-6174626f792d,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,AssemblyDrawing,Bot*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+G04 Created by KiCad (PCBNEW 10.0.6) date 2026-09-30 17:33:12*
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+%ADD10C,0.100000*%
+G04 APERTURE END LIST*
+D10*
+X32530000Y-32000000D02*
+X84330000Y-32000000D01*
+X84330000Y-67560000D01*
+X32530000Y-67560000D01*
+X32530000Y-32000000D01*
+M02*

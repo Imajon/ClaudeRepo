@@ -455,15 +455,18 @@ go.onclick = async () => {
   }
   go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
   const t0 = performance.now();
-  await new Promise(r => setTimeout(r, 600 + Math.random() * 900));   // latence simulée
-  const { p, vu } = comprendre(texte, base);
+  // vraie IA (Mistral, via server.js) si le serveur la propose ; sinon les mots-clés locaux
+  let ia = null;
+  if (texte && EN_LIGNE) try { ia = await api('api/ia', { texte, base }); } catch {}
+  if (!ia) await new Promise(r => setTimeout(r, 600 + Math.random() * 900));   // latence simulée (mots-clés)
+  const { p, vu } = ia ?? comprendre(texte, base);
   p.seed = (Math.random() * 1e9) | 0; params = p;
   const niv = { format: 'brique-v1', params: p, rows: generer(p), icones: { ...icones } };
   const duree = (performance.now() - t0) / 1000;
   charger(niv);
-  compris.innerHTML = texte
-    ? (vu.length ? `J'ai compris : <b>${vu.map(esc).join(', ')}</b>` : `Je n'ai reconnu aucun mot-clé, j'ai gardé les réglages d'avant. Essaie d'être plus précis !`)
-    : 'Jeu créé avec tes choix. Ajoute une phrase pour aller plus loin.';
+  compris.innerHTML = !texte ? 'Jeu créé avec tes choix. Ajoute une phrase pour aller plus loin.'
+    : ia ? `🤖 L'IA a compris : <b>${vu.map(esc).join(', ') || 'rien à changer'}</b>${ia.remarque ? '<br>' + esc(ia.remarque) : ''}`
+    : vu.length ? `J'ai compris : <b>${vu.map(esc).join(', ')}</b>` : `Je n'ai reconnu aucun mot-clé, j'ai gardé les réglages d'avant. Essaie d'être plus précis !`;
   historique.push({ demande: [...avant, texte].filter(Boolean).join(' · ') || '(sans phrase)', vu, niv, duree, corr: '' });
   rendreHist(); capot.textContent = JSON.stringify(niv, null, 1).replace(/\n\s+"(\.|#|S|G)/g, '\n  "$1');
   go.disabled = false; go.textContent = '✨ Recréer avec ma correction'; demande.value = '';

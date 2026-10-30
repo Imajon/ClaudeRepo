@@ -23,4 +23,11 @@ Le classement a besoin de `server.js`. Sans lui, la page fonctionne quand même,
 - **Câble :** un câble USB de données, pas un câble de charge seule. L'IDE Arduino et le moniteur série doivent être fermés, car ils bloquent le port.
 - **Pilote :** aucun sous Windows 10 et 11, l'ESP32-C3 est vu comme un port COM USB.
 - **Internet :** seulement pour la recherche d'icônes, qui passe par `api.iconify.design`. Un filtre réseau d'école doit laisser passer ce domaine.
-- **Serveur de classement :** Node 18 ou plus, sans dépendance. Lancer `node server.js`, puis ouvrir `http://localhost:8080`. Le port se change avec `PORT=...`. Les données sont dans `data.json`, qui n'est pas versionné.
+- **Serveur de classement :** Node 18 ou plus, sans dépendance. Lancer `node server.js`, puis ouvrir `http://localhost:8080`. Le port se change avec `PORT=...`. Les données sont dans `data.json`, qui n'est pas versionné ; leur emplacement se change avec `DATA=...`.
+
+## Hébergement sur Render
+
+- Créer un « Web Service » sur le dépôt `Imajon/ClaudeRepo`, avec Root Directory `brique`, aucune commande de build et la commande de démarrage `node server.js`.
+- Offre gratuite : le service s'endort après 15 minutes sans visite (environ 50 secondes au réveil) et `data.json` est effacé à chaque redéploiement.
+- Pour garder le classement : une instance payante avec un disque monté sur `/var/data`, et la variable d'environnement `DATA=/var/data/data.json`.
+- Chaque `git push` sur `main` redéploie automatiquement.

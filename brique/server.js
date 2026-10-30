@@ -2,7 +2,8 @@
 // Aucune dependance : `node server.js` (port 8080, ou PORT=...). Donnees dans data.json a cote.
 // Aucun compte, aucune donnee perso : un pseudo libre (2-12 caracteres, pas d'espace -> pas de "Prenom Nom").
 const http = require('http'), fs = require('fs'), path = require('path');
-const PORT = process.env.PORT || 8080, FICHIER = path.join(__dirname, 'data.json');
+// DATA : chemin du fichier de donnees (ex. DATA=/var/data/data.json sur un disque Render, sinon efface a chaque redemarrage)
+const PORT = process.env.PORT || 8080, FICHIER = process.env.DATA || path.join(__dirname, 'data.json');
 let db = fs.existsSync(FICHIER) ? JSON.parse(fs.readFileSync(FICHIER, 'utf8')) : { niveaux: [], parties: [] };
 const sauver = () => { fs.writeFileSync(FICHIER + '.tmp', JSON.stringify(db)); fs.renameSync(FICHIER + '.tmp', FICHIER); };
 
@@ -34,10 +35,12 @@ function stats(id) {
   };
 }
 
-// ---------- limite de requetes : 30 ecritures / minute / IP ----------
+// ---------- limite de requetes : 300 ecritures / minute / IP ----------
+// une classe entiere sort par la meme IP d'ecole (~30 enfants x 10 ecritures) ; derriere Render, la vraie IP est dans x-forwarded-for
 // ponytail: compteur en memoire, remis a zero par minute ; suffit pour un atelier, un vrai limiteur si le serveur est public a grande echelle
 const ecritures = new Map(); setInterval(() => ecritures.clear(), 60000);
-const tropDeRequetes = ip => { const n = (ecritures.get(ip) || 0) + 1; ecritures.set(ip, n); return n > 30; };
+const tropDeRequetes = ip => { const n = (ecritures.get(ip) || 0) + 1; ecritures.set(ip, n); return n > 300; };
+const ipDe = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
 
 const repondre = (res, code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(obj)); };
 function lireJSON(req) {
@@ -56,7 +59,7 @@ http.createServer(async (req, res) => {
     return repondre(res, 200, db.niveaux.map(n => ({ ...n, stats: stats(n.id) })));
 
   if (req.method !== 'POST' || !url.startsWith('/api/')) return repondre(res, 404, { erreur: 'introuvable' });
-  if (tropDeRequetes(req.socket.remoteAddress)) return repondre(res, 429, { erreur: 'Doucement ! Réessaie dans une minute.' });
+  if (tropDeRequetes(ipDe(req))) return repondre(res, 429, { erreur: 'Doucement ! Réessaie dans une minute.' });
   let b; try { b = await lireJSON(req); } catch { return repondre(res, 400, { erreur: 'requête illisible' }); }
   if (!PSEUDO.test(b.pseudo || '')) return repondre(res, 400, { erreur: 'Pseudo : 2 à 12 lettres ou chiffres, sans espace.' });
 

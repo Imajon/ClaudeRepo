@@ -35,6 +35,23 @@ function stats(id) {
   };
 }
 
+// ---------- accueil "communaute" : tout ce qui bouge (niveaux + stats, joueurs actifs, chiffres du jour) ----------
+const JOUR = 864e5;
+function communaute() {
+  const now = Date.now(), titre = id => db.niveaux.find(n => n.id === id)?.titre || '?';
+  const semaine = {}; for (const p of db.parties) if (now - p.date < 7 * JOUR) semaine[p.niveau] = (semaine[p.niveau] || 0) + 1;
+  const actions = [...db.parties.map(p => ({ pseudo: p.pseudo, date: p.date, quoi: 'fini', niveau: p.niveau })),
+                   ...db.niveaux.map(n => ({ pseudo: n.pseudo, date: n.cree, quoi: 'cree', niveau: n.id }))].sort((a, b) => b.date - a.date);
+  const vus = new Set(), actifs = [];
+  for (const a of actions) if (!vus.has(a.pseudo) && actifs.length < 12) { vus.add(a.pseudo); actifs.push({ ...a, titre: titre(a.niveau) }); }
+  return {
+    chiffres: { jeux: db.niveaux.length, parties: db.parties.length,
+                aujourdhui: new Set(actions.filter(a => now - a.date < JOUR).map(a => a.pseudo)).size },
+    niveaux: db.niveaux.map(n => ({ ...n, stats: { ...stats(n.id), semaine: semaine[n.id] || 0 } })),
+    actifs,
+  };
+}
+
 // ---------- limite de requetes : 300 ecritures / minute / IP ----------
 // une classe entiere sort par la meme IP d'ecole (~30 enfants x 10 ecritures) ; derriere Render, la vraie IP est dans x-forwarded-for
 // ponytail: compteur en memoire, remis a zero par minute ; suffit pour un atelier, un vrai limiteur si le serveur est public a grande echelle
@@ -92,6 +109,7 @@ http.createServer(async (req, res) => {
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
   }
+  if (req.method === 'GET' && url === '/api/communaute') return repondre(res, 200, communaute());
   if (req.method === 'GET' && url === '/api/niveaux')
     return repondre(res, 200, db.niveaux.map(n => ({ ...n, stats: stats(n.id) })));
 

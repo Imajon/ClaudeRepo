@@ -8,28 +8,68 @@
      Génération SIMULÉE en local (mots-clés -> paramètres -> niveau). Le format de niveau est celui du firmware :
      lignes de 20 caractères, tuiles . # S G * R ^ W C I (cf. hand_levels.txt). -->
 <style>
-:root{--bg:#14121f;--panel:#1f1c30;--panel2:#2a2640;--txt:#f3f0ff;--mute:#a59fc4;--acc:#ffcc33;--ok:#4ade80;--ko:#f87171;--line:#3a3558}
+/* style "HUD de jeu" : fond nuit violet, panneaux lumineux, titres numérotés 01 — … */
+:root{--bg:#0c0820;--panel:#1a1238;--panel2:#241a4c;--txt:#f1ecff;--mute:#9b90c8;--acc:#a78bfa;--acc2:#22d3ee;--hot:#ffcc33;--ok:#4ade80;--ko:#f87171;--line:#3b2c78;
+      --glow:0 0 0 1px #4d3a9e inset,0 0 26px rgba(139,92,246,.16)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,"Segoe UI",sans-serif}
-header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line)}
-header h1{margin:0;font-size:24px;letter-spacing:1px}
-header h1 span{color:var(--acc)}
+body{margin:0;min-height:100vh;color:var(--txt);font:16px/1.4 system-ui,"Segoe UI",sans-serif;
+     background:radial-gradient(1100px 520px at 50% -8%,#2b1a66 0,transparent 65%),
+                linear-gradient(rgba(120,90,220,.05) 1px,transparent 1px) 0 0/32px 32px,
+                linear-gradient(90deg,rgba(120,90,220,.05) 1px,transparent 1px) 0 0/32px 32px,var(--bg)}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:rgba(12,8,32,.7);position:sticky;top:0;z-index:5;backdrop-filter:blur(6px);flex-wrap:wrap}
+header h1{margin:0;font-size:24px;letter-spacing:3px}
+header h1 span{color:var(--acc);text-shadow:0 0 14px rgba(167,139,250,.7)}
 header .pseudo{margin-left:auto}
 header .mode{margin-left:0}
-.mode{margin-left:auto;display:flex;background:var(--panel);border-radius:999px;padding:4px}
+.mode{margin-left:auto;display:flex;background:var(--panel);border-radius:999px;padding:4px;box-shadow:var(--glow)}
 .mode button{border:0;background:none;color:var(--mute);padding:8px 16px;border-radius:999px;font:inherit;cursor:pointer}
-.mode button.on{background:var(--acc);color:#1a1300;font-weight:700}
+.mode button.on{background:var(--acc);color:#160c33;font-weight:700;box-shadow:0 0 16px rgba(167,139,250,.5)}
 main{display:grid;grid-template-columns:340px 1fr 320px;gap:16px;padding:16px;align-items:start}
 @media (max-width:1100px){main{grid-template-columns:1fr}}
-section{background:var(--panel);border-radius:16px;padding:16px}
-h2{margin:0 0 12px;font-size:17px;color:var(--acc)}
+section{background:linear-gradient(180deg,rgba(46,31,100,.55),rgba(22,15,48,.9));border-radius:14px;padding:16px;box-shadow:var(--glow)}
+h2{margin:0 0 12px;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--txt)}
+h2 b{color:var(--acc);margin-right:6px}
 h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:2px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:12px;padding:6px 10px;font:inherit;font-size:15px;cursor:pointer}
-.chip.on{border-color:var(--acc);background:#3d3420}
+.chip.on{border-color:var(--acc);background:#2f2266;box-shadow:0 0 12px rgba(167,139,250,.35)}
+/* ----- accueil communauté ----- */
+.commu{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;padding:16px;max-width:1400px;margin:0 auto}
+.commu>section{grid-column:span 4;min-width:0}
+.commu .c-hero{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:20px}
+.commu .c-class{grid-column:span 5}.commu .c-new{grid-column:span 7}
+@media (max-width:1000px){.commu>section,.commu .c-class,.commu .c-new{grid-column:1/-1}}
+.c-hero .accroche{flex:1;min-width:260px}
+.c-hero .accroche p{margin:4px 0 0;color:var(--mute)}
+.tuiles{display:flex;gap:12px;flex-wrap:wrap}
+.tuile{min-width:120px;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.25);box-shadow:var(--glow)}
+.tuile b{display:block;font-size:28px;color:var(--acc2);text-shadow:0 0 12px rgba(34,211,238,.5)}
+.tuile span{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:1px}
+.cta{display:flex;gap:10px;flex-wrap:wrap}
+.cta .big{width:auto;margin:0;padding:12px 20px;font-size:17px}
+.liste{display:flex;flex-direction:column;gap:8px}
+.rang{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid transparent}
+.rang:hover{border-color:var(--line)}
+.rang .pos{width:30px;text-align:center;font-weight:800;color:var(--acc);font-size:18px}
+.rang .qui{flex:1;min-width:0}
+.rang .qui div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rang small{color:var(--mute)}
+.barre{height:4px;margin-top:5px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.barre i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.jouer{border:1px solid var(--acc);background:rgba(167,139,250,.12);color:var(--txt);border-radius:9px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.jouer:hover{background:var(--acc);color:#160c33}
+.cartes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.carte{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:12px;background:rgba(0,0,0,.25);box-shadow:var(--glow)}
+.carte .t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vig{height:84px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;border-radius:8px;background:#0a0618}
+.mini{width:60px;image-rendering:pixelated}
+.avatar{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#160c33}
+.neuf{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--acc2);color:#04212a;font-weight:800;margin-left:6px}
 textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
 textarea:focus{outline:none;border-color:var(--acc)}
-.big{width:100%;margin-top:12px;border:0;border-radius:14px;padding:14px;font:inherit;font-size:19px;font-weight:800;cursor:pointer;background:var(--acc);color:#1a1300}
+.big{width:100%;margin-top:12px;border:0;border-radius:14px;padding:14px;font:inherit;font-size:19px;font-weight:800;cursor:pointer;color:#fff;
+     background:linear-gradient(90deg,#8b5cf6,#6d28d9);box-shadow:0 0 22px rgba(139,92,246,.45)}
+.big.alt{background:none;box-shadow:var(--glow)}
 .big:disabled{opacity:.5;cursor:wait}
 .sec{border:2px solid var(--line);background:none;color:var(--txt);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer}
 .sec:hover{border-color:var(--acc)}
@@ -77,17 +117,44 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 <body>
 <header>
   <h1>BRI<span>QUE</span></h1>
+  <nav class="mode">
+    <button id="vCommu" class="on">🏠 Communauté</button>
+    <button id="vCreer">🛠 Créer</button>
+  </nav>
   <input id="pseudoIn" class="pseudo" maxlength="12" placeholder="Ton pseudo" title="2 à 12 lettres ou chiffres, sans espace. Pas ton vrai nom !">
-  <div class="mode">
+  <div id="niveauScolaire" class="mode hide">
     <button id="mGuide" class="on">CM1 · CM2 — guidé</button>
     <button id="mLibre">6ᵉ · 4ᵉ — libre</button>
   </div>
 </header>
 
-<main>
+<!-- ===== ACCUEIL : ce qui se passe dans la communauté ===== -->
+<main id="commu" class="commu">
+  <section class="c-hero">
+    <div class="accroche">
+      <h2><b>01</b>— En ce moment</h2>
+      <div class="tuiles">
+        <div class="tuile"><b id="nJeux">–</b><span>jeux créés</span></div>
+        <div class="tuile"><b id="nParties">–</b><span>parties finies</span></div>
+        <div class="tuile"><b id="nAujourdhui">–</b><span>joueurs aujourd'hui</span></div>
+      </div>
+    </div>
+    <div class="cta">
+      <button id="ctaCreer" class="big">✨ Créer mon jeu</button>
+      <button id="ctaCommun" class="big alt">🧱 Jouer au jeu commun</button>
+    </div>
+  </section>
+  <section class="c-class"><h2><b>02</b>— Classement des jeux</h2><div id="classement" class="liste"></div></section>
+  <section class="c-new"><h2><b>03</b>— Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
+  <section><h2><b>04</b>— Joueurs actifs</h2><div id="actifs" class="liste"></div></section>
+  <section><h2><b>05</b>— Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
+  <section><h2><b>06</b>— Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu : chacun y ajoute un niveau signé de son pseudo.</p><div id="commun" class="liste"></div></section>
+</main>
+
+<main id="atelier" class="hide">
   <!-- ===== DEMANDE ===== -->
   <section>
-    <h2 id="titreDemande">1. Je décris mon jeu</h2>
+    <h2 id="titreDemande"><b>01</b>— Je décris mon jeu</h2>
 
     <div id="guide">
       <h3>Le monde</h3><div class="chips" data-k="theme"></div>
@@ -126,7 +193,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 
   <!-- ===== CONSOLE / APERÇU ===== -->
   <section class="console">
-    <h2>2. Je teste</h2>
+    <h2><b>02</b>— Je teste</h2>
     <div class="coque">
       <canvas id="ecran" width="320" height="240"></canvas>
       <div class="pad">
@@ -154,13 +221,8 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 
   <!-- ===== HISTORIQUE ===== -->
   <section>
-    <h2>3. Ce que j'ai fait</h2>
+    <h2><b>03</b>— Ce que j'ai fait</h2>
     <div id="hist" class="hist"><p class="vide">Tes essais apparaîtront ici : ce que tu as demandé, ce qui est arrivé, ce que tu veux corriger.</p></div>
-  </section>
-  <!-- ===== EN LIGNE ===== -->
-  <section class="large">
-    <div><h2>🏆 Les jeux les plus joués</h2><div id="classement" class="hist"></div></div>
-    <div><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu : chacun y ajoute un niveau signé de son pseudo.</p><div id="commun" class="hist"></div></div>
   </section>
 </main>
 
@@ -669,26 +731,71 @@ publierBtn.onclick = () => publier(false);
 communBtn.onclick = () => publier(true);
 
 let enLigne = [];
-const fmtStats = s => s.parties
-  ? `▶ ${s.parties} fois fini · ${s.joueurs} joueur${s.joueurs > 1 ? 's' : ''}<br>⏱ record ${(s.record.t / 1000).toFixed(1)} s par <b>${esc(s.record.pseudo)}</b><br>🏆 ${esc(s.champion.pseudo)} l'a fini ${s.champion.fois}× · ☠ ${s.mortsMoy} morts en moyenne`
-  : 'Personne ne l\'a encore fini !';
-const carte = (n, num) => `<div class="it"><span class="n">${num ? 'Niveau ' + num + ' · ' : ''}${esc(n.titre)}</span> <span class="r">par <b>${esc(n.pseudo)}</b></span>
-  <div class="r">${fmtStats(n.stats)}</div><button class="sec" data-id="${n.id}" style="margin-top:6px">▶ Jouer</button></div>`;
+// ---------- Accueil "Communauté" ----------
+const vide = t => `<p class="vide">${t}</p>`;
+const depuis = d => { const m = Math.floor((Date.now() - d) / 60000);
+  return m < 1 ? 'à l\'instant' : m < 60 ? `il y a ${m} min` : m < 1440 ? `il y a ${Math.floor(m / 60)} h` : `il y a ${Math.floor(m / 1440)} j`; };
+const teinte = s => [...s].reduce((h, c) => h * 31 + c.charCodeAt(0) | 0, 7) & 359;   // une couleur fixe par pseudo
+const avatar = p => `<span class="avatar" style="background:hsl(${teinte(p)} 80% 70%)">${esc(p[0].toUpperCase())}</span>`;
+const bouton = n => `<button class="jouer" data-id="${n.id}">▶ Jouer</button>`;
+const COUL = { '#': '#6d5bd0', R: '#ffd400', '^': '#eee', W: '#bbb', C: '#a0703c', I: '#9ef', '*': '#ffd400', G: '#4ade80', S: '#f472b6' };
+function vignette(rows) {                                // le niveau entier en petit (3 px par case), vu du bas comme au départ
+  const c = document.createElement('canvas'); c.width = COLS; c.height = rows.length; c.className = 'mini';
+  const x = c.getContext('2d');
+  rows.forEach((r, y) => [...r].forEach((t, i) => { if (COUL[t]) { x.fillStyle = COUL[t]; x.fillRect(i, y, 1, 1); } }));
+  return c.toDataURL();
+}
+const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="pos">${pos}</span>
+  <div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div><small>${detail}</small>
+  ${max ? `<div class="barre"><i style="width:${Math.round(100 * val / max)}%"></i></div>` : ''}</div>${bouton(n)}</div>`;
+
 async function rafraichir() {
-  try { enLigne = await api('api/niveaux'); EN_LIGNE = true; }
-  catch { EN_LIGNE = false; classement.innerHTML = commun.innerHTML = '<p class="vide">Pas de serveur de classement ici. Lance <code>node server.js</code> puis ouvre http://localhost:8080</p>'; return; }
-  const jeux = enLigne.filter(n => !n.commun).sort((a, b) => b.stats.parties - a.stats.parties);
+  let c;
+  try { c = await api('api/communaute'); EN_LIGNE = true; }
+  catch { EN_LIGNE = false; vCommu.classList.add('hide'); if (vue === 'commu') afficher('creer'); return; }   // GitHub Pages / fichier : pas de communauté
+  enLigne = c.niveaux;
+  nJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = c.chiffres.aujourdhui;
+  const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
+  const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
+  classement.innerHTML = top.map((n, i) => ligneRang(n, MEDAILLE[i] || i + 1,
+      n.stats.parties ? `${n.stats.parties} fois fini · record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'personne ne l\'a encore fini',
+      top[0].stats.parties, n.stats.parties)).join('') || vide('Aucun jeu publié pour l\'instant : sois le premier !');
+  nouveaux.innerHTML = [...enLigne].sort((a, b) => b.cree - a.cree).slice(0, 8).map(n => `<div class="carte">
+      <div class="vig"><img class="mini" src="${vignette(n.niv.rows)}" alt=""></div>
+      <div class="t">${esc(n.titre)}${Date.now() - n.cree < 864e5 ? '<span class="neuf">NEUF</span>' : ''}</div>
+      <small class="r" style="color:var(--mute)">par ${esc(n.pseudo)} · ${depuis(n.cree)}${n.commun ? ' · 🧱 commun' : ''}</small>${bouton(n)}</div>`).join('')
+    || vide('Aucun niveau pour l\'instant.');
+  actifs.innerHTML = c.actifs.map(a => `<div class="rang">${avatar(a.pseudo)}<div class="qui"><div><b>${esc(a.pseudo)}</b></div>
+      <small>${a.quoi === 'cree' ? '✨ a créé' : '🏁 a fini'} « ${esc(a.titre)} » · ${depuis(a.date)}</small></div></div>`).join('')
+    || vide('Personne n\'a encore joué.');
+  const chauds = enLigne.filter(n => n.stats.semaine).sort((a, b) => b.stats.semaine - a.stats.semaine).slice(0, 6);
+  tendance.innerHTML = chauds.map((n, i) => ligneRang(n, '🔥', `${n.stats.semaine} partie${n.stats.semaine > 1 ? 's' : ''} cette semaine`, chauds[0].stats.semaine, n.stats.semaine)).join('')
+    || vide('Rien cette semaine : joue un niveau pour le faire monter !');
   const niv = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree);
-  classement.innerHTML = jeux.map(n => carte(n)).join('') || '<p class="vide">Aucun jeu publié pour l\'instant.</p>';
-  commun.innerHTML = niv.map((n, i) => carte(n, i + 1)).join('') || '<p class="vide">Le jeu commun est vide : ajoute le premier niveau !</p>';
+  commun.innerHTML = niv.map((n, i) => ligneRang(n, i + 1, n.stats.parties ? `record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'jamais fini')).join('')
+    || vide('Le jeu commun est vide : ajoute le premier niveau !');
+}
+function jouerNiveau(n) {
+  charger({ ...n.niv, id: n.id, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params);
+  historique.push({ demande: `Jouer « ${n.titre} » de ${n.pseudo}`, vu: [], niv: jeu.niv, duree: 0, corr: '' }); rendreHist();
+  afficher('creer'); ecran.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 document.addEventListener('click', e => {
   const id = e.target.dataset?.id; if (!id) return;
-  const n = enLigne.find(n => n.id === id); if (!n) return;
-  charger({ ...n.niv, id: n.id, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params);
-  historique.push({ demande: `Jouer « ${n.titre} » de ${n.pseudo}`, vu: [], niv: jeu.niv, duree: 0, corr: '' }); rendreHist();
-  ecran.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const n = enLigne.find(n => n.id === id); if (n) jouerNiveau(n);
 });
+
+// ---------- Deux vues : Communauté (accueil) / Créer ----------
+let vue = 'commu';
+function afficher(v) {
+  vue = v;
+  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); niveauScolaire.classList.toggle('hide', v !== 'creer');
+  vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer');
+  scrollTo(0, 0);
+}
+vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer');
+ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
+afficher('commu');
 rafraichir(); setInterval(rafraichir, 15000);
 </script>
 </body>

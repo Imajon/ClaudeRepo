@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brique</title>
+<!-- Brique V1 : maquette de l'atelier "créer un jeu avec l'IA" (console c3-tft-meatboy).
+     Génération SIMULÉE en local (mots-clés -> paramètres -> niveau). Le format de niveau est celui du firmware :
+     lignes de 20 caractères, tuiles . # S G * R ^ W C I (cf. hand_levels.txt). -->
+<style>
+:root{--bg:#14121f;--panel:#1f1c30;--panel2:#2a2640;--txt:#f3f0ff;--mute:#a59fc4;--acc:#ffcc33;--ok:#4ade80;--ko:#f87171;--line:#3a3558}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,"Segoe UI",sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:24px;letter-spacing:1px}
+header h1 span{color:var(--acc)}
+.mode{margin-left:auto;display:flex;background:var(--panel);border-radius:999px;padding:4px}
+.mode button{border:0;background:none;color:var(--mute);padding:8px 16px;border-radius:999px;font:inherit;cursor:pointer}
+.mode button.on{background:var(--acc);color:#1a1300;font-weight:700}
+main{display:grid;grid-template-columns:340px 1fr 320px;gap:16px;padding:16px;align-items:start}
+@media (max-width:1100px){main{grid-template-columns:1fr}}
+section{background:var(--panel);border-radius:16px;padding:16px}
+h2{margin:0 0 12px;font-size:17px;color:var(--acc)}
+h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:2px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:12px;padding:6px 10px;font:inherit;font-size:15px;cursor:pointer}
+.chip.on{border-color:var(--acc);background:#3d3420}
+textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
+textarea:focus{outline:none;border-color:var(--acc)}
+.big{width:100%;margin-top:12px;border:0;border-radius:14px;padding:14px;font:inherit;font-size:19px;font-weight:800;cursor:pointer;background:var(--acc);color:#1a1300}
+.big:disabled{opacity:.5;cursor:wait}
+.sec{border:2px solid var(--line);background:none;color:var(--txt);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer}
+.sec:hover{border-color:var(--acc)}
+.compris{margin-top:12px;padding:10px;border-radius:12px;background:var(--panel2);font-size:14px;min-height:40px}
+.compris b{color:var(--ok)}
+.cat{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px}
+.cat div{background:var(--panel2);border-radius:8px;padding:6px 8px}
+.cat code{color:var(--acc);font-weight:700}
+.console{display:flex;flex-direction:column;align-items:center}
+.coque{background:#c9302c;border-radius:28px;padding:22px 28px 18px;box-shadow:0 10px 0 #8d1f1c;max-width:100%}
+canvas{display:block;width:640px;max-width:100%;aspect-ratio:4/3;image-rendering:pixelated;background:#000;border-radius:6px;border:6px solid #222}
+.pad{display:flex;justify-content:space-between;margin-top:14px;gap:12px}
+.pad button{width:64px;height:64px;border-radius:50%;border:0;background:#222;color:#fff;font-size:24px;box-shadow:0 5px 0 #000;touch-action:none;user-select:none}
+.pad button:active{transform:translateY(3px);box-shadow:0 2px 0 #000}
+.pad .saut{background:#ffcc33;color:#000}
+.aide{color:var(--mute);font-size:13px;margin:10px 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.envoi{margin-top:10px;font-size:14px;min-height:20px}
+.hist{display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:auto}
+.it{background:var(--panel2);border-radius:12px;padding:10px;font-size:14px;border-left:4px solid var(--line)}
+.it.cur{border-left-color:var(--acc)}
+.it .n{font-weight:800;color:var(--acc)}
+.it .q{margin:4px 0;font-style:italic}
+.it .r{color:var(--mute)}
+.it input{width:100%;margin-top:6px;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px;font:inherit;font-size:13px}
+.vide{color:var(--mute);font-size:14px}
+details{margin-top:16px;width:100%;max-width:700px}
+summary{cursor:pointer;color:var(--mute)}
+pre{background:#0b0a12;border-radius:10px;padding:12px;font-size:12px;overflow:auto;max-height:340px}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>BRI<span>QUE</span></h1>
+  <div class="mode">
+    <button id="mGuide" class="on">CM1 · CM2 — guidé</button>
+    <button id="mLibre">6ᵉ · 4ᵉ — libre</button>
+  </div>
+</header>
+
+<main>
+  <!-- ===== DEMANDE ===== -->
+  <section>
+    <h2 id="titreDemande">1. Je décris mon jeu</h2>
+
+    <div id="guide">
+      <h3>Le monde</h3><div class="chips" data-k="theme"></div>
+      <h3>Mon héros</h3><div class="chips" data-k="hero"></div>
+      <h3>Le danger</h3><div class="chips" data-k="danger"></div>
+      <h3>Et en plus…</h3>
+    </div>
+
+    <textarea id="demande" placeholder="Ex : un niveau très haut avec des ressorts et de la glace"></textarea>
+
+    <div id="catalogue" class="hide">
+      <h3>Les briques que l'IA sait utiliser</h3>
+      <div class="cat">
+        <div><code>#</code> sol / mur</div><div><code>R</code> ressort</div>
+        <div><code>^</code> pic</div><div><code>W</code> scie</div>
+        <div><code>C</code> bloc fragile</div><div><code>I</code> glace</div>
+        <div><code>*</code> étoile</div><div><code>G</code> arrivée</div>
+      </div>
+      <h3>Réglages</h3>
+      <div class="cat">
+        <div>hauteur (court / haut)</div><div>difficulté</div>
+        <div>gravité (lune / lourd)</div><div>vitesse (lent / vite)</div>
+      </div>
+    </div>
+
+    <button id="go" class="big">✨ Créer mon jeu</button>
+    <div id="compris" class="compris">Choisis, écris une phrase, puis appuie sur « Créer ».</div>
+  </section>
+
+  <!-- ===== CONSOLE / APERÇU ===== -->
+  <section class="console">
+    <h2>2. Je teste</h2>
+    <div class="coque">
+      <canvas id="ecran" width="320" height="240"></canvas>
+      <div class="pad">
+        <div style="display:flex;gap:10px"><button data-b="g">◀</button><button data-b="d">▶</button></div>
+        <button class="saut" data-b="s">⤒</button>
+      </div>
+    </div>
+    <p class="aide">Clavier : ← → pour bouger, Espace ou ↑ pour sauter. Saute contre un mur pour rebondir.</p>
+    <div class="actions">
+      <button id="rejouer" class="sec">↺ Rejouer</button>
+      <button id="nouveau" class="sec">🗑 Nouveau jeu</button>
+      <button id="envoyer" class="sec">📟 Envoyer sur la console</button>
+    </div>
+    <div id="envoi" class="envoi"></div>
+    <details>
+      <summary>🔧 Voir sous le capot</summary>
+      <pre id="capot"></pre>
+    </details>
+  </section>
+
+  <!-- ===== HISTORIQUE ===== -->
+  <section>
+    <h2>3. Ce que j'ai fait</h2>
+    <div id="hist" class="hist"><p class="vide">Tes essais apparaîtront ici : ce que tu as demandé, ce qui est arrivé, ce que tu veux corriger.</p></div>
+  </section>
+</main>
+
+<script>
+// ---------- Constantes reprises du firmware (c3-tft-meatboy.ino) ----------
+const TILE = 16, COLS = 20, SW = 320, SH = 240;
+const GRAVITY = 1400, RUN = 200, JUMP_V = -450, MAXFALL = 540, BOUNCE_V = -560;
+const WJUMP_VY = -400, WJUMP_VX = 185, JUMPLOCK = 0.13, CRUMB_DELAY = 0.8, PW = 12, PH = 14;
+
+// ---------- Choix guidés ----------
+const CHOIX = {
+  theme:  [['foret','🌲 Forêt'],['lave','🌋 Volcan'],['glace','❄️ Banquise'],['espace','🚀 Espace'],['bonbon','🍭 Bonbons']],
+  hero:   [['cube','🟥 Cube'],['ninja','🥷 Ninja'],['robot','🤖 Robot'],['chat','🐱 Chat']],
+  danger: [['pic','🔺 Pics'],['scie','⚙️ Scies'],['fragile','🧱 Blocs qui tombent'],['aucun','😌 Rien']],
+};
+const THEMES = {
+  foret:  { ciel:['#9be7ff','#e8fff0'], sol:'#3f8f3a', bord:'#2a5e27', glace:'#b8f0ff' },
+  lave:   { ciel:['#3a0b0b','#a8361a'], sol:'#4a3b3b', bord:'#ff6a00', glace:'#ffd0a0' },
+  glace:  { ciel:['#cfe9ff','#ffffff'], sol:'#7aa6c9', bord:'#4f7fa6', glace:'#e6fbff' },
+  espace: { ciel:['#05031a','#2b1d5c'], sol:'#5c5a7a', bord:'#a69cff', glace:'#9ff' },
+  bonbon: { ciel:['#ffd1ec','#fff4c2'], sol:'#ff7ab8', bord:'#c2387a', glace:'#bff' },
+};
+const HEROS = { cube:'#e8322b', ninja:'#222233', robot:'#9aa4b0', chat:'#ff9933' };
+
+let mode = 'guide', choix = { theme:'foret', hero:'cube', danger:'pic' };
+for (const k in CHOIX) {
+  const box = document.querySelector(`.chips[data-k="${k}"]`);
+  for (const [v, lab] of CHOIX[k]) {
+    const b = document.createElement('button');
+    b.className = 'chip' + (choix[k] === v ? ' on' : ''); b.textContent = lab;
+    b.onclick = () => { choix[k] = v; box.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); };
+    box.appendChild(b);
+  }
+}
+function setMode(m) {
+  mode = m;
+  mGuide.classList.toggle('on', m === 'guide'); mLibre.classList.toggle('on', m === 'libre');
+  guide.classList.toggle('hide', m !== 'guide'); catalogue.classList.toggle('hide', m !== 'libre');
+  demande.placeholder = m === 'guide' ? 'Une phrase en plus (pas obligé) : « très haut », « avec des ressorts »…'
+                                     : 'Décris ton niveau : thème, héros, pièges, hauteur, difficulté…';
+}
+mGuide.onclick = () => setMode('guide'); mLibre.onclick = () => setMode('libre'); setMode('guide');
+
+// ---------- "IA" simulée : texte -> paramètres ----------
+// ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
+const DEFAUT = { theme:'foret', hero:'cube', hauteur:30, difficulte:2, gravite:1, vitesse:1,
+                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3 };
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+function comprendre(texte, base) {
+  const p = structuredClone(base), vu = [], t = norm(texte);
+  const a = re => re.test(t);
+  const non = mot => new RegExp(`(sans|pas de|pas d'|plus de|enleve|retire)\\s+(les\\s+)?${mot}`).test(t);
+  const THEME_MOTS = { foret:/foret|arbre|jungle|nature/, lave:/lave|volcan|feu|enfer/, glace:/banquise|neige|hiver|pole/,
+                       espace:/espace|planete|lune|fusee|galax/, bonbon:/bonbon|sucre|gateau|chocolat/ };
+  for (const k in THEME_MOTS) if (a(THEME_MOTS[k])) { p.theme = k; vu.push('monde ' + k); break; }
+  const HERO_MOTS = { ninja:/ninja/, robot:/robot/, chat:/chat|minou/, cube:/cube|carre|viande/ };
+  for (const k in HERO_MOTS) if (a(HERO_MOTS[k])) { p.hero = k; vu.push('héros ' + k); break; }
+  const BRIQ = { pic:'pic|piege|epine|pique', scie:'scie|lame|tronconneuse', ressort:'ressort|rebond|trampoline',
+                 glace:'glace|glisse|verglas', fragile:'fragile|casse|effondre|tombe' };
+  for (const k in BRIQ) {
+    if (non(`(${BRIQ[k]})`)) { if (p.briques[k]) vu.push('sans ' + k); p.briques[k] = false; }
+    else if (a(new RegExp(BRIQ[k]))) { p.briques[k] = true; vu.push(k); }
+  }
+  if (a(/tres (haut|grand|long)|immense|gigantesque|enorme/)) { p.hauteur = 60; vu.push('très haut'); }
+  else if (a(/haut|grand|long/)) { p.hauteur = Math.min(60, p.hauteur + 12); vu.push('plus haut'); }
+  if (a(/court|petit|mini/)) { p.hauteur = Math.max(15, p.hauteur - 12); vu.push('plus court'); }
+  if (a(/impossible|tres dur|tres difficile/)) { p.difficulte = 3; vu.push('très dur'); }
+  else if (a(/dur|difficile|hard|complique/)) { p.difficulte = Math.min(3, p.difficulte + 1); vu.push('plus dur'); }
+  if (a(/facile|simple|bebe/)) { p.difficulte = Math.max(1, p.difficulte - 1); vu.push('plus facile'); }
+  if (a(/leger|flott|lune|apesanteur/)) { p.gravite = 0.65; vu.push('gravité faible'); }
+  if (a(/lourd/)) { p.gravite = 1.3; vu.push('gravité forte'); }
+  if (a(/lent/)) { p.vitesse = 0.8; vu.push('plus lent'); }
+  if (a(/vite|rapide|fonce/)) { p.vitesse = 1.2; vu.push('plus rapide'); }
+  if (a(/etoile|piece|tresor|diamant/)) { p.etoiles = Math.min(8, p.etoiles + 3); vu.push('plus d\'étoiles'); }
+  return { p, vu };
+}
+
+// ---------- Générateur de niveau (format firmware) ----------
+function rnd(seed) { return () => (seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296; }
+
+function generer(p) {
+  const R = rnd(p.seed), ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+  const H = p.hauteur, g = Array.from({ length: H }, () => Array(COLS).fill('.'));
+  g[H - 2].fill('#'); g[H - 1].fill('#'); g[H - 3][1] = 'S';
+  const larg = 6 - p.difficulte;                       // plateformes plus étroites si difficile
+  let y = H - 2, cx = 3, plats = [], prevRessort = false;
+  while (true) {
+    // saut mesuré ~4,7 cases, ressort ~6,5 (à gravité 1) : l'écart reste sous ce plafond quelle que soit la gravité
+    const ecart = Math.min((prevRessort ? 6 : 3) + (p.difficulte === 3 ? 1 : 0), Math.floor((prevRessort ? 6.2 : 4.2) / p.gravite));
+    if (y - ecart < 4) break;
+    y -= ecart;
+    cx = Math.max(1, Math.min(COLS - larg - 1, cx + (R() < .5 ? -1 : 1) * ri(3, 7)));
+    const t = p.briques.fragile && R() < .3 ? 'C' : p.briques.glace && R() < .4 ? 'I' : '#';
+    for (let x = cx; x < cx + larg; x++) g[y][x] = t;
+    prevRessort = p.briques.ressort && R() < .45;
+    if (prevRessort) g[y][cx + (larg >> 1)] = 'R';
+    plats.push({ y, x0: cx, x1: cx + larg - 1 });
+  }
+  const top = plats.at(-1) || { y: H - 2, x0: 8, x1: 12 };
+  g[top.y - 1][(top.x0 + top.x1) >> 1] = 'G';
+  plats.slice(0, -1).forEach((pl, i) => {
+    if (p.briques.pic && larg >= 3 && R() < .3 + .2 * p.difficulte) g[pl.y - 1][R() < .5 ? pl.x0 : pl.x1] = '^';
+    if (p.briques.scie && R() < .15 + .1 * p.difficulte) {
+      const sx = pl.x1 + 2 < COLS ? pl.x1 + 2 : pl.x0 - 2;
+      if (g[pl.y - 1][sx] === '.') g[pl.y - 1][sx] = 'W';
+    }
+  });
+  // étoiles au-dessus de plateformes au hasard
+  for (let i = 0, essais = 0; i < p.etoiles && essais < 50; essais++) {
+    const pl = plats[ri(0, Math.max(0, plats.length - 2))]; if (!pl) break;
+    const x = ri(pl.x0, pl.x1); if (g[pl.y - 2][x] === '.') { g[pl.y - 2][x] = '*'; i++; }
+  }
+  return g.map(r => r.join(''));
+}
+
+// ---------- Émulateur (physique simplifiée du firmware) ----------
+const cv = ecran, ctx = cv.getContext('2d');
+let jeu = null, keys = { g:0, d:0, s:0 }, sautPrec = 0;
+
+function charger(niv) {
+  const rows = niv.rows.map(r => r.split(''));
+  const j = { niv, rows, saws:[], stars:[], crumbs:{}, mort:0, t:0, gagne:false, cam:0, total:0 };
+  rows.forEach((r, y) => r.forEach((c, x) => {
+    if (c === 'S') { j.sx = x * TILE + 2; j.sy = y * TILE + TILE - PH; r[x] = '.'; }
+    if (c === 'G') { j.gx = x; j.gy = y; r[x] = '.'; }
+    if (c === '*') { j.stars.push({ x, y, pris:false }); r[x] = '.'; }
+    if (c === 'W') { j.saws.push({ x: x * TILE + 8, y0: (y - 3) * TILE, y1: (y + 1) * TILE, y: y * TILE, dir: 1 }); r[x] = '.'; }
+  }));
+  j.total = j.stars.length; jeu = j; respawn();
+  j.cam = Math.max(0, Math.min(rows.length * TILE - SH, j.sy - SH / 2));
+}
+function respawn() {
+  Object.assign(jeu, { px: jeu.sx, py: jeu.sy, vx: 0, vy: 0, sol: false, lock: 0, crumbs: {} });
+}
+const tuile = (x, y) => (y < 0 || x < 0 || x >= COLS) ? '#' : (y >= jeu.rows.length ? '.' : jeu.rows[y][x]);
+function solide(x, y) {
+  const c = tuile(x, y);
+  if (c === 'C') { const k = jeu.crumbs[x + ',' + y]; return !(k && k.t >= CRUMB_DELAY + .1); }
+  return c === '#' || c === 'R' || c === 'I' || c === 'B';
+}
+function heurte(px, py) {
+  for (let y = Math.floor(py / TILE); y <= Math.floor((py + PH - 1) / TILE); y++)
+    for (let x = Math.floor(px / TILE); x <= Math.floor((px + PW - 1) / TILE); x++)
+      if (solide(x, y)) return { x, y };
+  return null;
+}
+
+function maj(dt) {
+  const j = jeu, p = j.niv.params; if (!j || j.gagne) return;
+  j.t += dt;
+  const dir = (keys.d ? 1 : 0) - (keys.g ? 1 : 0), saut = keys.s && !sautPrec; sautPrec = keys.s;
+  const dessous = tuile(Math.floor((j.px + PW / 2) / TILE), Math.floor((j.py + PH) / TILE));
+  const vise = dir * RUN * p.vitesse;
+  if (j.lock > 0) j.lock -= dt;
+  else if (j.sol && dessous === 'I') j.vx += (vise - j.vx) * Math.min(1, dt * 2.5);   // glace : peu d'adhérence
+  else j.vx = vise;
+  j.vy = Math.min(MAXFALL, j.vy + GRAVITY * p.gravite * dt);
+  const mur = !j.sol && (heurte(j.px - 1, j.py) ? -1 : heurte(j.px + 1, j.py) ? 1 : 0);
+  if (mur && dir === mur && j.vy > 0) j.vy = Math.min(j.vy, 60);          // glissade au mur
+  j.buf = saut ? 0.12 : Math.max(0, (j.buf || 0) - dt);           // saut mémorisé 0,12 s (appui juste avant d'atterrir)
+  if (j.buf > 0) {
+    if (j.sol) { j.vy = JUMP_V; j.buf = 0; }
+    else if (mur) { j.vy = WJUMP_VY; j.vx = -mur * WJUMP_VX; j.lock = JUMPLOCK; j.buf = 0; }
+  }
+  // déplacement X puis Y
+  j.px += j.vx * dt;
+  let h = heurte(j.px, j.py);
+  if (h) { j.px = j.vx > 0 ? h.x * TILE - PW : (h.x + 1) * TILE; j.vx = 0; }
+  j.py += j.vy * dt; j.sol = false;
+  h = heurte(j.px, j.py);
+  if (h) {
+    if (j.vy > 0) {
+      j.py = h.y * TILE - PH;
+      const c = tuile(h.x, h.y);
+      if (c === 'R') j.vy = BOUNCE_V;
+      else { j.vy = 0; j.sol = true; }
+      if (c === 'C') { const k = h.x + ',' + h.y; j.crumbs[k] ??= { t: 0 }; }
+    } else { j.py = (h.y + 1) * TILE; j.vy = 0; }
+  }
+  for (const k in j.crumbs) j.crumbs[k].t += dt;
+  // dangers
+  const cx0 = Math.floor(j.px / TILE), cx1 = Math.floor((j.px + PW - 1) / TILE);
+  for (let y = Math.floor(j.py / TILE); y <= Math.floor((j.py + PH - 1) / TILE); y++)
+    for (let x = cx0; x <= cx1; x++)
+      if (tuile(x, y) === '^' && j.py + PH > y * TILE + 8) return mourir();
+  for (const s of j.saws) {
+    s.y += s.dir * 50 * dt; if (s.y < s.y0 || s.y > s.y1) s.dir *= -1;
+    const nx = Math.max(j.px, Math.min(s.x, j.px + PW)), ny = Math.max(j.py, Math.min(s.y, j.py + PH));
+    if ((nx - s.x) ** 2 + (ny - s.y) ** 2 < 81) return mourir();
+  }
+  if (j.py > j.rows.length * TILE) return mourir();
+  for (const s of j.stars) if (!s.pris && Math.abs(j.px + PW / 2 - s.x * TILE - 8) < 12 && Math.abs(j.py + PH / 2 - s.y * TILE - 8) < 12) s.pris = true;
+  if (Math.abs(j.px + PW / 2 - j.gx * TILE - 8) < 12 && Math.abs(j.py + PH / 2 - j.gy * TILE - 8) < 14) gagner();
+  // caméra verticale
+  const max = Math.max(0, j.rows.length * TILE - SH);
+  j.cam += (Math.max(0, Math.min(max, j.py - SH / 2)) - j.cam) * Math.min(1, dt * 8);
+}
+function mourir() { jeu.mort++; respawn(); }
+function gagner() {
+  jeu.gagne = true;
+  const e = historique.at(-1);
+  if (e && e.niv === jeu.niv && !e.fini) { e.fini = { t: jeu.t, morts: jeu.mort, etoiles: jeu.stars.filter(s => s.pris).length }; rendreHist(); }
+}
+
+function dessiner() {
+  const j = jeu;
+  if (!j) {
+    ctx.fillStyle = '#111'; ctx.fillRect(0, 0, SW, SH);
+    ctx.fillStyle = '#ffcc33'; ctx.font = 'bold 18px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Décris ton jeu', SW / 2, SH / 2 - 8); ctx.fillStyle = '#888'; ctx.font = '13px system-ui';
+    ctx.fillText('puis appuie sur « Créer »', SW / 2, SH / 2 + 14); return;
+  }
+  const th = THEMES[j.niv.params.theme], cam = Math.round(j.cam);
+  const grd = ctx.createLinearGradient(0, 0, 0, SH); grd.addColorStop(0, th.ciel[0]); grd.addColorStop(1, th.ciel[1]);
+  ctx.fillStyle = grd; ctx.fillRect(0, 0, SW, SH);
+  const y0 = Math.floor(cam / TILE), y1 = Math.min(j.rows.length - 1, y0 + SH / TILE + 1);
+  for (let y = y0; y <= y1; y++) for (let x = 0; x < COLS; x++) {
+    const c = j.rows[y][x], X = x * TILE, Y = y * TILE - cam;
+    if (c === '#') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y, TILE, TILE); ctx.fillStyle = th.bord; ctx.fillRect(X, Y, TILE, 3); }
+    else if (c === 'I') { ctx.fillStyle = th.glace; ctx.fillRect(X, Y, TILE, TILE); ctx.fillStyle = '#fff'; ctx.fillRect(X + 2, Y + 3, 6, 2); }
+    else if (c === 'R') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y + 8, TILE, 8); ctx.fillStyle = '#ffd400'; ctx.fillRect(X + 1, Y + 2, 14, 5); ctx.fillStyle = '#888'; ctx.fillRect(X + 4, Y + 7, 8, 2); }
+    else if (c === 'C') {
+      const k = j.crumbs[x + ',' + y]; if (k && k.t >= CRUMB_DELAY + .1) continue;
+      const sh = k ? (Math.random() - .5) * 2 : 0;
+      ctx.fillStyle = '#a0703c'; ctx.fillRect(X + sh, Y, TILE, TILE); ctx.strokeStyle = '#5a3a18'; ctx.beginPath(); ctx.moveTo(X + 3 + sh, Y + 3); ctx.lineTo(X + 8 + sh, Y + 9); ctx.lineTo(X + 13 + sh, Y + 5); ctx.stroke();
+    }
+    else if (c === '^') { ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.moveTo(X, Y + 16); ctx.lineTo(X + 4, Y + 6); ctx.lineTo(X + 8, Y + 16); ctx.lineTo(X + 12, Y + 6); ctx.lineTo(X + 16, Y + 16); ctx.fill(); }
+  }
+  for (const s of j.stars) if (!s.pris) etoile(s.x * TILE + 8, s.y * TILE + 8 - cam);
+  // arrivée
+  const gx = j.gx * TILE, gy = j.gy * TILE - cam;
+  ctx.fillStyle = '#eee'; ctx.fillRect(gx + 3, gy - 16, 2, 32); ctx.fillStyle = '#4ade80'; ctx.fillRect(gx + 5, gy - 16, 10, 8);
+  for (const s of j.saws) {
+    const a = j.t * 10, Y = s.y - cam; ctx.fillStyle = '#bbb'; ctx.beginPath();
+    for (let i = 0; i < 16; i++) { const r = i % 2 ? 6 : 9, an = a + i * Math.PI / 8; ctx.lineTo(s.x + Math.cos(an) * r, Y + Math.sin(an) * r); }
+    ctx.fill(); ctx.fillStyle = '#555'; ctx.fillRect(s.x - 2, Y - 2, 4, 4);
+  }
+  // héros
+  const hx = Math.round(j.px), hy = Math.round(j.py - cam), hero = j.niv.params.hero;
+  ctx.fillStyle = HEROS[hero]; ctx.fillRect(hx, hy, PW, PH);
+  if (hero === 'chat') { ctx.fillRect(hx, hy - 3, 3, 3); ctx.fillRect(hx + 9, hy - 3, 3, 3); }
+  if (hero === 'ninja') { ctx.fillStyle = '#e8322b'; ctx.fillRect(hx, hy + 3, PW, 2); ctx.fillRect(hx - 4 * Math.sign(j.vx || 1), hy + 3, 4, 2); }
+  if (hero === 'robot') { ctx.fillStyle = '#ffcc33'; ctx.fillRect(hx + 5, hy - 4, 2, 4); }
+  ctx.fillStyle = '#fff'; const ox = j.vx < 0 ? 1 : 5; ctx.fillRect(hx + ox, hy + 4, 3, 3); ctx.fillRect(hx + ox + 4, hy + 4, 3, 3);
+  // HUD
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, 0, SW, 16);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'left';
+  ctx.fillText(`★ ${j.stars.filter(s => s.pris).length}/${j.total}   ☠ ${j.mort}   ⏱ ${j.t.toFixed(1)}s`, 6, 12);
+  if (j.gagne) {
+    ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(0, 0, SW, SH); ctx.textAlign = 'center';
+    ctx.fillStyle = '#4ade80'; ctx.font = 'bold 26px system-ui'; ctx.fillText('BRAVO !', SW / 2, SH / 2 - 10);
+    ctx.fillStyle = '#fff'; ctx.font = '13px system-ui'; ctx.fillText('Dis ce que tu veux changer, puis recrée le jeu', SW / 2, SH / 2 + 16);
+  }
+}
+function etoile(x, y) {
+  ctx.fillStyle = '#ffd400'; ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const r = i % 2 ? 2.5 : 6, a = -Math.PI / 2 + i * Math.PI / 5; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }
+  ctx.fill();
+}
+
+let tPrec = performance.now();
+(function boucle(t) { const dt = Math.min(1 / 30, (t - tPrec) / 1000); tPrec = t; if (jeu) maj(dt); dessiner(); requestAnimationFrame(boucle); })(tPrec);
+
+// ---------- Entrées ----------
+const TOUCHES = { ArrowLeft:'g', KeyA:'g', KeyQ:'g', ArrowRight:'d', KeyD:'d', Space:'s', ArrowUp:'s', KeyW:'s', KeyZ:'s' };
+addEventListener('keydown', e => { if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return; const k = TOUCHES[e.code]; if (k) { keys[k] = 1; e.preventDefault(); } });
+addEventListener('keyup', e => { const k = TOUCHES[e.code]; if (k) keys[k] = 0; });
+document.querySelectorAll('.pad button').forEach(b => {
+  const k = b.dataset.b;
+  b.onpointerdown = e => { keys[k] = 1; b.setPointerCapture(e.pointerId); };
+  b.onpointerup = b.onpointercancel = () => keys[k] = 0;
+});
+
+// ---------- Création + historique ----------
+let historique = [], params = null;
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c]);
+
+go.onclick = async () => {
+  let texte = demande.value.trim(), base = params ?? structuredClone(DEFAUT), avant = [];
+  if (mode === 'guide') {
+    base.theme = choix.theme; base.hero = choix.hero;
+    for (const k of ['pic', 'scie', 'fragile']) base.briques[k] = choix.danger === k;
+    avant = [CHOIX.theme.find(c => c[0] === choix.theme)[1], CHOIX.hero.find(c => c[0] === choix.hero)[1], CHOIX.danger.find(c => c[0] === choix.danger)[1]];
+  }
+  go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
+  const t0 = performance.now();
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 900));   // latence simulée
+  const { p, vu } = comprendre(texte, base);
+  p.seed = (Math.random() * 1e9) | 0; params = p;
+  const niv = { format: 'brique-v1', params: p, rows: generer(p) };
+  const duree = (performance.now() - t0) / 1000;
+  charger(niv);
+  compris.innerHTML = texte
+    ? (vu.length ? `J'ai compris : <b>${vu.map(esc).join(', ')}</b>` : `Je n'ai reconnu aucun mot-clé, j'ai gardé les réglages d'avant. Essaie d'être plus précis !`)
+    : 'Jeu créé avec tes choix. Ajoute une phrase pour aller plus loin.';
+  historique.push({ demande: [...avant, texte].filter(Boolean).join(' · ') || '(sans phrase)', vu, niv, duree, fini: null, corr: '' });
+  rendreHist(); capot.textContent = JSON.stringify(niv, null, 1).replace(/\n\s+"(\.|#|S|G)/g, '\n  "$1');
+  go.disabled = false; go.textContent = '✨ Recréer avec ma correction'; demande.value = '';
+  envoi.textContent = ''; ecran.focus();
+};
+
+function rendreHist() {
+  if (!historique.length) return;
+  hist.innerHTML = historique.map((e, i) => `
+    <div class="it ${i === historique.length - 1 ? 'cur' : ''}">
+      <span class="n">Essai ${i + 1}</span>
+      <div class="q">« ${esc(e.demande)} »</div>
+      <div class="r">${e.vu.length ? 'Compris : ' + e.vu.map(esc).join(', ') + '<br>' : ''}
+        Créé en ${e.duree.toFixed(1)} s · ${e.niv.rows.length} lignes ·
+        ${e.fini ? `✅ fini en ${e.fini.t.toFixed(1)} s, ${e.fini.morts} ☠, ${e.fini.etoiles} ★` : '⏳ pas encore fini'}</div>
+      <input data-i="${i}" placeholder="Ce qui ne va pas / ce que je change…" value="${esc(e.corr)}">
+    </div>`).reverse().join('');
+  hist.querySelectorAll('input').forEach(inp => inp.oninput = () => {
+    historique[inp.dataset.i].corr = inp.value;
+    if (+inp.dataset.i === historique.length - 1) demande.value = inp.value;   // la correction devient la prochaine demande
+  });
+}
+
+rejouer.onclick = () => jeu && charger(jeu.niv);
+nouveau.onclick = () => {
+  if (historique.length && !confirm('Tout recommencer ? L\'historique sera effacé.')) return;
+  params = null; jeu = null; historique = []; capot.textContent = ''; go.textContent = '✨ Créer mon jeu';
+  hist.innerHTML = '<p class="vide">Tes essais apparaîtront ici.</p>'; compris.textContent = 'Choisis, écris une phrase, puis appuie sur « Créer ».';
+};
+// ponytail: envoi simulé ; le firmware actuel compile ses niveaux en dur (hand_levels.h), pas de chargement série. Web Serial quand il saura lire une ligne JSON.
+envoyer.onclick = async () => {
+  if (!jeu) return envoi.textContent = 'Crée un jeu d\'abord !';
+  const n = JSON.stringify(jeu.niv).length;
+  for (let i = 0; i <= 10; i++) { envoi.textContent = '📟 Envoi ' + '▮'.repeat(i) + '▯'.repeat(10 - i); await new Promise(r => setTimeout(r, 60)); }
+  envoi.innerHTML = `<span style="color:var(--ok)">✓ Envoyé sur la console (simulé, ${n} octets). Joue sur ta console !</span>`;
+};
+</script>
+</body>
+</html>

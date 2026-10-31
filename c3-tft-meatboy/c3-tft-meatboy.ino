@@ -117,7 +117,7 @@ struct __attribute__((packed)) LbMsg { uint8_t type; uint8_t n; LbEnt e[LB_MAX];
 
 
 #define SAVE_FORMAT 1       // format de la sauvegarde NVS : ne change que si la structure des donnees sauvegardees devient incompatible
-#define FW_VERSION "v55.1"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
+#define FW_VERSION "v55.2"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
 const char* rstReason = "?";  // raison du dernier reset (affichee a l'ecran titre)
 RTC_NOINIT_ATTR uint32_t dbgStage;  // dernier marqueur atteint (survit au reset)
 uint32_t lastStage = 0;
@@ -1247,7 +1247,7 @@ void respawn() {
 }
 
 // ================= ETAT / MENUS =================
-enum GameState { ST_SPLASH, ST_HOME, ST_LOBBY, ST_MODE, ST_SELECT, ST_COUNTDOWN, ST_PLAY, ST_END, ST_WIN, ST_DEAD, ST_RACEEND, ST_PONG, ST_QUIZ, ST_QUIZRESULT, ST_BRICK, ST_INVADERS, ST_CPINTRO, ST_SHOP, ST_LB, ST_NAME, ST_DESERT, ST_SHADOW, ST_SAMU, ST_ALTO, ST_TIMING, ST_DRIFT, ST_MYLV, ST_SMASH, ST_BQQ };
+enum GameState { ST_SPLASH, ST_HOME, ST_LOBBY, ST_MODE, ST_SELECT, ST_COUNTDOWN, ST_PLAY, ST_END, ST_WIN, ST_DEAD, ST_RACEEND, ST_PONG, ST_QUIZ, ST_QUIZRESULT, ST_BRICK, ST_INVADERS, ST_CPINTRO, ST_SHOP, ST_LB, ST_NAME, ST_DESERT, ST_SHADOW, ST_SAMU, ST_ALTO, ST_TIMING, ST_DRIFT, ST_MYLV, ST_SMASH, ST_BQQ, ST_ISO };
 GameState state;
 int curLevel, selLevel, endChoice, deadChoice, homeChoice, modeChoice;
 unsigned int deaths;
@@ -1798,6 +1798,8 @@ void pongStep(bool bLeft, bool br) {
 // 1 a 4 ecrans de large (20 cases chacun, 96 au plus) et 1 ou 2 de haut (15 cases chacun) ; 'T' = bloc qui disparait quand on arrive dessus
 #define BQC_HMAX 30
 bool bqCote = false; char bqCRows[BQC_HMAX][97]; int bqCW = 0, bqCH = 0;
+#define ISO_N 12
+bool bqIso = false;                                // BRIQUE "iso" : vue isometrique (plus bas, apres briqueParse)
 struct BqTrou { int c, r; bool open; } bqT[16]; int nBqT = 0;
 extern int bqNQ;                                   // questions de cours (declarees plus bas)
 int bqMini = 0, bqMiniJeu = 0;              // bqMiniJeu = type du dernier jeu recu : 0 plateforme, 1 briques, 2 invaders
@@ -2758,6 +2760,7 @@ void startLevel(int idx, bool resetCombo) {
   if (resetCombo) combo = 0;
   raceMode = false;
   if (idx == CUSTOM_IDX && bqCote) { startBqCote(); return; }
+  if (idx == CUSTOM_IDX && bqIso) { startBqIso(); return; }
   if (idx < 50) { startWorld(idx); return; }   // niveaux 1-10 exterieur, 11-20 donjon de feu, 21-30 glace, 31-40 desert, 41-50 jungle (mondes larges)
   loadLevelData(idx);
   levelStartMs = millis();
@@ -5834,8 +5837,9 @@ const char* bqCoteParse(const char* s) {
 // BRIQUE : decode "rows" dans une ligne JSON. Renvoie nullptr si OK, sinon la raison (renvoyee a la page web).
 const char* briqueParse(const char* s) {
   char jeu[10]; jsonStr(s, "jeu", jeu, sizeof jeu);
-  bqCote = false;
+  bqCote = bqIso = false;
   if (!strcmp(jeu, "cote")) return bqCoteParse(s);
+  if (!strcmp(jeu, "iso")) return bqIsoParse(s);
   if (!strcmp(jeu, "briques") || !strcmp(jeu, "invaders")) return bqMiniParse(s, jeu[0] == 'b' ? 1 : 2);
   bqMiniJeu = 0;
   const char* p = strstr(s, "\"rows\""); if (!p) return "pas de rows";
@@ -5869,6 +5873,185 @@ const char* briqueParse(const char* s) {
   customDJ = strstr(s, "\"doubleSaut\":true") != nullptr;
   bqParams(s);
   return nullptr;
+}
+
+// ---- BRIQUE "iso" : vue isometrique (cases en losange, avec des hauteurs). G/D = tourner, P3 = sauter d'une case ----
+// rows : '.' trou, '#' sol, 'S' depart, 'G' arrivee, '*' etoile, '^' piques, 'P' piques qui sortent 1 s sur 2 ; haut : un chiffre 0-4 par case
+// On monte d'une marche a la fois, on descend de partout. Trou ou piques = retour au depart.
+char isoR[ISO_N][ISO_N + 1], isoC[ISO_N][ISO_N]; uint8_t isoHt[ISO_N][ISO_N]; int isoW = 0, isoH = 0, isoMH = 0, isoNS = 0;
+int isoX, isoY, isoSX, isoSY, isoFX, isoFY, isoDir, isoDir0, isoStars;   // isoF = case de depart du saut ; isoDir : 0 haut-droite, 1 bas-droite, 2 bas-gauche, 3 haut-gauche
+float isoT = 1, isoMort = 0, isoHold = 0, isoInfoT = 0; bool isoChute = false; const char* isoInfo = ""; uint32_t isoLast = 0;
+const int8_t ISO_DX[4] = { 0, 1, 0, -1 }, ISO_DY[4] = { -1, 0, 1, 0 };
+const char* bqIsoParse(const char* s) {
+  bqMiniJeu = 0;
+  static char tmp[ISO_N][ISO_N + 1]; static uint8_t ht[ISO_N][ISO_N]; memset(ht, 0, sizeof ht);
+  int h = 0, w = 0, nS = 0, nG = 0;
+  const char* p = strstr(s, "\"rows\""); if (!p) return "pas de rows";
+  p = strchr(p, '['); if (!p) return "rows mal forme";
+  p++;
+  while (true) {
+    while (*p == ' ' || *p == ',' || *p == '\n' || *p == '\r') p++;
+    if (*p == ']') break;
+    if (*p != '"') return "rows mal forme";
+    if (h >= ISO_N) return "niveau trop grand (12 x 12 au plus)";
+    p++; int c = 0;
+    for (; *p && *p != '"'; p++, c++) {
+      if (c >= ISO_N) return "niveau trop grand (12 x 12 au plus)";
+      if (!strchr(".#SG*^P", *p)) return "brique inconnue";
+      nS += *p == 'S'; nG += *p == 'G'; tmp[h][c] = *p;
+    }
+    if (*p != '"') return "ligne non fermee";
+    p++; tmp[h][c] = 0; w = max(w, c); h++;
+  }
+  if (h < 3 || w < 3) return "niveau trop petit (3 x 3 au moins)";
+  if (nS != 1 || nG != 1) return "il faut 1 depart S et 1 arrivee G";
+  p = strstr(s, "\"haut\""); if (p) p = strchr(p, '[');   // hauteurs (facultatif, 0 sinon)
+  for (int r = 0; p && r < ISO_N; r++) {
+    p++; while (*p == ' ' || *p == ',' || *p == '\n' || *p == '\r') p++;
+    if (*p != '"') break;
+    for (int c = 0; *++p && *p != '"'; c++) {
+      if (*p < '0' || *p > '4') return "hauteur : 0 a 4";
+      if (c < ISO_N) ht[r][c] = *p - '0';
+    }
+    if (*p != '"') return "haut mal forme";
+  }
+  for (int r = 0; r < h; r++) { int c = strlen(tmp[r]); while (c < w) tmp[r][c++] = '.'; tmp[r][w] = 0; }
+  memcpy(isoR, tmp, sizeof tmp); memcpy(isoHt, ht, sizeof ht); isoW = w; isoH = h;
+  bqParams(s);
+  bqIso = true; customH = h;                        // customH : le resultat (BRIQUE FIN) repart vers la page
+  return nullptr;
+}
+void isoRespawn() { isoX = isoFX = isoSX; isoY = isoFY = isoSY; isoT = 1; isoMort = 0; isoDir = isoDir0; }
+void startBqIso() {
+  curLevel = CUSTOM_IDX; deaths = 0; bqTimeout = false; isoStars = 0; isoNS = 0; isoMH = 0; isoHold = 0; isoInfoT = 0;
+  for (int r = 0; r < isoH; r++) for (int c = 0; c < isoW; c++) {
+    char ch = isoR[r][c]; isoC[r][c] = ch; isoNS += ch == '*';
+    if (ch == 'S') { isoSX = c; isoSY = r; }
+    if (ch == 'G') { isoFX = c; isoFY = r; }
+    if (ch != '.') isoMH = max(isoMH, (int)isoHt[r][c]);
+  }
+  const int dx = isoFX - isoSX, dy = isoFY - isoSY;   // au depart, le heros regarde vers l'arrivee
+  isoDir0 = abs(dx) >= abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0);
+  isoRespawn(); levelStartMs = isoLast = millis();
+  state = ST_ISO;
+}
+bool isoPiq(int x, int y) { char ch = isoC[y][x]; return ch == '^' || (ch == 'P' && (millis() / 1000) & 1); }
+void isoDie(bool chute) { snd(SND_DIE); deaths++; isoMort = 0.8f; isoChute = chute; }
+uint16_t isoCol(long rgb, int pct) { return RGB565(min(255L, (rgb >> 16) * pct / 100), min(255L, ((rgb >> 8) & 255) * pct / 100), min(255L, (rgb & 255) * pct / 100)); }
+void isoDraw() {
+  const int n = isoW + isoH, hw = min(16, 300 / n), hh = hw / 2, zh = hh;
+  const int ox = SCREEN_W / 2 - (isoW - isoH) * hw / 2, oy = 18 + isoMH * zh + (214 - n * hh - zh - isoMH * zh) / 2;
+  const long sol = bqSol >= 0 ? bqSol : 0x5CB45AL;
+  const uint16_t ciel = bqCiel >= 0 ? RGB565(bqCiel >> 16, (bqCiel >> 8) & 255, bqCiel & 255) : RGB565(28, 32, 58);
+  const bool idle = isoT >= 1 && isoMort <= 0;
+  const int tx = isoX + ISO_DX[isoDir], ty = isoY + ISO_DY[isoDir];
+  // heros : en arc entre la case de depart et la case d'arrivee ; il tombe dans un trou, clignote sur des piques
+  const float t = isoT; const int fh = isoHt[isoFY][isoFX], th = isoC[isoY][isoX] == '.' ? 0 : isoHt[isoY][isoX];
+  const int hx = ox + (int)(((isoFX - isoFY) + ((isoX - isoY) - (isoFX - isoFY)) * t) * hw);
+  int hy = oy + hh + (int)(((isoFX + isoFY) + ((isoX + isoY) - (isoFX + isoFY)) * t) * hh - (fh + (th - fh) * t) * zh - sinf(t * 3.14159f) * 10);
+  if (isoMort > 0 && isoChute) hy += (int)((0.8f - isoMort) * 160);
+  const int hs = max(isoFX + isoFY, isoX + isoY);  // heros dessine apres cette diagonale : les cases de devant le cachent
+  const bool hVis = !(isoMort > 0 && !isoChute && ((millis() / 80) & 1));
+  for (int sTop = 0; sTop < SCREEN_H; sTop += STRIP_H) {
+    fb.fillRect(0, 0, SCREEN_W, STRIP_H, ciel);
+    for (int s = 0; s <= n - 2; s++) {
+      for (int r = max(0, s - isoW + 1); r <= min(s, isoH - 1); r++) {
+        const int c = s - r; const char ch = isoC[r][c]; if (ch == '.') continue;
+        const int h = isoHt[r][c], x = ox + (c - r) * hw, y = oy + s * hh - h * zh - sTop, dz = (h + 1) * zh;
+        if (y > STRIP_H || y + 2 * hh + dz < -24) continue;
+        const uint16_t cl = isoCol(sol, 62 + h * 6), cr = isoCol(sol, 45 + h * 6), ct = isoCol(sol, 85 + h * 10);
+        fb.fillTriangle(x - hw, y + hh, x, y + 2 * hh, x, y + 2 * hh + dz, cl); fb.fillTriangle(x - hw, y + hh, x - hw, y + hh + dz, x, y + 2 * hh + dz, cl);
+        fb.fillTriangle(x + hw, y + hh, x, y + 2 * hh, x, y + 2 * hh + dz, cr); fb.fillTriangle(x + hw, y + hh, x + hw, y + hh + dz, x, y + 2 * hh + dz, cr);
+        fb.fillTriangle(x - hw, y + hh, x, y, x + hw, y + hh, ct); fb.fillTriangle(x - hw, y + hh, x, y + 2 * hh, x + hw, y + hh, ct);
+        const int cy = y + hh;
+        if (ch == '*') { int b = cy - 7 + (int)(sinf(millis() / 200.0f + c) * 2); fb.fillTriangle(x - 4, b + 2, x + 4, b + 2, x, b - 5, COL_STAR); fb.fillTriangle(x - 4, b - 2, x + 4, b - 2, x, b + 5, COL_STAR); }
+        else if (ch == 'G') { fb.drawFastVLine(x, cy - 20, 20, COL_TXT); fb.fillTriangle(x + 1, cy - 20, x + 1, cy - 10, x + 11, cy - 15, COL_GOAL); }
+        else if (ch == '^' || ch == 'P') {
+          if (isoPiq(c, r)) for (int k = -1; k <= 1; k++) fb.fillTriangle(x + k * 5 - 2, cy + 2, x + k * 5 + 2, cy + 2, x + k * 5, cy - 6, RGB565(220, 220, 230));
+          else for (int k = -1; k <= 1; k++) fb.fillRect(x + k * 5 - 1, cy, 3, 2, RGB565(40, 40, 50));
+        }
+        if (idle && c == tx && r == ty) { fb.drawLine(x - hw, y + hh, x, y, COL_TXT); fb.drawLine(x, y, x + hw, y + hh, COL_TXT); fb.drawLine(x + hw, y + hh, x, y + 2 * hh, COL_TXT); fb.drawLine(x, y + 2 * hh, x - hw, y + hh, COL_TXT); }   // case visee
+      }
+      if (s == hs && hVis) {
+        const int y = hy - sTop, sd = ISO_DX[isoDir] - ISO_DY[isoDir];
+        fb.fillRoundRect(hx - 5, y - 14, 10, 13, 3, isoMort > 0 && !isoChute ? COL_SPLAT : COL_MEAT);
+        if (isoDir == 1 || isoDir == 2) { fb.fillRect(hx + sd * 2 - 3, y - 11, 2, 3, COL_TXT); fb.fillRect(hx + sd * 2 + 1, y - 11, 2, 3, COL_TXT); }   // de face : les yeux ; de dos : rien
+      }
+    }
+    fb.setTextSize(1); fb.setTextColor(COL_TXT);
+    fb.setCursor(4, 4 - sTop); fb.print(bqTitre[0] ? bqTitre : "ISO");
+    char b[32]; snprintf(b, sizeof b, "* %d/%d  morts %d", isoStars, isoNS, (int)deaths); fb.setCursor(SCREEN_W - 6 * (int)strlen(b) - 4, 4 - sTop); fb.print(b);
+    if (bqChrono) { long r = bqChrono - (long)(millis() - levelStartMs) / 1000; snprintf(b, sizeof b, "%lds", max(0L, r)); fb.setCursor(SCREEN_W / 2 - 6, 4 - sTop); fb.print(b); }
+    if (isoInfoT > 0) { fb.setTextColor(COL_STAR); fb.setCursor(SCREEN_W / 2 - (int)strlen(isoInfo) * 3, 18 - sTop); fb.print(isoInfo); }
+    fb.setTextColor(RGB565(150, 160, 180)); fb.setCursor(14, 230 - sTop); fb.print("G/D = tourner   P3 = sauter (maintenir = quitter)");
+    dBlitPlain(sTop);
+  }
+}
+#ifdef ISO_BENCH                                     // test sans les mains (compilation de test seulement : -DISO_BENCH) : direction du 1er pas d'un plus court chemin vers G
+int isoAuto() {
+  static int8_t from[ISO_N * ISO_N]; static uint8_t q[ISO_N * ISO_N]; memset(from, -1, sizeof from);
+  int n = 0, i = 0, g = -1; q[n++] = isoY * ISO_N + isoX; from[q[0]] = 4;
+  while (i < n && g < 0) {
+    const int y = q[i] / ISO_N, x = q[i] % ISO_N; i++;
+    for (int d = 0; d < 4; d++) {
+      const int Y = y + ISO_DY[d], X = x + ISO_DX[d];
+      if (Y < 0 || X < 0 || Y >= isoH || X >= isoW || from[Y * ISO_N + X] >= 0 || isoC[Y][X] == '.' || isoC[Y][X] == '^' || isoHt[Y][X] > isoHt[y][x] + 1) continue;
+      from[Y * ISO_N + X] = d; q[n++] = Y * ISO_N + X; if (isoC[Y][X] == 'G') g = Y * ISO_N + X;
+    }
+  }
+  if (g < 0) return -1;
+  while (true) {
+    const int d = from[g], p = (g / ISO_N - ISO_DY[d]) * ISO_N + g % ISO_N - ISO_DX[d];
+    if (from[p] == 4) return d;
+    g = p;
+  }
+}
+#endif
+// une image du jeu iso ; false = quitter vers l'accueil
+bool isoStep(bool bj, bool eL, bool eR, bool eJ) {
+  const uint32_t now = millis(); float dt = (now - isoLast) / 1000.0f; isoLast = now; if (dt > 0.1f) dt = 0.1f;
+  isoHold = bj ? isoHold + dt : 0; if (isoHold > 1.5f) return false;
+  if (bqChrono && now - levelStartMs > (unsigned long)bqChrono * 1000) {   // temps ecoule : comme les autres jeux
+    snd(SND_DIE); deaths++; deadChoice = 0; bqTimeout = true; dSpiStop(); tft.setSPISpeed(40000000); state = ST_DEAD; drawDead(); return true;
+  }
+  if (isoInfoT > 0) isoInfoT -= dt;
+  if (isoMort > 0) {
+    isoMort -= dt;
+    if (isoMort <= 0) {
+      if (bqVies && (int)deaths >= bqVies) { deadChoice = 0; dSpiStop(); tft.setSPISpeed(40000000); state = ST_DEAD; drawDead(); return true; }
+      isoRespawn();
+    }
+  } else if (isoT < 1) {
+    isoT += dt / 0.22f;
+    if (isoT >= 1) {                                 // atterrissage
+      isoT = 1; char &ch = isoC[isoY][isoX];
+      if (ch == '.') isoDie(true);
+      else if (isoPiq(isoX, isoY)) isoDie(false);
+      else if (ch == '*') { ch = '#'; isoStars++; snd(SND_STAR); }
+      else if (ch == 'G') {
+        if (bqTout && isoStars < isoNS) { isoInfo = "Prends toutes les etoiles !"; isoInfoT = 2; }
+        else {
+          dSpiStop(); tft.setSPISpeed(40000000);
+          if (bqNQ) bqStartQuiz(isoStars); else finishLevel(isoStars);   // question de cours avant la victoire, comme le jeu de cote
+          return true;
+        }
+      }
+    }
+  } else {
+#ifdef ISO_BENCH
+    { const int d = isoAuto(); eL = false; eR = d >= 0 && d != isoDir; eJ = d == isoDir; }
+#endif
+    if (eL) isoDir = (isoDir + 3) & 3;
+    if (eR) isoDir = (isoDir + 1) & 3;
+    if (eJ) {
+      const int nx = isoX + ISO_DX[isoDir], ny = isoY + ISO_DY[isoDir];
+      if (nx < 0 || ny < 0 || nx >= isoW || ny >= isoH) { isoInfo = "Le bord !"; isoInfoT = 1; }
+      else if (isoC[ny][nx] != '.' && isoHt[ny][nx] > isoHt[isoY][isoX] + 1) { isoInfo = "Trop haut ! Une marche a la fois"; isoInfoT = 1.5f; }
+      else { isoFX = isoX; isoFY = isoY; isoX = nx; isoY = ny; isoT = 0; snd(SND_JUMP); }
+    } else if (isoPiq(isoX, isoY)) isoDie(false);    // les piques sortent sous les pieds
+  }
+  isoDraw();
+  return true;
 }
 
 // BRIQUE : lit le port serie sans bloquer ; une ligne complete = un niveau a charger tout de suite.
@@ -6046,7 +6229,7 @@ void myLvStep(bool eL, bool eR, bool eJ) {
   if (myLvChoice == myLvN) { if (twoP) { state = ST_MODE; drawMode(); } else { homeChoice = 2; state = ST_HOME; drawHome(); } return; }
   if (twoP && !myLvCode[myLvChoice][0]) return;                         // course : seulement un jeu publie (les autres le retrouvent par son code)
   String s = briqueRead(myLvSlot[myLvChoice]);
-  if (!s.length() || briqueParse(s.c_str()) || (twoP && (bqMiniJeu || bqCote))) return;   // fichier abime, ou casse-brique / invaders (pas de course a plusieurs) : on reste dans la liste
+  if (!s.length() || briqueParse(s.c_str()) || (twoP && (bqMiniJeu || bqCote || bqIso))) return;   // fichier abime, ou casse-brique / invaders (pas de course a plusieurs) : on reste dans la liste
   extrasReset(); icParse(s.c_str()); qParse(s.c_str());
   if (twoP) {                                                           // hote : depart pour tous, avec le code du jeu
     raceCode = codeNum(myLvCode[myLvChoice]);
@@ -6060,7 +6243,7 @@ bool briqueLoadCode(uint32_t code) {
   if (!fsOk || !code) return false;
   char c[7]; codeTxt(code, c); char pat[16]; snprintf(pat, sizeof pat, "\"code\":\"%s\"", c);
   for (int i = 0; i < MYLV_MAX; i++) {
-    String s = briqueRead(i); if (!s.length() || !strstr(s.c_str(), pat) || briqueParse(s.c_str()) || bqMiniJeu || bqCote) continue;
+    String s = briqueRead(i); if (!s.length() || !strstr(s.c_str(), pat) || briqueParse(s.c_str()) || bqMiniJeu || bqCote || bqIso) continue;
     extrasReset(); icParse(s.c_str()); qParse(s.c_str()); raceCode = code; return true;
   }
   return false;
@@ -6114,7 +6297,7 @@ void briquePoll() {
       continue;
     }
     const bool libre = state == ST_SPLASH || state == ST_HOME || state == ST_SELECT || state == ST_END || state == ST_DEAD || state == ST_WIN
-                    || (state == ST_PLAY && curLevel >= 50) || (state == ST_DESERT && curLevel == CUSTOM_IDX);           // pas au milieu d'un monde, d'un mini-jeu ou d'une partie a deux
+                    || (state == ST_PLAY && curLevel >= 50) || (state == ST_DESERT && curLevel == CUSTOM_IDX) || state == ST_ISO;           // pas au milieu d'un monde, d'un mini-jeu ou d'une partie a deux
     const char* err = trop ? "niveau trop gros" : (twoP || raceMode || !(libre || state == ST_MYLV)) ? "console occupee : reviens a l'accueil" : briqueParse(buf);
     if (err) { Serial.printf("BRIQUE ERR %s\n", err); icWait = ""; continue; }
     Serial.printf("BRIQUE OK %d\n", customH);
@@ -6316,7 +6499,7 @@ void loop() {
       Serial.println("DONE"); } }
 #endif
   bool eL = bL && !prevLeft, eR = bR && !prevRight, eJ = bJ && !prevJump;
-  if ((eL || eR || eJ) && state != ST_PLAY && state != ST_DESERT && state != ST_SHADOW && state != ST_SAMU && state != ST_ALTO && state != ST_DRIFT && state != ST_SMASH) snd(SND_CLICK);   // clic dans les menus
+  if ((eL || eR || eJ) && state != ST_PLAY && state != ST_DESERT && state != ST_SHADOW && state != ST_SAMU && state != ST_ALTO && state != ST_DRIFT && state != ST_SMASH && state != ST_ISO) snd(SND_CLICK);   // clic dans les menus
 #ifdef DESERT_BENCH
   { static int bw = 5; if (state != ST_DESERT) { startWorld(bw); bw = (bw + 10) % 50; } }
 #endif
@@ -6538,6 +6721,9 @@ void loop() {
       break;
     case ST_INVADERS:
       if (!invadersStep(bL, bR, bJ, eJ)) { prevJump = true; bqMini = 0; checkpointFinish(); }
+      break;
+    case ST_ISO:
+      if (!isoStep(bJ, eL, eR, eJ)) { prevJump = true; dSpiStop(); tft.setSPISpeed(40000000); checkpointFinish(); }
       break;
     case ST_SAMU:
       if (!samuraiStep(bL, bR, bJ, eJ)) { prevJump = true; dSpiStop(); tft.setSPISpeed(40000000); state = ST_MODE; drawMode(); }

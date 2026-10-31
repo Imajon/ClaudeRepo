@@ -45,6 +45,12 @@ function nivValide(n) {
     if (!Array.isArray(n.rows) || n.rows.length < 15 || n.rows.length > 30 || !n.rows.every(r => typeof r === 'string' && /^[.#SG*^ET]{0,96}$/.test(r))) return false;
     const t = n.rows.join(''); return Math.max(...n.rows.map(r => r.length)) >= 20 && t.split('S').length === 2 && t.split('G').length === 2;
   }
+  if (jeu === 'iso') {                                  // meme regles que bqIsoParse() : 3 a 12 lignes de 3 a 12 cases, hauteurs 0-4 (facultatives)
+    const h = n.params.haut;
+    if (!Array.isArray(n.rows) || n.rows.length < 3 || n.rows.length > 12 || !n.rows.every(r => typeof r === 'string' && /^[.#SG*^P]{0,12}$/.test(r))) return false;
+    if (h !== undefined && !(Array.isArray(h) && h.length <= 12 && h.every(l => typeof l === 'string' && /^[0-4]{0,12}$/.test(l)))) return false;
+    const t = n.rows.join(''); return Math.max(...n.rows.map(r => r.length)) >= 3 && t.split('S').length === 2 && t.split('G').length === 2;
+  }
   if (!n || !Array.isArray(n.rows) || n.rows.length < 3 || n.rows.length > 80) return false;
   if (!n.rows.every(r => typeof r === 'string' && /^[.#SG*R^WCIE]{0,20}$/.test(r))) return false;
   const tout = n.rows.join('');
@@ -172,14 +178,18 @@ const COULEUR_NOM = Object.fromEntries(Object.entries(PALETTE).map(([k, v]) => [
 const IC_CLES = { heros: 'h', etoile: 'e', arrivee: 'g', ennemi: 'n', decor: 'd' };
 // ---------- IA (Mistral) : phrase de l'enfant -> reglages du jeu ; le niveau reste fabrique par le generateur de la page ----------
 // Cle dans la variable d'environnement MISTRAL_API_KEY (jamais dans le code). Sans cle : 503 -> la page reprend ses mots-cles.
-const CONSIGNE = `Tu aides des enfants de 9 a 14 ans a regler un jeu pour une petite console. Quatre jeux existent :
+const CONSIGNE = `Tu aides des enfants de 9 a 14 ans a regler un jeu pour une petite console. Cinq jeux existent :
 plateforme (jeu de plateforme vertical, on grimpe jusqu'au drapeau), cote (jeu vu de profil, on avance vers une porte au bout : couloir, course), briques (casse-briques : raquette, balle, briques a casser),
-invaders (un vaisseau en bas tire sur des envahisseurs qui descendent).
+invaders (un vaisseau en bas tire sur des envahisseurs qui descendent), iso (jeu isometrique, vue 3D en diagonale : on saute de case en case
+sur un plateau avec des hauteurs, des trous et des pics, jusqu'au drapeau).
 On te donne les reglages actuels et la demande de l'enfant. Reponds UNIQUEMENT avec un objet JSON :
-{"jeu":"plateforme|cote|briques|invaders" (ne change que si l'enfant demande un autre jeu),
+{"jeu":"plateforme|cote|briques|invaders|iso" (ne change que si l'enfant demande un autre jeu),
  "ecransL":1-4,"ecransH":1-2 (cote : largeur et hauteur en ecrans ; un seul ecran = 1 et 1),"plafond":bool (cote : un plafond au-dessus du couloir),
  "trous":0-3 (cote : trous caches dans le sol, ils s'ouvrent au dernier moment),"plateformes":bool (cote : plateformes en l'air ; sinon sol plat),
  Pour cote, comptent aussi : difficulte, vitesse, etoiles, ennemis, briques.pic, vies, message.
+ "taille":6-12 (iso : nombre de cases de cote du plateau),"relief":"plat|collines|montagnes" (iso : hauteur des cases),
+ Pour iso, comptent aussi : trous (0-3, trous dans le plateau), difficulte, etoiles, briques.pic (pics ; difficile = des pics qui sortent),
+ vies, chrono, objectif, couleurs ciel et sol, message.
  "motif":"pleine|pyramide|damier|cadre|hasard" (briques et invaders : dessin des briques ou de la formation d'envahisseurs),
  "acier":bool (briques : briques d'acier incassables), "bonus":bool (briques : capsules bonus), "vagues":1-5 (invaders),
  Pour briques et invaders, seuls comptent aussi : vitesse, difficulte (briques plus solides / plus d'envahisseurs qui tirent plus), vies,
@@ -219,7 +229,8 @@ const DANS = (v, a, b, def) => typeof v === 'number' && isFinite(v) ? Math.min(b
 const UN_DE = (v, liste, def) => liste.includes(v) ? v : def;
 function iaReglages(r, base) {                          // ne garde que des valeurs que le generateur sait utiliser
   const p = {
-    jeu: UN_DE(r.jeu, ['plateforme', 'cote', 'briques', 'invaders'], base.jeu || 'plateforme'),
+    jeu: UN_DE(r.jeu, ['plateforme', 'cote', 'briques', 'invaders', 'iso'], base.jeu || 'plateforme'),
+    taille: Math.round(DANS(r.taille, 6, 12, base.taille || 8)), relief: UN_DE(r.relief, ['plat', 'collines', 'montagnes'], base.relief || 'collines'),
     ecransL: Math.round(DANS(r.ecransL, 1, 4, base.ecransL || 2)), ecransH: Math.round(DANS(r.ecransH, 1, 2, base.ecransH || 1)),
     plafond: typeof r.plafond === 'boolean' ? r.plafond : base.plafond !== false, trous: Math.round(DANS(r.trous, 0, 3, base.trous ?? 1)),
     plateformes: typeof r.plateformes === 'boolean' ? r.plateformes : !!base.plateformes,
@@ -242,7 +253,12 @@ function iaReglages(r, base) {                          // ne garde que des vale
   for (const k of ['pic', 'scie', 'ressort', 'glace', 'fragile']) p.briques[k] = typeof r.briques?.[k] === 'boolean' ? r.briques[k] : !!base.briques?.[k];
   // "compris" = ce qui a VRAIMENT change (l'IA peut pretendre avoir compris une chose impossible)
   const vu = [], B = base.briques || {}, NOMS = { pic: 'pics', scie: 'scies', ressort: 'ressorts', glace: 'glace', fragile: 'blocs fragiles' };
-  if (p.jeu !== (base.jeu || 'plateforme')) vu.push({ plateforme: 'jeu de plateforme', cote: 'jeu de côté', briques: 'casse-briques', invaders: 'invaders' }[p.jeu]);
+  if (p.jeu !== (base.jeu || 'plateforme')) vu.push({ plateforme: 'jeu de plateforme', cote: 'jeu de côté', briques: 'casse-briques', invaders: 'invaders', iso: 'jeu isométrique' }[p.jeu]);
+  if (p.jeu === 'iso') {
+    if (p.taille !== (base.taille || 8)) vu.push(p.taille > (base.taille || 8) ? 'plus grand' : 'plus petit');
+    if (p.relief !== (base.relief || 'collines')) vu.push('relief : ' + p.relief);
+    if (p.trous !== (base.trous ?? 1)) vu.push(p.trous ? `${p.trous} trou${p.trous > 1 ? 's' : ''}` : 'sans trous');
+  }
   if (p.jeu === 'cote') {
     if (p.ecransL !== (base.ecransL || 2)) vu.push(`${p.ecransL} écran${p.ecransL > 1 ? 's' : ''} de large`);
     if (p.ecransH !== (base.ecransH || 1)) vu.push(`${p.ecransH} écran${p.ecransH > 1 ? 's' : ''} de haut`);

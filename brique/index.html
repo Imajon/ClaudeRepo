@@ -938,8 +938,9 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <div id="envoi" class="envoi"></div>
     <details id="majDetails" class="hide">
-      <summary>🔄 Mettre à jour ma console</summary>
+      <summary>🔄 Mettre à jour ma console <span id="majEnLigne" class="ref"></span></summary>
       <div id="majBox" class="envoi"></div>
+      <p class="aide">Le numéro de ta console s'affiche sur son écran de démarrage (ex. « v55.3 - appuie sur un bouton ») ; branche-la ici pour qu'on compare.</p>
       <p class="aide">La nouvelle version du jeu de la console. <b>Attention : on repart du niveau 1</b> (niveaux, pièces, skins remis à zéro) ; tes jeux de « Mes niveaux » sont gardés. Chrome ou Edge sur ordinateur, câble USB branché, environ 1 minute.</p>
       <esp-web-install-button id="majBtn" manifest="firmware/manifest.json">
         <button slot="activate" class="sec">🔄 Mettre à jour ma console</button>
@@ -1741,7 +1742,7 @@ async function ecouter() {
 // ---------- Mise à jour de la console (esp-web-tools) : fichiers publiés par c3-tft-meatboy/publier-firmware-brique.bat ----------
 let manifeste = null, attenteVersion = null;
 fetch('firmware/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null)
-  .then(m => { manifeste = m; majDetails.classList.toggle('hide', !m); }).catch(() => {});
+  .then(m => { manifeste = m; majDetails.classList.toggle('hide', !m); if (m) majEnLigne.textContent = 'version en ligne : ' + m.version; }).catch(() => {});
 majBtn.addEventListener('click', () => fermer(), true);   // esp-web-tools ouvre le port lui-même : on lui laisse
 async function verifierVersion() {                       // la console dit sa version ; plus ancienne que celle publiée -> on propose la mise à jour
   if (!manifeste || !port) return;
@@ -1752,9 +1753,10 @@ async function verifierVersion() {                       // la console dit sa ve
   attenteVersion = null;
   const num = s => (s.match(/\d+/g) || []).map(Number);   // "v54.10" -> [54, 10] : comparé nombre par nombre
   const plusVieille = (a, b) => { const x = num(a), y = num(b); for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
-  if (v && !plusVieille(v, manifeste.version)) return;   // à jour (ou version de développement plus récente)
+  const cmp = `Ta console : <b>${v ? esc(v) : 'avant v55'}</b> · en ligne : <b>${esc(manifeste.version)}</b>`;
+  if (v && !plusVieille(v, manifeste.version)) { majBox.innerHTML = `✅ ${cmp} : ta console est à jour.`; return; }   // à jour (ou version de développement plus récente)
   majDetails.open = true;
-  majBox.innerHTML = `<span style="color:var(--acc)">✨ Une nouvelle version de la console est disponible${v ? '' : ' (les casse-briques et Invaders en ont besoin)'} : clique sur « Mettre à jour ma console ».</span>`;
+  majBox.innerHTML = `<span style="color:var(--acc)">✨ ${cmp}. Une nouvelle version est disponible${v ? '' : ' (les nouveaux jeux en ont besoin)'} : clique sur « Mettre à jour ma console ».</span>`;
 }
 // courses à plusieurs jouées depuis la dernière connexion : la console les garde, on les envoie au classement au nom de l'enfant connecté
 let resBuf = [], resAttente = null;

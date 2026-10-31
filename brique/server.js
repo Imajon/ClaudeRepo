@@ -157,6 +157,8 @@ On te donne les reglages actuels et la demande de l'enfant. Reponds UNIQUEMENT a
    simple pour chercher une image, ex. dragon, pizza, castle, ghost ; "decor" = grande image dans le ciel, "etoile" = les objets a ramasser),
  "remarque":"une phrase courte et gentille si une partie de la demande est impossible, sinon vide",
  "souhaits":["chaque fonctionnalite demandee mais IMPOSSIBLE avec ces reglages, nommee en 1 a 4 mots (ex. lasers, ennemis volants), sinon liste vide"]}
+N'ajoute dans "couleurs" et "icones" QUE ce que l'enfant cite lui-meme (une seule couleur citee = une seule cle) ; omets tout le reste.
+Si l'enfant veut un type d'ennemi (fantomes, araignees...), mets aussi "ennemis" a 3 au moins.
 SEULS ces reglages existent. Une chose a VOIR (personnage, objet, decor) passe par "icones" ; une regle ou un comportement
 qui n'existe pas (lasers, tirer, voler, boss...) va dans "souhaits" (et "remarque").
 Pars des reglages actuels et ne change que ce que l'enfant demande. Choisis le theme le plus proche si son idee n'existe pas
@@ -199,8 +201,10 @@ function iaReglages(r, base) {                          // ne garde que des vale
   const NOM_IC = { h: 'héros', e: 'objets', g: 'arrivée', n: 'ennemis', d: 'décor' };
   for (const [k, c] of Object.entries(IC_CLES)) {
     const m = r.icones?.[k];
-    if (typeof m === 'string' && /^[a-z][a-z -]{1,19}$/i.test(m.trim())) { icones[c] = m.trim().toLowerCase(); vu.push(`${NOM_IC[c]} : ${icones[c]}`); }
+    const mot = typeof m === 'string' ? m.trim().toLowerCase() : '';
+    if (/^[a-z][a-z -]{1,19}$/.test(mot) && !['cube', 'star', 'flag', 'default', 'none'].includes(mot)) { icones[c] = mot; vu.push(`${NOM_IC[c]} : ${mot}`); }   // les dessins d'origine ne sont pas une demande
   }
+  if (icones.n && !p.ennemis) { p.ennemis = 3; vu.push('3 ennemis'); }   // un ennemi choisi doit apparaitre dans le niveau
   const souhaits = (Array.isArray(r.souhaits) ? r.souhaits : []).filter(s => typeof s === 'string' && s.trim()).slice(0, 3);
   return { p, vu, icones, remarque: typeof r.remarque === 'string' ? r.remarque.slice(0, 160) : '', souhaits };
 }

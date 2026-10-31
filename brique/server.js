@@ -41,6 +41,10 @@ function nivValide(n) {
     return Array.isArray(n.rows) && n.rows.length >= 1 && n.rows.length <= H
       && n.rows.every(r => typeof r === 'string' && r.length <= W && ok.test(r)) && /[123E]/.test(n.rows.join(''));
   }
+  if (jeu === 'cote') {                                 // meme regles que bqCoteParse() : 15 a 30 lignes de 20 a 96 cases
+    if (!Array.isArray(n.rows) || n.rows.length < 15 || n.rows.length > 30 || !n.rows.every(r => typeof r === 'string' && /^[.#SG*^ET]{0,96}$/.test(r))) return false;
+    const t = n.rows.join(''); return Math.max(...n.rows.map(r => r.length)) >= 20 && t.split('S').length === 2 && t.split('G').length === 2;
+  }
   if (!n || !Array.isArray(n.rows) || n.rows.length < 3 || n.rows.length > 80) return false;
   if (!n.rows.every(r => typeof r === 'string' && /^[.#SG*R^WCIE]{0,20}$/.test(r))) return false;
   const tout = n.rows.join('');
@@ -145,7 +149,7 @@ function statsQuestion(id) {
 }
 function espaceAnimateur(email) {
   return { email, groupes: db.groupes.filter(g => g.email === email).map(g => ({
-    code: g.code, nom: g.nom, matiere: g.matiere || '', prive: !!g.prive, questions: (g.questions || []).map(q => ({ ...q, stats: statsQuestion(q.id) })),
+    code: g.code, nom: g.nom, matiere: g.matiere || '', prive: !!g.prive, age: g.age || 'libre', questions: (g.questions || []).map(q => ({ ...q, stats: statsQuestion(q.id) })),
     joueurs: db.joueurs.filter(j => j.groupe === g.code).map(j => ({ pseudo: j.pseudo, cree: j.cree })),
     niveaux: db.niveaux.filter(n => n.groupe === g.code).map(n => ({ id: n.id, titre: n.titre, pseudo: n.pseudo, cree: n.cree, masque: !!n.masque, parties: stats(n.id).parties })),
   })) };
@@ -168,18 +172,21 @@ const COULEUR_NOM = Object.fromEntries(Object.entries(PALETTE).map(([k, v]) => [
 const IC_CLES = { heros: 'h', etoile: 'e', arrivee: 'g', ennemi: 'n', decor: 'd' };
 // ---------- IA (Mistral) : phrase de l'enfant -> reglages du jeu ; le niveau reste fabrique par le generateur de la page ----------
 // Cle dans la variable d'environnement MISTRAL_API_KEY (jamais dans le code). Sans cle : 503 -> la page reprend ses mots-cles.
-const CONSIGNE = `Tu aides des enfants de 9 a 14 ans a regler un jeu pour une petite console. Trois jeux existent :
-plateforme (jeu de plateforme vertical, on grimpe jusqu'au drapeau), briques (casse-briques : raquette, balle, briques a casser),
+const CONSIGNE = `Tu aides des enfants de 9 a 14 ans a regler un jeu pour une petite console. Quatre jeux existent :
+plateforme (jeu de plateforme vertical, on grimpe jusqu'au drapeau), cote (jeu vu de profil, on avance vers une porte au bout : couloir, course), briques (casse-briques : raquette, balle, briques a casser),
 invaders (un vaisseau en bas tire sur des envahisseurs qui descendent).
 On te donne les reglages actuels et la demande de l'enfant. Reponds UNIQUEMENT avec un objet JSON :
-{"jeu":"plateforme|briques|invaders" (ne change que si l'enfant demande un autre jeu),
+{"jeu":"plateforme|cote|briques|invaders" (ne change que si l'enfant demande un autre jeu),
+ "ecransL":1-4,"ecransH":1-2 (cote : largeur et hauteur en ecrans ; un seul ecran = 1 et 1),"plafond":bool (cote : un plafond au-dessus du couloir),
+ "trous":0-3 (cote : trous caches dans le sol, ils s'ouvrent au dernier moment),"plateformes":bool (cote : plateformes en l'air ; sinon sol plat),
+ Pour cote, comptent aussi : difficulte, vitesse, etoiles, ennemis, briques.pic, vies, message.
  "motif":"pleine|pyramide|damier|cadre|hasard" (briques et invaders : dessin des briques ou de la formation d'envahisseurs),
  "acier":bool (briques : briques d'acier incassables), "bonus":bool (briques : capsules bonus), "vagues":1-5 (invaders),
  Pour briques et invaders, seuls comptent aussi : vitesse, difficulte (briques plus solides / plus d'envahisseurs qui tirent plus), vies,
  couleurs.ciel (= le fond), message, et pour invaders icones heros (= le vaisseau) et ennemi. Le reste ne sert qu'a la plateforme.
  "forme":"tour|puits|escalier|iles|mixte" (plateforme : tour = plateformes en zigzag, puits = conduits ou on monte en sautant d'un mur a l'autre,
    escalier = marches qui montent en lacets, iles = etages d'ilots a traverser en sautant, mixte = un peu de tout),
- "theme":"foret|lave|glace|espace|bonbon","hero":"cube|ninja|robot|chat","hauteur":15-60,"difficulte":1-3,
+ "theme":"foret|lave|glace|espace|bonbon","hero":"cube|ninja|robot|chat","hauteur":15-75 (plateforme : 15 = un ecran de haut),"difficulte":1-3,
  "gravite":0.65-1.3 (1 = normale),"vitesse":0.8-1.2 (1 = normale),"etoiles":0-8,
  "briques":{"pic":bool,"scie":bool,"ressort":bool,"glace":bool,"fragile":bool},"doubleSaut":bool (un 2e saut en l'air),
  "ennemis":0-6 (monstres qui patrouillent sur les plateformes),
@@ -212,14 +219,17 @@ const DANS = (v, a, b, def) => typeof v === 'number' && isFinite(v) ? Math.min(b
 const UN_DE = (v, liste, def) => liste.includes(v) ? v : def;
 function iaReglages(r, base) {                          // ne garde que des valeurs que le generateur sait utiliser
   const p = {
-    jeu: UN_DE(r.jeu, ['plateforme', 'briques', 'invaders'], base.jeu || 'plateforme'),
+    jeu: UN_DE(r.jeu, ['plateforme', 'cote', 'briques', 'invaders'], base.jeu || 'plateforme'),
+    ecransL: Math.round(DANS(r.ecransL, 1, 4, base.ecransL || 2)), ecransH: Math.round(DANS(r.ecransH, 1, 2, base.ecransH || 1)),
+    plafond: typeof r.plafond === 'boolean' ? r.plafond : base.plafond !== false, trous: Math.round(DANS(r.trous, 0, 3, base.trous ?? 1)),
+    plateformes: typeof r.plateformes === 'boolean' ? r.plateformes : !!base.plateformes,
     motif: UN_DE(r.motif, ['pleine', 'pyramide', 'damier', 'cadre', 'hasard'], base.motif || 'pleine'),
     acier: typeof r.acier === 'boolean' ? r.acier : !!base.acier, bonus: typeof r.bonus === 'boolean' ? r.bonus : base.bonus !== false,
     vagues: Math.round(DANS(r.vagues, 1, 5, base.vagues || 3)),
     forme: UN_DE(r.forme, ['tour', 'puits', 'escalier', 'iles', 'mixte'], base.forme || 'tour'),
     theme: UN_DE(r.theme, ['foret', 'lave', 'glace', 'espace', 'bonbon'], base.theme),
     hero: UN_DE(r.hero, ['cube', 'ninja', 'robot', 'chat'], base.hero),
-    hauteur: Math.round(DANS(r.hauteur, 15, 60, base.hauteur)), difficulte: Math.round(DANS(r.difficulte, 1, 3, base.difficulte)),
+    hauteur: Math.round(DANS(r.hauteur, 15, 75, base.hauteur)), difficulte: Math.round(DANS(r.difficulte, 1, 3, base.difficulte)),
     gravite: DANS(r.gravite, 0.65, 1.3, base.gravite), vitesse: DANS(r.vitesse, 0.8, 1.2, base.vitesse),
     etoiles: Math.round(DANS(r.etoiles, 0, 8, base.etoiles)), briques: {},
     doubleSaut: typeof r.doubleSaut === 'boolean' ? r.doubleSaut : !!base.doubleSaut,
@@ -232,7 +242,14 @@ function iaReglages(r, base) {                          // ne garde que des vale
   for (const k of ['pic', 'scie', 'ressort', 'glace', 'fragile']) p.briques[k] = typeof r.briques?.[k] === 'boolean' ? r.briques[k] : !!base.briques?.[k];
   // "compris" = ce qui a VRAIMENT change (l'IA peut pretendre avoir compris une chose impossible)
   const vu = [], B = base.briques || {}, NOMS = { pic: 'pics', scie: 'scies', ressort: 'ressorts', glace: 'glace', fragile: 'blocs fragiles' };
-  if (p.jeu !== (base.jeu || 'plateforme')) vu.push({ plateforme: 'jeu de plateforme', briques: 'casse-briques', invaders: 'invaders' }[p.jeu]);
+  if (p.jeu !== (base.jeu || 'plateforme')) vu.push({ plateforme: 'jeu de plateforme', cote: 'jeu de côté', briques: 'casse-briques', invaders: 'invaders' }[p.jeu]);
+  if (p.jeu === 'cote') {
+    if (p.ecransL !== (base.ecransL || 2)) vu.push(`${p.ecransL} écran${p.ecransL > 1 ? 's' : ''} de large`);
+    if (p.ecransH !== (base.ecransH || 1)) vu.push(`${p.ecransH} écran${p.ecransH > 1 ? 's' : ''} de haut`);
+    if (p.plafond !== (base.plafond !== false)) vu.push(p.plafond ? 'un plafond' : 'sans plafond');
+    if (p.trous !== (base.trous ?? 1)) vu.push(p.trous ? `${p.trous} trou${p.trous > 1 ? 's' : ''} caché${p.trous > 1 ? 's' : ''}` : 'sans trous');
+    if (p.plateformes !== !!base.plateformes) vu.push(p.plateformes ? 'des plateformes' : 'sans plateformes');
+  }
   if (p.motif !== (base.motif || 'pleine')) vu.push('dessin ' + p.motif);
   if (p.forme !== (base.forme || 'tour')) vu.push('parcours ' + { tour: 'en zigzag', puits: 'puits (sauts muraux)', escalier: 'escaliers', iles: 'îles', mixte: 'varié' }[p.forme]);
   if (p.acier !== !!base.acier) vu.push(p.acier ? 'briques d\'acier' : 'sans acier');
@@ -318,8 +335,8 @@ const serveur = http.createServer(async (req, res) => {
   }
   if (req.method === 'GET' && url === '/api/communaute') {   // ?pseudo=… : l'enfant d'un groupe en mode atelier ne voit que son groupe
     const ps = new URLSearchParams(req.url.split('?')[1] || '').get('pseudo') || '';
-    const jr = db.joueurs.find(j => j.pseudo.toLowerCase() === ps.toLowerCase()), g = jr && db.groupes.find(g => g.code === jr.groupe && g.prive);
-    return repondre(res, 200, communaute(g));
+    const jr = db.joueurs.find(j => j.pseudo.toLowerCase() === ps.toLowerCase()), gj = jr && db.groupes.find(g => g.code === jr.groupe);
+    return repondre(res, 200, { ...communaute(gj?.prive ? gj : null), age: gj?.age || 'libre' });   // age : tranche d'age choisie par l'animateur du groupe
   }
   if (req.method === 'GET' && url.startsWith('/api/jeu/')) {   // recuperer un jeu par son code de partage
     const code = url.slice(9).toUpperCase(), n = db.niveaux.find(n => n.code === code && !n.masque);
@@ -393,6 +410,10 @@ const serveur = http.createServer(async (req, res) => {
     if (url === '/api/animateur/atelier') {           // mode atelier : matiere du jour + interface confinee au groupe (jeux prives)
       const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });
       g.matiere = propre(b.matiere, 40); g.prive = !!b.prive; sauver(); return repondre(res, 200, espaceAnimateur(email));
+    }
+    if (url === '/api/animateur/age') {               // tranche d'age du groupe : guide (CM1-CM2) ou libre (6e-4e) ; seul l'animateur la choisit
+      const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });
+      g.age = b.age === 'guide' ? 'guide' : 'libre'; sauver(); return repondre(res, 200, espaceAnimateur(email));
     }
     if (url === '/api/animateur/questions') {         // la liste complete des questions d'un groupe (ajout, modif, suppression)
       const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });

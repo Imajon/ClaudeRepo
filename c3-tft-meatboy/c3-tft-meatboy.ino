@@ -117,7 +117,7 @@ struct __attribute__((packed)) LbMsg { uint8_t type; uint8_t n; LbEnt e[LB_MAX];
 
 
 #define SAVE_FORMAT 1       // format de la sauvegarde NVS : ne change que si la structure des donnees sauvegardees devient incompatible
-#define FW_VERSION "v55.0"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
+#define FW_VERSION "v55.1"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
 const char* rstReason = "?";  // raison du dernier reset (affichee a l'ecran titre)
 RTC_NOINIT_ATTR uint32_t dbgStage;  // dernier marqueur atteint (survit au reset)
 uint32_t lastStage = 0;
@@ -1794,6 +1794,12 @@ void pongStep(bool bLeft, bool br) {
 
 // ---- BRIQUE : casse-brique / invaders crees sur la page ("params":{"jeu":"briques"|"invaders"}, decode par bqMiniParse) ----
 // bqMini = jeu perso en cours (0 = mini-jeux habituels) : mis par bqStart(), remis a 0 en sortant (checkpointFinish)
+// BRIQUE "cote" : jeu vu de cote cree sur la page, joue dans le moteur des mondes (defilement horizontal et vertical)
+// 1 a 4 ecrans de large (20 cases chacun, 96 au plus) et 1 ou 2 de haut (15 cases chacun) ; 'T' = bloc qui disparait quand on arrive dessus
+#define BQC_HMAX 30
+bool bqCote = false; char bqCRows[BQC_HMAX][97]; int bqCW = 0, bqCH = 0;
+struct BqTrou { int c, r; bool open; } bqT[16]; int nBqT = 0;
+extern int bqNQ;                                   // questions de cours (declarees plus bas)
 int bqMini = 0, bqMiniJeu = 0;              // bqMiniJeu = type du dernier jeu recu : 0 plateforme, 1 briques, 2 invaders
 char bqMiniRows[7][11];                     // briques : 7 x 10 ('1'-'3' solidite, 'w' acier) ; invaders : 4 x 8 ('E' = ennemi)
 float bqMiniVit = 1; int bqMiniVies = 0, bqMiniVagues = 1, bqMiniDiff = 2, bqMiniPerdues = 0; bool bqMiniBonus = true, bqMiniWin = false;
@@ -2751,6 +2757,7 @@ void startLevel(int idx, bool resetCombo) {
   dNoDma = false;                                  // nouvel essai d'envoi DMA
   if (resetCombo) combo = 0;
   raceMode = false;
+  if (idx == CUSTOM_IDX && bqCote) { startBqCote(); return; }
   if (idx < 50) { startWorld(idx); return; }   // niveaux 1-10 exterieur, 11-20 donjon de feu, 21-30 glace, 31-40 desert, 41-50 jungle (mondes larges)
   loadLevelData(idx);
   levelStartMs = millis();
@@ -3267,6 +3274,7 @@ void dRespawn() {
   for (int i = 0; i < nDTraps; i++) { dTraps[i].st = 0; dTraps[i].t = 0; }
   for (int i = 0; i < nDEn; i++) den[i].cd = 1.0f + 0.3f * i;
   for (int i = 0; i < 4; i++) if (gH[i].on) gClose(i);   // glitchs du sol refermes
+  if (curLevel == CUSTOM_IDX) bqTrousReset();
   for (int i = 0; i < nDr; i++) { if (dDr[i].st == 2) dg[dDr[i].row][dDr[i].tx] = '.'; dDr[i].st = 0; }   // briques remises en place
   if (tCol >= 0) { int sd = dChkX + PW / 2 >= tCol * TILE ? tB : tA; if (dTheme != sd) { dTheme = sd; setRates(sd, sd == tB ? 0 : 9); } }   // transition : monde du point de reprise
   gEvT = 2.5f;
@@ -3274,6 +3282,40 @@ void dRespawn() {
   dcamY = max(0.0f, min(dpy - DVH * 6 / 10, (float)((DGY + 1) * TILE - DVH)));   // plafond : une seule rangee de sol visible sous les pieds
 }
 void dBuildSprites(int theme);
+void startBqCote() {                                 // BRIQUE : le jeu de cote de l'enfant dans le moteur des mondes (exterieur, sans glitchs ni histoire)
+  curLevel = CUSTOM_IDX; dTheme = 4; dVar = 9; dSpd = 0.6f * bqVit; dBuild = 10;
+  dVW = 320; dVH = 240; dSH = 120;
+  dWW = bqCW; dGY = bqCH - 1; dH = bqCH + 3; tCol = -1; nPatch = 0; tA = tB = dTheme; dCorr = false;
+  wclear(); nBqT = 0;
+  for (int r = 0; r < bqCH; r++) for (int c = 0; c < dWW; c++) {
+    char ch = bqCRows[r][c], o = '.';
+    if (ch == '#') o = 'S';
+    else if (ch == 'T') { o = 'S'; if (nBqT < 16) bqT[nBqT++] = { c, r, false }; }
+    else if (ch == '^') o = 'c';
+    else if (ch == '*' || ch == 'G') o = ch;
+    else if (ch == 'E') wguy(c, r);
+    else if (ch == 'S') { dChkX = c * TILE + 2; dChkY = (r + 1) * TILE - (int)PH; }
+    dg[r][c] = o;
+  }
+  for (int r = bqCH; r < dH; r++) for (int c = 0; c < dWW; c++) dg[r][c] = dg[bqCH - 1][c] == 'S' ? 'S' : '.';   // sous le sol : plein, ou vide sous un trou
+  dSX = dChkX; dSY = dChkY;
+  setRates(dTheme, dVar);
+  worldRun();
+  gZone0 = dWW + 10;                                 // pas de zone corrompue
+  dPoleHpx = 2 * TILE;                               // une porte, pas un mat
+  strcpy(gStartTxt, "Trouve la porte !");
+  if (bqVies) dLives = bqVies - 1;
+}
+void bqTrous() {                                     // BRIQUE : un bloc 'T' disparait quand on arrive tout pres (au dernier moment)
+  for (int i = 0; i < nBqT; i++) {
+    BqTrou &t = bqT[i]; if (t.open) continue;
+    if (fabsf(dpx + PW / 2 - (t.c * TILE + 8)) > 34 || fabsf(dpy + PH - t.r * TILE) > 48) continue;
+    t.open = true;
+    for (int r = t.r; r < (t.r == bqCH - 1 ? DH : t.r + 1); r++) dg[r][t.c] = '.';   // dans le sol : on tombe jusqu'en bas
+    dPuff(t.c * TILE + 8, t.r * TILE + 4, RGB565(150, 140, 130), 6);
+  }
+}
+void bqTrousReset() { for (int i = 0; i < nBqT; i++) if (bqT[i].open) { bqT[i].open = false; for (int r = bqT[i].r; r < (bqT[i].r == bqCH - 1 ? DH : bqT[i].r + 1); r++) dg[r][bqT[i].c] = 'S'; } }
 void genWorld(int idx) {                             // genere le niveau idx (0..49) dans dg : jeu et miniature du menu
   dTheme = idx < 10 ? 4 : idx < 20 ? 3 : idx < 30 ? 2 : idx < 40 ? 0 : 1; dVar = idx % 10;
   dSpd = idx < 29 ? 0.6f : 1.0f;                     // niveaux 1-29 : vitesse reduite a 60 %
@@ -3305,7 +3347,9 @@ void genWorld(int idx) {                             // genere le niveau idx (0.
   dSX = dChkX; dSY = dChkY;
 }
 void startWorld(int idx) {                           // idx = niveau 0..49 : 1-10 exterieur, 11-20 donjon de feu, 21-30 glace, 31-40 desert, 41-50 jungle
-  curLevel = idx; genWorld(idx);
+  curLevel = idx; genWorld(idx); worldRun();
+}
+void worldRun() {                                    // lance le monde deja genere dans dg
   dFlX = dFlY = -1; for (int r = 0; r < DH; r++) for (int c = 0; c < dWW; c++) if (dg[r][c] == 'G') { dFlX = c; dFlY = r; }
   { int n = 0; while (dFlX >= 0 && n < 4 && dFlY - n - 1 >= 0 && !dsolid(dFlX, dFlY - n - 1)) n++; dPoleHpx = (n + 1) * TILE; }   // le mat monte de 5 cases (moins s'il y a un plafond)
   dSlide = false; dPopT = 0;
@@ -3374,14 +3418,16 @@ bool dCactusBox(char ch, int tx, int ty, float &bx, float &by, float &bw, float 
 void glitchSave() { story.putUChar("gl", (uint8_t)glitchLvl); }
 void dDie(const char* msg, bool heat) {
   if (dInvT > 0 && dpy < DH * TILE) return;          // invincible juste apres une reapparition (sauf chute dans le vide)
-  if (glitchLvl < 100) glitchLvl++;                  // chaque mort nourrit les glitchs
+  if (glitchLvl < 100 && curLevel != CUSTOM_IDX) glitchLvl++;   // chaque mort nourrit les glitchs
   dDeathMsg = msg; dPhase = 2; dPhaseT = heat ? 1.1f : 0.6f; dDeaths++; dHeat = heat ? 100 : dHeat; dvx = dvy = 0; dVineIdx = -1;
   dPuff(dpx + 6, dpy + 7, dTheme == 0 ? RGB565(120, 190, 255) : RGB565(255, 120, 150), 8);
 }
-void worldQuit() { glitchSave(); dSpiStop(); tft.setSPISpeed(40000000); selLevel = curLevel; state = ST_SELECT; drawSelect(); }
+void worldQuit() { if (curLevel == CUSTOM_IDX) { dSpiStop(); tft.setSPISpeed(40000000); checkpointFinish(); return; } glitchSave(); dSpiStop(); tft.setSPISpeed(40000000); selLevel = curLevel; state = ST_SELECT; drawSelect(); }
 void worldWin() {                                    // drapeau atteint : meme bilan que les niveaux classiques (score, etoiles, recap, menu de fin)
   deaths = dDeaths; levelCoins = dCoinsGot; levelStartMs = dStartMs;
-  glitchLvl = max(0, glitchLvl - 4); glitchSave();  // un niveau fini = des bugs corriges
+  if (curLevel == CUSTOM_IDX) {                     // BRIQUE : question de cours avant la victoire
+    if (bqNQ) { dSpiStop(); tft.setSPISpeed(40000000); bqStartQuiz(dStars); return; }
+  } else { glitchLvl = max(0, glitchLvl - 4); glitchSave(); }   // un niveau fini = des bugs corriges
   finishLevel(dStars);
 }
 static inline uint32_t gHash(uint32_t x) { x ^= x >> 16; x *= 0x7feb352dU; x ^= x >> 15; x *= 0x846ca68bU; x ^= x >> 16; return x; }
@@ -3652,7 +3698,7 @@ void desertSim(float dt, bool bl, bool br, bool bj, bool je) {   // un pas de si
       if (dpx + PW > bx + 1 && dpx < bx + TILE - 1 && dpy + PH > d.y + 2 && dpy < d.y + TILE) dDie("Une brique ! Retiens sa place.", false);
     }
   }
-  if (dPhase == 0) gEvents(dt);
+  if (dPhase == 0) { if (curLevel == CUSTOM_IDX) bqTrous(); gEvents(dt); }
   if (dInvT > 0) dInvT -= dt;
   if (dPhase == 0 && dGround && (dSafeT -= dt) <= 0) {   // memorise une position sure : au sol sur un bloc fixe, sans piege a cote
     dSafeT = 0.25f;
@@ -3688,6 +3734,7 @@ void desertSim(float dt, bool bl, bool br, bool bj, bool je) {   // un pas de si
   if (dFlX >= 0 && !dSlide && dPhase == 0) {            // drapeau facon Mario : plus on attrape le mat haut, plus le bonus est grand (jusqu'a 300 points)
     float base = (dFlY + 1) * TILE;
     if (dpx + PW > dFlX * TILE + 4 && dpx < dFlX * TILE + 12 && dpy + PH > base - dPoleHpx && dpy < base) {
+      if (curLevel == CUSTOM_IDX) { dWinFlag = true; dvx = dvy = 0; return; }   // BRIQUE : la porte
       float fr = constrain((base - (dpy + PH / 2)) / (float)dPoleHpx, 0.0f, 1.0f);
       scFlag = (int)(fr * 300); dSlide = true; dvx = dvy = 0; dpx = dFlX * TILE + 8 - PW / 2;
       dPopT = 1.8f; dPopY = dpy; dPopPts = scFlag; dPuff(dFlX * TILE + 8, dpy + 7, RGB565(255, 235, 90), 12);
@@ -3823,7 +3870,10 @@ void dsDecor(int x, int by, char ch) {                   // x = bord gauche de l
       dLeaf(x + 8, by, x + 2, by - 20, 4, RGB565(50, 160, 80), RGB565(120, 210, 100)); dLeaf(x + 8, by, x + 14, by - 20, 4, RGB565(50, 160, 80), RGB565(120, 210, 100)); dLeaf(x + 8, by, x + 8, by - 24, 4, RGB565(60, 175, 85), RGB565(130, 220, 110)); break;
     case 'p': fb.fillTriangle(x + 5, by - 3, x + 11, by - 3, x + 8, by - 34, RGB565(150, 190, 60)); fb.fillTriangle(x + 5, by - 3, x + 11, by - 3, x + 8, by - 16, RGB565(70, 150, 50));
       fb.fillRoundRect(x + 3, by - 5, 10, 5, 2, RGB565(150, 80, 40)); break;
-    case 'G': { int H = dPoleHpx; fb.fillRect(x + 7, by - H, 2, H, W2); fb.fillCircle(x + 8, by - H - 1, 3, COL_STAR);                       // mat de 5 cases, boule doree, drapeau en haut
+    case 'G': if (curLevel == CUSTOM_IDX) {             // BRIQUE : une porte en bois
+        fb.fillRect(x, by - 30, 16, 30, W1); fb.drawRect(x, by - 30, 16, 30, W2); fb.drawFastVLine(x + 8, by - 28, 27, W2);
+        fb.fillCircle(x + 12, by - 14, 1, COL_STAR); break;
+      } { int H = dPoleHpx; fb.fillRect(x + 7, by - H, 2, H, W2); fb.fillCircle(x + 8, by - H - 1, 3, COL_STAR);                       // mat de 5 cases, boule doree, drapeau en haut
       fb.fillRect(x + 9, by - H + 2, 15, 10, COL_GOAL); fb.fillTriangle(x + 24, by - H + 2, x + 24, by - H + 12, x + 29, by - H + 7, COL_GOAL); } break;
     default: break;
   }
@@ -5752,9 +5802,40 @@ void bqStart() {
   if (bqMini == 1) startBreakout(); else startInvaders();
 }
 
+// BRIQUE : jeu de cote : 15 ou 30 lignes de 20 a 96 cases, '.#SG*^ET'
+const char* bqCoteParse(const char* s) {
+  bqMiniJeu = 0;
+  const char* p = strstr(s, "\"rows\""); if (!p) return "pas de rows";
+  p = strchr(p, '['); if (!p) return "rows mal forme";
+  p++;
+  static char tmp[BQC_HMAX][97]; int h = 0, w = 0, nS = 0, nG = 0;
+  while (true) {
+    while (*p == ' ' || *p == ',' || *p == '\n' || *p == '\r') p++;
+    if (*p == ']') break;
+    if (*p != '"') return "rows mal forme";
+    if (h >= BQC_HMAX) return "niveau trop haut";
+    p++; int c = 0;
+    for (; *p && *p != '"'; p++, c++) {
+      if (c >= 96) return "niveau trop large";
+      if (!strchr(".#SG*^ET", *p)) return "brique inconnue";
+      nS += *p == 'S'; nG += *p == 'G'; tmp[h][c] = *p;
+    }
+    if (*p != '"') return "ligne non fermee";
+    p++; tmp[h][c] = 0; w = max(w, c); h++;
+  }
+  if (h < 15 || w < 20) return "niveau trop petit (15 x 20 au moins)";
+  if (nS != 1 || nG != 1) return "il faut 1 depart S et 1 arrivee G";
+  for (int r = 0; r < h; r++) { int c = strlen(tmp[r]); while (c < w) tmp[r][c++] = '.'; tmp[r][w] = 0; }
+  memcpy(bqCRows, tmp, sizeof tmp); bqCW = w; bqCH = h;
+  bqParams(s);
+  bqCote = true; customH = h;                       // customH : le resultat (BRIQUE FIN) repart vers la page
+  return nullptr;
+}
 // BRIQUE : decode "rows" dans une ligne JSON. Renvoie nullptr si OK, sinon la raison (renvoyee a la page web).
 const char* briqueParse(const char* s) {
   char jeu[10]; jsonStr(s, "jeu", jeu, sizeof jeu);
+  bqCote = false;
+  if (!strcmp(jeu, "cote")) return bqCoteParse(s);
   if (!strcmp(jeu, "briques") || !strcmp(jeu, "invaders")) return bqMiniParse(s, jeu[0] == 'b' ? 1 : 2);
   bqMiniJeu = 0;
   const char* p = strstr(s, "\"rows\""); if (!p) return "pas de rows";
@@ -5965,7 +6046,7 @@ void myLvStep(bool eL, bool eR, bool eJ) {
   if (myLvChoice == myLvN) { if (twoP) { state = ST_MODE; drawMode(); } else { homeChoice = 2; state = ST_HOME; drawHome(); } return; }
   if (twoP && !myLvCode[myLvChoice][0]) return;                         // course : seulement un jeu publie (les autres le retrouvent par son code)
   String s = briqueRead(myLvSlot[myLvChoice]);
-  if (!s.length() || briqueParse(s.c_str()) || (twoP && bqMiniJeu)) return;   // fichier abime, ou casse-brique / invaders (pas de course a plusieurs) : on reste dans la liste
+  if (!s.length() || briqueParse(s.c_str()) || (twoP && (bqMiniJeu || bqCote))) return;   // fichier abime, ou casse-brique / invaders (pas de course a plusieurs) : on reste dans la liste
   extrasReset(); icParse(s.c_str()); qParse(s.c_str());
   if (twoP) {                                                           // hote : depart pour tous, avec le code du jeu
     raceCode = codeNum(myLvCode[myLvChoice]);
@@ -5979,7 +6060,7 @@ bool briqueLoadCode(uint32_t code) {
   if (!fsOk || !code) return false;
   char c[7]; codeTxt(code, c); char pat[16]; snprintf(pat, sizeof pat, "\"code\":\"%s\"", c);
   for (int i = 0; i < MYLV_MAX; i++) {
-    String s = briqueRead(i); if (!s.length() || !strstr(s.c_str(), pat) || briqueParse(s.c_str()) || bqMiniJeu) continue;
+    String s = briqueRead(i); if (!s.length() || !strstr(s.c_str(), pat) || briqueParse(s.c_str()) || bqMiniJeu || bqCote) continue;
     extrasReset(); icParse(s.c_str()); qParse(s.c_str()); raceCode = code; return true;
   }
   return false;
@@ -6003,7 +6084,7 @@ void briqueRace() {
 }
 
 void briquePoll() {
-  static char buf[2304]; static int n = 0;           // ~23 octets par ligne x 80 + params
+  static char buf[3600]; static int n = 0;           // ~23 octets par ligne x 80, ou 30 lignes x 99 (jeu de cote), + params
   while (Serial.available()) {
     char ch = Serial.read();
     if (ch != '\n') { if (n < (int)sizeof buf - 1) buf[n++] = ch; continue; }
@@ -6033,7 +6114,7 @@ void briquePoll() {
       continue;
     }
     const bool libre = state == ST_SPLASH || state == ST_HOME || state == ST_SELECT || state == ST_END || state == ST_DEAD || state == ST_WIN
-                    || (state == ST_PLAY && curLevel >= 50);           // pas au milieu d'un monde, d'un mini-jeu ou d'une partie a deux
+                    || (state == ST_PLAY && curLevel >= 50) || (state == ST_DESERT && curLevel == CUSTOM_IDX);           // pas au milieu d'un monde, d'un mini-jeu ou d'une partie a deux
     const char* err = trop ? "niveau trop gros" : (twoP || raceMode || !(libre || state == ST_MYLV)) ? "console occupee : reviens a l'accueil" : briqueParse(buf);
     if (err) { Serial.printf("BRIQUE ERR %s\n", err); icWait = ""; continue; }
     Serial.printf("BRIQUE OK %d\n", customH);
@@ -6045,7 +6126,7 @@ void briquePoll() {
 }
 
 void setup() {
-  Serial.setRxBufferSize(2048);   // BRIQUE : un niveau (~1,5 Ko) doit tenir entre deux images
+  Serial.setRxBufferSize(4096);   // BRIQUE : un niveau (jusqu a 3,5 Ko : jeu de cote de 4 x 2 ecrans) doit tenir entre deux images
   Serial.begin(115200);
   delay(200);
   fsOk = LittleFS.begin(true);    // BRIQUE : formate la partition au tout premier demarrage (quelques secondes, une seule fois)

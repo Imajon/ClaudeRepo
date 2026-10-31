@@ -146,10 +146,12 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .icDrop{margin-top:8px;padding:10px;border:2px dashed var(--line);border-radius:12px;font-size:13px;color:var(--mute);text-align:center}
 .icDrop.sur{border-color:var(--acc);color:var(--txt)}
 /* ----- boutique : présentation épurée ----- */
-.shop{display:block;max-width:860px;margin:0 auto;padding:40px 16px 80px;text-align:center}
-.sh-hero{padding:60px 0 40px}
-.sh-photo{width:100vw;margin:40px 0 0 calc(50% - 50vw);background:#fff}   /* photo à fond perdu : bande blanche bord à bord, blanc sur blanc */
-.sh-photo img{display:block;width:min(100%,1205px);height:auto;margin:0 auto}
+.shop{display:block;max-width:860px;margin:0 auto;padding:0 16px 80px;text-align:center}
+.sh-hero{padding:32px 0 40px}
+.sh-photo{width:100vw;margin:0 0 0 calc(50% - 50vw);background:#fff;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,3.2fr) minmax(0,1fr);align-items:center;gap:2vw;padding:0 3vw}   /* à fond perdu : bande blanche bord à bord, blanc sur blanc */
+.sh-photo img{display:block;width:100%;height:auto}
+.sh-console{max-width:1205px;justify-self:center}
+.sh-bouton{max-width:300px;justify-self:center}
 body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
 :root:not([data-theme="dark"]) body:has(#boutique:not(.hide)){background:#fff}   /* thème clair : boutique sur blanc, la photo se fond dans la page */
 .sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}
@@ -248,12 +250,17 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
 <main id="boutique" class="shop hide">
+  <!-- en premier : la console entre deux boutons poussoirs, à fond perdu (blanc sur blanc) ; le texte vient dessous -->
+  <figure class="sh-photo">
+    <img class="sh-bouton" src="images/bouton1.jpg" alt="Un bouton poussoir, vu de dessus" width="463" height="337">
+    <img class="sh-console" src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
+    <img class="sh-bouton" src="images/bouton2.jpg" alt="Un bouton poussoir, vu de dessous avec ses quatre pattes" width="471" height="330">
+  </figure>
   <div class="sh-hero">
     <p class="sh-sur">Console Brique</p>
     <h2 class="sh-titre">Le jeu que tu inventes.<br>Dans ta main.</h2>
     <p class="sh-sous">Crée ton jeu ici, envoie-le dans la console, joue partout.</p>
     <p id="btDepuis" class="sh-prix">À partir de 28 €</p>
-    <figure class="sh-photo"><img src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880"></figure>
   </div>
 
   <div class="sh-bloc">

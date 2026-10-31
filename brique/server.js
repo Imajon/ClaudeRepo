@@ -305,8 +305,9 @@ const serveur = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
   }
-  if (req.method === 'GET' && url === '/images/console-v2.jpg') {   // photo de la console (boutique)
-    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'images', 'console-v2.jpg')).pipe(res);
+  const img = req.method === 'GET' && url.match(/^\/images\/(console-v2|bouton1|bouton2)\.jpg$/);   // photos de la boutique
+  if (img) {
+    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'images', img[1] + '.jpg')).pipe(res);
   }
   const fw = req.method === 'GET' && url.match(/^\/firmware\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);
   if (fw) {                                             // mise a jour des consoles (esp-web-tools) : fichiers deposes par publier-firmware-brique.bat

@@ -6,7 +6,7 @@ const http = require('http'), fs = require('fs'), path = require('path'), crypto
 const PORT = process.env.PORT || 8080, FICHIER = process.env.DATA || path.join(__dirname, 'data.json');
 // adresse publique pour les liens envoyes par mail (jamais l'en-tete Host : il pourrait envoyer un lien piege)
 const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
-const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [] };
+const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [], courses: [] };
 let db;
 
 // ---------- stockage : tout l'etat dans une ligne MySQL (ou un fichier) ----------
@@ -61,6 +61,13 @@ function codeGroupe() {                                  // ex. LUNE-42 : facile
   let c; do c = MOTS[crypto.randomInt(MOTS.length)] + '-' + crypto.randomInt(10, 100); while (db.groupes.some(g => g.code === c));
   return c;
 }
+// code de partage d'un jeu publie : 6 caracteres sans 0/1/I/O (meme alphabet que le firmware : il tient en 30 bits dans un message radio)
+// un jeu publie n'est jamais modifie -> un code = une version exacte, la meme sur toutes les consoles
+const CODE_AB = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ', CODE = /^[2-9A-HJ-NP-Z]{6}$/;
+function codeJeu() {
+  let c; do c = Array.from({ length: 6 }, () => CODE_AB[crypto.randomInt(32)]).join(''); while (db.niveaux.some(n => n.code === c));
+  return c;
+}
 async function envoyerMail(email, sujet, html) {
   if (!process.env.BREVO_API_KEY) { console.log(`[mail non configure] ${email} : ${sujet}\n${html}`); return; }   // en local : le lien s'affiche ici
   const r = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -86,6 +93,15 @@ function stats(id) {
     mortsMoy: +(ps.reduce((s, p) => s + p.morts, 0) / ps.length).toFixed(1),
   };
 }
+function statsCourses(id) {                              // courses a plusieurs (resultats remontes des consoles)
+  const cs = db.courses.filter(c => c.niveau === id);
+  if (!cs.length) return { courses: 0 };
+  const vic = {}; for (const c of cs) if (c.gagne) vic[c.pseudo] = (vic[c.pseudo] || 0) + 1;
+  const roi = Object.entries(vic).sort((a, b) => b[1] - a[1])[0];
+  const finis = cs.filter(c => c.t > 0), rec = finis.length ? finis.reduce((a, b) => b.t < a.t ? b : a) : null;
+  return { courses: cs.length, coureurs: new Set(cs.map(c => c.pseudo)).size, roi: roi ? { pseudo: roi[0], victoires: roi[1] } : null,
+           record: rec ? { t: rec.t, pseudo: rec.pseudo } : null };
+}
 
 // ---------- accueil "communaute" : tout ce qui bouge (niveaux visibles + stats, joueurs actifs, chiffres du jour) ----------
 function communaute() {
@@ -99,7 +115,7 @@ function communaute() {
   return {
     chiffres: { jeux: visibles.length, parties: parties.length,
                 aujourdhui: new Set(actions.filter(a => now - a.date < JOUR).map(a => a.pseudo)).size },
-    niveaux: visibles.map(n => ({ ...n, stats: { ...stats(n.id), semaine: semaine[n.id] || 0 } })),
+    niveaux: visibles.map(n => ({ ...n, stats: { ...stats(n.id), semaine: semaine[n.id] || 0, multi: statsCourses(n.id) } })),
     actifs, idees: ideesPubliques(),
   };
 }
@@ -202,6 +218,10 @@ const serveur = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
   }
   if (req.method === 'GET' && url === '/api/communaute') return repondre(res, 200, communaute());
+  if (req.method === 'GET' && url.startsWith('/api/jeu/')) {   // recuperer un jeu par son code de partage
+    const code = url.slice(9).toUpperCase(), n = db.niveaux.find(n => n.code === code && !n.masque);
+    return n ? repondre(res, 200, { ...n, stats: { ...stats(n.id), multi: statsCourses(n.id) } }) : repondre(res, 404, { erreur: 'Aucun jeu avec ce code : vérifie les 6 caractères.' });
+  }
   if (req.method === 'GET' && url === '/api/animateur') {
     const email = animateurDe(req); return email ? repondre(res, 200, espaceAnimateur(email)) : repondre(res, 401, { erreur: 'non connecté' });
   }
@@ -291,16 +311,26 @@ const serveur = http.createServer(async (req, res) => {
   if (url === '/api/niveaux') {                       // publier un jeu (commun=false) ou ajouter un niveau au jeu commun (commun=true)
     if (!nivValide(b.niv)) return repondre(res, 400, { erreur: 'niveau invalide' });
     const titre = String(b.titre || '').replace(/[<>]/g, '').trim().slice(0, 30) || 'Sans titre';
-    const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), pseudo: j.pseudo, groupe: j.groupe, titre, commun: !!b.commun,
+    const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), code: codeJeu(), pseudo: j.pseudo, groupe: j.groupe, titre, commun: !!b.commun,
                 cree: Date.now(), niv: { format: 'brique-v1', params: b.niv.params || {}, rows: b.niv.rows, icones: icValides(b.niv.icones) } };
     if (JSON.stringify(n.niv.params).length > 1000) n.niv.params = {};
-    db.niveaux.push(n); sauver(); return repondre(res, 200, { id: n.id });
+    db.niveaux.push(n); sauver(); return repondre(res, 200, { id: n.id, code: n.code });
   }
   if (url === '/api/idee') {                          // proposer une idee (texte) ou voter "moi aussi" (id)
     const s = b.id ? db.souhaits.find(s => s.id === b.id) : ajouterIdee(b.texte || '', j.pseudo, 'joueur');
     if (!s) return repondre(res, 400, { erreur: 'Écris ton idée en quelques mots.' });
     if (!s.votes.includes(j.pseudo)) s.votes.push(j.pseudo);
     sauver(); return repondre(res, 200, { idees: ideesPubliques() });
+  }
+  if (url === '/api/courses') {                       // courses a plusieurs jouees sur la console de cet enfant (commande RESULTATS)
+    const rs = Array.isArray(b.resultats) ? b.resultats.slice(0, 200) : [];
+    let n = 0;
+    for (const r of rs) {
+      const niv = CODE.test(r.code || '') && db.niveaux.find(x => x.code === r.code);
+      if (!niv || !entier(r.t, 3600000) || !entier(r.joueurs, 4) || r.joueurs < 2) continue;
+      db.courses.push({ niveau: niv.id, pseudo: j.pseudo, t: r.t, gagne: !!r.gagne, joueurs: r.joueurs, date: Date.now() }); n++;
+    }
+    sauver(); return repondre(res, 200, { ok: true, enregistrees: n });
   }
   if (url === '/api/parties') {                       // un niveau fini (console ou aperçu web)
     if (!db.niveaux.some(n => n.id === b.niveau)) return repondre(res, 400, { erreur: 'niveau inconnu' });
@@ -314,5 +344,6 @@ const serveur = http.createServer(async (req, res) => {
 
 charger().then(d => {
   db = { ...VIDE, ...d };
+  for (const n of db.niveaux) if (!n.code) n.code = codeJeu();   // jeux publies avant les codes de partage
   serveur.listen(PORT, () => console.log(`Brique sur ${PUBLIC_URL} (données : ${pool ? 'MySQL ' + process.env.DB_HOST : FICHIER})`));
 }).catch(e => { console.error('Impossible de charger les données :', e.message); process.exit(1); });

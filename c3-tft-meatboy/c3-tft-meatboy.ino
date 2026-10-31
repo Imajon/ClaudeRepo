@@ -117,7 +117,7 @@ struct __attribute__((packed)) LbMsg { uint8_t type; uint8_t n; LbEnt e[LB_MAX];
 
 
 #define SAVE_FORMAT 1       // format de la sauvegarde NVS : ne change que si la structure des donnees sauvegardees devient incompatible
-#define FW_VERSION "v54.3"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
+#define FW_VERSION "v54.4"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
 const char* rstReason = "?";  // raison du dernier reset (affichee a l'ecran titre)
 RTC_NOINIT_ATTR uint32_t dbgStage;  // dernier marqueur atteint (survit au reset)
 uint32_t lastStage = 0;
@@ -763,6 +763,42 @@ void loadHandLevel(int n) {
 char customRows[WROWS][COLS + 1];
 const char* customPtr[WROWS];
 int customH = 0;                      // 0 = aucun niveau perso recu depuis le demarrage
+uint32_t raceCode = 0;                // BRIQUE : code du jeu publie de la course en cours (0 = aucun)
+bool customDJ = false;                // BRIQUE : "doubleSaut":true dans les params -> double saut sans passer par la boutique
+#define RGB565(r, g, b) ((uint16_t)((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | ((b) >> 3)))   // (meme definition que plus bas : utilisee des ici)
+// reglages choisis sur la page ("params") : appliques au seul niveau perso (bqOn()), memes valeurs que l'apercu web
+struct BqTheme { const char* nom; uint8_t c0[3], c1[3], sol[3], bord[3]; };   // ciel haut, ciel bas, sol, bord du sol
+const BqTheme BQ_THEMES[] = {
+  { "foret",  { 155, 231, 255 }, { 232, 255, 240 }, {  63, 143,  58 }, {  42,  94,  39 } },
+  { "lave",   {  58,  11,  11 }, { 168,  54,  26 }, {  74,  59,  59 }, { 255, 106,   0 } },
+  { "glace",  { 207, 233, 255 }, { 255, 255, 255 }, { 122, 166, 201 }, {  79, 127, 166 } },
+  { "espace", {   5,   3,  26 }, {  43,  29,  92 }, {  92,  90, 122 }, { 166, 156, 255 } },
+  { "bonbon", { 255, 209, 236 }, { 255, 244, 194 }, { 255, 122, 184 }, { 194,  56, 122 } } };
+struct BqHero { const char* nom; uint16_t col; };
+const BqHero BQ_HEROS[] = { { "cube", RGB565(232, 50, 43) }, { "ninja", RGB565(34, 34, 51) }, { "robot", RGB565(154, 164, 176) }, { "chat", RGB565(255, 153, 51) } };
+int bqTheme = -1, bqHero = -1;        // -1 = pas choisi : dessin habituel de la console
+float bqGrav = 1, bqVit = 1;
+#define bqOn() (curLevel == CUSTOM_IDX && customH)   // macro : curLevel est declare plus bas
+int bqFind(const char* p, const char* cle, const char* const* noms, int n, int pas) {   // "cle":"nom" -> indice dans la table, -1 sinon
+  const char* q = strstr(p, cle); if (!q) return -1; q = strchr(q + strlen(cle), '"'); if (!q) return -1; q++;
+  for (int i = 0; i < n; i++) { const char* nm = *(const char* const*)((const char*)noms + i * pas); size_t l = strlen(nm); if (!strncmp(q, nm, l) && q[l] == '"') return i; }
+  return -1;
+}
+float bqNum(const char* p, const char* cle, float lo, float hi) {
+  const char* q = strstr(p, cle); if (!q) return 1; float v = atof(q + strlen(cle)); return v < lo ? lo : v > hi ? hi : v;
+}
+void bqParams(const char* s) {
+  const char* p = strstr(s, "\"params\"");
+  bqTheme = bqHero = -1; bqGrav = bqVit = 1;
+  if (!p) return;
+  bqTheme = bqFind(p, "\"theme\":", &BQ_THEMES[0].nom, 5, sizeof(BqTheme));
+  bqHero  = bqFind(p, "\"hero\":",  &BQ_HEROS[0].nom, 4, sizeof(BqHero));
+  bqGrav = bqNum(p, "\"gravite\":", 0.3f, 2.0f);
+  bqVit  = bqNum(p, "\"vitesse\":", 0.5f, 2.0f);
+}
+uint16_t bqMix(const uint8_t* a, const uint8_t* b, int k, int n) {   // a -> b, k/n
+  return RGB565(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n, a[2] + (b[2] - a[2]) * k / n);
+}
 
 void loadRows(const char* const* rows, int h) {
   levH = h;
@@ -1348,6 +1384,7 @@ bool espOn = false, twoP = false, isHost = false, raceMode = false;
 #define M_DSEL  'D'   // drift a deux : circuit choisi par l'hote (lvl) ; x = 1 -> depart
 #define TIMING_SENTINEL 254   // M_START : lance le timing a deux (x = cible en centiemes)
 #define DRIFT_SENTINEL  253   // M_START : lance le drift a deux
+#define BRIQUE_SENTINEL 252   // M_START : course sur un jeu Brique publie (t = son code de partage, 30 bits)
 #define M_ROSTER 'W'  // multijoueur : l'hote fige la liste des joueurs (lvl = nombre, ids dans x, y, x2, t)
 // from = identifiant de l'expediteur (2 derniers octets de sa MAC) : 2 a 4 consoles, chacune sait qui parle (et le banc peut simuler un joueur de plus)
 volatile bool vPeer = false, vStart = false, vPos = false, vFin = false;
@@ -1356,6 +1393,7 @@ volatile int16_t vOppX = 0, vOppY = 0;
 volatile uint32_t vFinT = 0;
 volatile uint32_t vLastRx = 0;                             // dernier paquet recu de l'adversaire (detection de deconnexion)
 volatile uint32_t vHelloN = 0;                             // HELLO recus : l'adversaire est dans le lobby
+volatile uint32_t vStartT = 0;        // M_START : code du jeu Brique
 volatile int16_t vStartX = 0, vTmRes = 0, vOppH = 0;
 volatile bool vTmResOk = false, vDSelNew = false; volatile uint8_t vDSel = 0, vDGo = 0;
 volatile uint32_t vPeerHelloCount = 0;                     // pour designer l'hote = celui arrive en premier
@@ -1445,7 +1483,7 @@ void mpHandle(const Msg &m, const uint8_t *mac) {          // un message d'un au
   }
   if (mpFrozen && !(mpIn[k] && mpOn[k])) return;           // pas (ou plus) dans la partie
   vLastRx = now;
-  if (m.type == M_START) { vStartLvl = m.lvl; vStartX = m.x; vStart = true; }
+  if (m.type == M_START) { vStartLvl = m.lvl; vStartX = m.x; vStartT = m.t; vStart = true; }
   else if (m.type == M_TMRES) { mpTm[k] = m.x; mpTmOk[k] = true; }
   else if (m.type == M_DSEL)  { vDSel = m.lvl; vDGo = (uint8_t)m.x; vDSelNew = true; }
   else if (m.type == M_POS)   { mpX[k] = m.x; mpY[k] = m.y; mpH[k] = m.x2; mpPos[k] = true; mpPosMs[k] = now; vOppX = m.x; vOppY = m.y; vOppH = m.x2; vPos = true; }
@@ -5592,6 +5630,7 @@ void mpResendGame(int k) {                                 // le jeu en cours, a
   for (int q = 0; q < 3; q++) {
     if (state == ST_TIMING) mpSendTo(k, M_START, TIMING_SENTINEL, (int16_t)timingTarget(), 0, 0, 0);
     else if (state == ST_DRIFT) { mpSendTo(k, M_START, DRIFT_SENTINEL, 0, 0, 0, 0); mpSendTo(k, M_DSEL, (uint8_t)driftTrack(), 0, 0, 0, 0); }
+    else if ((state == ST_PLAY || state == ST_COUNTDOWN) && curLevel == CUSTOM_IDX) mpSendTo(k, M_START, BRIQUE_SENTINEL, 0, 0, raceCode, 0);
     else if (state == ST_PLAY || state == ST_COUNTDOWN) mpSendTo(k, M_START, (uint8_t)curLevel, 0, 0, 0, 0);
     delay(5);
   }
@@ -5646,6 +5685,8 @@ const char* briqueParse(const char* s) {
   memcpy(customRows, tmp, sizeof tmp);
   for (int r = 0; r < WROWS; r++) customPtr[r] = customRows[r];
   customH = h;
+  customDJ = strstr(s, "\"doubleSaut\":true") != nullptr;
+  bqParams(s);
   return nullptr;
 }
 
@@ -5655,13 +5696,20 @@ const char* briqueParse(const char* s) {
 #define MYLV_MAX 8
 bool fsOk = false;
 int myLvN = 0, myLvChoice = 0, myLvSlot[MYLV_MAX];
-char myLvTitre[MYLV_MAX][31], myLvPseudo[MYLV_MAX][13];
+char myLvTitre[MYLV_MAX][31], myLvPseudo[MYLV_MAX][13], myLvCode[MYLV_MAX][7];
+// code de partage d'un jeu publie (6 caracteres, sans 0/1/I/O) <-> 30 bits (champ t du depart en course)
+static const char* CODE_AB = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+uint32_t codeNum(const char* c) { uint32_t v = 0; for (int i = 0; i < 6; i++) { const char* p = c[i] ? strchr(CODE_AB, c[i]) : nullptr; if (!p) return 0; v = v * 32 + (p - CODE_AB); } return v; }
+void codeTxt(uint32_t v, char* out) { for (int i = 5; i >= 0; i--) { out[i] = CODE_AB[v & 31]; v >>= 5; } out[6] = 0; }
 
 int briqueNext() { File f = LittleFS.open("/bnext", "r"); int n = f ? f.parseInt() : 0; if (f) f.close(); return n; }   // nombre de niveaux recus depuis toujours
 String briqueRead(int slot) { char p[8]; snprintf(p, sizeof p, "/b%d", slot); if (!LittleFS.exists(p)) return String(); File f = LittleFS.open(p, "r"); String s = f ? f.readString() : String(); if (f) f.close(); return s; }
 void briqueSave(const char* json, const String& ic) {   // fichier = ligne du niveau + ses lignes d'icones
   if (!fsOk) return;
   int n = briqueNext(); const size_t lj = strlen(json);
+  char code[7]; jsonStr(json, "code", code, 7);
+  if (code[0]) { char pat[16]; snprintf(pat, sizeof pat, "\"code\":\"%s\"", code);   // jeu publie deja dans Mes niveaux : on garde la version presente (identique)
+    for (int i = 0; i < MYLV_MAX && i < n; i++) if (strstr(briqueRead(i).c_str(), pat)) return; }
   if (n > 0) { String old = briqueRead((n - 1) % MYLV_MAX);              // meme niveau renvoye : pas de doublon
     if (old.length() == lj + ic.length() && !strncmp(old.c_str(), json, lj) && !strcmp(old.c_str() + lj, ic.c_str())) return; }
   char p[8]; snprintf(p, sizeof p, "/b%d", n % MYLV_MAX);
@@ -5713,6 +5761,7 @@ void myLvScan() {
     myLvSlot[myLvN] = slot;
     jsonStr(s.c_str(), "titre", myLvTitre[myLvN], 31); if (!myLvTitre[myLvN][0]) snprintf(myLvTitre[myLvN], 31, "Niveau %d", n - i);
     jsonStr(s.c_str(), "pseudo", myLvPseudo[myLvN], 13);
+    jsonStr(s.c_str(), "code", myLvCode[myLvN], 7);
     myLvN++;
   }
 }
@@ -5728,7 +5777,8 @@ void drawMyLv() {
   }
   tft.setTextSize(1); tft.setTextColor(COL_STAR);
   if (!myLvN) { ctext(90, "Aucun niveau pour l'instant."); ctext(106, "Cree-en un sur la page Brique"); ctext(120, "et envoie-le sur la console !"); }
-  else if (myLvChoice < myLvN && myLvPseudo[myLvChoice][0]) ctextf(214, "par %s", myLvPseudo[myLvChoice]);
+  else if (twoP && myLvChoice < myLvN && !myLvCode[myLvChoice][0]) { tft.setTextColor(COL_MEAT); ctext(214, "Pas publie : publie-le sur Brique pour jouer a plusieurs"); }
+  else if (myLvChoice < myLvN && myLvPseudo[myLvChoice][0]) ctextf(214, myLvCode[myLvChoice][0] ? "par %s  -  code %s" : "par %s", myLvPseudo[myLvChoice], myLvCode[myLvChoice]);
   tft.setTextColor(tft.color565(120, 130, 150)); ctext(229, "P2/P1 = choisir   P3 = jouer");
 }
 void goMyLv() { myLvScan(); if (myLvChoice > myLvN) myLvChoice = 0; state = ST_MYLV; drawMyLv(); }
@@ -5736,11 +5786,44 @@ void myLvStep(bool eL, bool eR, bool eJ) {
   int mv = (eR ? 1 : 0) - (eL ? 1 : 0);
   if (mv) { myLvChoice = (myLvChoice + mv + myLvN + 1) % (myLvN + 1); drawMyLv(); }
   if (!eJ) return;
-  if (myLvChoice == myLvN) { homeChoice = 2; state = ST_HOME; drawHome(); return; }
+  if (myLvChoice == myLvN) { if (twoP) { state = ST_MODE; drawMode(); } else { homeChoice = 2; state = ST_HOME; drawHome(); } return; }
+  if (twoP && !myLvCode[myLvChoice][0]) return;                         // course : seulement un jeu publie (les autres le retrouvent par son code)
   String s = briqueRead(myLvSlot[myLvChoice]);
   if (!s.length() || briqueParse(s.c_str())) return;                    // fichier abime : on reste dans la liste
   memset(icUse, 0, sizeof icUse); icParse(s.c_str());
+  if (twoP) {                                                           // hote : depart pour tous, avec le code du jeu
+    raceCode = codeNum(myLvCode[myLvChoice]);
+    for (int k = 0; k < 6; k++) { espSend(M_START, BRIQUE_SENTINEL, 0, 0, raceCode); delay(8); }
+    beginRace(CUSTOM_IDX); return;
+  }
   startLevel(CUSTOM_IDX, true);
+}
+// invite : charge le jeu de Mes niveaux qui porte ce code (meme version que l'hote : un code = une version publiee)
+bool briqueLoadCode(uint32_t code) {
+  if (!fsOk || !code) return false;
+  char c[7]; codeTxt(code, c); char pat[16]; snprintf(pat, sizeof pat, "\"code\":\"%s\"", c);
+  for (int i = 0; i < MYLV_MAX; i++) {
+    String s = briqueRead(i); if (!s.length() || !strstr(s.c_str(), pat) || briqueParse(s.c_str())) continue;
+    memset(icUse, 0, sizeof icUse); icParse(s.c_str()); raceCode = code; return true;
+  }
+  return false;
+}
+void drawMissing(uint32_t code) {
+  char c[7]; codeTxt(code, c);
+  brickFill(0, 0, SCREEN_W, SCREEN_H);
+  tft.setTextColor(COL_MEAT); tft.setTextSize(3); ctext(30, "IL TE MANQUE");
+  ctext(62, "CE JEU !");
+  tft.setTextColor(COL_TXT); tft.setTextSize(2); ctext(110, "Sur la page Brique,");
+  ctext(132, "recupere le code :");
+  tft.setTextColor(COL_STAR); tft.setTextSize(4); ctext(162, c);
+  tft.setTextColor(tft.color565(120, 130, 150)); tft.setTextSize(1); ctext(222, "P3 = quitter la partie");
+}
+// resultats de course sur un jeu Brique : gardes en flash, remontes au classement par la page (commande RESULTATS)
+void briqueRace() {
+  if (curLevel != CUSTOM_IDX || !raceCode || !fsOk) return;
+  File f = LittleFS.open("/bres", "a"); if (!f) return;
+  if (f.size() < 3000) { char c[7]; codeTxt(raceCode, c); f.printf("%s %u %d %d\n", c, (unsigned)myFinT, raceResult == 1 ? 1 : 0, mpPlayers()); }   // ponytail: ~100 courses max entre deux connexions
+  f.close();
 }
 
 void briquePoll() {
@@ -5749,6 +5832,12 @@ void briquePoll() {
     char ch = Serial.read();
     if (ch != '\n') { if (n < (int)sizeof buf - 1) buf[n++] = ch; continue; }
     buf[n] = 0; bool trop = n >= (int)sizeof buf - 1; n = 0;
+    if (!strncmp(buf, "RESULTATS OK", 12)) { LittleFS.remove("/bres"); Serial.println("BRIQUE RESVIDE"); continue; }   // la page les a envoyes au classement
+    if (!strncmp(buf, "RESULTATS", 9)) {                                // courses jouees depuis la derniere connexion
+      int n = 0; File f = fsOk ? LittleFS.open("/bres", "r") : File();
+      while (f && f.available()) { String l = f.readStringUntil('\n'); l.trim(); if (l.length()) { Serial.printf("BRIQUE RES %s\n", l.c_str()); n++; } }
+      if (f) f.close(); Serial.printf("BRIQUE RESFIN %d\n", n); continue;
+    }
     if (!strncmp(buf, "LISTE", 5)) {                                    // ce que contient "Mes niveaux" (du plus recent au plus ancien)
       myLvScan(); for (int i = 0; i < myLvN; i++) Serial.printf("BRIQUE NIV %s|%s\n", myLvTitre[i], myLvPseudo[i]);
       Serial.printf("BRIQUE LISTE %d%s\n", myLvN, fsOk ? "" : " (flash indisponible)"); continue;
@@ -6042,6 +6131,7 @@ void loop() {
         if (vStartLvl == PONG_SENTINEL) startPong2P(false);
         else if (vStartLvl == TIMING_SENTINEL) startTiming2P(false, vStartX);
         else if (vStartLvl == DRIFT_SENTINEL) startDrift();
+        else if (vStartLvl == BRIQUE_SENTINEL) { if (briqueLoadCode(vStartT)) beginRace(CUSTOM_IDX); else drawMissing(vStartT); }   // jeu absent : on dit lequel recuperer
         else beginRace(vStartLvl);
       } else if (eJ) twoPQuit();                            // quitter le salon apres le depart de la liste
       delay(20);
@@ -6076,6 +6166,8 @@ void loop() {
           shopSel = 0; state = ST_SHOP; drawShop();
         } else if (md == 10) {               // Partage de classement (solo)
           lbStart();
+        } else if (md == 12) {               // Mes jeux (Brique) : l'hote choisit un jeu publie
+          goMyLv();
         } else if (md == 11) {               // Smash (solo, smash.ino)
           startSmash();
         } else if (twoP) {                          // Pong a deux : l'hote demarre pour les deux
@@ -6362,7 +6454,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
   updateTrail(dt);
 
   if (raceMode && vFin && raceResult == 0) {   // l'adversaire a atteint le drapeau en premier
-    raceResult = 2; state = ST_RACEEND; drawRaceEnd(); return;
+    raceResult = 2; briqueRace(); state = ST_RACEEND; drawRaceEnd(); return;
   }
   DBG(2);
   while (vCoinTail != vCoinHead) {                    // pieces prises par l'adversaire : retirees ici aussi
@@ -6396,14 +6488,14 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
     else if (jumpEdge) {                                       // capacites boutique : vol (2 appuis rapproches) / double saut
       if (flying) { flying = false; jumpBuf = 0; }
       else if (abilT[2] > 0 && flyTap > 0) { flying = true; vy = 0; jumpBuf = 0; }
-      else if (abilT[1] > 0 && !airJumped) { snd(SND_JUMP); vy = JUMP_V; airJumped = true; jumpBuf = 0; sqX = 0.7; sqY = 1.35; }
+      else if ((abilT[1] > 0 || (curLevel == CUSTOM_IDX && customDJ)) && !airJumped) { snd(SND_JUMP); vy = JUMP_V; airJumped = true; jumpBuf = 0; sqX = 0.7; sqY = 1.35; }
     }
   }
   if (jumpEdge) flyTap = 0.3f;
 
   int dir = (br ? 1 : 0) - (bLeft ? 1 : 0);
   if (dir != 0) playerFacingRight = (dir > 0);
-  float target = dir * (RUN + speedBoostLv * 12.0f) * (abilT[0] > 0 ? 1.35f : 1.0f) * (curLevel < 29 ? 0.6f : 1.0f);   // boutique : +12px/s par palier achete ; niveaux 1-29 : 60 % (retour)
+  float target = dir * (bqOn() ? RUN * bqVit : RUN + speedBoostLv * 12.0f) * (abilT[0] > 0 ? 1.35f : 1.0f) * (curLevel < 29 ? 0.6f : 1.0f);   // boutique : +12px/s par palier achete (pas en niveau perso : vitesse de la page) ; niveaux 1-29 : 60 % (retour)
   if (jumpLock > 0) jumpLock -= dt;
   else {
     bool onIce = (onGround || coyote > 0) && (tileAt((int)floor((px + 2) / TILE), (int)floor((py + PH + 1) / TILE)) == 'I' || tileAt((int)floor((px + PW - 2) / TILE), (int)floor((py + PH + 1) / TILE)) == 'I');
@@ -6412,7 +6504,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
     else if (vx > target) { vx -= ax; if (vx < target) vx = target; }
   }
 
-  float g = GRAVITY;
+  float g = GRAVITY * (bqOn() ? bqGrav : 1.0f);   // niveau perso : gravite choisie sur la page
   if (vy < 0 && !bj) g *= 1.7;
   else if (vy > 0)   g *= 1.12;
   vy += g * dt;
@@ -6626,7 +6718,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
       myFinT = millis() - raceStartMs;
       raceResult = vFin ? 2 : 1;          // si l'adversaire a deja fini -> perdu
       espSend(M_FIN, curLevel, 0, 0, myFinT);
-      state = ST_RACEEND; drawRaceEnd(); return;
+      briqueRace(); state = ST_RACEEND; drawRaceEnd(); return;
     }
     int got = 0; for (int i = 0; i < nStarPos; i++) if (starGot[i]) got++;
     finishLevel(got); return;
@@ -6929,9 +7021,14 @@ void drawGame() {
   gq = micros();
 #endif
   int cy = (int)camY + sTop;
+  if (bqOn() && bqTheme >= 0) {                                          // niveau perso : ciel du theme choisi, en degrade sur tout le niveau
+    const BqTheme &t = BQ_THEMES[bqTheme]; const int H = levH * TILE;
+    for (int y = 0; y < STRIP_H; y++) fb.drawFastHLine(0, y, SCREEN_W, bqMix(t.c0, t.c1, constrain(cy + y, 0, H), H));
+  } else {
   fb.fillRect(0, 0, SCREEN_W, STRIP_H, COL_LVLBG);
   if (curLevel < 10 || (curLevel / 10) % 2 == 0) drawMountainDecor();   // dizaines paires : montagnes
   else drawCastleDecor();                                                // dizaines impaires (11-20, 31-40...) : chateau fort
+  }
 
 #ifdef GAME_BENCH
   gT[0] += micros() - gq; gq = micros();
@@ -6949,6 +7046,10 @@ void drawGame() {
           fb.fillTriangle(x, y + TILE, x + TILE / 2, y, x + TILE, y + TILE, COL_SPK);
           fb.drawTriangle(x, y + TILE, x + TILE / 2, y, x + TILE, y + TILE, COL_MEATD);
         }
+      } else if (c == '#' && bqOn() && bqTheme >= 0) {   // niveau perso : sol du theme (comme l'apercu web)
+        const BqTheme &t = BQ_THEMES[bqTheme];
+        fb.fillRect(x, y, TILE, TILE, RGB565(t.sol[0], t.sol[1], t.sol[2]));
+        fb.fillRect(x, y, TILE, 3, RGB565(t.bord[0], t.bord[1], t.bord[2]));
       } else if (c == '#' || c == 'H') {   // H de loin : rendu identique a '#'
         int pi = platIdx[ty][tx]; if (pi > 7) pi = 0;     // cube du ton de sa plateforme
         fb.fillRect(x, y, TILE, TILE, toneF[pi]);
@@ -7183,7 +7284,8 @@ void drawGame() {
     int w = (int)(fw + 0.5f), h = (int)(fh + 0.5f);
     int bx = (int)(px + PW / 2) + lean, by = (int)(py + PH) - cy;
     int x0 = bx - w / 2, y0 = by - h;
-    skinBody(fb, skinSel, x0, y0, w, h, 3, bodyCol, bodyColD);
+    if (bqOn() && bqHero >= 0) { bodyCol = BQ_HEROS[bqHero].col; bodyColD = blendCol(bodyCol, 0x0000, 0.45f); }   // niveau perso : heros choisi sur la page
+    skinBody(fb, bqOn() && bqHero >= 0 ? 0 : skinSel, x0, y0, w, h, 3, bodyCol, bodyColD);
     int ey = y0 + h * 4 / 14, eh = max(2, h * 3 / 14);
     int ex1 = x0 + w * 3 / 12, ex2 = x0 + w * 7 / 12;
     if (pushVis) { ex1 += lean / 2; ex2 += lean / 2; }
@@ -7880,18 +7982,20 @@ void drawModeIcon(int i, int cx, int cy) {
       tft.fillCircle(cx + 12, cy + 12, 7, G); tft.drawCircle(cx + 12, cy + 12, 7, RGB565(190, 130, 20)); tft.drawFastVLine(cx + 12, cy + 8, 9, RGB565(190, 130, 20)); break;
     case 11: tft.fillRect(cx - 2, cy - 18, 4, 26, W); tft.fillRect(cx - 9, cy + 6, 18, 4, G); tft.fillRect(cx - 2, cy + 10, 4, 8, RGB565(150, 100, 60));   // smash : epee
       tft.fillRoundRect(cx + 6, cy - 6, 14, 18, 4, RGB565(60, 120, 230)); tft.drawRoundRect(cx + 6, cy - 6, 14, 18, 4, G); break;   // + bouclier
+    case 12: for (int r = 0; r < 3; r++) for (int c = 0; c < 3 - (r & 1); c++) tft.fillRect(cx - 18 + c * 13 + (r & 1) * 6, cy - 12 + r * 9, 11, 7, r == 1 ? G : RGB565(167, 139, 250));   // mes jeux : briques
+      break;
     default: tft.fillRoundRect(cx - 11, cy - 16, 22, 16, 4, G); tft.fillRect(cx - 2, cy, 4, 8, G); tft.fillRect(cx - 9, cy + 8, 18, 5, G);   // classement : coupe
       tft.drawCircle(cx - 13, cy - 10, 4, G); tft.drawCircle(cx + 13, cy - 10, 4, G); tft.fillCircle(cx, cy - 9, 3, RGB565(255, 245, 200));
   }
 }
-int modeCount() { return !twoP ? 12 : mpPlayers() > 2 ? 3 : 4; }
+int modeCount() { return !twoP ? 12 : mpPlayers() > 2 ? 4 : 5; }
 int modeAt(int slot) {                                     // multijoueur : Niveaux, Pong (a deux seulement), Timing, Drift
-  static const int8_t M2[4] = { 0, 1, 7, 8 }, M3[3] = { 0, 7, 8 };
+  static const int8_t M2[5] = { 0, 1, 7, 8, 12 }, M3[4] = { 0, 7, 8, 12 };   // 12 = Mes jeux (Brique)
   return !twoP ? slot : mpPlayers() > 2 ? M3[slot] : M2[slot];
 }
 void drawModeTile(int slot, bool sel) {
   const int i = modeAt(slot);
-  static const char *const L[12] = { "Niveaux", "Pong", "Briques", "Invaders", "Echo", "Samourai", "Alto", "Timing", "Drift", "Boutique", "Scores", "Smash" };
+  static const char *const L[13] = { "Niveaux", "Pong", "Briques", "Invaders", "Echo", "Samourai", "Alto", "Timing", "Drift", "Boutique", "Scores", "Smash", "Mes jeux" };
   int x = 8 + (slot % 4) * 77, y = 44 + (slot / 4) * 61, w = 73, h = 57;
   tft.fillRoundRect(x, y, w, h, 8, sel ? RGB565(70, 44, 52) : RGB565(26, 22, 34));
   tft.drawRoundRect(x, y, w, h, 8, sel ? COL_MEAT : RGB565(70, 70, 90));

@@ -117,7 +117,7 @@ struct __attribute__((packed)) LbMsg { uint8_t type; uint8_t n; LbEnt e[LB_MAX];
 
 
 #define SAVE_FORMAT 1       // format de la sauvegarde NVS : ne change que si la structure des donnees sauvegardees devient incompatible
-#define FW_VERSION "v55.2"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
+#define FW_VERSION "v55.3"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
 const char* rstReason = "?";  // raison du dernier reset (affichee a l'ecran titre)
 RTC_NOINIT_ATTR uint32_t dbgStage;  // dernier marqueur atteint (survit au reset)
 uint32_t lastStage = 0;
@@ -823,6 +823,7 @@ void loadRows(const char* const* rows, int h) {
     for (int c = 0; c < COLS; c++) {
       char ch = (c < rl) ? row[c] : '.';
       if (ch == '*') { addStar(c, r); ch = '.'; }
+      else if (ch == 'H') { addTrapSpike(c, r, true); ch = '.'; }   // BRIQUE : pic cache, il surgit quand on arrive tout pres
       else if (ch == 'W') { addSaw(1, c * TILE + 8, (r - 3) * TILE, (r + 1) * TILE, 50, 9); ch = '.'; }  // tronconneuse verticale (marqueur, pas une tuile solide)
       grid[r][c] = ch;
     }
@@ -3295,6 +3296,9 @@ void startBqCote() {                                 // BRIQUE : le jeu de cote 
     if (ch == '#') o = 'S';
     else if (ch == 'T') { o = 'S'; if (nBqT < 16) bqT[nBqT++] = { c, r, false }; }
     else if (ch == '^') o = 'c';
+    else if (ch == 'H') {                            // pic cache : surgit du sol quand on approche (piege des mondes) ; ailleurs qu'au sol = pic fixe
+      if (r == bqCH - 2 && nDTraps < 12) { o = 'y'; dTraps[nDTraps].tx = c; dTraps[nDTraps].t = 0; dTraps[nDTraps].st = 0; nDTraps++; } else o = 'c';
+    }
     else if (ch == '*' || ch == 'G') o = ch;
     else if (ch == 'E') wguy(c, r);
     else if (ch == 'S') { dChkX = c * TILE + 2; dChkY = (r + 1) * TILE - (int)PH; }
@@ -5820,7 +5824,7 @@ const char* bqCoteParse(const char* s) {
     p++; int c = 0;
     for (; *p && *p != '"'; p++, c++) {
       if (c >= 96) return "niveau trop large";
-      if (!strchr(".#SG*^ET", *p)) return "brique inconnue";
+      if (!strchr(".#SG*^ETH", *p)) return "brique inconnue";
       nS += *p == 'S'; nG += *p == 'G'; tmp[h][c] = *p;
     }
     if (*p != '"') return "ligne non fermee";
@@ -5856,7 +5860,7 @@ const char* briqueParse(const char* s) {
     int c = 0;
     for (; *p && *p != '"'; p++, c++) {
       if (c >= COLS) return "ligne trop longue";
-      if (!strchr(".#SG*R^WCIE", *p)) return "brique inconnue";
+      if (!strchr(".#SG*R^WCIEH", *p)) return "brique inconnue";
       nS += *p == 'S'; nG += *p == 'G';
       tmp[h][c] = *p;
     }
@@ -5876,10 +5880,12 @@ const char* briqueParse(const char* s) {
 }
 
 // ---- BRIQUE "iso" : vue isometrique (cases en losange, avec des hauteurs). G/D = tourner, P3 = sauter d'une case ----
-// rows : '.' trou, '#' sol, 'S' depart, 'G' arrivee, '*' etoile, '^' piques, 'P' piques qui sortent 1 s sur 2 ; haut : un chiffre 0-4 par case
+// rows : '.' trou, '#' sol, 'S' depart, 'G' arrivee, '*' etoile, '^' piques, 'P' piques qui sortent 1 s sur 2,
+// 'H' pic cache (sort 1,2 s quand on arrive a cote, puis rentre jusqu'a ce qu'on s'eloigne) ; haut : un chiffre 0-4 par case
 // On monte d'une marche a la fois, on descend de partout. Trou ou piques = retour au depart.
 char isoR[ISO_N][ISO_N + 1], isoC[ISO_N][ISO_N]; uint8_t isoHt[ISO_N][ISO_N]; int isoW = 0, isoH = 0, isoMH = 0, isoNS = 0;
 int isoX, isoY, isoSX, isoSY, isoFX, isoFY, isoDir, isoDir0, isoStars;   // isoF = case de depart du saut ; isoDir : 0 haut-droite, 1 bas-droite, 2 bas-gauche, 3 haut-gauche
+uint32_t isoHUp[ISO_N][ISO_N];                     // pic cache : millis() de sa sortie, 0 = arme
 float isoT = 1, isoMort = 0, isoHold = 0, isoInfoT = 0; bool isoChute = false; const char* isoInfo = ""; uint32_t isoLast = 0;
 const int8_t ISO_DX[4] = { 0, 1, 0, -1 }, ISO_DY[4] = { -1, 0, 1, 0 };
 const char* bqIsoParse(const char* s) {
@@ -5897,7 +5903,7 @@ const char* bqIsoParse(const char* s) {
     p++; int c = 0;
     for (; *p && *p != '"'; p++, c++) {
       if (c >= ISO_N) return "niveau trop grand (12 x 12 au plus)";
-      if (!strchr(".#SG*^P", *p)) return "brique inconnue";
+      if (!strchr(".#SG*^PH", *p)) return "brique inconnue";
       nS += *p == 'S'; nG += *p == 'G'; tmp[h][c] = *p;
     }
     if (*p != '"') return "ligne non fermee";
@@ -5921,7 +5927,7 @@ const char* bqIsoParse(const char* s) {
   bqIso = true; customH = h;                        // customH : le resultat (BRIQUE FIN) repart vers la page
   return nullptr;
 }
-void isoRespawn() { isoX = isoFX = isoSX; isoY = isoFY = isoSY; isoT = 1; isoMort = 0; isoDir = isoDir0; }
+void isoRespawn() { isoX = isoFX = isoSX; isoY = isoFY = isoSY; isoT = 1; isoMort = 0; isoDir = isoDir0; memset(isoHUp, 0, sizeof isoHUp); }
 void startBqIso() {
   curLevel = CUSTOM_IDX; deaths = 0; bqTimeout = false; isoStars = 0; isoNS = 0; isoMH = 0; isoHold = 0; isoInfoT = 0;
   for (int r = 0; r < isoH; r++) for (int c = 0; c < isoW; c++) {
@@ -5935,7 +5941,13 @@ void startBqIso() {
   isoRespawn(); levelStartMs = isoLast = millis();
   state = ST_ISO;
 }
-bool isoPiq(int x, int y) { char ch = isoC[y][x]; return ch == '^' || (ch == 'P' && (millis() / 1000) & 1); }
+bool isoPiq(int x, int y) { char ch = isoC[y][x]; return ch == '^' || (ch == 'P' && (millis() / 1000) & 1) || (ch == 'H' && isoHUp[y][x] && millis() - isoHUp[y][x] < 1200); }
+void isoCaches() {                                   // le heros vient d'atterrir : les pics caches d'a cote sortent, les autres se rearment
+  for (int r = 0; r < isoH; r++) for (int c = 0; c < isoW; c++) if (isoC[r][c] == 'H') {
+    if (abs(r - isoY) + abs(c - isoX) != 1) isoHUp[r][c] = 0;
+    else if (!isoHUp[r][c]) isoHUp[r][c] = millis() | 1;
+  }
+}
 void isoDie(bool chute) { snd(SND_DIE); deaths++; isoMort = 0.8f; isoChute = chute; }
 uint16_t isoCol(long rgb, int pct) { return RGB565(min(255L, (rgb >> 16) * pct / 100), min(255L, ((rgb >> 8) & 255) * pct / 100), min(255L, (rgb & 255) * pct / 100)); }
 void isoDraw() {
@@ -5966,9 +5978,9 @@ void isoDraw() {
         const int cy = y + hh;
         if (ch == '*') { int b = cy - 7 + (int)(sinf(millis() / 200.0f + c) * 2); fb.fillTriangle(x - 4, b + 2, x + 4, b + 2, x, b - 5, COL_STAR); fb.fillTriangle(x - 4, b - 2, x + 4, b - 2, x, b + 5, COL_STAR); }
         else if (ch == 'G') { fb.drawFastVLine(x, cy - 20, 20, COL_TXT); fb.fillTriangle(x + 1, cy - 20, x + 1, cy - 10, x + 11, cy - 15, COL_GOAL); }
-        else if (ch == '^' || ch == 'P') {
+        else if (ch == '^' || ch == 'P' || ch == 'H') {
           if (isoPiq(c, r)) for (int k = -1; k <= 1; k++) fb.fillTriangle(x + k * 5 - 2, cy + 2, x + k * 5 + 2, cy + 2, x + k * 5, cy - 6, RGB565(220, 220, 230));
-          else for (int k = -1; k <= 1; k++) fb.fillRect(x + k * 5 - 1, cy, 3, 2, RGB565(40, 40, 50));
+          else if (ch == 'P') for (int k = -1; k <= 1; k++) fb.fillRect(x + k * 5 - 1, cy, 3, 2, RGB565(40, 40, 50));   // 'H' rentre : invisible
         }
         if (idle && c == tx && r == ty) { fb.drawLine(x - hw, y + hh, x, y, COL_TXT); fb.drawLine(x, y, x + hw, y + hh, COL_TXT); fb.drawLine(x + hw, y + hh, x, y + 2 * hh, COL_TXT); fb.drawLine(x, y + 2 * hh, x - hw, y + hh, COL_TXT); }   // case visee
       }
@@ -6025,6 +6037,7 @@ bool isoStep(bool bj, bool eL, bool eR, bool eJ) {
     isoT += dt / 0.22f;
     if (isoT >= 1) {                                 // atterrissage
       isoT = 1; char &ch = isoC[isoY][isoX];
+      isoCaches();
       if (ch == '.') isoDie(true);
       else if (isoPiq(isoX, isoY)) isoDie(false);
       else if (ch == '*') { ch = '#'; isoStars++; snd(SND_STAR); }

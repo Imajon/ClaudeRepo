@@ -42,17 +42,17 @@ function nivValide(n) {
       && n.rows.every(r => typeof r === 'string' && r.length <= W && ok.test(r)) && /[123E]/.test(n.rows.join(''));
   }
   if (jeu === 'cote') {                                 // meme regles que bqCoteParse() : 15 a 30 lignes de 20 a 96 cases
-    if (!Array.isArray(n.rows) || n.rows.length < 15 || n.rows.length > 30 || !n.rows.every(r => typeof r === 'string' && /^[.#SG*^ET]{0,96}$/.test(r))) return false;
+    if (!Array.isArray(n.rows) || n.rows.length < 15 || n.rows.length > 30 || !n.rows.every(r => typeof r === 'string' && /^[.#SG*^ETH]{0,96}$/.test(r))) return false;
     const t = n.rows.join(''); return Math.max(...n.rows.map(r => r.length)) >= 20 && t.split('S').length === 2 && t.split('G').length === 2;
   }
   if (jeu === 'iso') {                                  // meme regles que bqIsoParse() : 3 a 12 lignes de 3 a 12 cases, hauteurs 0-4 (facultatives)
     const h = n.params.haut;
-    if (!Array.isArray(n.rows) || n.rows.length < 3 || n.rows.length > 12 || !n.rows.every(r => typeof r === 'string' && /^[.#SG*^P]{0,12}$/.test(r))) return false;
+    if (!Array.isArray(n.rows) || n.rows.length < 3 || n.rows.length > 12 || !n.rows.every(r => typeof r === 'string' && /^[.#SG*^PH]{0,12}$/.test(r))) return false;
     if (h !== undefined && !(Array.isArray(h) && h.length <= 12 && h.every(l => typeof l === 'string' && /^[0-4]{0,12}$/.test(l)))) return false;
     const t = n.rows.join(''); return Math.max(...n.rows.map(r => r.length)) >= 3 && t.split('S').length === 2 && t.split('G').length === 2;
   }
   if (!n || !Array.isArray(n.rows) || n.rows.length < 3 || n.rows.length > 80) return false;
-  if (!n.rows.every(r => typeof r === 'string' && /^[.#SG*R^WCIE]{0,20}$/.test(r))) return false;
+  if (!n.rows.every(r => typeof r === 'string' && /^[.#SG*R^WCIEH]{0,20}$/.test(r))) return false;
   const tout = n.rows.join('');
   return tout.split('S').length === 2 && tout.split('G').length === 2;
 }
@@ -186,9 +186,9 @@ On te donne les reglages actuels et la demande de l'enfant. Reponds UNIQUEMENT a
 {"jeu":"plateforme|cote|briques|invaders|iso" (ne change que si l'enfant demande un autre jeu),
  "ecransL":1-4,"ecransH":1-2 (cote : largeur et hauteur en ecrans ; un seul ecran = 1 et 1),"plafond":bool (cote : un plafond au-dessus du couloir),
  "trous":0-3 (cote : trous caches dans le sol, ils s'ouvrent au dernier moment),"plateformes":bool (cote : plateformes en l'air ; sinon sol plat),
- Pour cote, comptent aussi : difficulte, vitesse, etoiles, ennemis, briques.pic, vies, message.
+ Pour cote, comptent aussi : difficulte, vitesse, etoiles, ennemis, briques.pic, briques.cache, vies, message.
  "taille":6-12 (iso : nombre de cases de cote du plateau),"relief":"plat|collines|montagnes" (iso : hauteur des cases),
- Pour iso, comptent aussi : trous (0-3, trous dans le plateau), difficulte, etoiles, briques.pic (pics ; difficile = des pics qui sortent),
+ Pour iso, comptent aussi : trous (0-3, trous dans le plateau), difficulte, etoiles, briques.pic (pics ; difficile = des pics qui sortent), briques.cache,
  vies, chrono, objectif, couleurs ciel et sol, message.
  "motif":"pleine|pyramide|damier|cadre|hasard" (briques et invaders : dessin des briques ou de la formation d'envahisseurs),
  "acier":bool (briques : briques d'acier incassables), "bonus":bool (briques : capsules bonus), "vagues":1-5 (invaders),
@@ -198,7 +198,8 @@ On te donne les reglages actuels et la demande de l'enfant. Reponds UNIQUEMENT a
    escalier = marches qui montent en lacets, iles = etages d'ilots a traverser en sautant, mixte = un peu de tout),
  "theme":"foret|lave|glace|espace|bonbon","hero":"cube|ninja|robot|chat","hauteur":15-75 (plateforme : 15 = un ecran de haut),"difficulte":1-3,
  "gravite":0.65-1.3 (1 = normale),"vitesse":0.8-1.2 (1 = normale),"etoiles":0-8,
- "briques":{"pic":bool,"scie":bool,"ressort":bool,"glace":bool,"fragile":bool},"doubleSaut":bool (un 2e saut en l'air),
+ "briques":{"pic":bool,"scie":bool,"ressort":bool,"glace":bool,"fragile":bool,"cache":bool} (cache = pics caches qui surgissent au dernier moment
+   quand on arrive : plateforme, cote et iso ; « un pic qui apparait au dernier moment » = cache, pas pic),"doubleSaut":bool (un 2e saut en l'air),
  "ennemis":0-6 (monstres qui patrouillent sur les plateformes),
  "objectif":"arriver|tout" (tout = ramasser tous les objets avant que l'arrivee marche), "chrono":0-180 (secondes pour finir, 0 = sans),
  "vies":0-9 (0 = on recommence a chaque chute), "message":"phrase de victoire courte, seulement si l'enfant en donne une",
@@ -250,9 +251,9 @@ function iaReglages(r, base) {                          // ne garde que des vale
     message: typeof r.message === 'string' && r.message.trim() ? filtreTexte(r.message) : filtreTexte(base.message || ''),
     couleurs: { ...couleursValides(base.couleurs), ...couleursValides(r.couleurs) },
   };
-  for (const k of ['pic', 'scie', 'ressort', 'glace', 'fragile']) p.briques[k] = typeof r.briques?.[k] === 'boolean' ? r.briques[k] : !!base.briques?.[k];
+  for (const k of ['pic', 'scie', 'ressort', 'glace', 'fragile', 'cache']) p.briques[k] = typeof r.briques?.[k] === 'boolean' ? r.briques[k] : !!base.briques?.[k];
   // "compris" = ce qui a VRAIMENT change (l'IA peut pretendre avoir compris une chose impossible)
-  const vu = [], B = base.briques || {}, NOMS = { pic: 'pics', scie: 'scies', ressort: 'ressorts', glace: 'glace', fragile: 'blocs fragiles' };
+  const vu = [], B = base.briques || {}, NOMS = { pic: 'pics', scie: 'scies', ressort: 'ressorts', glace: 'glace', fragile: 'blocs fragiles', cache: 'pics cachés' };
   if (p.jeu !== (base.jeu || 'plateforme')) vu.push({ plateforme: 'jeu de plateforme', cote: 'jeu de côté', briques: 'casse-briques', invaders: 'invaders', iso: 'jeu isométrique' }[p.jeu]);
   if (p.jeu === 'iso') {
     if (p.taille !== (base.taille || 8)) vu.push(p.taille > (base.taille || 8) ? 'plus grand' : 'plus petit');
@@ -338,9 +339,9 @@ const serveur = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
   }
-  const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.jpg$/);   // photos du site (nom simple : pas de chemin)
-  if (img && fs.existsSync(path.join(__dirname, 'images', img[1] + '.jpg'))) {
-    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'images', img[1] + '.jpg')).pipe(res);
+  const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.(jpg|png)$/);   // photos du site (nom simple : pas de chemin) ; png = image avec transparence
+  if (img && fs.existsSync(path.join(__dirname, 'images', img[1] + '.' + img[2]))) {
+    res.writeHead(200, { 'Content-Type': img[2] === 'png' ? 'image/png' : 'image/jpeg', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'images', img[1] + '.' + img[2])).pipe(res);
   }
   const fw = req.method === 'GET' && url.match(/^\/firmware\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);
   if (fw) {                                             // mise a jour des consoles (esp-web-tools) : fichiers deposes par publier-firmware-brique.bat

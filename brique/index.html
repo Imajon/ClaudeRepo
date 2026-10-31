@@ -151,8 +151,12 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .cat{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px}
 .cat div{background:var(--panel2);border-radius:8px;padding:6px 8px}
 .cat code{color:var(--acc);font-weight:700}
-.console{display:flex;flex-direction:column;align-items:center}
-.coque{background:#c9302c;border-radius:28px;padding:22px 28px 18px;box-shadow:0 10px 0 #8d1f1c;max-width:100%}
+.console{display:flex;flex-direction:column;align-items:center;min-width:0}   /* min-width : la photo (873 px) ne doit pas élargir la colonne, elle est réduite par zoom */
+.coque{position:relative;width:873px;flex:none}               /* la vraie console : l'écran (320x240, comme la console) est posé sur la photo, à l'échelle 1 */
+.coque>img{display:block;width:100%;height:auto}
+.coque .apercu{position:absolute;left:265px;top:112px;width:320px;height:240px;max-width:none;max-height:none;border-radius:0;scrollbar-width:none}   /* niveau haut ou large : il défile dans l écran, sans barre (elle rognerait le 320 px) */
+.coque canvas{border:0;border-radius:0}
+@media (min-width:1101px) and (max-width:1650px){#atelier{grid-template-columns:340px minmax(0,1fr)}#atelier>section:last-of-type{grid-column:1/-1}}   /* la console d'abord : l'historique passe dessous */
 canvas{display:block;width:320px;max-width:100%;image-rendering:pixelated;background:#000;border-radius:6px;border:6px solid #222}
 .apercu{width:332px;max-width:100%;max-height:360px;overflow:auto;border-radius:6px}
 .aide{color:var(--mute);font-size:13px;margin:10px 0}
@@ -274,7 +278,6 @@ body{overflow-x:clip}                                           /* la bande 100v
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
-    <p class="sh-sur">Console Brique · kit à souder + IA</p>
     <h2 class="sh-titre glitch" data-text="Le jeu que tu inventes.&#10;Dans ta main.">Le jeu que tu inventes.<br>Dans ta main.</h2>
   </div>
   <figure class="sh-photo">
@@ -365,7 +368,6 @@ body{overflow-x:clip}                                           /* la bande 100v
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
 <main id="boutique" class="shop hide">
   <div class="sh-hero">
-    <p class="sh-sur">Console Brique · kit à souder + IA</p>
     <h2 class="sh-titre">Un kit simple, à deux,<br>ou un support pédagogique clé en main.</h2>
   </div>
 
@@ -868,10 +870,10 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div id="catalogue" class="hide">
       <div data-jeu="cote" class="cat" style="margin-bottom:10px">
         <div>largeur : 1 à 4 écrans</div><div>hauteur : 1 ou 2 écrans</div><div>plafond (ou pas)</div><div>trous cachés</div>
-        <div>plateformes (ou pas)</div><div>pics, ennemis, étoiles</div><div>une porte au bout</div><div>difficulté</div>
+        <div>plateformes (ou pas)</div><div>pics, pics cachés, ennemis, étoiles</div><div>une porte au bout</div><div>difficulté</div>
       </div>
       <div data-jeu="iso" class="cat" style="margin-bottom:10px">
-        <div>taille : 6 à 12 cases</div><div>relief : plat, collines, montagnes</div><div>trous</div><div>pics (et pics qui sortent)</div>
+        <div>taille : 6 à 12 cases</div><div>relief : plat, collines, montagnes</div><div>trous</div><div>pics, pics qui sortent, pics cachés</div>
         <div>étoiles</div><div>un drapeau au fond</div><div>difficulté</div><div>vies, chrono</div>
       </div>
       <div data-jeu="briques invaders" class="cat" style="margin-bottom:10px">
@@ -882,7 +884,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <h3>Les briques que l'IA sait utiliser</h3>
       <div class="cat">
         <div><code>#</code> sol / mur</div><div><code>R</code> ressort</div>
-        <div><code>^</code> pic</div><div><code>W</code> scie</div>
+        <div><code>^</code> pic</div><div><code>H</code> pic caché</div><div><code>W</code> scie</div>
         <div><code>C</code> bloc fragile</div><div><code>I</code> glace</div>
         <div><code>*</code> étoile</div><div><code>G</code> arrivée</div>
       </div>
@@ -922,6 +924,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section class="console">
     <h2>Mon niveau</h2>
     <div class="coque">
+      <img src="images/console-face.png" alt="" width="1105" height="763">
       <div id="apercu" class="apercu"><canvas id="ecran" width="320" height="240"></canvas></div>
     </div>
     <p class="aide">Pour jouer, envoie ton niveau sur la console : c'est elle qui fait tourner le jeu.</p>
@@ -968,7 +971,7 @@ const CHOIX = {
   theme:  [['foret','🌲 Forêt'],['lave','🌋 Volcan'],['glace','❄️ Banquise'],['espace','🚀 Espace'],['bonbon','🍭 Bonbons']],
   hero:   [['cube','🟥 Cube'],['ninja','🥷 Ninja'],['robot','🤖 Robot'],['chat','🐱 Chat']],
   forme:  [['mixte','🎲 Un peu de tout'],['tour','🗼 Tour en zigzag'],['puits','🕳 Puits (sauts muraux)'],['escalier','🪜 Escaliers'],['iles','🏝 Îles à traverser']],
-  danger: [['pic','🔺 Pics'],['scie','⚙️ Scies'],['fragile','🧱 Blocs qui tombent'],['aucun','😌 Rien']],
+  danger: [['pic','🔺 Pics'],['cache','🫣 Pics cachés'],['scie','⚙️ Scies'],['fragile','🧱 Blocs qui tombent'],['aucun','😌 Rien']],
   motif:  [['pleine','🧱 Plein'],['pyramide','🔺 Pyramide'],['damier','🏁 Damier'],['cadre','🖼 Cadre'],['hasard','🎲 Au hasard']],
   acier:  [['non','Non'],['oui','🔩 Oui']],
   vagues: [['1','1 vague'],['3','3 vagues'],['5','5 vagues']],
@@ -1028,7 +1031,7 @@ mGuide.onclick = () => setMode('guide'); mLibre.onclick = () => setMode('libre')
 // ---------- "IA" simulée : texte -> paramètres ----------
 // ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
 const DEFAUT = { theme:'foret', hero:'cube', hauteur:30, difficulte:2, gravite:1, vitesse:1,
-                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3, doubleSaut:false, ennemis:0, couleurs:{},
+                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false, cache:false }, etoiles:3, doubleSaut:false, ennemis:0, couleurs:{},
                  objectif:'arriver', chrono:0, vies:0, message:'',
                  forme:'tour', jeu:'plateforme', motif:'pleine', acier:false, bonus:true, vagues:3,
                  ecransL:2, ecransH:1, plafond:true, trous:1, plateformes:false, taille:8, relief:'collines' };   // isométrique : taille (cases de côté), relief   // jeu de côté : largeur / hauteur en écrans   // jeu briques / invaders : motif, acier, bonus, vagues
@@ -1071,7 +1074,10 @@ function comprendre(texte, base) {
   for (const k in HERO_MOTS) if (a(HERO_MOTS[k])) { p.hero = k; vu.push('héros ' + k); break; }
   const BRIQ = { pic:'pic|piege|epine|pique', scie:'scie|lame|tronconneuse', ressort:'ressort|rebond|trampoline',
                  glace:'glace|glisse|verglas', fragile:'fragile|casse|effondre|tombe' };
+  const cacheMot = !estMini(p) && a(/au dernier moment|surgi|sort(ent)? (du sol|d'un coup)|apparai|pics? caches?|pieges? caches?/);
+  if (cacheMot) { if (!p.briques.cache) vu.push('pics cachés'); p.briques.cache = true; }   // « un pic qui apparaît au dernier moment » : pas un pic de plus, un pic caché
   for (const k in estMini(p) ? {} : BRIQ) {             // « casse-briques » n'est pas un bloc fragile
+    if (k === 'pic' && cacheMot) continue;
     if (non(`(${BRIQ[k]})`)) { if (p.briques[k]) vu.push('sans ' + k); p.briques[k] = false; }
     else if (a(new RegExp(BRIQ[k]))) { p.briques[k] = true; vu.push(k); }
   }
@@ -1150,11 +1156,12 @@ function genererIso(p) {
   const libres = []; for (let i = 0; i < N * N; i++) if (!chemin.includes(i)) libres.push(i);
   const tirer = () => rc(libres.splice(ri(0, libres.length - 1), 1)[0]), k = N * N / 64;   // pièges proportionnels à la surface (8 x 8 = 1)
   for (let i = Math.round((p.trous ?? 1) * 3 * k); i > 0 && libres.length; i--) { const [y, x] = tirer(); g[y][x] = '.'; }
+  const sur = chemin.slice(2, -2), surChemin = (n, t) => { for (let i = n; i > 0 && sur.length; i--) { const [y, x] = rc(sur.splice(ri(0, sur.length - 1), 1)[0]); g[y][x] = t; } };
   if (p.briques?.pic) {
     for (let i = Math.round(p.difficulte * 2 * k); i > 0 && libres.length; i--) { const [y, x] = tirer(); g[y][x] = '^'; }
-    const sur = chemin.slice(2, -2);                               // difficile : des pics qui sortent, sur le chemin (on passe entre deux)
-    for (let i = p.difficulte - 1; i > 0 && sur.length; i--) { const [y, x] = rc(sur.splice(ri(0, sur.length - 1), 1)[0]); g[y][x] = 'P'; }
+    surChemin(p.difficulte - 1, 'P');                              // difficile : des pics qui sortent, sur le chemin (on passe entre deux)
   }
+  if (p.briques?.cache) surChemin(p.difficulte, 'H');              // pics cachés : ils sortent quand on arrive à côté, on attend qu'ils rentrent
   g[N - 1][N - 1] = 'S'; g[0][0] = 'G';
   const vu = new Set([id(N - 1, N - 1)]), file = [[N - 1, N - 1]];   // étoiles : seulement sur des cases qu'on peut atteindre
   while (file.length) {
@@ -1198,6 +1205,7 @@ function genererCote(p) {
     }
   }
   if (p.briques?.pic) for (let i = 0; i < p.difficulte + (W / 20) - 1; i++) pose('^', pied);
+  if (p.briques?.cache) for (let i = 0; i < p.difficulte + (W / 20) - 1; i++) pose('H', pied);   // pic caché : sort du sol quand on arrive
   for (let i = 0; i < (p.ennemis || 0); i++) pose('E', pied);
   for (let i = 0, e = 0; i < p.etoiles && e < 60; e++) {
     const s = surf.length && R() < .6 ? surf[ri(0, surf.length - 1)] : null, x = s ? s.x + ri(0, 2) : ri(5, W - 6), y = s ? s.y - 1 : pied - 2;
@@ -1299,6 +1307,7 @@ function generer(p) {
   g[top.y - 1][(top.x0 + top.x1) >> 1] = 'G';
   plats.filter(pl => pl !== top).forEach(pl => {
     if (p.briques.pic && pl.x1 - pl.x0 >= 2 && R() < .3 + .2 * p.difficulte) { const x = R() < .5 ? pl.x0 : pl.x1; if (g[pl.y - 1][x] === '.') g[pl.y - 1][x] = '^'; }
+    if (p.briques.cache && pl.x1 - pl.x0 >= 2 && R() < .3 + .2 * p.difficulte) { const x = (pl.x0 + pl.x1) >> 1; if (g[pl.y - 1][x] === '.') g[pl.y - 1][x] = 'H'; }   // pic caché : surgit quand on passe
     if (p.briques.scie && R() < .15 + .1 * p.difficulte) {
       const sx = pl.x1 + 2 < COLS ? pl.x1 + 2 : pl.x0 - 2;
       if (g[pl.y - 1][sx] === '.') g[pl.y - 1][sx] = 'W';
@@ -1341,6 +1350,11 @@ function charger(niv) {
   requestAnimationFrame(() => { apercu.scrollTop = apercu.scrollHeight; apercu.scrollLeft = 0; });   // on voit le bas, la ou on commence
 }
 
+function ajusterConsole() {                             // console (873 px) trop large pour la colonne : on la réduit, l'écran garde ses proportions
+  const s = document.querySelector('section.console'), cs = getComputedStyle(s), w = s.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if (w > 0) document.querySelector('.coque').style.zoom = Math.min(1, w / 873);
+}
+addEventListener('resize', ajusterConsole);
 function dessiner() {
   const j = jeu;
   if (!j) {
@@ -1362,7 +1376,8 @@ function dessiner() {
   const y0 = 0, y1 = j.rows.length - 1;
   for (let y = y0; y <= y1; y++) for (let x = 0; x < j.rows[y].length; x++) {
     const c = j.rows[y][x], X = x * TILE, Y = y * TILE - cam;
-    if (c === 'T') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y, TILE, TILE); ctx.strokeStyle = '#ffd400'; ctx.setLineDash([3, 3]); ctx.strokeRect(X + 1, Y + 1, TILE - 2, TILE - 2); ctx.setLineDash([]); }   // trou caché : visible ici seulement
+    if (c === 'H') { ctx.strokeStyle = '#e0a040'; ctx.setLineDash([2, 2]); ctx.beginPath(); ctx.moveTo(X + 1, Y + 15); ctx.lineTo(X + 8, Y + 5); ctx.lineTo(X + 15, Y + 15); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]); }   // pic caché : visible ici seulement
+    else if (c === 'T') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y, TILE, TILE); ctx.strokeStyle = '#ffd400'; ctx.setLineDash([3, 3]); ctx.strokeRect(X + 1, Y + 1, TILE - 2, TILE - 2); ctx.setLineDash([]); }   // trou caché : visible ici seulement
     else if (c === '#') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y, TILE, TILE); ctx.fillStyle = th.bord; ctx.fillRect(X, Y, TILE, 3); }
     else if (c === 'I') { ctx.fillStyle = th.glace; ctx.fillRect(X, Y, TILE, TILE); ctx.fillStyle = '#fff'; ctx.fillRect(X + 2, Y + 3, 6, 2); }
     else if (c === 'R') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y + 8, TILE, 8); ctx.fillStyle = '#ffd400'; ctx.fillRect(X + 1, Y + 2, 14, 5); ctx.fillStyle = '#888'; ctx.fillRect(X + 4, Y + 7, 8, 2); }
@@ -1421,6 +1436,7 @@ function dessinerIso(niv) {
     poly(teinte(85 + h * 10), [x - hw, y + hh], [x, y], [x + hw, y + hh], [x, y + 2 * hh]);
     if (ch === '*') etoile(x, cy - 7);
     else if (ch === 'G') { ctx.fillStyle = '#eee'; ctx.fillRect(x, cy - 20, 1, 20); poly('#4ade80', [x + 1, cy - 20], [x + 1, cy - 10], [x + 11, cy - 15]); }
+    else if (ch === 'H') { ctx.strokeStyle = '#e0a040'; ctx.setLineDash([2, 2]); for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(x + k * 5 - 2, cy + 2); ctx.lineTo(x + k * 5, cy - 6); ctx.lineTo(x + k * 5 + 2, cy + 2); ctx.stroke(); } ctx.setLineDash([]); }   // pic caché : en pointillés
     else if (ch === '^' || ch === 'P') for (let k = -1; k <= 1; k++) poly(ch === '^' ? '#dcdce6' : '#e0a040', [x + k * 5 - 2, cy + 2], [x + k * 5 + 2, cy + 2], [x + k * 5, cy - 6]);   // orange : pics qui sortent
     else if (ch === 'S') { ctx.fillStyle = '#ff4678'; ctx.beginPath(); ctx.roundRect(x - 5, cy - 14, 10, 13, 3); ctx.fill(); }
   }
@@ -1474,7 +1490,7 @@ go.onclick = async () => {
   const lab = k => CHOIX[k].find(c => c[0] === choix[k])[1];
   if (mode === 'guide' && genre === 'plateforme') {
     base.theme = choix.theme; base.hero = choix.hero; base.forme = choix.forme;
-    for (const k of ['pic', 'scie', 'fragile']) base.briques[k] = choix.danger === k;
+    for (const k of ['pic', 'scie', 'fragile', 'cache']) base.briques[k] = choix.danger === k;
     base.hauteur = 15 * +choix.ecrans;
     avant = [lab('theme'), lab('hero'), lab('forme'), lab('danger'), lab('ecrans') + ' de haut'];
   } else if (mode === 'guide' && genre === 'cote') {
@@ -1837,7 +1853,7 @@ const depuis = d => { const m = Math.floor((Date.now() - d) / 60000);
 const teinte = s => [...s].reduce((h, c) => h * 31 + c.charCodeAt(0) | 0, 7) & 359;   // une couleur fixe par pseudo
 const avatar = p => `<span class="avatar" style="background:hsl(${teinte(p)} 80% 70%)">${esc(p[0].toUpperCase())}</span>`;
 const bouton = n => `<button class="jouer" data-id="${n.id}">📥 Prendre</button>`;
-const COUL = { T: '#a08060', '#': '#6d5bd0', R: '#ffd400', '^': '#eee', W: '#bbb', C: '#a0703c', I: '#9ef', P: '#e0a040', '*': '#ffd400', G: '#4ade80', S: '#f472b6',
+const COUL = { T: '#a08060', '#': '#6d5bd0', R: '#ffd400', '^': '#eee', W: '#bbb', C: '#a0703c', I: '#9ef', P: '#e0a040', H: '#c08030', '*': '#ffd400', G: '#4ade80', S: '#f472b6',
                E: '#ff6ec8', 1: '#ff5a5a', 2: '#5ac8ff', 3: '#a0a0af', w: '#4e5468' };   // E ennemi ; 1-3 / w : casse-briques
 function vignette(rows) {                                // le niveau entier en petit (3 px par case), vu du bas comme au départ
   const c = document.createElement('canvas'); c.width = Math.max(COLS, ...rows.map(r => r.length)); c.height = rows.length; c.className = 'mini';
@@ -2052,6 +2068,7 @@ function afficher(v) {
   commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); support.classList.toggle('hide', v !== 'support');
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
+  if (v === 'creer') ajusterConsole();
   scrollTo(0, 0);
 }
 vAccueil.onclick = () => afficher('accueil'); accCreer.onclick = () => afficher('creer'); accBoutique.onclick = () => afficher('boutique');

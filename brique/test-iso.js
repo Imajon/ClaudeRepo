@@ -4,7 +4,7 @@ const page = fs.readFileSync(__dirname + '/index.html', 'utf8'), serv = fs.readF
 const bout = (src, debut) => { const i = src.indexOf(debut); let j = src.indexOf('\n}\n', i); return src.slice(i, j + 2); };
 const { genererIso, nivValide } = new Function(`${bout(page, 'function rnd(')}\n${bout(page, 'function genererIso(')}\n${bout(serv, 'function nivValide(')}\nreturn { genererIso, nivValide };`)();
 for (let seed = 1; seed <= 2000; seed++) {
-  const p = { seed, taille: 6 + seed % 7, relief: ['plat', 'collines', 'montagnes'][seed % 3], trous: seed % 4, difficulte: 1 + seed % 3, etoiles: seed % 9, briques: { pic: seed % 2 === 0 } };
+  const p = { seed, taille: 6 + seed % 7, relief: ['plat', 'collines', 'montagnes'][seed % 3], trous: seed % 4, difficulte: 1 + seed % 3, etoiles: seed % 9, briques: { pic: seed % 2 === 0, cache: seed % 3 === 0 } };
   const rows = genererIso(p), niv = { params: { jeu: 'iso', ...p }, rows };
   assert(nivValide(niv), 'nivValide ' + seed);
   assert(JSON.stringify(niv).length < 3600, 'trop long ' + seed);

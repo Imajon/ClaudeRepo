@@ -35,6 +35,12 @@ function sauver() {
 // ---------- validation (meme regles que briqueParse() du firmware) ----------
 const PSEUDO = /^[A-Za-z0-9_-]{2,12}$/, MAIL = /^[^\s@<>]{1,64}@[^\s@<>]{1,190}\.[a-z]{2,}$/i;
 function nivValide(n) {
+  const jeu = n?.params?.jeu;
+  if (jeu === 'briques' || jeu === 'invaders') {        // meme regles que bqMiniParse() : 7 x 10 ('1'-'3', 'w') ou 4 x 8 ('E')
+    const [H, W, ok] = jeu === 'briques' ? [7, 10, /^[.123w]*$/] : [4, 8, /^[.E]*$/];
+    return Array.isArray(n.rows) && n.rows.length >= 1 && n.rows.length <= H
+      && n.rows.every(r => typeof r === 'string' && r.length <= W && ok.test(r)) && /[123E]/.test(n.rows.join(''));
+  }
   if (!n || !Array.isArray(n.rows) || n.rows.length < 3 || n.rows.length > 80) return false;
   if (!n.rows.every(r => typeof r === 'string' && /^[.#SG*R^WCIE]{0,20}$/.test(r))) return false;
   const tout = n.rows.join('');
@@ -162,9 +168,18 @@ const COULEUR_NOM = Object.fromEntries(Object.entries(PALETTE).map(([k, v]) => [
 const IC_CLES = { heros: 'h', etoile: 'e', arrivee: 'g', ennemi: 'n', decor: 'd' };
 // ---------- IA (Mistral) : phrase de l'enfant -> reglages du jeu ; le niveau reste fabrique par le generateur de la page ----------
 // Cle dans la variable d'environnement MISTRAL_API_KEY (jamais dans le code). Sans cle : 503 -> la page reprend ses mots-cles.
-const CONSIGNE = `Tu aides des enfants de 9 a 14 ans a regler un jeu de plateforme vertical pour une petite console.
+const CONSIGNE = `Tu aides des enfants de 9 a 14 ans a regler un jeu pour une petite console. Trois jeux existent :
+plateforme (jeu de plateforme vertical, on grimpe jusqu'au drapeau), briques (casse-briques : raquette, balle, briques a casser),
+invaders (un vaisseau en bas tire sur des envahisseurs qui descendent).
 On te donne les reglages actuels et la demande de l'enfant. Reponds UNIQUEMENT avec un objet JSON :
-{"theme":"foret|lave|glace|espace|bonbon","hero":"cube|ninja|robot|chat","hauteur":15-60,"difficulte":1-3,
+{"jeu":"plateforme|briques|invaders" (ne change que si l'enfant demande un autre jeu),
+ "motif":"pleine|pyramide|damier|cadre|hasard" (briques et invaders : dessin des briques ou de la formation d'envahisseurs),
+ "acier":bool (briques : briques d'acier incassables), "bonus":bool (briques : capsules bonus), "vagues":1-5 (invaders),
+ Pour briques et invaders, seuls comptent aussi : vitesse, difficulte (briques plus solides / plus d'envahisseurs qui tirent plus), vies,
+ couleurs.ciel (= le fond), message, et pour invaders icones heros (= le vaisseau) et ennemi. Le reste ne sert qu'a la plateforme.
+ "forme":"tour|puits|escalier|iles|mixte" (plateforme : tour = plateformes en zigzag, puits = conduits ou on monte en sautant d'un mur a l'autre,
+   escalier = marches qui montent en lacets, iles = etages d'ilots a traverser en sautant, mixte = un peu de tout),
+ "theme":"foret|lave|glace|espace|bonbon","hero":"cube|ninja|robot|chat","hauteur":15-60,"difficulte":1-3,
  "gravite":0.65-1.3 (1 = normale),"vitesse":0.8-1.2 (1 = normale),"etoiles":0-8,
  "briques":{"pic":bool,"scie":bool,"ressort":bool,"glace":bool,"fragile":bool},"doubleSaut":bool (un 2e saut en l'air),
  "ennemis":0-6 (monstres qui patrouillent sur les plateformes),
@@ -197,6 +212,11 @@ const DANS = (v, a, b, def) => typeof v === 'number' && isFinite(v) ? Math.min(b
 const UN_DE = (v, liste, def) => liste.includes(v) ? v : def;
 function iaReglages(r, base) {                          // ne garde que des valeurs que le generateur sait utiliser
   const p = {
+    jeu: UN_DE(r.jeu, ['plateforme', 'briques', 'invaders'], base.jeu || 'plateforme'),
+    motif: UN_DE(r.motif, ['pleine', 'pyramide', 'damier', 'cadre', 'hasard'], base.motif || 'pleine'),
+    acier: typeof r.acier === 'boolean' ? r.acier : !!base.acier, bonus: typeof r.bonus === 'boolean' ? r.bonus : base.bonus !== false,
+    vagues: Math.round(DANS(r.vagues, 1, 5, base.vagues || 3)),
+    forme: UN_DE(r.forme, ['tour', 'puits', 'escalier', 'iles', 'mixte'], base.forme || 'tour'),
     theme: UN_DE(r.theme, ['foret', 'lave', 'glace', 'espace', 'bonbon'], base.theme),
     hero: UN_DE(r.hero, ['cube', 'ninja', 'robot', 'chat'], base.hero),
     hauteur: Math.round(DANS(r.hauteur, 15, 60, base.hauteur)), difficulte: Math.round(DANS(r.difficulte, 1, 3, base.difficulte)),
@@ -212,6 +232,12 @@ function iaReglages(r, base) {                          // ne garde que des vale
   for (const k of ['pic', 'scie', 'ressort', 'glace', 'fragile']) p.briques[k] = typeof r.briques?.[k] === 'boolean' ? r.briques[k] : !!base.briques?.[k];
   // "compris" = ce qui a VRAIMENT change (l'IA peut pretendre avoir compris une chose impossible)
   const vu = [], B = base.briques || {}, NOMS = { pic: 'pics', scie: 'scies', ressort: 'ressorts', glace: 'glace', fragile: 'blocs fragiles' };
+  if (p.jeu !== (base.jeu || 'plateforme')) vu.push({ plateforme: 'jeu de plateforme', briques: 'casse-briques', invaders: 'invaders' }[p.jeu]);
+  if (p.motif !== (base.motif || 'pleine')) vu.push('dessin ' + p.motif);
+  if (p.forme !== (base.forme || 'tour')) vu.push('parcours ' + { tour: 'en zigzag', puits: 'puits (sauts muraux)', escalier: 'escaliers', iles: 'îles', mixte: 'varié' }[p.forme]);
+  if (p.acier !== !!base.acier) vu.push(p.acier ? 'briques d\'acier' : 'sans acier');
+  if (p.bonus !== (base.bonus !== false)) vu.push(p.bonus ? 'avec bonus' : 'sans bonus');
+  if (p.vagues !== (base.vagues || 3)) vu.push(`${p.vagues} vague${p.vagues > 1 ? 's' : ''}`);
   if (p.theme !== base.theme) vu.push('monde ' + p.theme);
   if (p.hero !== base.hero) vu.push('héros ' + p.hero);
   if (p.hauteur !== base.hauteur) vu.push(p.hauteur > base.hauteur ? 'plus haut' : 'plus court');

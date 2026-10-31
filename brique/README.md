@@ -7,7 +7,7 @@ Page web de l'atelier : décrire un jeu avec l'IA, choisir ses icônes, le publi
 ## Ce que fait la page
 
 - **Communauté** (accueil) : classement, nouveaux niveaux, joueurs actifs, plébiscités, jeu commun, idées des joueurs, « Récupérer » un jeu par son code.
-- **Créer** : description guidée ou libre, IA (Mistral) qui choisit les réglages, icônes (recherche Iconify, coller, glisser), aperçu, envoi sur la console (Web Serial), publication.
+- **Créer** : trois jeux au choix (plateforme, casse-briques, invaders ; `params.jeu`), parcours de plateforme au choix (zigzag, puits à sauts muraux, escaliers, îles, varié ; `params.forme`), description guidée ou libre, IA (Mistral) qui choisit les réglages, icônes (recherche Iconify, coller, glisser), aperçu, envoi sur la console (Web Serial), publication. Casse-briques et invaders : un seul joueur (pas de course à plusieurs).
 - **Animateur** : connexion par lien envoyé par mail, groupes avec code (`LUNE-42`), joueurs, modération des niveaux et des idées.
 - **Enfants** : pseudo + code du groupe, aucun mail ni nom.
 - **Multi différé** : chaque jeu publié a un code de partage (`K7P2QX`). Chacun le récupère sur sa console quand il veut ; ensemble, l'hôte lance la course dans « 2 à 4 joueurs → Mes jeux ». Les résultats remontent au classement à la connexion suivante.

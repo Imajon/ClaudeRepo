@@ -683,16 +683,28 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
       <input id="titreIn" class="pseudo nomJeu" maxlength="30" placeholder="Ex : La tour de Zorro"></label>
     <h2 id="titreDemande"><b>01</b>— Je décris mon jeu</h2>
 
+    <h3>Quel jeu ?</h3><div class="chips" id="genreChoix"></div>
     <div id="guide">
-      <h3>Le monde</h3><div class="chips" data-k="theme"></div>
-      <h3>Mon héros</h3><div class="chips" data-k="hero"></div>
-      <h3>Le danger</h3><div class="chips" data-k="danger"></div>
+      <div data-jeu="plateforme">
+        <h3>Le monde</h3><div class="chips" data-k="theme"></div>
+        <h3>Mon héros</h3><div class="chips" data-k="hero"></div>
+        <h3>Le parcours</h3><div class="chips" data-k="forme"></div>
+        <h3>Le danger</h3><div class="chips" data-k="danger"></div>
+      </div>
+      <div data-jeu="briques invaders"><h3 id="motifTitre">Le dessin</h3><div class="chips" data-k="motif"></div></div>
+      <div data-jeu="briques"><h3>Briques d'acier (incassables)</h3><div class="chips" data-k="acier"></div></div>
+      <div data-jeu="invaders"><h3>Combien de vagues</h3><div class="chips" data-k="vagues"></div></div>
       <h3>Et en plus…</h3>
     </div>
 
     <textarea id="demande" placeholder="Ex : un niveau très haut avec des ressorts et de la glace"></textarea>
 
     <div id="catalogue" class="hide">
+      <div data-jeu="briques invaders" class="cat" style="margin-bottom:10px">
+        <div>dessin : plein, pyramide, damier, cadre, au hasard</div><div>vitesse (lent / vite)</div><div>difficulté</div><div>vies</div>
+        <div data-jeu="briques">briques d'acier</div><div data-jeu="briques">sans bonus</div><div data-jeu="invaders">nombre de vagues</div>
+      </div>
+      <div data-jeu="plateforme">
       <h3>Les briques que l'IA sait utiliser</h3>
       <div class="cat">
         <div><code>#</code> sol / mur</div><div><code>R</code> ressort</div>
@@ -704,27 +716,30 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
       <div class="cat">
         <div>hauteur (court / haut)</div><div>difficulté</div>
         <div>gravité (lune / lourd)</div><div>vitesse (lent / vite)</div>
-        <div>double saut</div>
+        <div>double saut</div><div>parcours : tour, puits, escaliers, îles, varié</div>
+      </div>
       </div>
     </div>
 
     <button id="go" class="big">✨ Créer mon jeu</button>
     <div id="compris" class="compris">Choisis, écris une phrase, puis appuie sur « Créer ».</div>
 
+    <div data-jeu="plateforme invaders">
     <h3>🎨 Mes icônes (pas obligé) : choisis quoi remplacer</h3>
     <div id="icSlots" class="chips"></div>
     <div class="icRow"><input id="icRech" class="pseudo" placeholder="Cherche en anglais : cat, dragon, pizza…"><button id="icGo" class="sec">🔍</button></div>
     <div id="icRes" class="icRes"></div>
     <div id="icDrop" class="icDrop">…ou trouve une image sur le web : clic droit → « Copier l'image », puis <b>Ctrl+V</b> ici.<br>
       Tu peux aussi la glisser ici ou <label>choisir un fichier<input id="icFile" type="file" accept="image/*" hidden></label>.</div>
+    </div>
 
     <h3>🌈 Mes couleurs (pas obligé)</h3>
-    <div class="palette"><span>Ciel</span><div id="palCiel" class="chips"></div></div>
-    <div class="palette"><span>Plateformes</span><div id="palSol" class="chips"></div></div>
+    <div class="palette"><span id="palCielNom">Ciel</span><div id="palCiel" class="chips"></div></div>
+    <div class="palette" data-jeu="plateforme"><span>Plateformes</span><div id="palSol" class="chips"></div></div>
 
     <h3>⚙️ Mes règles (pas obligé)</h3>
-    <div class="palette"><span>But</span><div id="rgObjectif" class="chips"><button class="chip on" data-v="arriver">🏁 Arriver</button><button class="chip" data-v="tout">⭐ Tout ramasser d'abord</button></div></div>
-    <div class="palette"><span>Chrono</span><select id="rgChrono" class="pseudo regle"><option value="0">Sans chrono</option><option>30</option><option>45</option><option>60</option><option>90</option><option>120</option></select></div>
+    <div class="palette" data-jeu="plateforme"><span>But</span><div id="rgObjectif" class="chips"><button class="chip on" data-v="arriver">🏁 Arriver</button><button class="chip" data-v="tout">⭐ Tout ramasser d'abord</button></div></div>
+    <div class="palette" data-jeu="plateforme"><span>Chrono</span><select id="rgChrono" class="pseudo regle"><option value="0">Sans chrono</option><option>30</option><option>45</option><option>60</option><option>90</option><option>120</option></select></div>
     <div class="palette"><span>Vies</span><select id="rgVies" class="pseudo regle"><option value="0">On recommence à chaque chute</option><option value="3">3 vies</option><option value="5">5 vies</option><option value="9">9 vies</option></select></div>
     <div class="palette"><span>Victoire</span><input id="rgMsg" class="pseudo regle" maxlength="40" placeholder="Message quand on gagne"></div>
   </section>
@@ -767,8 +782,14 @@ const PW = 12, PH = 14;   // taille du heros
 const CHOIX = {
   theme:  [['foret','🌲 Forêt'],['lave','🌋 Volcan'],['glace','❄️ Banquise'],['espace','🚀 Espace'],['bonbon','🍭 Bonbons']],
   hero:   [['cube','🟥 Cube'],['ninja','🥷 Ninja'],['robot','🤖 Robot'],['chat','🐱 Chat']],
+  forme:  [['mixte','🎲 Un peu de tout'],['tour','🗼 Tour en zigzag'],['puits','🕳 Puits (sauts muraux)'],['escalier','🪜 Escaliers'],['iles','🏝 Îles à traverser']],
   danger: [['pic','🔺 Pics'],['scie','⚙️ Scies'],['fragile','🧱 Blocs qui tombent'],['aucun','😌 Rien']],
+  motif:  [['pleine','🧱 Plein'],['pyramide','🔺 Pyramide'],['damier','🏁 Damier'],['cadre','🖼 Cadre'],['hasard','🎲 Au hasard']],
+  acier:  [['non','Non'],['oui','🔩 Oui']],
+  vagues: [['1','1 vague'],['3','3 vagues'],['5','5 vagues']],
 };
+// les jeux que la console sait faire tourner avec des réglages (firmware : bqMiniParse / briqueParse)
+const GENRES = [['plateforme','🧗 Plateforme'],['briques','🧱 Casse-briques'],['invaders','👾 Invaders']];
 const THEMES = {
   foret:  { ciel:['#9be7ff','#e8fff0'], sol:'#3f8f3a', bord:'#2a5e27', glace:'#b8f0ff' },
   lave:   { ciel:['#3a0b0b','#a8361a'], sol:'#4a3b3b', bord:'#ff6a00', glace:'#ffd0a0' },
@@ -778,7 +799,20 @@ const THEMES = {
 };
 const HEROS = { cube:'#e8322b', ninja:'#222233', robot:'#9aa4b0', chat:'#ff9933' };
 
-let mode = 'guide', choix = { theme:'foret', hero:'cube', danger:'pic' };
+let mode = 'guide', genre = 'plateforme', choix = { theme:'foret', hero:'cube', danger:'pic', forme:'mixte', motif:'pleine', acier:'non', vagues:'3' };
+for (const [v, lab] of GENRES) {
+  const b = document.createElement('button'); b.className = 'chip'; b.dataset.v = v; b.textContent = lab;
+  b.onclick = () => { if (genre !== v) { params = null; setGenre(v); } };
+  genreChoix.appendChild(b);
+}
+function setGenre(g) {                                  // n'affiche que ce qui sert au jeu choisi
+  genre = g;
+  genreChoix.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.v === g));
+  document.querySelectorAll('[data-jeu]').forEach(e => e.classList.toggle('hide', !e.dataset.jeu.split(' ').includes(g)));
+  palCielNom.textContent = g === 'plateforme' ? 'Ciel' : 'Fond';
+  motifTitre.textContent = g === 'briques' ? 'Le dessin des briques' : 'La formation des envahisseurs';
+  majIcones();
+}
 for (const k in CHOIX) {
   const box = document.querySelector(`.chips[data-k="${k}"]`);
   for (const [v, lab] of CHOIX[k]) {
@@ -801,7 +835,8 @@ mGuide.onclick = () => setMode('guide'); mLibre.onclick = () => setMode('libre')
 // ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
 const DEFAUT = { theme:'foret', hero:'cube', hauteur:30, difficulte:2, gravite:1, vitesse:1,
                  briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3, doubleSaut:false, ennemis:0, couleurs:{},
-                 objectif:'arriver', chrono:0, vies:0, message:'' };
+                 objectif:'arriver', chrono:0, vies:0, message:'',
+                 forme:'tour', jeu:'plateforme', motif:'pleine', acier:false, bonus:true, vagues:3 };   // jeu briques / invaders : motif, acier, bonus, vagues
 // palette (même liste que server.js ; le firmware lit le code hexa)
 const PALETTE = { rouge:'#e8322b', orange:'#ff8a1f', jaune:'#ffd400', vert:'#3f8f3a', 'vert clair':'#7ee06a', turquoise:'#22d3ee',
   'bleu ciel':'#9be7ff', bleu:'#2f6fe0', violet:'#8b5cf6', rose:'#ff7ab8', marron:'#8a5a2b', bordeaux:'#7a1020',
@@ -812,6 +847,17 @@ function comprendre(texte, base) {
   const p = structuredClone(base), vu = [], t = norm(texte);
   const a = re => re.test(t);
   const non = mot => new RegExp(`(sans|pas de|pas d'|plus de|enleve|retire)\\s+(les\\s+)?${mot}`).test(t);
+  const JEU_MOTS = { briques:/casse[- ]?briques?|breakout|raquette/, invaders:/invaders?|envahisseur|vaisseau|extraterrestre|alien|soucoupe/, plateforme:/jeu de plateformes?|platformer/ };
+  for (const k in JEU_MOTS) if (a(JEU_MOTS[k]) && p.jeu !== k) { p.jeu = k; vu.push(GENRES.find(g => g[0] === k)[1]); break; }
+  const MOTIF_MOTS = { pyramide:/pyramide|triangle/, damier:/damier|echiquier/, cadre:/cadre|contour/, hasard:/hasard|aleatoire|bazar/, pleine:/plein|rempli/ };
+  for (const k in MOTIF_MOTS) if (a(MOTIF_MOTS[k])) { p.motif = k; vu.push('dessin ' + k); break; }
+  if (non('(acier|metal|incassables?)')) { if (p.acier) vu.push('sans acier'); p.acier = false; }
+  else if (a(/acier|metal|incassable/)) { p.acier = true; vu.push('briques d\'acier'); }
+  if (non('bonus')) { p.bonus = false; vu.push('sans bonus'); }
+  const vg = t.match(/(\d) vagues?/); if (vg) { p.vagues = Math.max(1, Math.min(5, +vg[1])); vu.push(`${p.vagues} vagues`); }
+  const FORME_MOTS = { puits:/puits|cheminee|saut(s|er)? (mura|contre les murs|de mur)|wall/, escalier:/escalier|\bmarches\b/, iles:/\biles?\b|\bilots?\b|traverser|archipel/,
+                       mixte:/varie|melange|de tout|mixte|surprise/, tour:/zigzag|\btour\b/ };   // \b : « facile » n'est pas une île
+  for (const k in FORME_MOTS) if (a(FORME_MOTS[k])) { p.forme = k; vu.push('parcours ' + CHOIX.forme.find(c => c[0] === k)[1].replace(/^\S+ /, '').toLowerCase()); break; }
   const THEME_MOTS = { foret:/foret|arbre|jungle|nature/, lave:/lave|volcan|feu|enfer/, glace:/banquise|neige|hiver|pole/,
                        espace:/espace|planete|lune|fusee|galax/, bonbon:/bonbon|sucre|gateau|chocolat/ };
   for (const k in THEME_MOTS) if (a(THEME_MOTS[k])) { p.theme = k; vu.push('monde ' + k); break; }
@@ -819,7 +865,7 @@ function comprendre(texte, base) {
   for (const k in HERO_MOTS) if (a(HERO_MOTS[k])) { p.hero = k; vu.push('héros ' + k); break; }
   const BRIQ = { pic:'pic|piege|epine|pique', scie:'scie|lame|tronconneuse', ressort:'ressort|rebond|trampoline',
                  glace:'glace|glisse|verglas', fragile:'fragile|casse|effondre|tombe' };
-  for (const k in BRIQ) {
+  for (const k in estMini(p) ? {} : BRIQ) {             // « casse-briques » n'est pas un bloc fragile
     if (non(`(${BRIQ[k]})`)) { if (p.briques[k]) vu.push('sans ' + k); p.briques[k] = false; }
     else if (a(new RegExp(BRIQ[k]))) { p.briques[k] = true; vu.push(k); }
   }
@@ -834,7 +880,7 @@ function comprendre(texte, base) {
   for (const nom of Object.keys(PALETTE).sort((x, y) => y.length - x.length)) {
     const n = norm(nom);
     if (a(new RegExp(`(plateforme|sol|bloc)s?[^.,]{0,20}\\b${n}`)) && !p.couleurs.sol) { p.couleurs.sol = PALETTE[nom]; vu.push('plateformes ' + nom); }
-    if (a(new RegExp(`ciel[^.,]{0,20}\\b${n}`)) && !p.couleurs.ciel) { p.couleurs.ciel = PALETTE[nom]; vu.push('ciel ' + nom); }
+    if (a(new RegExp(`(ciel|fond)[^.,]{0,20}\\b${n}`)) && !p.couleurs.ciel) { p.couleurs.ciel = PALETTE[nom]; vu.push((estMini(p) ? 'fond ' : 'ciel ') + nom); }
   }
   if (a(/tres (haut|grand|long)|immense|gigantesque|enorme/)) { p.hauteur = 60; vu.push('très haut'); }
   else if (a(/haut|grand|long/)) { p.hauteur = Math.min(60, p.hauteur + 12); vu.push('plus haut'); }
@@ -853,45 +899,128 @@ function comprendre(texte, base) {
 // ---------- Générateur de niveau (format firmware) ----------
 function rnd(seed) { return () => (seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296; }
 
+// casse-briques : 7 lignes de 10 ('1'-'3' = coups pour casser, 'w' = acier) ; invaders : 2 à 4 lignes de 8 ('E')
+function genererMini(p) {
+  const R = rnd(p.seed), bk = p.jeu === 'briques', W = bk ? 10 : 8, H = bk ? 7 : 1 + p.difficulte;
+  const dans = (r, c) => ({ pleine: !bk || r < 5, pyramide: Math.abs(c * 2 - (W - 1)) <= (r + 1) * 2 - 1, damier: (r + c) % 2 === 0,
+                            cadre: r === 0 || r === H - 1 || c === 0 || c === W - 1, hasard: R() < .7 })[p.motif || 'pleine'];
+  const g = Array.from({ length: H }, (_, r) => Array.from({ length: W }, (_, c) => {
+    if (!dans(r, c)) return '.';
+    if (!bk) return 'E';
+    if (p.acier && (r === 2 || (r === 4 && p.difficulte === 3)) && c % 3 === 1) return 'w';
+    return String(Math.min(3, 1 + (r < 2 ? p.difficulte - 1 : Math.floor(R() * p.difficulte))));   // plus solide en haut, comme la console
+  }));
+  if (!g.flat().some(c => c !== '.' && c !== 'w')) g[0][W >> 1] = bk ? '1' : 'E';   // jamais un jeu vide
+  return g.map(r => r.join(''));
+}
+const estMini = p => p?.jeu === 'briques' || p?.jeu === 'invaders';
+
 function generer(p) {
+  if (estMini(p)) return genererMini(p);
   const R = rnd(p.seed), ri = (a, b) => a + Math.floor(R() * (b - a + 1));
   const H = p.hauteur, g = Array.from({ length: H }, () => Array(COLS).fill('.'));
   g[H - 2].fill('#'); g[H - 1].fill('#'); g[H - 3][1] = 'S';
   const larg = 6 - p.difficulte;                       // plateformes plus étroites si difficile
-  let y = H - 2, cx = 3, plats = [], prevRessort = false;
-  while (true) {
-    // saut mesuré ~4,7 cases, ressort ~6,5 (à gravité 1) : l'écart reste sous ce plafond quelle que soit la gravité
-    // double saut : ~1,8 fois plus haut -> plateformes plus espacées
-    const ecart = Math.min((prevRessort ? 6 : 3) + (p.difficulte === 3 ? 1 : 0) + (p.doubleSaut ? 3 : 0),
-                           Math.floor((prevRessort ? 6.2 : 4.2) * (p.doubleSaut ? 1.8 : 1) / p.gravite));
-    if (y - ecart < 4) break;
-    y -= ecart;
-    cx = Math.max(1, Math.min(COLS - larg - 1, cx + (R() < .5 ? -1 : 1) * ri(3, 7)));
-    const t = p.briques.fragile && R() < .3 ? 'C' : p.briques.glace && R() < .4 ? 'I' : '#';
-    for (let x = cx; x < cx + larg; x++) g[y][x] = t;
-    prevRessort = p.briques.ressort && R() < .45;
-    if (prevRessort) g[y][cx + (larg >> 1)] = 'R';
-    plats.push({ y, x0: cx, x1: cx + larg - 1 });
+  const borne = (v, a, b) => Math.max(a, Math.min(b, v));
+  const tuile = () => p.briques.fragile && R() < .3 ? 'C' : p.briques.glace && R() < .4 ? 'I' : '#';
+  // saut mesuré ~4,7 cases, ressort ~6,5 (à gravité 1) : l'écart reste sous ce plafond quelle que soit la gravité
+  // double saut : ~1,8 fois plus haut -> plateformes plus espacées. Les autres formes montent de 3 cases au plus (sautable même à gravité 1,3).
+  const ecart = ressort => Math.min((ressort ? 6 : 3) + (p.difficulte === 3 ? 1 : 0) + (p.doubleSaut ? 3 : 0),
+                                    Math.floor((ressort ? 6.2 : 4.2) * (p.doubleSaut ? 1.8 : 1) / p.gravite));
+  // cur = la surface d'où part le morceau suivant ; plats = surfaces qui peuvent recevoir pièges / ennemis ; surf = toutes (étoiles)
+  let cur = { y: H - 2, x0: 1, x1: 5 }; const plats = [], surf = [];
+  const resa = new Set(), reserver = (x0, x1, y0, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) resa.add(y * COLS + x); };
+  const poser = (y, x0, x1, t, piege = true) => {      // null si la place est prise (haut d'un puits : on ne le bouche pas)
+    if (x0 < 1 || x1 > COLS - 2 || y < 2) return null;
+    for (let x = x0; x <= x1; x++) if (resa.has(y * COLS + x) || resa.has((y + 1) * COLS + x)) return null;
+    for (let x = x0; x <= x1; x++) g[y][x] = t;
+    const pl = { y, x0, x1 }; surf.push(pl); if (piege) plats.push(pl); return pl;
+  };
+  const MORCEAUX = {
+    tour() {                                           // plateformes en zigzag (le premier générateur)
+      let prevRessort = false, fait = false;
+      for (let i = 0; i < 4; i++) {
+        const e = ecart(prevRessort), y = cur.y - e; if (y < 4) break;
+        let pl = null;
+        for (let essai = 0; essai < 6 && !pl; essai++)
+          pl = poser(y, ...(cx => [cx, cx + larg - 1])(borne(cur.x0 + (R() < .5 ? -1 : 1) * ri(3, 7), 1, COLS - larg - 1)), tuile());
+        if (!pl) break;
+        cur = pl; fait = true; const cx = pl.x0;
+        prevRessort = p.briques.ressort && R() < .45;
+        if (prevRessort) g[y][cx + (larg >> 1)] = 'R';
+      }
+      return fait;
+    },
+    puits() {                                          // conduit de 3 cases : on monte en sautant d'un mur à l'autre
+      const T = cur.y - ri(8, 10) - p.difficulte * 2; if (T - 3 < 4) return false;
+      const L = borne(((cur.x0 + cur.x1) >> 1) - 2, 2, COLS - 7);   // murs en L et L+4
+      if (L + 3 < cur.x0 || L + 1 > cur.x1) return false;            // il faut pouvoir sauter dedans depuis cur
+      const gauche = L - 4 >= 1 && (R() < .5 || L + 8 > COLS - 2);   // côté de la sortie : le mur d'en face monte 2 cases plus haut
+      const bas = cur.y, sortie = gauche ? poser(T, L - 3, L, '#', false) : poser(T, L + 4, L + 7, '#', false);   // palier de sortie, collé au haut du mur
+      if (!sortie) return false;
+      for (let y = gauche ? T : T - 2; y <= bas - 3; y++) g[y][L] = '#';   // 2 cases libres dessous : on y entre en sautant, et on sort du puits d'en dessous
+      for (let y = gauche ? T - 2 : T; y <= bas - 3; y++) g[y][L + 4] = '#';
+      for (let y = bas - 7, k = 0; y > T + 3; y -= 6, k++) g[y][k % 2 ? L + 1 : L + 3] = '#';   // petits rebords pour souffler
+      g[T + 2][L + 2] = '*';
+      cur = sortie; cur.dir = gauche ? -1 : 1;           // la suite part du côté de la sortie
+      reserver(L + 1, L + 3, T - 4, T + 1);              // personne ne pose de couvercle sur le puits…
+      reserver(gauche ? L - 3 : L + 4, gauche ? L : L + 7, T - 3, T - 1);   // …ni de plafond sur le palier de sortie
+      return true;
+    },
+    escalier() {                                       // marches de 3 qui montent de 2 ; au bord, une marche de 3 plus haut et on repart dans l'autre sens
+      let dir = cur.dir ?? (cur.x0 > COLS / 2 ? -1 : 1), pl = cur, fait = false;
+      for (let n = ri(5, 8); n > 0; n--) {
+        let x0 = dir > 0 ? pl.x1 + 1 : pl.x0 - 3, y = pl.y - 2;
+        if (x0 < 1 || x0 + 2 > COLS - 2) { x0 = pl.x0 - 2 * dir; y = pl.y - 3; dir = -dir; }   // demi-tour
+        const m = y >= 4 && poser(y, x0, x0 + 2, tuile());
+        if (!m) break;
+        pl = cur = m; fait = true;
+      }
+      return fait;
+    },
+    iles() {                                           // étages d'îlots à traverser ; les trous font retomber à l'étage du dessous
+      const w = Math.max(2, 5 - p.difficulte); let dir = cur.dir ?? (cur.x0 > COLS / 2 ? -1 : 1), fait = false;
+      let y = cur.y - 3, x = dir > 0 ? cur.x1 + 1 : cur.x0 - 1;     // le premier îlot touche presque cur
+      for (let etage = ri(2, 3); etage > 0 && y >= 4; etage--) {
+        let n = 0;
+        while (dir > 0 ? x + w - 1 + 2 <= COLS - 2 : x - w + 1 - 2 >= 1) {   // garde 2 cases au bout pour la marche du demi-tour
+          const il = dir > 0 ? poser(y, x, x + w - 1, tuile()) : poser(y, x - w + 1, x, tuile());
+          if (!il) break;                                  // îlot impossible : l'étage s'arrête là
+          cur = il; fait = true; n++;
+          x += dir * (w + ri(2, 3));
+        }
+        if (!n || y - 5 < 4) break;
+        const m = dir > 0 ? cur.x1 + 1 : cur.x0 - 2;                // marche de 2 entre deux étages (5 cases d'écart : on ne se cogne pas)
+        const marche = poser(y - 2, m, m + 1, '#', false); if (!marche) break;
+        cur = marche; dir = -dir; y -= 5; x = dir > 0 ? cur.x1 + 1 : cur.x0 - 1;
+      }
+      return fait;
+    },
+  };
+  const FORMES = Object.keys(MORCEAUX), forme = MORCEAUX[p.forme] ? p.forme : p.forme === 'mixte' ? 'mixte' : 'tour';
+  for (let n = 0; n < 40; n++) {
+    const f = forme === 'mixte' ? FORMES[ri(0, FORMES.length - 1)] : forme;
+    if (!MORCEAUX[f]() && !MORCEAUX.tour()) break;     // plus la place pour ce morceau : un bout de zigzag, sinon c'est le sommet
   }
-  const top = plats.at(-1) || { y: H - 2, x0: 8, x1: 12 };
+  const top = cur.y < H - 2 ? cur : { y: H - 2, x0: 8, x1: 12 };
   g[top.y - 1][(top.x0 + top.x1) >> 1] = 'G';
-  plats.slice(0, -1).forEach((pl, i) => {
-    if (p.briques.pic && larg >= 3 && R() < .3 + .2 * p.difficulte) g[pl.y - 1][R() < .5 ? pl.x0 : pl.x1] = '^';
+  plats.filter(pl => pl !== top).forEach(pl => {
+    if (p.briques.pic && pl.x1 - pl.x0 >= 2 && R() < .3 + .2 * p.difficulte) { const x = R() < .5 ? pl.x0 : pl.x1; if (g[pl.y - 1][x] === '.') g[pl.y - 1][x] = '^'; }
     if (p.briques.scie && R() < .15 + .1 * p.difficulte) {
       const sx = pl.x1 + 2 < COLS ? pl.x1 + 2 : pl.x0 - 2;
       if (g[pl.y - 1][sx] === '.') g[pl.y - 1][sx] = 'W';
     }
   });
   // ennemis : un 'E' au-dessus d'une plateforme assez large (la console le fait patrouiller), jamais sur celle de l'arrivée
-  const larges = plats.slice(0, -1).filter(pl => pl.x1 - pl.x0 >= 2);
+  const larges = plats.filter(pl => pl !== top && pl.x1 - pl.x0 >= 2);
   for (let i = 0; i < (p.ennemis || 0) && larges.length; i++) {
     const pl = larges.splice(ri(0, larges.length - 1), 1)[0], x = (pl.x0 + pl.x1) >> 1;
     if (g[pl.y - 1][x] === '.') g[pl.y - 1][x] = 'E';
   }
   // étoiles au-dessus de plateformes au hasard
   for (let i = 0, essais = 0; i < p.etoiles && essais < 50; essais++) {
-    const pl = plats[ri(0, Math.max(0, plats.length - 2))]; if (!pl) break;
-    const x = ri(pl.x0, pl.x1); if (g[pl.y - 2][x] === '.') { g[pl.y - 2][x] = '*'; i++; }
+    const pl = surf[ri(0, Math.max(0, surf.length - 2))]; if (!pl) break;
+    const x = ri(pl.x0, pl.x1); if (pl.y >= 2 && g[pl.y - 2][x] === '.' && g[pl.y - 1][x] === '.') { g[pl.y - 2][x] = '*'; i++; }
   }
   return g.map(r => r.join(''));
 }
@@ -901,6 +1030,7 @@ const cv = ecran, ctx = cv.getContext('2d');
 let jeu = null;
 
 function charger(niv) {
+  if (estMini(niv.params)) { jeu = { niv, mini: true }; cv.height = SH; dessiner(); return; }
   const rows = niv.rows.map(r => r.split(''));
   const j = { niv, rows, saws:[], stars:[], ennemis:[] };
   rows.forEach((r, y) => r.forEach((c, x) => {
@@ -923,6 +1053,7 @@ function dessiner() {
     ctx.fillText('Décris ton jeu', SW / 2, SH / 2 - 8); ctx.fillStyle = '#888'; ctx.font = '13px system-ui';
     ctx.fillText('puis appuie sur « Créer »', SW / 2, SH / 2 + 14); return;
   }
+  if (j.mini) return dessinerMini(j.niv);
   const coul = j.niv.params.couleurs || {}, base = THEMES[j.niv.params.theme] || THEMES.foret, cam = 0, H = cv.height;
   // couleurs choisies : comme la console (ciel -> vers le blanc en bas, bord du sol = sol assombri)
   const melange = (h, k) => '#' + [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)).map(v => Math.round(k > 0 ? v + (255 - v) * k : v * -k).toString(16).padStart(2, '0')).join('');
@@ -972,6 +1103,37 @@ function dessiner() {
   ctx.fillStyle = '#fff'; const ox = vx < 0 ? 1 : 5; ctx.fillRect(hx + ox, hy + 4, 3, 3); ctx.fillRect(hx + ox + 4, hy + 4, 3, 3);
   }
 }
+// casse-briques / invaders : mêmes positions et couleurs que breakoutStep / invadersStep du firmware
+function dessinerMini(niv) {
+  const p = niv.params, ic = niv.icones || {};
+  ctx.fillStyle = p.couleurs?.ciel || '#181a28'; ctx.fillRect(0, 0, SW, SH);
+  ctx.fillStyle = '#ebebf5'; ctx.font = '8px monospace'; ctx.textAlign = 'left'; ctx.fillText('SCORE 0', 4, 12);
+  if (p.jeu === 'briques') {
+    const RC = ['#ff5a5a', '#ffa03c', '#ffdc46', '#78dc5a', '#50c8c8', '#c878ff', '#ff78c8'];
+    niv.rows.forEach((r, y) => [...r].forEach((c, x) => {
+      if (c === '.') return;
+      const X = 1 + x * 32, Y = 26 + y * 12;
+      ctx.fillStyle = c === 'w' ? '#4e5468' : c === '3' ? '#a0a0af' : c === '2' ? '#5ac8ff' : RC[y]; ctx.fillRect(X, Y, 30, 10);
+      if (c === 'w') { ctx.strokeStyle = '#969eb6'; ctx.strokeRect(X + .5, Y + .5, 29, 9); }
+      else if (c !== '1') { ctx.strokeStyle = '#181a28'; ctx.strokeRect(X + 2.5, Y + 2.5, 25, 5); }
+    }));
+    ctx.fillStyle = '#ff4678'; ctx.beginPath(); ctx.roundRect(SW / 2 - 24, SH - 14, 48, 6, 3); ctx.fill();
+    ctx.fillStyle = '#ebebf5'; ctx.beginPath(); ctx.arc(SW / 2, SH - 18, 3, 0, 7); ctx.fill();
+  } else {
+    const COL = ['#5adcff', '#ff6ec8', '#ff6ec8', '#78e65a'];
+    niv.rows.forEach((r, y) => [...r].forEach((c, x) => {
+      if (c !== 'E') return;
+      const X = 45 + x * 30, Y = 24 + y * 22;
+      if (ic.n) { ctx.drawImage(icImg(ic.n), X + 2, Y - 2); return; }
+      ctx.fillStyle = COL[y]; ctx.beginPath(); ctx.roundRect(X + 2, Y, 16, 8, 3); ctx.fill();
+      for (let k = 0; k < 4; k++) ctx.fillRect(X + 2 + k * 5, Y + 8, 3, 4);
+      ctx.fillStyle = '#12101a'; ctx.fillRect(X + 6, Y + 3, 2, 2); ctx.fillRect(X + 12, Y + 3, 2, 2);
+    }));
+    if (ic.h) ctx.drawImage(icImg(ic.h), SW / 2 - 8, SH - 26);
+    else { ctx.fillStyle = '#78e65a'; ctx.beginPath(); ctx.roundRect(SW / 2 - 8, SH - 20, 16, 8, 2); ctx.fill(); ctx.fillRect(SW / 2 - 2, SH - 24, 4, 4); }
+    ctx.fillStyle = '#ebebf5'; ctx.fillText(`${p.vagues || 1} VAGUE${(p.vagues || 1) > 1 ? 'S' : ''}`, 130, 12);
+  }
+}
 function etoile(x, y) {
   ctx.fillStyle = '#ffd400'; ctx.beginPath();
   for (let i = 0; i < 10; i++) { const r = i % 2 ? 2.5 : 6, a = -Math.PI / 2 + i * Math.PI / 5; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }
@@ -986,10 +1148,15 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;
 
 go.onclick = async () => {
   let texte = demande.value.trim(), base = params ?? structuredClone(DEFAUT), avant = [];
-  if (mode === 'guide') {
-    base.theme = choix.theme; base.hero = choix.hero;
+  base.jeu = genre;
+  const lab = k => CHOIX[k].find(c => c[0] === choix[k])[1];
+  if (mode === 'guide' && genre === 'plateforme') {
+    base.theme = choix.theme; base.hero = choix.hero; base.forme = choix.forme;
     for (const k of ['pic', 'scie', 'fragile']) base.briques[k] = choix.danger === k;
-    avant = [CHOIX.theme.find(c => c[0] === choix.theme)[1], CHOIX.hero.find(c => c[0] === choix.hero)[1], CHOIX.danger.find(c => c[0] === choix.danger)[1]];
+    avant = [lab('theme'), lab('hero'), lab('forme'), lab('danger')];
+  } else if (mode === 'guide') {
+    base.motif = choix.motif; base.acier = choix.acier === 'oui'; base.vagues = +choix.vagues;
+    avant = [GENRES.find(g => g[0] === genre)[1], lab('motif'), genre === 'briques' ? 'acier : ' + lab('acier') : lab('vagues')];
   }
   base.couleurs = { ...couleurs }; Object.assign(base, regles());   // couleurs et règles choisies à la main (l'IA peut les changer si l'enfant en parle)
   go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
@@ -1000,6 +1167,7 @@ go.onclick = async () => {
   if (!ia) await new Promise(r => setTimeout(r, 600 + Math.random() * 900));   // latence simulée (mots-clés)
   const { p, vu } = ia ?? comprendre(texte, base);
   p.seed = (Math.random() * 1e9) | 0; params = p; couleurs = { ...(p.couleurs || {}) }; majPalette(); afficherRegles(p);
+  if (p.jeu !== genre) setGenre(p.jeu || 'plateforme');   // « fais-moi un casse-briques » : l'IA a changé de jeu
   if (ia?.icones) { await Promise.all(Object.entries(ia.icones).map(([k, mot]) => iconeAuto(k, mot))); majIcones(); }   // « un dragon en fond » -> icône décor trouvée sur Iconify
   const niv = { format: 'brique-v1', params: p, rows: generer(p), icones: { ...icones } };
   const duree = (performance.now() - t0) / 1000;
@@ -1080,6 +1248,7 @@ function majIcones() {
   if (jeu && !jeu.niv.pseudo) jeu.niv.icones = { ...icones };   // ton propre jeu change tout de suite (pas celui d'un autre)
   icSlots.innerHTML = '';
   for (const [k, lab] of IC) {
+    if (genre === 'invaders' && !'hn'.includes(k)) continue;   // invaders : vaisseau et ennemis seulement
     const b = document.createElement('button'); b.className = 'chip' + (k === icSlot ? ' on' : ''); b.textContent = lab;
     b.onclick = () => { icSlot = k; majIcones(); };
     if (icones[k]) {
@@ -1122,7 +1291,7 @@ icDrop.ondrop = e => {
   if (f) depuisUrl(URL.createObjectURL(f)); else if (/^https?:/.test(u)) depuisUrl(u);
 };
 icFile.onchange = () => icFile.files[0] && depuisUrl(URL.createObjectURL(icFile.files[0]));
-majIcones();
+setGenre('plateforme');
 // icône demandée à l'IA (mot anglais) : première image en couleur trouvée sur Iconify, posée dans sa case
 async function iconeAuto(slot, mot) {
   try {
@@ -1314,7 +1483,8 @@ const depuis = d => { const m = Math.floor((Date.now() - d) / 60000);
 const teinte = s => [...s].reduce((h, c) => h * 31 + c.charCodeAt(0) | 0, 7) & 359;   // une couleur fixe par pseudo
 const avatar = p => `<span class="avatar" style="background:hsl(${teinte(p)} 80% 70%)">${esc(p[0].toUpperCase())}</span>`;
 const bouton = n => `<button class="jouer" data-id="${n.id}">📥 Prendre</button>`;
-const COUL = { '#': '#6d5bd0', R: '#ffd400', '^': '#eee', W: '#bbb', C: '#a0703c', I: '#9ef', '*': '#ffd400', G: '#4ade80', S: '#f472b6' };
+const COUL = { '#': '#6d5bd0', R: '#ffd400', '^': '#eee', W: '#bbb', C: '#a0703c', I: '#9ef', '*': '#ffd400', G: '#4ade80', S: '#f472b6',
+               E: '#ff6ec8', 1: '#ff5a5a', 2: '#5ac8ff', 3: '#a0a0af', w: '#4e5468' };   // E ennemi ; 1-3 / w : casse-briques
 function vignette(rows) {                                // le niveau entier en petit (3 px par case), vu du bas comme au départ
   const c = document.createElement('canvas'); c.width = COLS; c.height = rows.length; c.className = 'mini';
   const x = c.getContext('2d');
@@ -1384,7 +1554,7 @@ idees.onchange = async e => {                            // animateur connecté 
   try { rendreIdees((await api('api/animateur/idee', v === 'x' ? { id, supprimer: true } : { id, statut: v }, session)).idees); } catch (err) { alert(err.message); }
 };
 function jouerNiveau(n) {
-  charger({ ...n.niv, id: n.id, code: n.code, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params);
+  charger({ ...n.niv, id: n.id, code: n.code, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params); setGenre(params.jeu || 'plateforme');
   envoi.innerHTML = `<div class="partage">« ${esc(n.titre)} » de ${esc(n.pseudo)} · code <span class="code">${esc(n.code)}</span><br><small>Envoie-le sur ta console pour y jouer, seul ou à plusieurs (« Mes jeux »).</small></div>`;
   historique.push({ demande: `Jouer « ${n.titre} » de ${n.pseudo}`, vu: [], niv: jeu.niv, duree: 0, corr: '' }); rendreHist();
   afficher('creer'); ecran.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -1792,6 +1792,24 @@ void pongStep(bool bLeft, bool br) {
   drawPong();
 }
 
+// ---- BRIQUE : casse-brique / invaders crees sur la page ("params":{"jeu":"briques"|"invaders"}, decode par bqMiniParse) ----
+// bqMini = jeu perso en cours (0 = mini-jeux habituels) : mis par bqStart(), remis a 0 en sortant (checkpointFinish)
+int bqMini = 0, bqMiniJeu = 0;              // bqMiniJeu = type du dernier jeu recu : 0 plateforme, 1 briques, 2 invaders
+char bqMiniRows[7][11];                     // briques : 7 x 10 ('1'-'3' solidite, 'w' acier) ; invaders : 4 x 8 ('E' = ennemi)
+float bqMiniVit = 1; int bqMiniVies = 0, bqMiniVagues = 1, bqMiniDiff = 2, bqMiniPerdues = 0; bool bqMiniBonus = true, bqMiniWin = false;
+long bqMiniFond = -1; uint32_t bqMiniT0 = 0;
+uint16_t bqBg() { return bqMini && bqMiniFond >= 0 ? RGB565(bqMiniFond >> 16, (bqMiniFond >> 8) & 255, bqMiniFond & 255) : COL_BG; }
+void bqMiniReset() { bqMiniWin = false; bqMiniPerdues = 0; bqMiniT0 = millis(); }
+void bqMiniGagne() {                        // jeu perso gagne : resultat a la page (meme ligne que les niveaux : temps, vies perdues, 0 etoile)
+  bqMiniWin = true; snd(SND_WIN);
+  if (Serial) Serial.printf("BRIQUE FIN %lu %d 0\n", (unsigned long)(millis() - bqMiniT0), bqMiniPerdues);
+}
+void bqMiniFin(int sTop) {                  // ecran de victoire par-dessus le jeu
+  fb.setTextSize(3); fb.setTextColor(COL_GOAL); fb.setCursor(SCREEN_W / 2 - 63, 100 - sTop); fb.print("GAGNE !");
+  fb.setTextSize(1); fb.setTextColor(COL_STAR); fb.setCursor(SCREEN_W / 2 - (int)strlen(bqMsg) * 3, 136 - sTop); fb.print(bqMsg);
+  fb.setTextColor(COL_TXT); fb.setCursor(SCREEN_W / 2 - 69, 160 - sTop); fb.print("P3 = retour a l'accueil");
+}
+
 // ================= CASSE-BRIQUE (solo, raquette en bas) =================
 // GAUCHE/DROITE = raquette. P3 = lancer la balle / relacher la balle collante.
 // Maintenir P3 1,5 s = quitter. Briques a 1-3 coups ; certaines lachent une
@@ -1825,7 +1843,7 @@ uint32_t bkBest;
 float bkHoldT, bkMsgT; char bkMsg[20];
 bool bkOver;
 
-float bkSpeed() { float s = 175.0f + bkLevel * 10.0f; if (s > 280) s = 280; return s * bkSpdMul; }   // retour "la balle doit aller moins vite" : l'affichage est passe de ~20 a 50 images/s, la physique tourne maintenant en temps reel (300/480 -> 175/280)   // retour "toujours trop lente" -> base/plafond remontes encore (220->300, 380->480)
+float bkSpeed() { float s = 175.0f + bkLevel * 10.0f; if (s > 280) s = 280; return s * bkSpdMul * (bqMini ? bqMiniVit : 1); }   // retour "la balle doit aller moins vite" : l'affichage est passe de ~20 a 50 images/s, la physique tourne maintenant en temps reel (300/480 -> 175/280)   // retour "toujours trop lente" -> base/plafond remontes encore (220->300, 380->480)
 
 // dispositions 5-9 : 'w' = brique d'acier, INCASSABLE (la balle rebondit, meme percante) -> il faut la contourner ; 'b' = brique normale
 static const char *const BK_PAT[5][BK_ROWS] = {
@@ -1847,6 +1865,14 @@ void bkSeal() {                           // une brique normale que la balle ne 
 }
 void bkLoadLevel() {
   bkBricks = 0;
+  if (bqMini) {                             // BRIQUE : la disposition de l'enfant
+    for (int r = 0; r < BK_ROWS; r++) for (int c = 0; c < BK_COLS; c++) {
+      const char q = bqMiniRows[r][c];
+      bkHp[r][c] = q == 'w' ? 9 : q >= '1' && q <= '3' ? q - '0' : 0;
+      if (bkHp[r][c] && bkHp[r][c] != 9) bkBricks++;
+    }
+    bkSeal(); return;
+  }
   static const uint8_t ORD[10] = { 0, 5, 1, 6, 2, 7, 3, 8, 4, 9 };   // alterne les anciennes dispositions et les nouvelles (a l'acier)
   int pat = ORD[bkLevel % 10];
   int maxHp = 1 + min(2, bkLevel / 2);
@@ -1878,13 +1904,13 @@ void bkServe() {                          // une balle collee au milieu de la ra
 }
 void bkMessage(const char* m) { strncpy(bkMsg, m, sizeof(bkMsg) - 1); bkMsg[sizeof(bkMsg) - 1] = 0; bkMsgT = 1.2f; }
 void startBreakout() {
-  bkLevel = 0; bkScore = 0; bkLives = 3; bkOver = false;
+  bkLevel = 0; bkScore = 0; bkLives = bqMini && bqMiniVies ? bqMiniVies : 3; bkOver = false; bqMiniReset();
   bkPW = bkWTarget = 48; bkPX = SCREEN_W / 2 - bkPW / 2;
   bkSizeT = bkStickyT = bkPierceT = bkSpdT = 0; bkSpdMul = 1; bkHoldT = 0; bkMsgT = 0;
   for (int i = 0; i < BK_MAXC; i++) bkC[i].on = false;
   bkBest = prefs.getUInt("bkbest", 0);
   bkLoadLevel(); bkServe();
-  bkMessage("NIVEAU 1");
+  bkMessage(bqMini && bqTitre[0] ? bqTitre : "NIVEAU 1");
   state = ST_BRICK;
 }
 void bkLaunch(int bi) {                   // part vers le haut, angle selon la position sur la raquette
@@ -1937,7 +1963,7 @@ int bkHit(float x, float y) {      // 0 rien, 1 brique (cassee / abimee), 2 acie
   bkScore += 10;
   if (bkHp[r][c] == 0) {
     bkBricks--; bkScore += 10;
-    if (random(0, 100) < 22) for (int i = 0; i < BK_MAXC; i++) if (!bkC[i].on) {
+    if ((!bqMini || bqMiniBonus) && random(0, 100) < 22) for (int i = 0; i < BK_MAXC; i++) if (!bkC[i].on) {
       uint8_t w = random(0, 100), t;            // tirage pondere : bonus plus frequents que les pieges
       t = w < 18 ? PU_MULTI : w < 34 ? PU_LONG : w < 46 ? PU_STICKY : w < 58 ? PU_PIERCE : w < 70 ? PU_SLOW :
           w < 82 ? PU_SHORT : w < 94 ? PU_FAST : PU_LIFE;
@@ -1964,7 +1990,7 @@ uint16_t bkCapCol(uint8_t t) {
 }
 void drawBreakout() {
   for (int sTop = 0; sTop < SCREEN_H; sTop += STRIP_H) {
-    fb.fillRect(0, 0, SCREEN_W, STRIP_H, COL_BG);
+    fb.fillRect(0, 0, SCREEN_W, STRIP_H, bqBg());
     for (int r = 0; r < BK_ROWS; r++) {
       int y = BK_Y0 + r * (BK_H + 2) - sTop; if (y < -BK_H || y > STRIP_H) continue;
       for (int c = 0; c < BK_COLS; c++) if (bkHp[r][c]) {
@@ -1994,14 +2020,15 @@ void drawBreakout() {
     fb.setCursor(120, 6 - sTop); fb.print("NIV "); fb.print(bkLevel + 1);
     fb.setCursor(180, 6 - sTop); fb.print("REC "); fb.print(bkBest);
     for (int i = 0; i < bkLives && i < 6; i++) fb.fillCircle(SCREEN_W - 10 - i * 10, 9 - sTop, 3, COL_MEAT);
-    if (bkMsgT > 0 || bkOver) {
+    if (bqMiniWin) bqMiniFin(sTop);
+    else if (bkMsgT > 0 || bkOver) {
       const char* m = bkOver ? "PERDU !" : bkMsg;
       fb.setTextSize(2); fb.setTextColor(COL_STAR);
       fb.setCursor(SCREEN_W / 2 - (int)strlen(m) * 6, 150 - sTop); fb.print(m);
       if (bkOver) { fb.setTextSize(1); fb.setTextColor(COL_TXT); fb.setCursor(96, 176 - sTop); fb.print("P3 = retour a l'accueil"); }
     }
     bool anyStuck = false; for (int i = 0; i < BK_MAXB; i++) if (bkB[i].on && bkB[i].stuck) anyStuck = true;
-    if (anyStuck && !bkOver) { fb.setTextSize(1); fb.setTextColor(tft.color565(150, 160, 180)); fb.setCursor(70, 200 - sTop); fb.print("P3 = lancer   (maintenir = quitter)"); }
+    if (anyStuck && !bkOver && !bqMiniWin) { fb.setTextSize(1); fb.setTextColor(tft.color565(150, 160, 180)); fb.setCursor(70, 200 - sTop); fb.print("P3 = lancer   (maintenir = quitter)"); }
     dBlitPlain(sTop);
   }
 }
@@ -2012,7 +2039,7 @@ bool breakoutStep(bool bLeft, bool br, bool bj, bool eJ) {
   float dt = (now - lastMs) / 1000.0f; lastMs = now;
   if (dt <= 0 || dt > 0.045f) dt = 0.02f;
 
-  if (bkOver) { if (eJ) return false; drawBreakout(); return true; }
+  if (bkOver || bqMiniWin) { if (eJ) return false; drawBreakout(); return true; }
   if (bj) { bkHoldT += dt; if (bkHoldT > 1.5f) return false; } else bkHoldT = 0;
 
   // raquette (taille qui glisse vers la cible)
@@ -2069,15 +2096,16 @@ bool breakoutStep(bool bLeft, bool br, bool bj, bool eJ) {
   }
 
   if (alive == 0) {                         // plus de balle : une vie de moins
-    bkLives--;
+    bkLives--; bqMiniPerdues++;
     bkWTarget = 48; bkSizeT = bkStickyT = bkPierceT = 0; if (bkSpdT > 0) { bkSpdT = 0; bkSpdMul = 1; }
     for (int i = 0; i < BK_MAXC; i++) bkC[i].on = false;
     if (bkLives <= 0) {
       bkOver = true;
-      if ((uint32_t)bkScore > bkBest) { bkBest = bkScore; prefs.putUInt("bkbest", bkBest); }
+      if (!bqMini && (uint32_t)bkScore > bkBest) { bkBest = bkScore; prefs.putUInt("bkbest", bkBest); }
     } else { bkServe(); bkMessage("BALLE PERDUE"); }
   }
   if (bkBricks <= 0) {                      // niveau fini
+    if (bqMini) { bqMiniGagne(); drawBreakout(); return true; }   // BRIQUE : un seul niveau, celui de l'enfant
     if (checkpointActive) { checkpointWin(); return true; }   // palier bonus : gagner = on passe tout de suite, pas besoin de perdre
     bkLevel++; bkScore += 100;
     for (int i = 0; i < BK_MAXC; i++) bkC[i].on = false;
@@ -2110,6 +2138,7 @@ int invScore, invLives, invWave;
 uint32_t invBest;
 bool invOver;
 float invFireT, invEFireT;
+int invN0;                                  // envahisseurs au debut de la vague (le groupe accelere a mesure qu'il se vide)
 
 int invOX() { return (SCREEN_W - (INV_COLS * (INV_AW + INV_GAPX) - INV_GAPX)) / 2; }
 int invAlienX(int c) { return invOX() + c * (INV_AW + INV_GAPX) + (int)invGX; }
@@ -2117,13 +2146,14 @@ int invAlienY(int r) { return 24 + r * (INV_AH + INV_GAPY) + (int)invGY; }
 int invAliveCount() { int n = 0; for (int r = 0; r < INV_ROWS; r++) for (int c = 0; c < INV_COLS; c++) if (invAlive[r][c]) n++; return n; }
 
 void invLoadWave() {
-  for (int r = 0; r < INV_ROWS; r++) for (int c = 0; c < INV_COLS; c++) invAlive[r][c] = true;
+  for (int r = 0; r < INV_ROWS; r++) for (int c = 0; c < INV_COLS; c++) invAlive[r][c] = !bqMini || bqMiniRows[r][c] == 'E';   // BRIQUE : la formation de l'enfant
+  invN0 = invAliveCount();
   invGX = 0; invGY = 0; invDirX = 1;
-  invSpeed = 28.0f + invWave * 5.0f;
+  invSpeed = (28.0f + invWave * 5.0f) * (bqMini ? bqMiniVit : 1);
   for (int i = 0; i < INV_MAXEB; i++) invEB[i].on = false;
 }
 void startInvaders() {
-  invScore = 0; invLives = 3; invWave = 0; invOver = false;
+  invScore = 0; invLives = bqMini && bqMiniVies ? bqMiniVies : 3; invWave = 0; invOver = false; bqMiniReset();
   invShipX = SCREEN_W / 2 - 8;
   for (int i = 0; i < INV_MAXPB; i++) invPB[i].on = false;
   invFireT = 0; invEFireT = 0.6f;
@@ -2156,26 +2186,28 @@ void drawInvaderSprite(int x, int y, int type, uint16_t col) {
 
 void drawInvaders() {
   for (int sTop = 0; sTop < SCREEN_H; sTop += STRIP_H) {
-    fb.fillRect(0, 0, SCREEN_W, STRIP_H, COL_BG);
+    fb.fillRect(0, 0, SCREEN_W, STRIP_H, bqBg());
     for (int r = 0; r < INV_ROWS; r++) {
       int y = invAlienY(r) - sTop; if (y < -INV_AH || y > STRIP_H) continue;
       int type = (r == 0) ? 0 : (r < INV_ROWS - 1 ? 1 : 2);
       uint16_t col = (type == 0) ? tft.color565(90, 220, 255) : (type == 1 ? tft.color565(255, 110, 200) : COL_GOAL);
       for (int c = 0; c < INV_COLS; c++) {
         if (!invAlive[r][c]) continue;
-        drawInvaderSprite(invAlienX(c), y, type, col);
+        if (bqIcon(3)) drawIcon(3, invAlienX(c) + 2, y - 2, false);   // BRIQUE : icone ennemi choisie sur la page
+        else drawInvaderSprite(invAlienX(c), y, type, col);
       }
     }
     for (int i = 0; i < INV_MAXPB; i++) if (invPB[i].on) fb.fillRect((int)invPB[i].x - 1, (int)invPB[i].y - sTop - 5, 2, 7, COL_TXT);
     for (int i = 0; i < INV_MAXEB; i++) if (invEB[i].on) fb.fillRect((int)invEB[i].x - 1, (int)invEB[i].y - sTop - 5, 2, 7, COL_MEAT);
-    fb.fillRoundRect((int)invShipX, SCREEN_H - 20 - sTop, 16, 8, 2, COL_GOAL);
-    fb.fillRect((int)invShipX + 6, SCREEN_H - 24 - sTop, 4, 4, COL_GOAL);
+    if (bqIcon(0)) drawIcon(0, (int)invShipX, SCREEN_H - 26 - sTop, false);   // BRIQUE : icone heros = le vaisseau
+    else { fb.fillRoundRect((int)invShipX, SCREEN_H - 20 - sTop, 16, 8, 2, COL_GOAL); fb.fillRect((int)invShipX + 6, SCREEN_H - 24 - sTop, 4, 4, COL_GOAL); }
     fb.setTextSize(1); fb.setTextColor(COL_TXT);
     fb.setCursor(4, 6 - sTop); fb.print("SCORE "); fb.print(invScore);
     fb.setCursor(120, 6 - sTop); fb.print("VAGUE "); fb.print(invWave + 1);
     fb.setCursor(220, 6 - sTop); fb.print("REC "); fb.print(invBest);
     for (int i = 0; i < invLives && i < 6; i++) fb.fillTriangle(SCREEN_W - 14 - i * 14, 14 - sTop, SCREEN_W - 20 - i * 14, 20 - sTop, SCREEN_W - 8 - i * 14, 20 - sTop, COL_GOAL);
-    if (invOver) {
+    if (bqMiniWin) bqMiniFin(sTop);
+    else if (invOver) {
       fb.setTextSize(3); fb.setTextColor(COL_MEAT);
       fb.setCursor(70, 100 - sTop); fb.print("PERDU !");
       fb.setTextSize(1); fb.setTextColor(COL_TXT);
@@ -2193,7 +2225,7 @@ bool invadersStep(bool bLeft, bool br, bool bj, bool eJ) {
   float dt = (now - lastMs) / 1000.0f; lastMs = now;
   if (dt <= 0 || dt > 0.045f) dt = 0.02f;
 
-  if (invOver) { if (eJ) return false; drawInvaders(); return true; }
+  if (invOver || bqMiniWin) { if (eJ) return false; drawInvaders(); return true; }
   static float invHoldT = 0;
   if (bj) { invHoldT += dt; if (invHoldT > 1.5f) return false; } else invHoldT = 0;   // maintenir P3 1,5s = quitter (comme le casse-brique)
 
@@ -2212,11 +2244,12 @@ bool invadersStep(bool bLeft, bool br, bool bj, bool eJ) {
 
   int alive = invAliveCount();
   if (alive == 0) {                           // vague terminee -> la suivante, un peu plus dure
+    if (bqMini && invWave + 1 >= bqMiniVagues) { bqMiniGagne(); drawInvaders(); return true; }   // BRIQUE : toutes les vagues demandees
     if (checkpointActive) { checkpointWin(); return true; }   // palier bonus : vague gagnee = on passe tout de suite
     invWave++; invScore += 50;
     invLoadWave();
   } else {
-    float mul = 1.0f + (INV_ROWS * INV_COLS - alive) * 0.05f;
+    float mul = 1.0f + (invN0 - alive) * 0.05f;
     invGX += invDirX * invSpeed * mul * dt;
     int lc = -1, rc = -1;                     // colonnes vivantes la plus a gauche/droite
     for (int c = 0; c < INV_COLS; c++) for (int r = 0; r < INV_ROWS; r++) if (invAlive[r][c]) { if (lc < 0) lc = c; rc = c; break; }
@@ -2226,7 +2259,7 @@ bool invadersStep(bool bLeft, bool br, bool bj, bool eJ) {
     }
     invEFireT -= dt;
     if (invEFireT <= 0) {
-      invEFireT = max(0.35f, 1.3f - invWave * 0.08f);
+      invEFireT = max(0.35f, 1.3f - invWave * 0.08f) * (!bqMini || bqMiniDiff == 2 ? 1.0f : bqMiniDiff == 1 ? 1.5f : 0.65f);   // BRIQUE : facile = tirs plus rares
       int tries = 0, c = random(0, INV_COLS);
       while (tries++ < INV_COLS) {
         int bottomR = -1;
@@ -2240,7 +2273,7 @@ bool invadersStep(bool bLeft, bool br, bool bj, bool eJ) {
     }
     for (int r = INV_ROWS - 1; r >= 0; r--) for (int c = 0; c < INV_COLS; c++) if (invAlive[r][c] && invAlienY(r) + INV_AH >= SCREEN_H - 24) {
       invOver = true;                          // un envahisseur a atteint le vaisseau
-      if ((uint32_t)invScore > invBest) { invBest = invScore; prefs.putUInt("invbest", invBest); }
+      if (!bqMini && (uint32_t)invScore > invBest) { invBest = invScore; prefs.putUInt("invbest", invBest); }
     }
     // tirs joueur vs envahisseurs
     for (int i = 0; i < INV_MAXPB; i++) {
@@ -2258,10 +2291,10 @@ bool invadersStep(bool bLeft, bool br, bool bj, bool eJ) {
   for (int i = 0; i < INV_MAXEB; i++) {
     if (!invEB[i].on) continue;
     if (invEB[i].x >= invShipX - 2 && invEB[i].x <= invShipX + 18 && invEB[i].y >= SCREEN_H - 22 && invEB[i].y <= SCREEN_H - 10) {
-      invEB[i].on = false; invLives--;
+      invEB[i].on = false; invLives--; bqMiniPerdues++;
       if (invLives <= 0) {
         invOver = true;
-        if ((uint32_t)invScore > invBest) { invBest = invScore; prefs.putUInt("invbest", invBest); }
+        if (!bqMini && (uint32_t)invScore > invBest) { invBest = invScore; prefs.putUInt("invbest", invBest); }
       }
     }
   }
@@ -5686,8 +5719,44 @@ void mpReset() {                                           // entree dans le sal
   myHelloCount = 0; lastHello = 0; lobbyWasPeer = false;
 }
 
+// BRIQUE : casse-brique (rows = 7 lignes de 10 : '.', '1'-'3' solidite, 'w' acier) ou invaders (4 lignes de 8 : '.', 'E')
+const char* bqMiniParse(const char* s, int jeu) {
+  const int H = jeu == 1 ? 7 : 4, W = jeu == 1 ? 10 : 8; const char* ok = jeu == 1 ? ".123w" : ".E";
+  const char* p = strstr(s, "\"rows\""); if (!p) return "pas de rows";
+  p = strchr(p, '['); if (!p) return "rows mal forme";
+  p++;
+  char tmp[7][11]; memset(tmp, '.', sizeof tmp); int h = 0, n = 0;
+  while (true) {
+    while (*p == ' ' || *p == ',') p++;
+    if (*p == ']') break;
+    if (*p != '"' || h >= H) return "rows mal forme";
+    p++;
+    int c = 0;
+    for (; *p && *p != '"'; p++, c++) { if (c >= W || !strchr(ok, *p)) return "brique inconnue"; tmp[h][c] = *p; n += *p != '.' && *p != 'w'; }
+    if (*p != '"') return "ligne non fermee";
+    p++; h++;
+  }
+  if (!n) return jeu == 1 ? "aucune brique a casser" : "aucun ennemi";
+  memcpy(bqMiniRows, tmp, sizeof tmp); bqMiniJeu = jeu;
+  const char* q = strstr(s, "\"params\""); if (!q) q = s;
+  bqMiniVit = bqNum(q, "\"vitesse\":", 0.6f, 1.6f); bqMiniVies = (int)bqNum0(q, "\"vies\":", 0, 9);
+  bqMiniVagues = max(1, (int)bqNum0(q, "\"vagues\":", 0, 9)); bqMiniDiff = (int)bqNum0(q, "\"difficulte\":", 0, 3); if (!bqMiniDiff) bqMiniDiff = 2;
+  bqMiniBonus = !strstr(q, "\"bonus\":false"); bqMiniFond = bqHex(q, "\"ciel\":");
+  jsonStr(s, "titre", bqTitre, sizeof bqTitre); jsonStr(s, "message", bqMsg, sizeof bqMsg);
+  return nullptr;
+}
+// lance le dernier jeu decode (briqueParse) : niveau de plateforme, casse-brique ou invaders
+void bqStart() {
+  if (!bqMiniJeu) { startLevel(CUSTOM_IDX, true); return; }
+  bqMini = bqMiniJeu;
+  if (bqMini == 1) startBreakout(); else startInvaders();
+}
+
 // BRIQUE : decode "rows" dans une ligne JSON. Renvoie nullptr si OK, sinon la raison (renvoyee a la page web).
 const char* briqueParse(const char* s) {
+  char jeu[10]; jsonStr(s, "jeu", jeu, sizeof jeu);
+  if (!strcmp(jeu, "briques") || !strcmp(jeu, "invaders")) return bqMiniParse(s, jeu[0] == 'b' ? 1 : 2);
+  bqMiniJeu = 0;
   const char* p = strstr(s, "\"rows\""); if (!p) return "pas de rows";
   p = strchr(p, '['); if (!p) return "rows mal forme";
   p++;
@@ -5762,6 +5831,7 @@ static const char* IC_K = "hegnd";        // heros, etoile, arrivee (goal), enne
 uint16_t icPx[5][256]; bool icUse[5];
 String icWait;                            // lignes "icone" recues, gardees en flash avec le niveau qui suit
 bool icOn(int k) { return curLevel == CUSTOM_IDX && icUse[k]; }
+bool bqIcon(int k) { return bqMini && icUse[k]; }   // casse-brique / invaders perso
 // ---- BRIQUE : questions de cours ecrites par l'animateur, posees a l'arrivee (ASCII : la police n'a pas d'accents) ----
 #define BQQ_MAX 10
 struct BqQ { char id[8]; char q[81]; char r[3][31]; uint8_t nr, b; };
@@ -5895,21 +5965,21 @@ void myLvStep(bool eL, bool eR, bool eJ) {
   if (myLvChoice == myLvN) { if (twoP) { state = ST_MODE; drawMode(); } else { homeChoice = 2; state = ST_HOME; drawHome(); } return; }
   if (twoP && !myLvCode[myLvChoice][0]) return;                         // course : seulement un jeu publie (les autres le retrouvent par son code)
   String s = briqueRead(myLvSlot[myLvChoice]);
-  if (!s.length() || briqueParse(s.c_str())) return;                    // fichier abime : on reste dans la liste
+  if (!s.length() || briqueParse(s.c_str()) || (twoP && bqMiniJeu)) return;   // fichier abime, ou casse-brique / invaders (pas de course a plusieurs) : on reste dans la liste
   extrasReset(); icParse(s.c_str()); qParse(s.c_str());
   if (twoP) {                                                           // hote : depart pour tous, avec le code du jeu
     raceCode = codeNum(myLvCode[myLvChoice]);
     for (int k = 0; k < 6; k++) { espSend(M_START, BRIQUE_SENTINEL, 0, 0, raceCode); delay(8); }
     beginRace(CUSTOM_IDX); return;
   }
-  startLevel(CUSTOM_IDX, true);
+  bqStart();
 }
 // invite : charge le jeu de Mes niveaux qui porte ce code (meme version que l'hote : un code = une version publiee)
 bool briqueLoadCode(uint32_t code) {
   if (!fsOk || !code) return false;
   char c[7]; codeTxt(code, c); char pat[16]; snprintf(pat, sizeof pat, "\"code\":\"%s\"", c);
   for (int i = 0; i < MYLV_MAX; i++) {
-    String s = briqueRead(i); if (!s.length() || !strstr(s.c_str(), pat) || briqueParse(s.c_str())) continue;
+    String s = briqueRead(i); if (!s.length() || !strstr(s.c_str(), pat) || briqueParse(s.c_str()) || bqMiniJeu) continue;
     extrasReset(); icParse(s.c_str()); qParse(s.c_str()); raceCode = code; return true;
   }
   return false;
@@ -5969,7 +6039,7 @@ void briquePoll() {
     if (!icWait.length()) extrasReset();                                // niveau sans icones ni questions : comme d'origine
     briqueSave(buf, icWait); icWait = "";
     dSpiStop(); tft.setSPISpeed(40000000);                              // comme worldQuit() : on peut arriver du menu de fin d'un monde (DMA)
-    startLevel(CUSTOM_IDX, true);
+    bqStart();
   }
 }
 
@@ -6381,10 +6451,10 @@ void loop() {
       if (eJ || eL || eR) { state = ST_SELECT; drawSelect(); }
       break;
     case ST_BRICK:
-      if (!breakoutStep(bL, bR, bJ, eJ)) { prevJump = true; checkpointFinish(); }
+      if (!breakoutStep(bL, bR, bJ, eJ)) { prevJump = true; bqMini = 0; checkpointFinish(); }
       break;
     case ST_INVADERS:
-      if (!invadersStep(bL, bR, bJ, eJ)) { prevJump = true; checkpointFinish(); }
+      if (!invadersStep(bL, bR, bJ, eJ)) { prevJump = true; bqMini = 0; checkpointFinish(); }
       break;
     case ST_SAMU:
       if (!samuraiStep(bL, bR, bJ, eJ)) { prevJump = true; dSpiStop(); tft.setSPISpeed(40000000); state = ST_MODE; drawMode(); }

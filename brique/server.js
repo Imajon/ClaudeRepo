@@ -305,8 +305,8 @@ const serveur = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
   }
-  const img = req.method === 'GET' && url.match(/^\/images\/(console-v2|bouton1|bouton2)\.jpg$/);   // photos de la boutique
-  if (img) {
+  const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.jpg$/);   // photos du site (nom simple : pas de chemin)
+  if (img && fs.existsSync(path.join(__dirname, 'images', img[1] + '.jpg'))) {
     res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'images', img[1] + '.jpg')).pipe(res);
   }
   const fw = req.method === 'GET' && url.match(/^\/firmware\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);

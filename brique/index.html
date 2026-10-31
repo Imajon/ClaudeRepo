@@ -8,19 +8,23 @@
      Génération SIMULÉE en local (mots-clés -> paramètres -> niveau). Le format de niveau est celui du firmware :
      lignes de 20 caractères, tuiles . # S G * R ^ W C I (cf. hand_levels.txt). -->
 <style>
-/* thème clair par défaut (lisible) ; thème sombre "HUD de jeu" au choix (bouton 🌙, gardé dans le navigateur) */
-:root{--bg:#f6f4fb;--panel:#ffffff;--panel2:#f1edfa;--txt:#1d1638;--mute:#625a85;--acc:#6d28d9;--acc2:#0e7490;--hot:#b45309;--ok:#15803d;--ko:#dc2626;--line:#ddd5f2;
-      --glow:0 0 0 1px #e4ddf6 inset,0 1px 3px rgba(40,25,90,.06);--surface:#fff;--head:rgba(255,255,255,.88);--soft:#f6f3fd;--soft2:#ece6fa;
-      --onacc:#fff;--chipon:#ede5ff;--brille:none;--deco:none;color-scheme:light}
-:root[data-theme="dark"]{--bg:#0c0820;--panel:#1a1238;--panel2:#241a4c;--txt:#f1ecff;--mute:#a79dd2;--acc:#a78bfa;--acc2:#22d3ee;--hot:#ffcc33;--ok:#4ade80;--ko:#f87171;--line:#3b2c78;
-      --glow:0 0 0 1px #4d3a9e inset,0 0 26px rgba(139,92,246,.16);--surface:linear-gradient(180deg,rgba(46,31,100,.55),rgba(22,15,48,.9));--head:rgba(12,8,32,.7);
-      --soft:rgba(255,255,255,.04);--soft2:rgba(255,255,255,.09);--onacc:#160c33;--chipon:#2f2266;--brille:0 0 12px rgba(34,211,238,.5);color-scheme:dark;
-      --deco:radial-gradient(1100px 520px at 50% -8%,#2b1a66 0,transparent 65%),linear-gradient(rgba(120,90,220,.05) 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,rgba(120,90,220,.05) 1px,transparent 1px) 0 0/32px 32px}
+/* style "circuit imprimé" : vert de masque de soudure, pastilles cuivre, pistes en fond, étiquettes façon sérigraphie.
+   Thème clair par défaut ; thème sombre (carte nue, vert profond) au choix : bouton 🌙, gardé dans le navigateur */
+:root{--bg:#f3f6f1;--panel:#ffffff;--panel2:#eef4ec;--txt:#13241a;--mute:#55675b;--acc:#0b7a41;--acc2:#a8641b;--hot:#b45309;--ok:#15803d;--ko:#dc2626;--line:#d3e1d1;
+      --glow:0 0 0 1px #d9e6d6 inset,0 1px 3px rgba(20,60,30,.07);--surface:#fff;--head:rgba(255,255,255,.9);--soft:#f4f8f2;--soft2:#e5eee2;
+      --onacc:#fff;--chipon:#e0f2e5;--brille:none;--pad:#c99a3c;--mono:ui-monospace,"Cascadia Mono",Consolas,monospace;color-scheme:light;
+      --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' fill='none' stroke='rgba(11,122,65,.07)' stroke-width='2'%3E%3Cpath d='M0 44h64l22 22h70l22-22h42M44 220v-54l22-22V88M150 0v34l22 22v44l-22 22v98M0 160h24l22 22h48M110 220v-30l18-18h92'/%3E%3Cg fill='rgba(11,122,65,.07)' stroke='none'%3E%3Ccircle cx='66' cy='144' r='5'/%3E%3Ccircle cx='150' cy='34' r='5'/%3E%3Ccircle cx='94' cy='182' r='5'/%3E%3Ccircle cx='128' cy='172' r='4'/%3E%3C/g%3E%3Ccircle cx='172' cy='100' r='7'/%3E%3Ccircle cx='86' cy='66' r='6'/%3E%3C/svg%3E") 0 0/220px 220px}
+:root[data-theme="dark"]{--bg:#07130c;--panel:#0e2116;--panel2:#13301f;--txt:#e6f4ea;--mute:#93b29e;--acc:#3ddc84;--acc2:#e3b55a;--hot:#ffcc33;--ok:#4ade80;--ko:#f87171;--line:#1f4a31;
+      --glow:0 0 0 1px #1d4a2f inset,0 0 24px rgba(61,220,132,.07);--surface:linear-gradient(180deg,#0f2618,#0b1c12);--head:rgba(7,19,12,.82);
+      --soft:rgba(255,255,255,.04);--soft2:rgba(255,255,255,.08);--onacc:#04210f;--chipon:#173d27;--brille:0 0 12px rgba(227,181,90,.45);--pad:#e3b55a;color-scheme:dark;
+      --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' fill='none' stroke='rgba(61,220,132,.07)' stroke-width='2'%3E%3Cpath d='M0 44h64l22 22h70l22-22h42M44 220v-54l22-22V88M150 0v34l22 22v44l-22 22v98M0 160h24l22 22h48M110 220v-30l18-18h92'/%3E%3Cg fill='rgba(61,220,132,.07)' stroke='none'%3E%3Ccircle cx='66' cy='144' r='5'/%3E%3Ccircle cx='150' cy='34' r='5'/%3E%3Ccircle cx='94' cy='182' r='5'/%3E%3Ccircle cx='128' cy='172' r='4'/%3E%3C/g%3E%3Ccircle cx='172' cy='100' r='7'/%3E%3Ccircle cx='86' cy='66' r='6'/%3E%3C/svg%3E") 0 0/220px 220px}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;color:var(--txt);font:16px/1.45 system-ui,"Segoe UI",sans-serif;background:var(--deco),var(--bg)}
 header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--head);position:sticky;top:0;z-index:5;backdrop-filter:blur(6px);flex-wrap:wrap}
 .theme{width:40px;height:40px;padding:0;font-size:18px;flex:none}
-header h1{margin:0;font-size:24px;letter-spacing:3px}
+header h1{margin:0;font:800 22px/1 var(--mono);letter-spacing:4px;padding:8px 12px;border:2px solid var(--acc);border-radius:6px;position:relative}   /* le logo comme une puce : bord et pattes */
+header h1::before,header h1::after{content:"";position:absolute;left:8px;right:8px;height:4px;background:repeating-linear-gradient(90deg,var(--pad) 0 4px,transparent 4px 9px)}
+header h1::before{top:-6px}header h1::after{bottom:-6px}
 header h1 span{color:var(--acc)}
 header .pseudo{margin-left:auto}
 header .mode{margin-left:0}
@@ -29,7 +33,13 @@ header .mode{margin-left:0}
 .mode button.on{background:var(--acc);color:var(--onacc);font-weight:700}
 main{display:grid;grid-template-columns:340px 1fr 320px;gap:16px;padding:16px;align-items:start}
 @media (max-width:1100px){main{grid-template-columns:minmax(0,1fr)}}
-section{background:var(--surface);border-radius:14px;padding:18px;box-shadow:var(--glow)}
+section{background:var(--surface);border-radius:14px;padding:18px;box-shadow:var(--glow);position:relative}
+section::after{content:"";position:absolute;inset:7px;pointer-events:none;border-radius:8px;   /* trous de fixation cuivrés aux 4 coins, comme sur la carte */
+  background:radial-gradient(circle,transparent 0 2px,var(--pad) 2.5px 4px,transparent 4.5px) 0 0/10px 10px no-repeat,radial-gradient(circle,transparent 0 2px,var(--pad) 2.5px 4px,transparent 4.5px) 100% 0/10px 10px no-repeat,
+             radial-gradient(circle,transparent 0 2px,var(--pad) 2.5px 4px,transparent 4.5px) 0 100%/10px 10px no-repeat,radial-gradient(circle,transparent 0 2px,var(--pad) 2.5px 4px,transparent 4.5px) 100% 100%/10px 10px no-repeat;opacity:.7}
+.ref{font:700 11px/1 var(--mono);letter-spacing:1px;color:var(--acc2);text-transform:uppercase}   /* repère de sérigraphie : U1, SW1, IA… */
+main>section{counter-increment:u}main{counter-reset:u}
+main>section>h2::before{content:"U" counter(u);font:700 11px/1 var(--mono);color:var(--acc2);border:1px solid currentColor;border-radius:3px;padding:3px 5px;margin-right:8px;vertical-align:3px}
 h2{margin:0 0 12px;font-size:17px;font-weight:700;color:var(--txt)}
 h2 b{color:var(--acc);margin-right:6px}
 h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
@@ -43,12 +53,29 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .commu .c-class,.commu .c-new{grid-column:span 6}           /* classement et nouveaux niveaux : même taille, même hauteur, se replient ensemble */
 .commu .c-class .liste,.commu .c-new .cartes{max-height:520px;overflow:auto}
 @media (max-width:1000px){.commu>section,.commu .c-class,.commu .c-new{grid-column:1/-1}}
+.commu .c-intro{grid-column:1/-1}
+.intro-titre{margin:6px 0 16px;font-size:clamp(26px,4vw,40px);font-weight:800;line-height:1.1}
+.etapes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;position:relative}
+.etapes::before{content:"";position:absolute;left:8%;right:8%;top:84px;height:3px;z-index:0;   /* piste de cuivre qui relie les étapes, avec ses vias */
+  background:radial-gradient(circle,var(--pad) 0 5px,transparent 5.5px) 0 50%/16.66% 14px repeat-x,linear-gradient(var(--pad),var(--pad)) 0 50%/100% 3px no-repeat;opacity:.55}
+.etape{position:relative;z-index:1;display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:14px;background:var(--panel);box-shadow:var(--glow)}
+.etape>img,.ia-demo{width:100%;height:168px;max-height:none;object-fit:cover;border-radius:10px;display:block}
+.etape>img.blanc{object-fit:contain;background:#fff}
+.etape h3{margin:0;font-size:18px;color:var(--txt)}
+.etape p{margin:0;color:var(--mute);font-size:14px}
+.ia-demo{display:grid;grid-template-columns:1fr auto 64px;align-items:center;gap:10px;padding:12px;background:#0b1a11;color:#d9f5e3}
+.ia-demo .bulle{font:13px/1.35 var(--mono);background:#13301f;border-radius:10px 10px 10px 2px;padding:10px}
+.ia-demo .puce{font:800 13px var(--mono);padding:10px 8px;border:2px solid #3ddc84;border-radius:6px;color:#3ddc84;position:relative;box-shadow:0 0 14px rgba(61,220,132,.35)}
+.ia-demo .puce::before,.ia-demo .puce::after{content:"";position:absolute;top:6px;bottom:6px;width:4px;background:repeating-linear-gradient(#e3b55a 0 3px,transparent 3px 7px)}
+.ia-demo .puce::before{left:-7px}.ia-demo .puce::after{right:-7px}
+.ia-demo .mini{width:64px;height:144px;object-fit:cover;object-position:bottom;background:linear-gradient(#3a0b0b,#a8361a);border-radius:4px}
+@media (max-width:800px){.etapes{grid-template-columns:minmax(0,1fr)}.etapes::before{display:none}}
 .bande{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,2fr);gap:12px}
 @media (max-width:800px){.bande{grid-template-columns:repeat(3,minmax(0,1fr))}.bande .actifs{grid-column:1/-1}.tuile{padding:10px}.tuile>b{font-size:26px}.tuile>span{font-size:11px;letter-spacing:0}}
 header nav.mode{max-width:100%;overflow-x:auto}   /* téléphone : le menu défile au lieu d'élargir la page */
 .tuile{padding:12px 16px;border-radius:12px;background:var(--soft);box-shadow:var(--glow);min-width:0}
-.tuile>b{display:block;font-size:34px;line-height:1.1;color:var(--acc2);text-shadow:var(--brille)}
-.tuile>span{font-size:13px;color:var(--mute);text-transform:uppercase;letter-spacing:1px}
+.tuile>b{display:block;font:700 34px/1.1 var(--mono);color:var(--acc2);text-shadow:var(--brille)}
+.tuile>span{font:12px var(--mono);color:var(--mute);text-transform:uppercase;letter-spacing:1px}
 .tuile.actifs .liste{margin-top:6px;max-height:112px;overflow:auto;gap:4px}
 .tuile.actifs .rang{padding:4px 8px}
 .cta{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -105,12 +132,13 @@ dialog::backdrop{background:rgba(5,2,15,.7)}
 textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
 textarea:focus{outline:none;border-color:var(--acc)}
 .big{width:100%;margin-top:12px;border:0;border-radius:14px;padding:14px;font:inherit;font-size:19px;font-weight:800;cursor:pointer;color:#fff;
-     background:linear-gradient(90deg,#8b5cf6,#6d28d9);box-shadow:0 0 22px rgba(139,92,246,.45)}
+     background:linear-gradient(90deg,#11904f,#0a6a37);box-shadow:0 4px 18px rgba(11,122,65,.35)}
 .big.alt{background:none;color:var(--txt);box-shadow:var(--glow)}
 .big:disabled{opacity:.5;cursor:wait}
 .sec{border:2px solid var(--line);background:none;color:var(--txt);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer}
 .sec:hover{border-color:var(--acc)}
-.compris{margin-top:12px;padding:10px;border-radius:12px;background:var(--panel2);font-size:14px;min-height:40px}
+.compris{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--panel2);font:13px/1.5 var(--mono);min-height:40px;border-left:3px solid var(--acc)}   /* réponse de l'IA, façon console */
+.compris::before{content:"IA › ";font-weight:800;color:var(--acc)}
 .compris b{color:var(--ok)}
 .cat{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px}
 .cat div{background:var(--panel2);border-radius:8px;padding:6px 8px}
@@ -147,7 +175,13 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .icDrop.sur{border-color:var(--acc);color:var(--txt)}
 /* ----- boutique : présentation épurée ----- */
 .shop{display:block;max-width:860px;margin:0 auto;padding:0 16px 80px;text-align:center}
-.sh-hero{padding:32px 0 40px}
+.sh-hero{padding:28px 0 0;position:relative;z-index:1}
+.sh-apres{padding:8px 0 40px}
+:root:not([data-theme="dark"]) .sh-photo{margin-top:-34px}   /* la photo remonte sous le titre (sur blanc seulement : en sombre le texte clair disparaîtrait) */
+.sh-kit{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;text-align:left}
+.sh-kit figure{margin:0;border-radius:14px;overflow:hidden;background:var(--panel);box-shadow:var(--glow)}
+.sh-kit img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+.sh-kit figcaption{padding:10px 12px;font-weight:600;display:flex;flex-direction:column;gap:4px}
 .sh-photo{width:100vw;margin:0 0 0 calc(50% - 50vw);background:#fff;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,3.2fr) minmax(0,1fr);align-items:center;gap:2vw;padding:0 3vw}   /* à fond perdu : bande blanche bord à bord, blanc sur blanc */
 .sh-photo img{display:block;width:100%;height:auto}
 .sh-console{max-width:1205px;justify-self:center}
@@ -218,6 +252,34 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== ACCUEIL : ce qui se passe dans la communauté ===== -->
 <main id="commu" class="commu">
+  <!-- ce qui fait Brique : on soude soi-même, l'IA aide à créer. Trois étapes reliées par une piste de circuit -->
+  <section class="c-intro">
+    <div class="intro-txt">
+      <span class="ref">Kit à souder · IA · USB</span>
+      <p class="intro-titre">Soude ta console.<br>Invente ton jeu avec l'IA.</p>
+    </div>
+    <div class="etapes">
+      <article class="etape">
+        <img src="images/souder.jpg" alt="Un bouton poussoir soudé sur le circuit vert de la console" width="900" height="720">
+        <span class="ref">Étape 1 · SW1</span><h3>Je soude ma console</h3>
+        <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p>
+      </article>
+      <article class="etape">
+        <div class="ia-demo" aria-hidden="true">
+          <div class="bulle">« un volcan très haut avec des scies »</div>
+          <div class="puce">IA</div>
+          <img id="iaDemo" class="mini" alt="">
+        </div>
+        <span class="ref">Étape 2 · IA</span><h3>Je décris, l'IA construit</h3>
+        <p>Une phrase suffit. L'IA règle le niveau, je regarde, je corrige, je recommence : c'est moi qui décide.</p>
+      </article>
+      <article class="etape">
+        <img src="images/console-v2.jpg" alt="La console Brique terminée" width="1205" height="880" class="blanc">
+        <span class="ref">Étape 3 · USB</span><h3>Je joue et je partage</h3>
+        <p>Le jeu part dans la console par le câble USB. Un code le partage aux copains, pour jouer jusqu'à 4.</p>
+      </article>
+    </div>
+  </section>
   <!-- bandeau du haut : les chiffres et qui joue en ce moment, sur toute la largeur -->
   <section class="c-stats">
     <div id="atelierBan" class="atelierBan hide"></div>
@@ -250,17 +312,30 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
 <main id="boutique" class="shop hide">
-  <!-- en premier : la console entre deux boutons poussoirs, à fond perdu (blanc sur blanc) ; le texte vient dessous -->
+  <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
+  <div class="sh-hero">
+    <p class="sh-sur">Console Brique · kit à souder + IA</p>
+    <h2 class="sh-titre">Le jeu que tu inventes.<br>Dans ta main.</h2>
+  </div>
   <figure class="sh-photo">
     <img class="sh-bouton" src="images/bouton1.jpg" alt="Un bouton poussoir, vu de dessus" width="463" height="337">
     <img class="sh-console" src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
     <img class="sh-bouton" src="images/bouton2.jpg" alt="Un bouton poussoir, vu de dessous avec ses quatre pattes" width="471" height="330">
   </figure>
-  <div class="sh-hero">
-    <p class="sh-sur">Console Brique</p>
-    <h2 class="sh-titre">Le jeu que tu inventes.<br>Dans ta main.</h2>
-    <p class="sh-sous">Crée ton jeu ici, envoie-le dans la console, joue partout.</p>
+  <div class="sh-apres">
+    <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA le construit : il part dans la console par le câble USB.</p>
     <p id="btDepuis" class="sh-prix">À partir de 28 €</p>
+  </div>
+
+  <div class="sh-bloc">
+    <h3 class="sh-h">Dans le kit</h3>
+    <div class="sh-kit">
+      <figure><img src="images/pcb.jpg" alt="Le circuit imprimé hexagonal, encore nu" width="900" height="675" loading="lazy"><figcaption><span class="ref">PCB1</span>Le circuit hexagonal</figcaption></figure>
+      <figure><img src="images/esp32.jpg" alt="Le module ESP32-C3 Super Mini, à peine plus grand qu'un bout de doigt" width="900" height="680" loading="lazy"><figcaption><span class="ref">U1</span>Le cerveau : ESP32-C3</figcaption></figure>
+      <figure><img src="images/boutons.jpg" alt="Des boutons poussoirs en vrac sur une table" width="900" height="750" loading="lazy"><figcaption><span class="ref">SW1-SW3</span>Les 3 boutons</figcaption></figure>
+      <figure><img src="images/connecteur.jpg" alt="Le connecteur de l'écran soudé sur la carte" width="900" height="720" loading="lazy"><figcaption><span class="ref">J1</span>Le connecteur de l'écran</figcaption></figure>
+    </div>
+    <p class="aide">Tout se soude à la main, en grosses pastilles : pensé pour une première soudure, dès 9 ans avec un adulte.</p>
   </div>
 
   <div class="sh-bloc">
@@ -313,13 +388,13 @@ body{overflow-x:clip}                                           /* la bande 100v
 <!-- ===== SUPPORT : notice d'assemblage et de prise en main ===== -->
 <main id="support" class="anim support hide">
   <section>
-    <h2><b>01</b>— La console Brique</h2>
+    <h2>La console Brique</h2>
     <p>Une console à souder soi-même : un ESP32-C3, un écran TFT 2" et 3 boutons. Une fois montée, elle fait tourner Pixel Run et reçoit par câble USB les niveaux créés ici.</p>
     <p><b>Console pré-soudée ?</b> Elle arrive montée et testée : passe directement au branchement USB et à l'envoi de ton premier jeu. Les étapes de soudure ci-dessous ne concernent que le kit.</p>
     <p class="aide">Environ 1 h 30 de montage pour un enfant accompagné (CM1 → 4ᵉ), puis 10 minutes pour la première programmation.</p>
   </section>
   <section>
-    <h2><b>02</b>— Matériel et outils</h2>
+    <h2>Matériel et outils</h2>
     <div class="tab"><table>
       <tr><th>Qté</th><th>Pièce</th><th>Détail</th></tr>
       <tr><td>1</td><td>ESP32-C3 Super Mini</td><td>Microcontrôleur, prise USB-C</td></tr>
@@ -334,7 +409,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p><b>Pour programmer :</b> un ordinateur avec Chrome ou Edge.</p>
   </section>
   <section>
-    <h2><b>03</b>— Assemblage pas à pas</h2>
+    <h2>Assemblage pas à pas</h2>
     <p>Câblage <b>standard</b>, celui du firmware principal : chaque fil relie une broche de l'écran ou d'un bouton à une broche de l'ESP32-C3.</p>
     <div class="tab"><table>
       <tr><th>Élément</th><th>Broche</th><th>ESP32-C3</th></tr>
@@ -362,7 +437,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ol>
   </section>
   <section>
-    <h2><b>04</b>— Premier démarrage</h2>
+    <h2>Premier démarrage</h2>
     <p>Une console d'atelier a déjà son firmware : on branche, l'écran titre s'affiche. Sinon, l'installer une fois depuis un ordinateur avec l'IDE Arduino 2 :</p>
     <ol>
       <li>Brancher la console en USB.</li>
@@ -372,7 +447,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p><b>À vérifier :</b> l'écran titre s'affiche dans le bon sens · Gauche/Droite déplacent le sélecteur · Saut valide · « 1 Joueur » lance le niveau 1.</p>
   </section>
   <section>
-    <h2><b>05</b>— Programmer sa console</h2>
+    <h2>Programmer sa console</h2>
     <p class="aide" style="margin-top:0">Chrome ou Edge sur ordinateur, IDE Arduino et moniteur série fermés, console sur l'accueil ou dans un menu.</p>
     <ol>
       <li><b>Créer</b> : onglet 🛠 Créer, choisir le monde, le héros, le danger, compléter par une phrase, puis ✨ Créer mon jeu.</li>
@@ -383,7 +458,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ol>
   </section>
   <section>
-    <h2><b>06</b>— Dépannage</h2>
+    <h2>Dépannage</h2>
     <div class="tab"><table>
       <tr><th>Symptôme</th><th>Cause probable</th><th>Solution</th></tr>
       <tr><td>Écran noir ou blanc</td><td>Fil SCL/SDA/DC/CS inversé, ou soudure sèche</td><td>Comparer au tableau, refaire les soudures de l'écran</td></tr>
@@ -632,33 +707,33 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p class="aide">Du CM1 à la 4ᵉ · par groupes de 8 à 30 · de 1 séance à un projet sur l'année.</p>
   </section>
   <div class="profs-grille">
-    <section><h2><b>01</b>— Atelier manuel</h2>
+    <section><h2>Atelier manuel</h2>
       <p>Chaque élève monte sa console : microcontrôleur ESP32-C3, écran couleur, trois boutons, soudure et assemblage du boîtier.</p>
       <p><b>Pas de soudure possible</b> (âge, matériel, temps) ? La console existe en <b>version pré-soudée</b>, montée et testée : l'atelier commence directement par la création.</p>
       <p class="aide">Comprendre ce qu'il y a dans un objet numérique, suivre un plan de montage, travailler avec soin et sécurité (lunettes, fer à souder encadré).</p></section>
-    <section><h2><b>02</b>— Personnalisation</h2>
+    <section><h2>Personnalisation</h2>
       <p>Le monde, le héros, les couleurs, les ennemis, le décor : chaque élève compose son univers, cherche ses images et nomme son jeu.</p>
       <p class="aide">Faire des choix esthétiques, chercher et sélectionner des images, présenter sa création aux autres.</p></section>
-    <section><h2><b>03</b>— Coder avec l'IA</h2>
+    <section><h2>Coder avec l'IA</h2>
       <p>L'élève décrit son jeu en français (« un volcan très haut avec des ressorts et 3 vies »). L'IA traduit en réglages, l'élève teste sur sa console, corrige sa demande, recommence.</p>
       <p class="aide">Formuler précisément, tester et corriger (démarche d'essai-erreur), regarder « sous le capot » le code produit, comprendre ce qu'une IA sait faire… et ce qu'elle ne sait pas : les demandes impossibles deviennent des « idées des joueurs ».</p></section>
-    <section><h2><b>04</b>— La couche pédagogique</h2>
+    <section><h2>La couche pédagogique</h2>
       <p>Dans l'<b>espace Animateur</b>, vous écrivez vos questions de cours (QCM, 2 ou 3 réponses). Elles sont <b>insérées d'office</b> dans tous les jeux du groupe : à l'arrivée, la console pose une question avant d'afficher la victoire, et montre la bonne réponse en cas d'erreur.</p>
       <p class="aide">Français, maths, anglais, histoire, sciences… La leçon devient la clé du jeu, révisée à chaque partie, y compris en jouant au jeu d'un camarade. Vous suivez le taux de bonnes réponses par question.</p></section>
-    <section><h2><b>05</b>— Mode atelier</h2>
+    <section><h2>Mode atelier</h2>
       <p>Le jour de l'atelier, activez le <b>mode atelier</b> du groupe et indiquez la matière du jour : vos élèves ne voient que les jeux de leur groupe (pas la communauté publique ni la boutique), et leurs créations restent privées au groupe.</p>
       <p class="aide">Une prof de français fait une séance de français, un prof de maths des maths : les jeux portent la leçon que vous avez choisie.</p></section>
-    <section><h2><b>06</b>— Déroulé type</h2>
+    <section><h2>Déroulé type</h2>
       <ol style="margin:0;padding-left:20px;line-height:1.6">
         <li><b>Séance 1</b> — montage et soudure de la console <span class="aide">(à sauter avec des consoles pré-soudées)</span>.</li>
         <li><b>Séance 2</b> — découverte : premier jeu guidé, envoi sur la console.</li>
         <li><b>Séance 3</b> — création libre avec l'IA, personnalisation, questions de cours.</li>
         <li><b>Séance 4</b> — publication, échange des jeux par code, courses à plusieurs.</li>
       </ol></section>
-    <section><h2><b>07</b>— Cadre et sécurité</h2>
+    <section><h2>Cadre et sécurité</h2>
       <p>Les élèves n'ont <b>ni compte ni adresse mail</b> : un pseudo et le code du groupe suffisent. Seul l'adulte se connecte (lien reçu par mail). Vous pouvez masquer un jeu, supprimer une idée, libérer un pseudo.</p>
       <p class="aide">Pas de nom, pas de photo, pas de messagerie entre élèves. Les textes affichés sur les consoles sont filtrés.</p></section>
-    <section><h2><b>08</b>— Pour commencer</h2>
+    <section><h2>Pour commencer</h2>
       <ol style="margin:0;padding-left:20px;line-height:1.6">
         <li>Ouvrez l'<b>espace Animateur</b> et créez un groupe : vous obtenez un code (ex. LUNE-42).</li>
         <li>Écrivez vos questions de cours et, si besoin, activez le mode atelier.</li>
@@ -671,14 +746,14 @@ body{overflow-x:clip}                                           /* la bande 100v
 <!-- ===== ESPACE ANIMATEUR ===== -->
 <main id="anim" class="anim hide">
   <section id="animConnexion">
-    <h2><b>01</b>— Espace animateur</h2>
+    <h2>Espace animateur</h2>
     <p class="aide" style="margin-top:0">Entre ton adresse mail : tu reçois un lien de connexion (pas de mot de passe). Les enfants, eux, ne donnent jamais de mail.</p>
     <div class="icRow"><input id="animMail" class="pseudo" type="email" placeholder="ton.adresse@exemple.fr"><button id="animLienBtn" class="sec">📧 Recevoir mon lien</button></div>
     <div id="animMsg" class="envoi"></div>
   </section>
   <div id="animEspace" class="hide" style="display:flex;flex-direction:column;gap:16px">
     <section>
-      <h2><b>01</b>— Mes groupes</h2>
+      <h2>Mes groupes</h2>
       <p class="aide" style="margin-top:0">Connecté : <b id="animQui"></b> · <a href="#" id="animSortir" style="color:var(--acc)">se déconnecter</a></p>
       <div class="icRow"><input id="grNom" class="pseudo" maxlength="40" placeholder="Nom du groupe (ex. CM2 Jules Ferry)"><button id="grCreer" class="sec">➕ Créer un groupe</button></div>
     </section>
@@ -701,7 +776,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section>
     <label class="champ" style="margin-top:0"><span style="font-weight:700">🎮 Nom de mon jeu</span>
       <input id="titreIn" class="pseudo nomJeu" maxlength="30" placeholder="Ex : La tour de Zorro"></label>
-    <h2 id="titreDemande"><b>01</b>— Je décris mon jeu</h2>
+    <h2 id="titreDemande">Je décris mon jeu <span class="ref" style="margin-left:6px">l'IA le construit</span></h2>
 
     <h3>Quel jeu ?</h3><div class="chips" id="genreChoix"></div>
     <div id="guide">
@@ -766,7 +841,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 
   <!-- ===== CONSOLE / APERÇU ===== -->
   <section class="console">
-    <h2><b>02</b>— Mon niveau</h2>
+    <h2>Mon niveau</h2>
     <div class="coque">
       <div id="apercu" class="apercu"><canvas id="ecran" width="320" height="240"></canvas></div>
     </div>
@@ -799,7 +874,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 
   <!-- ===== HISTORIQUE ===== -->
   <section>
-    <h2><b>03</b>— Ce que j'ai fait</h2>
+    <h2>Ce que j'ai fait</h2>
     <div id="hist" class="hist"><p class="vide">Tes essais apparaîtront ici : ce que tu as demandé, ce qui est arrivé, ce que tu veux corriger.</p></div>
   </section>
 </main>
@@ -1546,6 +1621,8 @@ function vignette(rows) {                                // le niveau entier en 
   rows.forEach((r, y) => [...r].forEach((t, i) => { if (COUL[t]) { x.fillStyle = COUL[t]; x.fillRect(i, y, 1, 1); } }));
   return c.toDataURL();
 }
+// accueil, étape 2 : un vrai niveau sorti du générateur, comme si l'IA venait de lire « un volcan très haut avec des scies »
+iaDemo.src = vignette(generer({ ...structuredClone(DEFAUT), theme: 'lave', hauteur: 48, seed: 7, forme: 'mixte', briques: { ...DEFAUT.briques, scie: true } }));
 const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="pos">${pos}</span>
   <div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div><small>${detail}</small>
   ${max ? `<div class="barre"><i style="width:${Math.round(100 * val / max)}%"></i></div>` : ''}</div>${bouton(n)}</div>`;

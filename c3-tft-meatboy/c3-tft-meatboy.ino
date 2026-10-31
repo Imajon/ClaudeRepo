@@ -1247,7 +1247,7 @@ void respawn() {
 }
 
 // ================= ETAT / MENUS =================
-enum GameState { ST_SPLASH, ST_HOME, ST_LOBBY, ST_MODE, ST_SELECT, ST_COUNTDOWN, ST_PLAY, ST_END, ST_WIN, ST_DEAD, ST_RACEEND, ST_PONG, ST_QUIZ, ST_QUIZRESULT, ST_BRICK, ST_INVADERS, ST_CPINTRO, ST_SHOP, ST_LB, ST_NAME, ST_DESERT, ST_SHADOW, ST_SAMU, ST_ALTO, ST_TIMING, ST_DRIFT, ST_MYLV, ST_SMASH };
+enum GameState { ST_SPLASH, ST_HOME, ST_LOBBY, ST_MODE, ST_SELECT, ST_COUNTDOWN, ST_PLAY, ST_END, ST_WIN, ST_DEAD, ST_RACEEND, ST_PONG, ST_QUIZ, ST_QUIZRESULT, ST_BRICK, ST_INVADERS, ST_CPINTRO, ST_SHOP, ST_LB, ST_NAME, ST_DESERT, ST_SHADOW, ST_SAMU, ST_ALTO, ST_TIMING, ST_DRIFT, ST_MYLV, ST_SMASH, ST_BQQ };
 GameState state;
 int curLevel, selLevel, endChoice, deadChoice, homeChoice, modeChoice;
 unsigned int deaths;
@@ -5762,6 +5762,73 @@ static const char* IC_K = "hegnd";        // heros, etoile, arrivee (goal), enne
 uint16_t icPx[5][256]; bool icUse[5];
 String icWait;                            // lignes "icone" recues, gardees en flash avec le niveau qui suit
 bool icOn(int k) { return curLevel == CUSTOM_IDX && icUse[k]; }
+// ---- BRIQUE : questions de cours ecrites par l'animateur, posees a l'arrivee (ASCII : la police n'a pas d'accents) ----
+#define BQQ_MAX 10
+struct BqQ { char id[8]; char q[81]; char r[3][31]; uint8_t nr, b; };
+BqQ bqQ[BQQ_MAX]; int bqNQ = 0, bqQCur = 0, bqQSel = 0, bqQGot = 0; bool bqQRes = false, bqQOk = false; uint32_t bqQT0 = 0;
+void qParse(const char* s) {               // toutes les questions contenues dans s (une ligne recue, ou un fichier de Mes niveaux)
+  for (const char* p = strstr(s, "\"question\""); p && bqNQ < BQQ_MAX; p = strstr(p + 1, "\"question\"")) {
+    const char* fin = strchr(p, '\n'); char l[400]; int n = fin ? min((int)(fin - p), 399) : min((int)strlen(p), 399);
+    memcpy(l, p, n); l[n] = 0;               // on ne lit que cette ligne
+    BqQ &q = bqQ[bqNQ]; jsonStr(l, "question", q.q, sizeof q.q); jsonStr(l, "id", q.id, sizeof q.id);
+    q.nr = 0; const char* a = strstr(l, "\"r\""); a = a ? strchr(a, '[') : nullptr;
+    while (a && q.nr < 3) {
+      a = strchr(a, '"'); if (!a) break; a++; int k = 0;
+      for (; *a && *a != '"' && k < 30; a++) if (*a >= 32 && *a < 127) q.r[q.nr][k++] = *a;
+      q.r[q.nr][k] = 0; while (*a && *a != '"') a++; if (*a) a++; q.nr++;
+      while (*a == ' ' || *a == ',') a++; if (*a == ']') break;
+    }
+    const char* bb = strstr(l, "\"b\":"); q.b = bb ? atoi(bb + 4) : 0;
+    if (q.q[0] && q.nr >= 2 && q.b < q.nr) bqNQ++;
+  }
+}
+void extrasReset() { memset(icUse, 0, sizeof icUse); bqNQ = 0; }   // icones + questions du niveau perso
+void bqWrap(const char* t, int y, int sz, int maxc) {   // texte centre, coupe aux espaces
+  char line[40]; int n = strlen(t), i = 0;
+  while (i < n) {
+    int len = min(maxc, n - i);
+    if (i + len < n) { int k = len; while (k > 0 && t[i + k] != ' ') k--; if (k > 0) len = k; }
+    memcpy(line, t + i, len); line[len] = 0; ctext(y, line); y += sz * 10;
+    i += len; while (t[i] == ' ') i++;
+  }
+}
+void drawBqQuiz() {
+  const BqQ &q = bqQ[bqQCur];
+  brickFill(0, 0, SCREEN_W, SCREEN_H);
+  tft.setTextSize(2);
+  if (!bqQRes) {
+    tft.setTextColor(COL_STAR); ctext(8, "QUESTION !");
+    tft.setTextColor(COL_TXT); bqWrap(q.q, 34, 2, 25);
+    for (int i = 0; i < q.nr; i++) {
+      const int y = 132 + i * 32; const bool sel = i == bqQSel;
+      tft.fillRoundRect(16, y - 7, 288, 28, 6, sel ? COL_MEAT : RGB565(40, 34, 60));
+      tft.setTextColor(sel ? COL_BG : COL_TXT); char t[24]; strncpy(t, q.r[i], 23); t[23] = 0; ctext(y, t);
+    }
+    tft.setTextColor(tft.color565(120, 130, 150)); tft.setTextSize(1); ctext(229, "P2/P1 = choisir   P3 = repondre");
+  } else {
+    tft.setTextColor(bqQOk ? COL_GOAL : COL_MEAT); tft.setTextSize(3); ctext(50, bqQOk ? "BRAVO !" : "PRESQUE...");
+    tft.setTextSize(2); tft.setTextColor(COL_TXT);
+    if (bqQOk) ctext(110, "Bonne reponse !"); else { ctext(100, "La bonne reponse :"); tft.setTextColor(COL_STAR); bqWrap(q.r[q.b], 128, 2, 25); }
+    tft.setTextColor(tft.color565(120, 130, 150)); tft.setTextSize(1); ctext(229, "P3 = continuer");
+  }
+}
+void bqStartQuiz(int got) {                // arrivee d'un niveau perso qui a des questions : une question avant la victoire
+  bqQGot = got; bqQCur = random(bqNQ); bqQSel = 0; bqQRes = false; bqQT0 = millis();
+  snd(SND_JUMP); state = ST_BQQ; drawBqQuiz();
+}
+void bqQuizStep(bool eL, bool eR, bool eJ) {
+  const BqQ &q = bqQ[bqQCur];
+  if (!bqQRes) {
+    const int mv = (eR ? 1 : 0) - (eL ? 1 : 0);
+    if (mv) { bqQSel = (bqQSel + mv + q.nr) % q.nr; drawBqQuiz(); }
+    if (!eJ) return;
+    bqQOk = bqQSel == q.b; bqQRes = true; drawBqQuiz();
+    if (Serial) Serial.printf("BRIQUE QUIZ %s %d\n", q.id, bqQOk ? 1 : 0);   // page connectee : stats tout de suite
+    else if (fsOk) { File f = LittleFS.open("/bres", "a"); if (f) { if (f.size() < 3000) f.printf("Q %s %d\n", q.id, bqQOk ? 1 : 0); f.close(); } }   // sinon : remontees a la prochaine connexion
+    return;
+  }
+  if (eJ) { levelStartMs += millis() - bqQT0; finishLevel(bqQGot); }   // le temps passe sur la question ne compte pas
+}
 bool bqFlagOk() {                          // objectif "tout ramasser" : le drapeau n'accepte qu'une fois toutes les etoiles prises
   if (!bqOn() || !bqTout) return true;
   for (int i = 0; i < nStarPos; i++) if (!starGot[i]) return false;
@@ -5829,7 +5896,7 @@ void myLvStep(bool eL, bool eR, bool eJ) {
   if (twoP && !myLvCode[myLvChoice][0]) return;                         // course : seulement un jeu publie (les autres le retrouvent par son code)
   String s = briqueRead(myLvSlot[myLvChoice]);
   if (!s.length() || briqueParse(s.c_str())) return;                    // fichier abime : on reste dans la liste
-  memset(icUse, 0, sizeof icUse); icParse(s.c_str());
+  extrasReset(); icParse(s.c_str()); qParse(s.c_str());
   if (twoP) {                                                           // hote : depart pour tous, avec le code du jeu
     raceCode = codeNum(myLvCode[myLvChoice]);
     for (int k = 0; k < 6; k++) { espSend(M_START, BRIQUE_SENTINEL, 0, 0, raceCode); delay(8); }
@@ -5843,7 +5910,7 @@ bool briqueLoadCode(uint32_t code) {
   char c[7]; codeTxt(code, c); char pat[16]; snprintf(pat, sizeof pat, "\"code\":\"%s\"", c);
   for (int i = 0; i < MYLV_MAX; i++) {
     String s = briqueRead(i); if (!s.length() || !strstr(s.c_str(), pat) || briqueParse(s.c_str())) continue;
-    memset(icUse, 0, sizeof icUse); icParse(s.c_str()); raceCode = code; return true;
+    extrasReset(); icParse(s.c_str()); qParse(s.c_str()); raceCode = code; return true;
   }
   return false;
 }
@@ -5882,8 +5949,14 @@ void briquePoll() {
       Serial.printf("BRIQUE LISTE %d%s\n", myLvN, fsOk ? "" : " (flash indisponible)"); continue;
     }
     if (!strchr(buf, '{')) continue;                                    // ligne vide ou parasite
+    if (strstr(buf, "\"question\"")) {                                 // question de cours : gardee pour le niveau qui suit
+      if (!icWait.length()) extrasReset();
+      const int avant = bqNQ; if (!trop) qParse(buf);
+      if (bqNQ == avant) Serial.println("BRIQUE ERR question mal formee"); else { icWait += '\n'; icWait += buf; Serial.println("BRIQUE OK question"); }
+      continue;
+    }
     if (strstr(buf, "\"icone\"")) {                                    // icone : appliquee tout de suite, gardee pour le niveau qui suit
-      if (!icWait.length()) memset(icUse, 0, sizeof icUse);
+      if (!icWait.length()) extrasReset();
       const char* e = trop ? "icone trop grosse" : icParse(buf);
       if (e) Serial.printf("BRIQUE ERR %s\n", e); else { icWait += '\n'; icWait += buf; Serial.println("BRIQUE OK icone"); }
       continue;
@@ -5893,7 +5966,7 @@ void briquePoll() {
     const char* err = trop ? "niveau trop gros" : (twoP || raceMode || !(libre || state == ST_MYLV)) ? "console occupee : reviens a l'accueil" : briqueParse(buf);
     if (err) { Serial.printf("BRIQUE ERR %s\n", err); icWait = ""; continue; }
     Serial.printf("BRIQUE OK %d\n", customH);
-    if (!icWait.length()) memset(icUse, 0, sizeof icUse);               // niveau sans icones : dessins d'origine
+    if (!icWait.length()) extrasReset();                                // niveau sans icones ni questions : comme d'origine
     briqueSave(buf, icWait); icWait = "";
     dSpiStop(); tft.setSPISpeed(40000000);                              // comme worldQuit() : on peut arriver du menu de fin d'un monde (DMA)
     startLevel(CUSTOM_IDX, true);
@@ -6298,6 +6371,9 @@ void loop() {
       delay(20);
       break;
     }
+    case ST_BQQ:
+      bqQuizStep(eL, eR, eJ); delay(20);
+      break;
     case ST_MYLV:
       myLvStep(eL, eR, eJ); delay(20);
       break;
@@ -6763,6 +6839,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
       briqueRace(); state = ST_RACEEND; drawRaceEnd(); return;
     }
     int got = 0; for (int i = 0; i < nStarPos; i++) if (starGot[i]) got++;
+    if (bqOn() && bqNQ) { bqStartQuiz(got); return; }   // BRIQUE : question de cours avant la victoire
     finishLevel(got); return;
     }
   }

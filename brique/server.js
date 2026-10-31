@@ -6,7 +6,7 @@ const http = require('http'), fs = require('fs'), path = require('path'), crypto
 const PORT = process.env.PORT || 8080, FICHIER = process.env.DATA || path.join(__dirname, 'data.json');
 // adresse publique pour les liens envoyes par mail (jamais l'en-tete Host : il pourrait envoyer un lien piege)
 const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
-const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [], courses: [] };
+const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [], courses: [], reponses: [] };
 let db;
 
 // ---------- stockage : tout l'etat dans une ligne MySQL (ou un fichier) ----------
@@ -104,8 +104,8 @@ function statsCourses(id) {                              // courses a plusieurs 
 }
 
 // ---------- accueil "communaute" : tout ce qui bouge (niveaux visibles + stats, joueurs actifs, chiffres du jour) ----------
-function communaute() {
-  const now = Date.now(), visibles = db.niveaux.filter(n => !n.masque), ids = new Set(visibles.map(n => n.id));
+function communaute(g) {                                 // g = groupe de l'enfant en mode atelier : on ne montre que ce groupe
+  const now = Date.now(), visibles = db.niveaux.filter(n => !n.masque && (g ? n.groupe === g.code : !n.prive)), ids = new Set(visibles.map(n => n.id));
   const titre = id => visibles.find(n => n.id === id)?.titre || '?', parties = db.parties.filter(p => ids.has(p.niveau));
   const semaine = {}; for (const p of parties) if (now - p.date < 7 * JOUR) semaine[p.niveau] = (semaine[p.niveau] || 0) + 1;
   const actions = [...parties.map(p => ({ pseudo: p.pseudo, date: p.date, quoi: 'fini', niveau: p.niveau })),
@@ -117,13 +117,29 @@ function communaute() {
                 aujourdhui: new Set(actions.filter(a => now - a.date < JOUR).map(a => a.pseudo)).size },
     niveaux: visibles.map(n => ({ ...n, stats: { ...stats(n.id), semaine: semaine[n.id] || 0, multi: statsCourses(n.id) } })),
     actifs, idees: ideesPubliques(),
+    atelier: g ? { nom: g.nom, matiere: g.matiere || '' } : null,
   };
 }
 
 // ---------- espace animateur : ses groupes, leurs joueurs et leurs niveaux ----------
+// ---------- couche pedagogique : questions de cours d'un groupe, posees sur la console a l'arrivee de chaque jeu ----------
+// ponytail: QCM 2 ou 3 reponses, 10 questions par groupe ; d'autres formes (vrai/faux, saisie) si les profs en demandent
+const propre = (t, n) => String(t || '').replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, n);
+function questionsValides(qs, anciennes = []) {
+  return (Array.isArray(qs) ? qs : []).slice(0, 10).map(x => {
+    const q = propre(x?.q, 80), r = (Array.isArray(x?.r) ? x.r : []).map(t => propre(t, 30)).filter(Boolean).slice(0, 3);
+    if (!q || r.length < 2 || !Number.isInteger(x.b) || x.b < 0 || x.b >= r.length) return null;
+    const id = anciennes.some(a => a.id === x.id) ? x.id : aleatoire(3);   // garder l'id = garder ses statistiques
+    return { id, q, r, b: x.b };
+  }).filter(Boolean);
+}
+function statsQuestion(id) {
+  const rs = db.reponses.filter(r => r.qid === id);
+  return { reponses: rs.length, justes: rs.filter(r => r.ok).length };
+}
 function espaceAnimateur(email) {
   return { email, groupes: db.groupes.filter(g => g.email === email).map(g => ({
-    code: g.code, nom: g.nom,
+    code: g.code, nom: g.nom, matiere: g.matiere || '', prive: !!g.prive, questions: (g.questions || []).map(q => ({ ...q, stats: statsQuestion(q.id) })),
     joueurs: db.joueurs.filter(j => j.groupe === g.code).map(j => ({ pseudo: j.pseudo, cree: j.cree })),
     niveaux: db.niveaux.filter(n => n.groupe === g.code).map(n => ({ id: n.id, titre: n.titre, pseudo: n.pseudo, cree: n.cree, masque: !!n.masque, parties: stats(n.id).parties })),
   })) };
@@ -263,7 +279,11 @@ const serveur = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
   }
-  if (req.method === 'GET' && url === '/api/communaute') return repondre(res, 200, communaute());
+  if (req.method === 'GET' && url === '/api/communaute') {   // ?pseudo=… : l'enfant d'un groupe en mode atelier ne voit que son groupe
+    const ps = new URLSearchParams(req.url.split('?')[1] || '').get('pseudo') || '';
+    const jr = db.joueurs.find(j => j.pseudo.toLowerCase() === ps.toLowerCase()), g = jr && db.groupes.find(g => g.code === jr.groupe && g.prive);
+    return repondre(res, 200, communaute(g));
+  }
   if (req.method === 'GET' && url.startsWith('/api/jeu/')) {   // recuperer un jeu par son code de partage
     const code = url.slice(9).toUpperCase(), n = db.niveaux.find(n => n.code === code && !n.masque);
     return n ? repondre(res, 200, { ...n, stats: { ...stats(n.id), multi: statsCourses(n.id) } }) : repondre(res, 404, { erreur: 'Aucun jeu avec ce code : vérifie les 6 caractères.' });
@@ -333,6 +353,14 @@ const serveur = http.createServer(async (req, res) => {
       if (b.supprimer) db.souhaits = db.souhaits.filter(x => x !== s); else if (STATUTS.includes(b.statut)) s.statut = b.statut;
       sauver(); return repondre(res, 200, { idees: ideesPubliques() });
     }
+    if (url === '/api/animateur/atelier') {           // mode atelier : matiere du jour + interface confinee au groupe (jeux prives)
+      const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });
+      g.matiere = propre(b.matiere, 40); g.prive = !!b.prive; sauver(); return repondre(res, 200, espaceAnimateur(email));
+    }
+    if (url === '/api/animateur/questions') {         // la liste complete des questions d'un groupe (ajout, modif, suppression)
+      const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });
+      g.questions = questionsValides(b.questions, g.questions || []); sauver(); return repondre(res, 200, espaceAnimateur(email));
+    }
     if (url === '/api/animateur/liberer') {           // l'enfant a perdu son secret (autre ordinateur) : il pourra reprendre son pseudo
       const j = db.joueurs.find(j => j.pseudo === b.pseudo); if (!j || !groupe(j.groupe)) return repondre(res, 404, { erreur: 'joueur introuvable' });
       db.joueurs = db.joueurs.filter(x => x !== j); sauver(); return repondre(res, 200, espaceAnimateur(email));
@@ -357,8 +385,9 @@ const serveur = http.createServer(async (req, res) => {
   if (url === '/api/niveaux') {                       // publier un jeu (commun=false) ou ajouter un niveau au jeu commun (commun=true)
     if (!nivValide(b.niv)) return repondre(res, 400, { erreur: 'niveau invalide' });
     const titre = String(b.titre || '').replace(/[<>]/g, '').trim().slice(0, 30) || 'Sans titre';
-    const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), code: codeJeu(), pseudo: j.pseudo, groupe: j.groupe, titre, commun: !!b.commun,
-                cree: Date.now(), niv: { format: 'brique-v1', params: b.niv.params || {}, rows: b.niv.rows, icones: icValides(b.niv.icones) } };
+    const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), code: codeJeu(), pseudo: j.pseudo, groupe: j.groupe, prive: !!db.groupes.find(g => g.code === j.groupe)?.prive, titre, commun: !!b.commun,
+                cree: Date.now(), niv: { format: 'brique-v1', params: b.niv.params || {}, rows: b.niv.rows, icones: icValides(b.niv.icones),
+                       questions: (db.groupes.find(g => g.code === j.groupe)?.questions || []).map(({ id, q, r, b }) => ({ id, q, r, b })) } };   // les questions du groupe voyagent avec le jeu
     if (JSON.stringify(n.niv.params).length > 1000) n.niv.params = {};
     if (n.niv.params.message) n.niv.params.message = filtreTexte(n.niv.params.message);   // le message part sur toutes les consoles qui recuperent le jeu
     db.niveaux.push(n); sauver(); return repondre(res, 200, { id: n.id, code: n.code });
@@ -368,6 +397,15 @@ const serveur = http.createServer(async (req, res) => {
     if (!s) return repondre(res, 400, { erreur: 'Écris ton idée en quelques mots.' });
     if (!s.votes.includes(j.pseudo)) s.votes.push(j.pseudo);
     sauver(); return repondre(res, 200, { idees: ideesPubliques() });
+  }
+  if (url === '/api/questions') {                     // questions du groupe de l'enfant (envoyees sur sa console avec son jeu)
+    return repondre(res, 200, { questions: (db.groupes.find(g => g.code === j.groupe)?.questions || []).map(({ id, q, r, b }) => ({ id, q, r, b })) });
+  }
+  if (url === '/api/reponses') {                      // reponses donnees sur la console : stats de reussite pour l'animateur
+    const ids = new Set(db.groupes.flatMap(g => (g.questions || []).map(q => q.id)));
+    let n = 0;
+    for (const r of (Array.isArray(b.reponses) ? b.reponses.slice(0, 200) : [])) if (ids.has(r?.id)) { db.reponses.push({ qid: r.id, pseudo: j.pseudo, ok: !!r.ok, date: Date.now() }); n++; }
+    sauver(); return repondre(res, 200, { ok: true, enregistrees: n });
   }
   if (url === '/api/courses') {                       // courses a plusieurs jouees sur la console de cet enfant (commande RESULTATS)
     const rs = Array.isArray(b.resultats) ? b.resultats.slice(0, 200) : [];

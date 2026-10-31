@@ -82,6 +82,19 @@ dialog::backdrop{background:rgba(5,2,15,.7)}
 .pastille{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
 .pastille.on{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.6)}
 .pastille.auto{background:conic-gradient(#e8322b,#ffd400,#3f8f3a,#2f6fe0,#8b5cf6,#e8322b)}
+.sh-versions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sh-versions button{display:flex;flex-direction:column;gap:6px;text-align:left;padding:16px;border-radius:16px;border:2px solid var(--line);background:rgba(0,0,0,.2);color:var(--txt);font:inherit;cursor:pointer}
+.sh-versions button span{color:var(--mute);font-size:14px}
+.sh-versions button.on{border-color:var(--acc);box-shadow:0 0 16px rgba(167,139,250,.35)}
+@media (max-width:600px){.sh-versions{grid-template-columns:1fr}}
+.atelierBan{margin-bottom:12px;padding:10px 14px;border-radius:12px;background:rgba(34,211,238,.1);box-shadow:var(--glow);font-size:17px}
+.atelierBan b{color:var(--acc2)}
+.en-atelier #vBoutique,.en-atelier #vSupport,.en-atelier #vProfs{display:none}
+.profs-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.profs-grille section p{margin:0 0 8px}
+.qform{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
+.qform .rep{display:flex;gap:6px;align-items:center}
+.qform .rep input[type=text]{flex:1}
 .nomJeu{width:100%;font-size:20px;font-weight:800;padding:12px 14px;border-color:var(--acc);box-shadow:0 0 14px rgba(167,139,250,.3);margin-bottom:12px}
 .neuf{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--acc2);color:#04212a;font-weight:800;margin-left:6px}
 textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
@@ -167,6 +180,8 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .support li{margin:6px 0}
 .support code{color:var(--acc)}
 .support .tab{overflow-x:auto}
+.support .fiche{background:#fff;border-radius:8px;padding:8px;margin:10px 0}
+.support .fiche svg{display:block;width:100%;height:auto}
 </style>
 </head>
 <body>
@@ -177,6 +192,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <button id="vCreer">🛠 Créer</button>
     <button id="vBoutique">🛒 Boutique</button>
     <button id="vSupport">🧰 Support</button>
+    <button id="vProfs">📚 Atelier</button>
   </nav>
   <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
   <button id="vAnim" class="sec">🎓 Animateur</button>
@@ -190,6 +206,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 <main id="commu" class="commu">
   <section class="c-hero">
     <div class="accroche">
+      <div id="atelierBan" class="atelierBan hide"></div>
       <h2><b>01</b>— En ce moment</h2>
       <div class="tuiles">
         <div class="tuile"><b id="nJeux">–</b><span>jeux créés</span></div>
@@ -223,7 +240,15 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <p class="sh-sur">Console Brique</p>
     <h2 class="sh-titre">Le jeu que tu inventes.<br>Dans ta main.</h2>
     <p class="sh-sous">Crée ton jeu ici, envoie-le dans la console, joue partout.</p>
-    <p class="sh-prix">À partir de 28 €</p>
+    <p id="btDepuis" class="sh-prix">À partir de 28 €</p>
+  </div>
+
+  <div class="sh-bloc">
+    <h3 class="sh-h">À souder soi-même, ou prête à jouer.</h3>
+    <div id="btVersions" class="sh-versions">
+      <button class="on" data-v="kit"><b>🔧 Kit à souder</b><span>L'atelier complet : on monte sa console, puis on crée ses jeux.</span></button>
+      <button data-v="presoude"><b>✅ Pré-soudée</b><span>Montée et testée : on commence directement par la création.</span></button>
+    </div>
   </div>
 
   <div class="sh-bloc">
@@ -270,6 +295,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
   <section>
     <h2><b>01</b>— La console Brique</h2>
     <p>Une console à souder soi-même : un ESP32-C3, un écran TFT 2" et 3 boutons. Une fois montée, elle fait tourner Pixel Run et reçoit par câble USB les niveaux créés ici.</p>
+    <p><b>Console pré-soudée ?</b> Elle arrive montée et testée : passe directement au branchement USB et à l'envoi de ton premier jeu. Les étapes de soudure ci-dessous ne concernent que le kit.</p>
     <p class="aide">Environ 1 h 30 de montage pour un enfant accompagné (CM1 → 4ᵉ), puis 10 minutes pour la première programmation.</p>
   </section>
   <section>
@@ -330,7 +356,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <p class="aide" style="margin-top:0">Chrome ou Edge sur ordinateur, IDE Arduino et moniteur série fermés, console sur l'accueil ou dans un menu.</p>
     <ol>
       <li><b>Créer</b> : onglet 🛠 Créer, choisir le monde, le héros, le danger, compléter par une phrase, puis ✨ Créer mon jeu.</li>
-      <li><b>Tester</b> dans la page avec ◀ ▶ ⤒ (ou le clavier). Corriger la phrase et recréer si besoin.</li>
+      <li><b>Regarder</b> l'aperçu du niveau. Corriger la phrase et recréer si besoin.</li>
       <li><b>Mes icônes (facultatif)</b> : chercher une image en anglais (cat, dragon…), la coller ou la glisser.</li>
       <li><b>Envoyer</b> : brancher la console, 📟 Envoyer sur la console, choisir le port. Le niveau démarre aussitôt.</li>
       <li><b>Rejouer plus tard</b> : accueil de la console → <b>Mes niveaux</b> (les 8 derniers, gardés même éteinte).</li>
@@ -351,7 +377,275 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
       <tr><td>Téléversement échoue</td><td>Liaison USB capricieuse</td><td>Maintenir BOOT en branchant, ou <code>esptool --no-stub</code></td></tr>
       <tr><td>Recherche d'icônes vide</td><td>Filtre réseau de l'école</td><td>Autoriser <code>api.iconify.design</code></td></tr>
     </table></div>
+    <h3>Fiche de test au multimètre (console V1)</h3>
+    <p class="aide">Console débranchée, multimètre en mode continuité (bip). Une ligne à cocher par fil, puis les ponts d'étain à chercher entre broches voisines.</p>
+    <button id="ficheImprimer" class="sec">🖨 Imprimer la fiche</button>
+    <div id="fiche" class="fiche"><!-- FICHE-TEST : remplacee par c3-tft-meatboy/materiel/make_test_continuite.py --><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1414" width="210mm" height="297mm" font-family="Segoe UI, Arial, sans-serif">
+<rect width="1000" height="1414" fill="#fff"/>
+<text x="500.0" y="44" font-size="26" font-weight="800" fill="#12233a" text-anchor="middle">Console V1 : fiche de test (continuite + depannage)</text>
+<text x="500.0" y="68" font-size="14" font-weight="400" fill="#5a6b82" text-anchor="middle">Console DEBRANCHEE de l'USB - multimetre en mode continuite (bip) - cocher chaque ligne</text>
+<rect x="30" y="88" width="940" height="32" rx="6" fill="#12233a"/>
+<text x="44" y="110" font-size="17" font-weight="800" fill="#fff" text-anchor="start">1. Reperer les broches</text>
+<text x="956" y="110" font-size="12" font-weight="400" fill="#a8b8cc" text-anchor="end">meme disposition que montage-c3-tft.svg</text>
+<rect x="120" y="150" width="150" height="330" rx="12" fill="#1d3160" stroke="#0c1830" stroke-width="2"/>
+<rect x="165" y="480" width="60" height="18" rx="5" fill="#c9ccd1" stroke="#8a8d92"/>
+<text x="195" y="493" font-size="9" font-weight="600" fill="#333" text-anchor="middle">USB-C</text>
+<text x="195" y="310" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">ESP32-C3</text>
+<text x="195" y="327" font-size="10" font-weight="400" fill="#9aa0a6" text-anchor="middle">SuperMini</text>
+<circle cx="120" cy="175" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="179" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO0</text>
+<circle cx="270" cy="175" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="179" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO21</text>
+<circle cx="120" cy="215" r="7" fill="#6ee36e" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="219" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO1</text>
+<circle cx="270" cy="215" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="219" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO20</text>
+<circle cx="120" cy="255" r="7" fill="#ffd23c" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="259" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO2</text>
+<circle cx="270" cy="255" r="7" fill="#ff5b5b" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="259" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO10</text>
+<circle cx="120" cy="295" r="7" fill="#ff9500" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="299" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO3</text>
+<circle cx="270" cy="295" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="299" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO9</text>
+<circle cx="120" cy="335" r="7" fill="#19c3d6" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="339" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO4</text>
+<circle cx="270" cy="335" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="339" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO8</text>
+<circle cx="120" cy="375" r="7" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="379" font-size="13" font-weight="700" fill="#222" text-anchor="end">3V3</text>
+<circle cx="270" cy="375" r="7" fill="#22c55e" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="379" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO7</text>
+<circle cx="120" cy="415" r="7" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="106" y="419" font-size="13" font-weight="700" fill="#222" text-anchor="end">GND</text>
+<circle cx="270" cy="415" r="7" fill="#1e90ff" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="419" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO6</text>
+<circle cx="120" cy="455" r="7" fill="#9aa3ad" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="459" font-size="13" font-weight="700" fill="#222" text-anchor="end">5V</text>
+<circle cx="270" cy="455" r="7" fill="#b06cff" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="459" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO5</text>
+<text x="195" y="522" font-size="11" font-weight="600" fill="#b35c00" text-anchor="middle">Verifie avec les inscriptions</text>
+<text x="195" y="536" font-size="11" font-weight="600" fill="#b35c00" text-anchor="middle">imprimees sur la carte</text>
+<rect x="470" y="150" width="230" height="200" rx="12" fill="#10131b" stroke="#000" stroke-width="2"/>
+<rect x="520" y="180" width="160" height="140" rx="4" fill="#1b2740"/>
+<text x="600" y="245" font-size="15" font-weight="700" fill="#7fd7ff" text-anchor="middle">ST7789</text>
+<text x="600" y="263" font-size="11" font-weight="400" fill="#5a8fb0" text-anchor="middle">320x240</text>
+<circle cx="470" cy="172" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="458" y="176" font-size="12" font-weight="700" fill="#222" text-anchor="end">1  GND</text>
+<text x="482" y="176" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GND</text>
+<circle cx="470" cy="194" r="6" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="198" font-size="12" font-weight="700" fill="#222" text-anchor="end">2  VCC</text>
+<text x="482" y="198" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">3V3</text>
+<circle cx="470" cy="216" r="6" fill="#19c3d6" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="220" font-size="12" font-weight="700" fill="#222" text-anchor="end">3  SCL</text>
+<text x="482" y="220" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO4</text>
+<circle cx="470" cy="238" r="6" fill="#1e90ff" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="242" font-size="12" font-weight="700" fill="#222" text-anchor="end">4  SDA</text>
+<text x="482" y="242" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO6</text>
+<circle cx="470" cy="260" r="6" fill="#ff5b5b" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="264" font-size="12" font-weight="700" fill="#222" text-anchor="end">5  RES</text>
+<text x="482" y="264" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO10</text>
+<circle cx="470" cy="282" r="6" fill="#b06cff" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="286" font-size="12" font-weight="700" fill="#222" text-anchor="end">6  DC</text>
+<text x="482" y="286" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO5</text>
+<circle cx="470" cy="304" r="6" fill="#22c55e" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="308" font-size="12" font-weight="700" fill="#222" text-anchor="end">7  CS</text>
+<text x="482" y="308" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO7</text>
+<circle cx="470" cy="326" r="6" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="330" font-size="12" font-weight="700" fill="#222" text-anchor="end">8  BLK</text>
+<text x="482" y="330" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">3V3</text>
+<rect x="770" y="160" width="190" height="52" rx="10" fill="#f6f8fb" stroke="#c3ccd6"/>
+<rect x="810" y="173" width="26" height="26" rx="6" fill="#ffd23c" stroke="#555"/>
+<circle cx="788" cy="186" r="6" fill="#ffd23c" stroke="#000" stroke-width="1.2"/>
+<circle cx="858" cy="186" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="788" y="208" font-size="10" font-weight="700" fill="#555" text-anchor="middle">1</text>
+<text x="858" y="208" font-size="10" font-weight="700" fill="#555" text-anchor="middle">2</text>
+<text x="874" y="184" font-size="12" font-weight="800" fill="#222" text-anchor="start">GAUCHE</text>
+<text x="874" y="200" font-size="11" font-weight="400" fill="#555" text-anchor="start">GPIO2 / GND</text>
+<rect x="770" y="224" width="190" height="52" rx="10" fill="#f6f8fb" stroke="#c3ccd6"/>
+<rect x="810" y="237" width="26" height="26" rx="6" fill="#6ee36e" stroke="#555"/>
+<circle cx="788" cy="250" r="6" fill="#6ee36e" stroke="#000" stroke-width="1.2"/>
+<circle cx="858" cy="250" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="788" y="272" font-size="10" font-weight="700" fill="#555" text-anchor="middle">1</text>
+<text x="858" y="272" font-size="10" font-weight="700" fill="#555" text-anchor="middle">2</text>
+<text x="874" y="248" font-size="12" font-weight="800" fill="#222" text-anchor="start">DROITE</text>
+<text x="874" y="264" font-size="11" font-weight="400" fill="#555" text-anchor="start">GPIO1 / GND</text>
+<rect x="770" y="288" width="190" height="52" rx="10" fill="#f6f8fb" stroke="#c3ccd6"/>
+<rect x="810" y="301" width="26" height="26" rx="6" fill="#ff9500" stroke="#555"/>
+<circle cx="788" cy="314" r="6" fill="#ff9500" stroke="#000" stroke-width="1.2"/>
+<circle cx="858" cy="314" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="788" y="336" font-size="10" font-weight="700" fill="#555" text-anchor="middle">1</text>
+<text x="858" y="336" font-size="10" font-weight="700" fill="#555" text-anchor="middle">2</text>
+<text x="874" y="312" font-size="12" font-weight="800" fill="#222" text-anchor="start">SAUT (gros)</text>
+<text x="874" y="328" font-size="11" font-weight="400" fill="#555" text-anchor="start">GPIO3 / GND</text>
+<text x="770" y="370" font-size="11" font-weight="400" fill="#555" text-anchor="start">patte 1 = fil du GPIO</text>
+<text x="770" y="385" font-size="11" font-weight="400" fill="#555" text-anchor="start">patte 2 = GND</text>
+<rect x="30" y="563" width="940" height="32" rx="6" fill="#12233a"/>
+<text x="44" y="585" font-size="17" font-weight="800" fill="#fff" text-anchor="start">2. Doit BIPER</text>
+<text x="956" y="585" font-size="12" font-weight="400" fill="#a8b8cc" text-anchor="end">pointe A sur la carte, pointe B sur l'ecran / le bouton</text>
+<rect x="40" y="611" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="619" r="6" fill="#19c3d6" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="623" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO4</tspan>  &#8596;  ecran SCL (3)</text>
+<rect x="510" y="611" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="619" r="6" fill="#1e90ff" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="623" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO6</tspan>  &#8596;  ecran SDA (4)</text>
+<rect x="40" y="638" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="646" r="6" fill="#ff5b5b" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="650" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO10</tspan>  &#8596;  ecran RES (5)</text>
+<rect x="510" y="638" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="646" r="6" fill="#b06cff" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="650" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO5</tspan>  &#8596;  ecran DC (6)</text>
+<rect x="40" y="665" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="673" r="6" fill="#22c55e" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="677" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO7</tspan>  &#8596;  ecran CS (7)</text>
+<rect x="510" y="665" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="673" r="6" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="677" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">3V3</tspan>  &#8596;  ecran VCC (2)</text>
+<rect x="40" y="692" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="700" r="6" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="704" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">3V3</tspan>  &#8596;  ecran BLK (8)</text>
+<rect x="510" y="692" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="700" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="556" y="704" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GND</tspan>  &#8596;  ecran GND (1)</text>
+<rect x="40" y="719" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="727" r="6" fill="#ffd23c" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="731" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO2</tspan>  &#8596;  bouton GAUCHE, patte 1</text>
+<rect x="510" y="719" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="727" r="6" fill="#6ee36e" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="731" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO1</tspan>  &#8596;  bouton DROITE, patte 1</text>
+<rect x="40" y="746" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="754" r="6" fill="#ff9500" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="758" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO3</tspan>  &#8596;  bouton SAUT, patte 1</text>
+<rect x="510" y="746" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="754" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="556" y="758" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GND</tspan>  &#8596;  les 3 boutons, patte 2</text>
+<rect x="40" y="773" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="781" r="6" fill="#ffd23c" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="785" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO2</tspan>  &#8596;  GND : SEULEMENT bouton GAUCHE appuye</text>
+<rect x="510" y="773" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="781" r="6" fill="#6ee36e" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="785" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO1</tspan>  &#8596;  GND : SEULEMENT bouton DROITE appuye</text>
+<rect x="40" y="800" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="808" r="6" fill="#ff9500" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="812" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO3</tspan>  &#8596;  GND : SEULEMENT bouton SAUT appuye</text>
+<rect x="30" y="828" width="940" height="32" rx="6" fill="#12233a"/>
+<text x="44" y="850" font-size="17" font-weight="800" fill="#fff" text-anchor="start">3. Ne doit PAS biper (pont de soudure)</text>
+<text x="956" y="850" font-size="12" font-weight="400" fill="#a8b8cc" text-anchor="end">broches voisines : si ca bipe, refaire la soudure</text>
+<rect x="40" y="876" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="879" x2="79" y2="889" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="879" x2="65" y2="889" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="888" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">3V3</tspan>  &#8596;  <tspan font-weight="800">GND</tspan>   <tspan fill="#777" font-size="11" dx="10">carte : bip bref = condensateur (normal), bip continu = court-circuit</tspan></text>
+<rect x="510" y="876" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="879" x2="549" y2="889" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="879" x2="535" y2="889" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="888" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO1</tspan>  &#8596;  <tspan font-weight="800">GPIO2</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="40" y="903" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="906" x2="79" y2="916" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="906" x2="65" y2="916" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="915" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO2</tspan>  &#8596;  <tspan font-weight="800">GPIO3</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="510" y="903" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="906" x2="549" y2="916" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="906" x2="535" y2="916" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="915" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO3</tspan>  &#8596;  <tspan font-weight="800">GPIO4</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="40" y="930" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="933" x2="79" y2="943" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="933" x2="65" y2="943" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="942" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO4</tspan>  &#8596;  <tspan font-weight="800">3V3</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="510" y="930" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="933" x2="549" y2="943" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="933" x2="535" y2="943" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="942" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO10</tspan>  &#8596;  <tspan font-weight="800">GPIO9</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="40" y="957" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="960" x2="79" y2="970" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="960" x2="65" y2="970" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="969" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO7</tspan>  &#8596;  <tspan font-weight="800">GPIO6</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="510" y="957" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="960" x2="549" y2="970" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="960" x2="535" y2="970" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="969" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO6</tspan>  &#8596;  <tspan font-weight="800">GPIO5</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="40" y="984" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="987" x2="79" y2="997" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="987" x2="65" y2="997" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="996" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO8</tspan>  &#8596;  <tspan font-weight="800">GPIO7</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="510" y="984" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="987" x2="549" y2="997" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="987" x2="535" y2="997" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="996" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO1 / 2 / 3</tspan>  &#8596;  <tspan font-weight="800">GND</tspan>   <tspan fill="#777" font-size="11" dx="10">boutons relaches</tspan></text>
+<rect x="40" y="1011" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="1014" x2="79" y2="1024" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="1014" x2="65" y2="1024" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="1023" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">SCL</tspan>  &#8596;  <tspan font-weight="800">SDA</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="510" y="1011" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="1014" x2="549" y2="1024" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="1014" x2="535" y2="1024" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="1023" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">SDA</tspan>  &#8596;  <tspan font-weight="800">RES</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="40" y="1038" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="1041" x2="79" y2="1051" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="1041" x2="65" y2="1051" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="1050" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">RES</tspan>  &#8596;  <tspan font-weight="800">DC</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="510" y="1038" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="1041" x2="549" y2="1051" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="1041" x2="535" y2="1051" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="1050" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">DC</tspan>  &#8596;  <tspan font-weight="800">CS</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="40" y="1065" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="1068" x2="79" y2="1078" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="1068" x2="65" y2="1078" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="1077" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">CS</tspan>  &#8596;  <tspan font-weight="800">BLK</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="510" y="1065" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="1068" x2="549" y2="1078" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="1068" x2="535" y2="1078" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="1077" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">VCC</tspan>  &#8596;  <tspan font-weight="800">SCL</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="30" y="1098" width="940" height="32" rx="6" fill="#12233a"/>
+<text x="44" y="1120" font-size="17" font-weight="800" fill="#fff" text-anchor="start">4. Symptome -> quoi tester en premier</text>
+<rect x="30" y="1136" width="940" height="38" rx="6" fill="#fff" stroke="#dde3ea"/>
+<text x="44" y="1160" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Ecran tout noir, pas de lumiere</text>
+<text x="370" y="1160" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">VCC, BLK, GND de l'ecran ; 3V3 et GND de la carte</text>
+<rect x="30" y="1178" width="940" height="38" rx="6" fill="#f3f6fa" stroke="#dde3ea"/>
+<text x="44" y="1202" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Ecran allume mais blanc ou noir uni</text>
+<text x="370" y="1202" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">SCL, SDA, CS, DC, RES ; puis le firmware : V1 = sketch principal (pas proto-0-4)</text>
+<rect x="30" y="1220" width="940" height="38" rx="6" fill="#fff" stroke="#dde3ea"/>
+<text x="44" y="1244" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Image melangee, couleurs fausses</text>
+<text x="370" y="1244" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">DC (GPIO5) et SDA (GPIO6) ; ponts SDA-RES, RES-DC, DC-CS</text>
+<rect x="30" y="1262" width="940" height="38" rx="6" fill="#f3f6fa" stroke="#dde3ea"/>
+<text x="44" y="1286" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Un bouton ne fait rien</text>
+<text x="370" y="1286" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">son fil GPIO -> patte 1, et la patte 2 -> GND ; tester bouton appuye</text>
+<rect x="30" y="1304" width="940" height="38" rx="6" fill="#fff" stroke="#dde3ea"/>
+<text x="44" y="1328" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Le perso bouge tout seul</text>
+<text x="370" y="1328" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">court-circuit GPIO -> GND (bouton relache) ou pont GPIO1-GPIO2-GPIO3</text>
+<rect x="30" y="1346" width="940" height="38" rx="6" fill="#f3f6fa" stroke="#dde3ea"/>
+<text x="44" y="1370" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Pas reconnue en USB, chauffe</text>
+<text x="370" y="1370" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">court-circuit 3V3 -> GND ou 5V -> GND : debrancher tout de suite</text>
+<text x="500.0" y="1406" font-size="11" font-weight="400" fill="#999" text-anchor="middle">Brochage : materiel/pinout-format1.txt - genere par make_test_continuite.py</text>
+</svg><!-- /FICHE-TEST --></div>
   </section>
+</main>
+
+<!-- ===== ATELIER : présentation pour les professeurs ===== -->
+<main id="profs" class="anim hide">
+  <section>
+    <h2><b>📚</b>Brique en classe : l'atelier</h2>
+    <p style="margin:0;font-size:18px">Les élèves <b>fabriquent leur console</b>, <b>créent leurs jeux en parlant à une IA</b>, et chaque jeu <b>reprend la leçon du jour</b> : vos questions de cours s'affichent quand on atteint l'arrivée.</p>
+    <p class="aide">Du CM1 à la 4ᵉ · par groupes de 8 à 30 · de 1 séance à un projet sur l'année.</p>
+  </section>
+  <div class="profs-grille">
+    <section><h2><b>01</b>— Atelier manuel</h2>
+      <p>Chaque élève monte sa console : microcontrôleur ESP32-C3, écran couleur, trois boutons, soudure et assemblage du boîtier.</p>
+      <p><b>Pas de soudure possible</b> (âge, matériel, temps) ? La console existe en <b>version pré-soudée</b>, montée et testée : l'atelier commence directement par la création.</p>
+      <p class="aide">Comprendre ce qu'il y a dans un objet numérique, suivre un plan de montage, travailler avec soin et sécurité (lunettes, fer à souder encadré).</p></section>
+    <section><h2><b>02</b>— Personnalisation</h2>
+      <p>Le monde, le héros, les couleurs, les ennemis, le décor : chaque élève compose son univers, cherche ses images et nomme son jeu.</p>
+      <p class="aide">Faire des choix esthétiques, chercher et sélectionner des images, présenter sa création aux autres.</p></section>
+    <section><h2><b>03</b>— Coder avec l'IA</h2>
+      <p>L'élève décrit son jeu en français (« un volcan très haut avec des ressorts et 3 vies »). L'IA traduit en réglages, l'élève teste sur sa console, corrige sa demande, recommence.</p>
+      <p class="aide">Formuler précisément, tester et corriger (démarche d'essai-erreur), regarder « sous le capot » le code produit, comprendre ce qu'une IA sait faire… et ce qu'elle ne sait pas : les demandes impossibles deviennent des « idées des joueurs ».</p></section>
+    <section><h2><b>04</b>— La couche pédagogique</h2>
+      <p>Dans l'<b>espace Animateur</b>, vous écrivez vos questions de cours (QCM, 2 ou 3 réponses). Elles sont <b>insérées d'office</b> dans tous les jeux du groupe : à l'arrivée, la console pose une question avant d'afficher la victoire, et montre la bonne réponse en cas d'erreur.</p>
+      <p class="aide">Français, maths, anglais, histoire, sciences… La leçon devient la clé du jeu, révisée à chaque partie, y compris en jouant au jeu d'un camarade. Vous suivez le taux de bonnes réponses par question.</p></section>
+    <section><h2><b>05</b>— Mode atelier</h2>
+      <p>Le jour de l'atelier, activez le <b>mode atelier</b> du groupe et indiquez la matière du jour : vos élèves ne voient que les jeux de leur groupe (pas la communauté publique ni la boutique), et leurs créations restent privées au groupe.</p>
+      <p class="aide">Une prof de français fait une séance de français, un prof de maths des maths : les jeux portent la leçon que vous avez choisie.</p></section>
+    <section><h2><b>06</b>— Déroulé type</h2>
+      <ol style="margin:0;padding-left:20px;line-height:1.6">
+        <li><b>Séance 1</b> — montage et soudure de la console <span class="aide">(à sauter avec des consoles pré-soudées)</span>.</li>
+        <li><b>Séance 2</b> — découverte : premier jeu guidé, envoi sur la console.</li>
+        <li><b>Séance 3</b> — création libre avec l'IA, personnalisation, questions de cours.</li>
+        <li><b>Séance 4</b> — publication, échange des jeux par code, courses à plusieurs.</li>
+      </ol></section>
+    <section><h2><b>07</b>— Cadre et sécurité</h2>
+      <p>Les élèves n'ont <b>ni compte ni adresse mail</b> : un pseudo et le code du groupe suffisent. Seul l'adulte se connecte (lien reçu par mail). Vous pouvez masquer un jeu, supprimer une idée, libérer un pseudo.</p>
+      <p class="aide">Pas de nom, pas de photo, pas de messagerie entre élèves. Les textes affichés sur les consoles sont filtrés.</p></section>
+    <section><h2><b>08</b>— Pour commencer</h2>
+      <ol style="margin:0;padding-left:20px;line-height:1.6">
+        <li>Ouvrez l'<b>espace Animateur</b> et créez un groupe : vous obtenez un code (ex. LUNE-42).</li>
+        <li>Écrivez vos questions de cours et, si besoin, activez le mode atelier.</li>
+        <li>Les élèves cliquent « Rejoindre mon groupe » avec ce code et un pseudo.</li>
+      </ol>
+      <div class="actions" style="justify-content:flex-start;margin-top:12px"><button id="profsAnim" class="big" style="width:auto;margin:0">🎓 Ouvrir l'espace Animateur</button></div></section>
+  </div>
 </main>
 
 <!-- ===== ESPACE ANIMATEUR ===== -->
@@ -883,6 +1177,13 @@ envoyer.onclick = async () => {
     if (!port) { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter(); await syncCourses(); }
     envoi.textContent = '📟 Envoi…';
     // une ligne par icône d'abord (la console les garde avec le niveau qui suit), puis le niveau
+    let qs = jeu.niv.questions;                          // jeu publié : ses questions ; sinon celles du groupe de l'enfant
+    if (!qs && moi && EN_LIGNE) try { qs = (await api('api/questions', ident())).questions; } catch {}
+    for (const q of qs || []) {
+      const sa = t => norm(t || '').replace(/[^ -~]/g, '').replace(/["\\]/g, '');   // sans accents : police de la console
+      const l = await ligneSerie({ question: sa(q.q).slice(0, 80), r: q.r.map(x => sa(x).slice(0, 30)), b: q.b, id: q.id });
+      if (!l.startsWith('BRIQUE OK')) return dire(l ? 'La console dit : ' + l.replace('BRIQUE ERR ', '') : 'Pas de réponse : la console a-t-elle le bon firmware ?');
+    }
     for (const [k, px] of Object.entries(jeu.niv.icones || {})) {
       const l = await ligneSerie({ icone: k, px });
       if (!l.startsWith('BRIQUE OK')) return dire(l ? 'La console dit : ' + l.replace('BRIQUE ERR ', '') : 'Pas de réponse : la console a-t-elle le bon firmware ?');
@@ -929,8 +1230,10 @@ async function syncCourses() {
   const ecrireLigne = async t => { const w = port.writable.getWriter(); await w.write(new TextEncoder().encode(t + '\n')); w.releaseLock(); };
   await ecrireLigne('RESULTATS'); await fin; resAttente = null;
   if (!resBuf.length) return;
-  const resultats = resBuf.map(l => { const [code, t, g, n] = l.split(' '); return { code, t: +t, gagne: g === '1', joueurs: +n }; });
+  const reponses = resBuf.filter(l => l.startsWith('Q ')).map(l => { const [, id, ok] = l.split(' '); return { id, ok: ok === '1' }; });   // questions de cours
+  const resultats = resBuf.filter(l => !l.startsWith('Q ')).map(l => { const [code, t, g, n] = l.split(' '); return { code, t: +t, gagne: g === '1', joueurs: +n }; });
   try {
+    if (reponses.length) await api('api/reponses', { ...ident(), reponses });
     const r = await api('api/courses', { ...ident(), resultats });
     await ecrireLigne('RESULTATS OK');                     // la console peut les oublier
     if (r.enregistrees) { dire(`🏁 ${r.enregistrees} course${r.enregistrees > 1 ? 's' : ''} à plusieurs ajoutée${r.enregistrees > 1 ? 's' : ''} au classement !`, true); rafraichir(); }
@@ -939,6 +1242,9 @@ async function syncCourses() {
 function ligneConsole(l) {
   if ((l.startsWith('BRIQUE OK') || l.startsWith('BRIQUE ERR')) && attente) return attente(l);
   if (l.startsWith('BRIQUE RES ')) return resBuf.push(l.slice(11));
+  const qz = l.match(/^BRIQUE QUIZ (\S+) ([01])/);                  // question de cours répondue sur la console
+  if (qz) { if (moi && EN_LIGNE) api('api/reponses', { ...ident(), reponses: [{ id: qz[1], ok: qz[2] === '1' }] }).catch(() => {});
+    return dire(qz[2] === '1' ? '✅ Bonne réponse à la question !' : '❌ Pas tout à fait… la bonne réponse est affichée sur la console.', qz[2] === '1'); }
   if (l.startsWith('BRIQUE RESFIN') && resAttente) return resAttente();
   const m = l.match(/^BRIQUE FIN (\d+) (\d+) (\d+)/);
   if (m && nivConsole) resultat(nivConsole, 'console', +m[1] / 1000, +m[2], +m[3]);
@@ -1021,9 +1327,9 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 
 async function rafraichir() {
   let c;
-  try { c = await api('api/communaute'); EN_LIGNE = true; }
+  try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); EN_LIGNE = true; }
   catch { EN_LIGNE = false; [vCommu, vAnim, moiBox].forEach(e => e.classList.add('hide')); if (vue !== 'creer') afficher('creer'); return; }   // GitHub Pages / fichier : pas de communauté
-  enLigne = c.niveaux;
+  enLigne = c.niveaux; modeAtelier(c.atelier);
   nJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = c.chiffres.aujourdhui;
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
   const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
@@ -1046,6 +1352,13 @@ async function rafraichir() {
   commun.innerHTML = niv.map((n, i) => ligneRang(n, i + 1, n.stats.parties ? `record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'jamais fini')).join('')
     || vide('Le jeu commun est vide : ajoute le premier niveau !');
   rendreIdees(c.idees);
+}
+// ---------- Mode atelier : l'animateur confine son groupe (matière du jour, jeux du groupe seulement) ----------
+function modeAtelier(a) {
+  document.body.classList.toggle('en-atelier', !!a);
+  atelierBan.classList.toggle('hide', !a);
+  if (a) atelierBan.innerHTML = `📚 Atelier ${a.matiere ? '<b>' + esc(a.matiere) + '</b> · ' : ''}${esc(a.nom)} <small>— tu ne vois que les jeux de ton groupe</small>`;
+  if (a && (vue === 'boutique' || vue === 'support')) afficher('commu');
 }
 // ---------- Idées des joueurs (ce que le firmware ne sait pas encore faire) ----------
 const STATUT = { idee: '💡 idée', prevu: '🛠 prévue', fait: '✅ faite' };
@@ -1099,12 +1412,24 @@ async function rendreAnim(donnees) {
   if (!d && session) try { d = await api('api/animateur', null, session); } catch (e) { if (e.code === 401) { session = null; ecrire('brique-session', null); } }
   animConnexion.classList.toggle('hide', !!d); animEspace.classList.toggle('hide', !d);
   if (!d) return;
-  animQui.textContent = d.email;
+  animQui.textContent = d.email; animDonnees = d;
   animGroupes.innerHTML = d.groupes.map(g => `<section>
     <h2><b>${esc(g.nom)}</b></h2>
     <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span></p>
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
     <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
+    <h3>📚 Mode atelier</h3>
+    <div class="icRow"><input class="pseudo" data-matiere="${esc(g.code)}" maxlength="40" placeholder="Matière du jour (ex. Maths : fractions)" value="${esc(g.matiere)}">
+      <label class="chip" style="white-space:nowrap"><input type="checkbox" data-prive="${esc(g.code)}" ${g.prive ? 'checked' : ''}> Interface confinée au groupe</label></div>
+    <p class="aide" style="margin:4px 0 0">Confinée : les enfants ne voient que les jeux de leur groupe (pas la communauté publique, pas la boutique), et leurs jeux restent privés au groupe.</p>
+    <h3>❓ Questions de cours (${g.questions.length}/10) — posées sur la console à l'arrivée de chaque jeu du groupe</h3>
+    <div class="liste">${g.questions.map((q, i) => `<div class="rang"><span class="pos">${i + 1}</span><div class="qui"><div><b>${esc(q.q)}</b></div>
+      <small>${q.r.map((r, k) => k === q.b ? `✅ ${esc(r)}` : esc(r)).join(' · ')}${q.stats.reponses ? ` — ${q.stats.reponses} réponse${q.stats.reponses > 1 ? 's' : ''}, ${Math.round(100 * q.stats.justes / q.stats.reponses)} % justes` : ''}</small></div>
+      <button class="jouer" data-qsuppr="${esc(g.code)}" data-i="${i}">🗑</button></div>`).join('') || '<span class="vide">Aucune question : les jeux de ce groupe n’en poseront pas.</span>'}</div>
+    ${g.questions.length < 10 ? `<div class="qform" data-qform="${esc(g.code)}">
+      <input class="pseudo" maxlength="80" placeholder="Question (ex. Combien font 7 × 8 ?)" data-q>
+      ${[0, 1, 2].map(k => `<div class="rep"><input type="radio" name="b-${esc(g.code)}" value="${k}" ${k ? '' : 'checked'} title="Bonne réponse"><input type="text" class="pseudo" maxlength="30" placeholder="Réponse ${k + 1}${k === 2 ? ' (pas obligé)' : ''}" data-r></div>`).join('')}
+      <button class="sec" data-qajout="${esc(g.code)}">➕ Ajouter la question</button></div>` : ''}
     <h3>🎮 Niveaux publiés (${g.niveaux.length})</h3>
     <div class="liste">${g.niveaux.sort((a, b) => b.cree - a.cree).map(n => `<div class="rang ${n.masque ? 'masque' : ''}"><div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div>
       <small>${depuis(n.cree)} · ${n.parties} partie${n.parties > 1 ? 's' : ''}${n.masque ? ' · masqué' : ''}</small></div>
@@ -1112,9 +1437,29 @@ async function rendreAnim(donnees) {
   </section>`).join('') || '';
 }
 grCreer.onclick = async () => { try { rendreAnim(await api('api/animateur/groupe', { nom: grNom.value }, session)); grNom.value = ''; } catch (e) { alert(e.message); } };
+let animDonnees = null;
+async function questionsDe(code, f) {                    // modifie la liste des questions d'un groupe, puis la renvoie au serveur
+  const g = animDonnees.groupes.find(g => g.code === code), qs = g.questions.map(({ id, q, r, b }) => ({ id, q, r, b }));
+  f(qs); rendreAnim(await api('api/animateur/questions', { code, questions: qs }, session));
+}
+animGroupes.onchange = async e => {
+  const t = e.target, code = t.dataset.matiere || t.dataset.prive; if (!code) return;
+  const sec = t.closest('section');
+  try { rendreAnim(await api('api/animateur/atelier', { code, matiere: sec.querySelector('[data-matiere]').value, prive: sec.querySelector('[data-prive]').checked }, session)); }
+  catch (err) { alert(err.message); }
+};
 animGroupes.onclick = async e => {
   const t = e.target;
   try {
+    if (t.dataset.qsuppr) return questionsDe(t.dataset.qsuppr, qs => qs.splice(+t.dataset.i, 1));
+    if (t.dataset.qajout) {
+      const f = t.closest('[data-qform]'), q = f.querySelector('[data-q]').value.trim();
+      const champs = [...f.querySelectorAll('[data-r]')], bonne = +f.querySelector('input[type=radio]:checked').value;
+      if (!q || !champs[bonne].value.trim()) return alert('Écris la question et sa bonne réponse.');
+      const r = [], b = champs.reduce((acc, c, k) => { if (c.value.trim()) { if (k === bonne) acc = r.length; r.push(c.value.trim()); } return acc; }, 0);
+      if (r.length < 2) return alert('Il faut au moins 2 réponses.');
+      return questionsDe(t.dataset.qajout, qs => qs.push({ q, r, b }));
+    }
     if (t.dataset.masquer) rendreAnim(await api('api/animateur/masquer', { id: t.dataset.masquer, masque: t.dataset.etat === '1' }, session));
     if (t.dataset.liberer) { e.preventDefault(); if (confirm(`Libérer le pseudo « ${t.dataset.liberer} » ?`)) rendreAnim(await api('api/animateur/liberer', { pseudo: t.dataset.liberer }, session)); }
     rafraichir();
@@ -1132,21 +1477,27 @@ async function connexionParLien() {                     // arrivée depuis le li
 // ---------- Boutique : prix unitaire dégressif selon la quantité ----------
 const PALIERS = [[30, 28], [10, 31], [3, 34], [2, 36], [1, 39]]; // [à partir de n consoles, prix unitaire €]
 const BOUTIQUE_MAIL = 'commande@exemple.fr'; // ponytail: commande par mail, brancher un paiement (Stripe…) si besoin
-const prixUnitaire = n => PALIERS.find(([min]) => n >= min)[1];
+// version pre-soudee : meme degressivite, + un supplement par console (montage + test)
+const PRESOUDE_SUPPLEMENT = 12;   // ponytail: prix a confirmer, a changer ici
+let version = 'kit';
+const sup = () => version === 'presoude' ? PRESOUDE_SUPPLEMENT : 0;
+const prixUnitaire = n => PALIERS.find(([min]) => n >= min)[1] + sup();
 function majBoutique() {
   const n = Math.max(1, Math.min(999, parseInt(btQte.value) || 1)), pu = prixUnitaire(n);
-  paliers.innerHTML = [...PALIERS].reverse().map(([min, p], i, a) => `<div class="${p === pu ? 'on' : ''}"><b>${p} €</b><span>${a[i + 1] ? (a[i + 1][0] - 1 > min ? `${min} à ${a[i + 1][0] - 1}` : min) : `${min} et +`} console${min > 1 ? 's' : ''}</span><i>${p < 39 ? `−${Math.round((1 - p / 39) * 100)} %` : ''}</i></div>`).join('');
+  const max = PALIERS.at(-1)[1] + sup(); btDepuis.textContent = `À partir de ${PALIERS[0][1] + sup()} €${version === 'presoude' ? ' · pré-soudée' : ''}`;
+  paliers.innerHTML = [...PALIERS].map(([min, p]) => [min, p + sup()]).reverse().map(([min, p], i, a) => `<div class="${p === pu ? 'on' : ''}"><b>${p} €</b><span>${a[i + 1] ? (a[i + 1][0] - 1 > min ? `${min} à ${a[i + 1][0] - 1}` : min) : `${min} et +`} console${min > 1 ? 's' : ''}</span><i>${p < max ? `−${Math.round((1 - p / max) * 100)} %` : ''}</i></div>`).join('');
   btTotal.textContent = (n * pu) + ' €';
-  btDetail.textContent = `${n} × ${pu} €` + (pu < 39 ? ` · ${n * (39 - pu)} € d'économie` : '');
+  btDetail.textContent = `${n} × ${pu} € (${version === 'presoude' ? 'pré-soudée' : 'kit à souder'})` + (pu < max ? ` · ${n * (max - pu)} € d'économie` : '');
   return { n, pu };
 }
 btQte.oninput = majBoutique; majBoutique();
+btVersions.onclick = e => { const b = e.target.closest('[data-v]'); if (!b) return; version = b.dataset.v; btVersions.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); majBoutique(); };
 document.querySelectorAll('.sh-pm').forEach(b => b.onclick = () => { btQte.value = Math.max(1, (parseInt(btQte.value) || 1) + +b.dataset.d); majBoutique(); });
 btCommander.onclick = () => {
   const { n, pu } = majBoutique();
-  location.href = `mailto:${BOUTIQUE_MAIL}?subject=${encodeURIComponent(`Commande Brique : ${n} console(s)`)}&body=${encodeURIComponent(`Bonjour,
+  location.href = `mailto:${BOUTIQUE_MAIL}?subject=${encodeURIComponent(`Commande Brique : ${n} console(s) ${version === 'presoude' ? 'pré-soudée(s)' : 'en kit'}`)}&body=${encodeURIComponent(`Bonjour,
 
-Je souhaite commander ${n} console(s) Brique à ${pu} € l'unité, soit ${n * pu} € au total.
+Je souhaite commander ${n} console(s) Brique, version ${version === 'presoude' ? 'pré-soudée' : 'kit à souder'}, à ${pu} € l'unité, soit ${n * pu} € au total.
 
 Nom :
 Adresse de livraison :
@@ -1165,6 +1516,7 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
 let vue = 'commu';
 function afficher(v) {
   vue = v;
+  profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); support.classList.toggle('hide', v !== 'support');
   niveauScolaire.classList.toggle('hide', v !== 'creer');
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
@@ -1172,6 +1524,11 @@ function afficher(v) {
   scrollTo(0, 0);
 }
 vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique'); vSupport.onclick = () => afficher('support');
+ficheImprimer.onclick = () => {                         // la fiche seule, en A4, dans un nouvel onglet
+  const w = open(URL.createObjectURL(new Blob([fiche.innerHTML], { type: 'image/svg+xml' })));
+  if (w) w.onload = () => w.print();
+};
+vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
 majMoi();
 connexionParLien().then(fait => fait || afficher('commu'));

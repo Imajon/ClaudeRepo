@@ -64,6 +64,16 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .vig{height:84px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;border-radius:8px;background:#0a0618}
 .mini{width:60px;image-rendering:pixelated}
 .avatar{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#160c33}
+header .moi{margin-left:auto;display:flex;align-items:center;gap:8px}
+header .moi b{color:var(--acc2)}
+#vAnim.on{border-color:var(--acc);box-shadow:0 0 12px rgba(167,139,250,.35)}
+dialog{background:var(--panel);color:var(--txt);border:0;border-radius:14px;padding:20px;box-shadow:var(--glow),0 20px 60px rgba(0,0,0,.6);max-width:min(420px,92vw)}
+dialog::backdrop{background:rgba(5,2,15,.7)}
+.champ{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.champ input{width:100%}
+.anim{max-width:1000px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+.code{white-space:nowrap;font:800 22px/1 ui-monospace,monospace;letter-spacing:2px;color:var(--acc2);text-shadow:0 0 12px rgba(34,211,238,.5)}
+.masque{opacity:.45}
 .neuf{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--acc2);color:#04212a;font-weight:800;margin-left:6px}
 textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
 textarea:focus{outline:none;border-color:var(--acc)}
@@ -80,11 +90,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .cat code{color:var(--acc);font-weight:700}
 .console{display:flex;flex-direction:column;align-items:center}
 .coque{background:#c9302c;border-radius:28px;padding:22px 28px 18px;box-shadow:0 10px 0 #8d1f1c;max-width:100%}
-canvas{display:block;width:640px;max-width:100%;aspect-ratio:4/3;image-rendering:pixelated;background:#000;border-radius:6px;border:6px solid #222}
-.pad{display:flex;justify-content:space-between;margin-top:14px;gap:12px}
-.pad button{width:64px;height:64px;border-radius:50%;border:0;background:#222;color:#fff;font-size:24px;box-shadow:0 5px 0 #000;touch-action:none;user-select:none}
-.pad button:active{transform:translateY(3px);box-shadow:0 2px 0 #000}
-.pad .saut{background:#ffcc33;color:#000}
+canvas{display:block;width:640px;max-width:100%;image-rendering:pixelated;background:#000;border-radius:6px;border:6px solid #222}
+.apercu{width:652px;max-width:100%;max-height:480px;overflow-y:auto;border-radius:6px}
 .aide{color:var(--mute);font-size:13px;margin:10px 0}
 .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .pseudo{background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:inherit;width:160px}
@@ -121,7 +128,8 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <button id="vCommu" class="on">🏠 Communauté</button>
     <button id="vCreer">🛠 Créer</button>
   </nav>
-  <input id="pseudoIn" class="pseudo" maxlength="12" placeholder="Ton pseudo" title="2 à 12 lettres ou chiffres, sans espace. Pas ton vrai nom !">
+  <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
+  <button id="vAnim" class="sec">🎓 Animateur</button>
   <div id="niveauScolaire" class="mode hide">
     <button id="mGuide" class="on">CM1 · CM2 — guidé</button>
     <button id="mLibre">6ᵉ · 4ᵉ — libre</button>
@@ -150,6 +158,34 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
   <section><h2><b>05</b>— Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
   <section><h2><b>06</b>— Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu : chacun y ajoute un niveau signé de son pseudo.</p><div id="commun" class="liste"></div></section>
 </main>
+
+<!-- ===== ESPACE ANIMATEUR ===== -->
+<main id="anim" class="anim hide">
+  <section id="animConnexion">
+    <h2><b>01</b>— Espace animateur</h2>
+    <p class="aide" style="margin-top:0">Entre ton adresse mail : tu reçois un lien de connexion (pas de mot de passe). Les enfants, eux, ne donnent jamais de mail.</p>
+    <div class="icRow"><input id="animMail" class="pseudo" type="email" placeholder="ton.adresse@exemple.fr"><button id="animLienBtn" class="sec">📧 Recevoir mon lien</button></div>
+    <div id="animMsg" class="envoi"></div>
+  </section>
+  <div id="animEspace" class="hide" style="display:flex;flex-direction:column;gap:16px">
+    <section>
+      <h2><b>01</b>— Mes groupes</h2>
+      <p class="aide" style="margin-top:0">Connecté : <b id="animQui"></b> · <a href="#" id="animSortir" style="color:var(--acc)">se déconnecter</a></p>
+      <div class="icRow"><input id="grNom" class="pseudo" maxlength="40" placeholder="Nom du groupe (ex. CM2 Jules Ferry)"><button id="grCreer" class="sec">➕ Créer un groupe</button></div>
+    </section>
+    <div id="animGroupes" style="display:flex;flex-direction:column;gap:16px"></div>
+  </div>
+</main>
+
+<!-- ===== REJOINDRE UN GROUPE (enfant) ===== -->
+<dialog id="dlgRejoindre">
+  <h2><b>👤</b>Rejoindre mon groupe</h2>
+  <p class="aide" style="margin-top:0">Ton animateur te donne le code du groupe. Choisis un pseudo : <b>pas ton vrai nom !</b></p>
+  <label class="champ">Code du groupe<input id="rjCode" class="pseudo" placeholder="ex. LUNE-42" autocapitalize="characters"></label>
+  <label class="champ">Mon pseudo<input id="rjPseudo" class="pseudo" maxlength="12" placeholder="2 à 12 lettres ou chiffres"></label>
+  <div id="rjMsg" class="envoi"></div>
+  <div class="actions" style="justify-content:flex-end"><button id="rjAnnuler" class="sec">Annuler</button><button id="rjOk" class="sec" style="border-color:var(--acc)">C'est parti !</button></div>
+</dialog>
 
 <main id="atelier" class="hide">
   <!-- ===== DEMANDE ===== -->
@@ -193,17 +229,12 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 
   <!-- ===== CONSOLE / APERÇU ===== -->
   <section class="console">
-    <h2><b>02</b>— Je teste</h2>
+    <h2><b>02</b>— Mon niveau</h2>
     <div class="coque">
-      <canvas id="ecran" width="320" height="240"></canvas>
-      <div class="pad">
-        <div style="display:flex;gap:10px"><button data-b="g">◀</button><button data-b="d">▶</button></div>
-        <button class="saut" data-b="s">⤒</button>
-      </div>
+      <div id="apercu" class="apercu"><canvas id="ecran" width="320" height="240"></canvas></div>
     </div>
-    <p class="aide">Clavier : ← → pour bouger, Espace ou ↑ pour sauter. Saute contre un mur pour rebondir.</p>
+    <p class="aide">Pour jouer, envoie ton niveau sur la console : c'est elle qui fait tourner le jeu.</p>
     <div class="actions">
-      <button id="rejouer" class="sec">↺ Rejouer</button>
       <button id="nouveau" class="sec">🗑 Nouveau jeu</button>
       <button id="envoyer" class="sec">📟 Envoyer sur la console</button>
     </div>
@@ -229,8 +260,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 <script>
 // ---------- Constantes reprises du firmware (c3-tft-meatboy.ino) ----------
 const TILE = 16, COLS = 20, SW = 320, SH = 240;
-const GRAVITY = 1400, RUN = 200, JUMP_V = -450, MAXFALL = 540, BOUNCE_V = -560;
-const WJUMP_VY = -400, WJUMP_VX = 185, JUMPLOCK = 0.13, CRUMB_DELAY = 0.8, PW = 12, PH = 14;
+const PW = 12, PH = 14;   // taille du heros
 
 // ---------- Choix guidés ----------
 const CHOIX = {
@@ -339,92 +369,22 @@ function generer(p) {
   return g.map(r => r.join(''));
 }
 
-// ---------- Émulateur (physique simplifiée du firmware) ----------
+// ---------- Aperçu fixe du niveau (pas de simulation : on joue uniquement sur la console) ----------
 const cv = ecran, ctx = cv.getContext('2d');
-let jeu = null, keys = { g:0, d:0, s:0 }, sautPrec = 0;
+let jeu = null;
 
 function charger(niv) {
   const rows = niv.rows.map(r => r.split(''));
-  const j = { niv, rows, saws:[], stars:[], crumbs:{}, mort:0, t:0, gagne:false, cam:0, total:0 };
+  const j = { niv, rows, saws:[], stars:[] };
   rows.forEach((r, y) => r.forEach((c, x) => {
     if (c === 'S') { j.sx = x * TILE + 2; j.sy = y * TILE + TILE - PH; r[x] = '.'; }
     if (c === 'G') { j.gx = x; j.gy = y; r[x] = '.'; }
-    if (c === '*') { j.stars.push({ x, y, pris:false }); r[x] = '.'; }
-    if (c === 'W') { j.saws.push({ x: x * TILE + 8, y0: (y - 3) * TILE, y1: (y + 1) * TILE, y: y * TILE, dir: 1 }); r[x] = '.'; }
+    if (c === '*') { j.stars.push({ x, y }); r[x] = '.'; }
+    if (c === 'W') { j.saws.push({ x: x * TILE + 8, y: y * TILE }); r[x] = '.'; }
   }));
-  j.total = j.stars.length; jeu = j; respawn();
-  j.cam = Math.max(0, Math.min(rows.length * TILE - SH, j.sy - SH / 2));
-}
-function respawn() {
-  Object.assign(jeu, { px: jeu.sx, py: jeu.sy, vx: 0, vy: 0, sol: false, lock: 0, crumbs: {} });
-}
-const tuile = (x, y) => (y < 0 || x < 0 || x >= COLS) ? '#' : (y >= jeu.rows.length ? '.' : jeu.rows[y][x]);
-function solide(x, y) {
-  const c = tuile(x, y);
-  if (c === 'C') { const k = jeu.crumbs[x + ',' + y]; return !(k && k.t >= CRUMB_DELAY + .1); }
-  return c === '#' || c === 'R' || c === 'I' || c === 'B';
-}
-function heurte(px, py) {
-  for (let y = Math.floor(py / TILE); y <= Math.floor((py + PH - 1) / TILE); y++)
-    for (let x = Math.floor(px / TILE); x <= Math.floor((px + PW - 1) / TILE); x++)
-      if (solide(x, y)) return { x, y };
-  return null;
-}
-
-function maj(dt) {
-  const j = jeu, p = j.niv.params; if (!j || j.gagne) return;
-  j.t += dt;
-  const dir = (keys.d ? 1 : 0) - (keys.g ? 1 : 0), saut = keys.s && !sautPrec; sautPrec = keys.s;
-  const dessous = tuile(Math.floor((j.px + PW / 2) / TILE), Math.floor((j.py + PH) / TILE));
-  const vise = dir * RUN * p.vitesse;
-  if (j.lock > 0) j.lock -= dt;
-  else if (j.sol && dessous === 'I') j.vx += (vise - j.vx) * Math.min(1, dt * 2.5);   // glace : peu d'adhérence
-  else j.vx = vise;
-  j.vy = Math.min(MAXFALL, j.vy + GRAVITY * p.gravite * dt);
-  const mur = !j.sol && (heurte(j.px - 1, j.py) ? -1 : heurte(j.px + 1, j.py) ? 1 : 0);
-  if (mur && dir === mur && j.vy > 0) j.vy = Math.min(j.vy, 60);          // glissade au mur
-  j.buf = saut ? 0.12 : Math.max(0, (j.buf || 0) - dt);           // saut mémorisé 0,12 s (appui juste avant d'atterrir)
-  if (j.buf > 0) {
-    if (j.sol) { j.vy = JUMP_V; j.buf = 0; }
-    else if (mur) { j.vy = WJUMP_VY; j.vx = -mur * WJUMP_VX; j.lock = JUMPLOCK; j.buf = 0; }
-  }
-  // déplacement X puis Y
-  j.px += j.vx * dt;
-  let h = heurte(j.px, j.py);
-  if (h) { j.px = j.vx > 0 ? h.x * TILE - PW : (h.x + 1) * TILE; j.vx = 0; }
-  j.py += j.vy * dt; j.sol = false;
-  h = heurte(j.px, j.py);
-  if (h) {
-    if (j.vy > 0) {
-      j.py = h.y * TILE - PH;
-      const c = tuile(h.x, h.y);
-      if (c === 'R') j.vy = BOUNCE_V;
-      else { j.vy = 0; j.sol = true; }
-      if (c === 'C') { const k = h.x + ',' + h.y; j.crumbs[k] ??= { t: 0 }; }
-    } else { j.py = (h.y + 1) * TILE; j.vy = 0; }
-  }
-  for (const k in j.crumbs) j.crumbs[k].t += dt;
-  // dangers
-  const cx0 = Math.floor(j.px / TILE), cx1 = Math.floor((j.px + PW - 1) / TILE);
-  for (let y = Math.floor(j.py / TILE); y <= Math.floor((j.py + PH - 1) / TILE); y++)
-    for (let x = cx0; x <= cx1; x++)
-      if (tuile(x, y) === '^' && j.py + PH > y * TILE + 8) return mourir();
-  for (const s of j.saws) {
-    s.y += s.dir * 50 * dt; if (s.y < s.y0 || s.y > s.y1) s.dir *= -1;
-    const nx = Math.max(j.px, Math.min(s.x, j.px + PW)), ny = Math.max(j.py, Math.min(s.y, j.py + PH));
-    if ((nx - s.x) ** 2 + (ny - s.y) ** 2 < 81) return mourir();
-  }
-  if (j.py > j.rows.length * TILE) return mourir();
-  for (const s of j.stars) if (!s.pris && Math.abs(j.px + PW / 2 - s.x * TILE - 8) < 12 && Math.abs(j.py + PH / 2 - s.y * TILE - 8) < 12) s.pris = true;
-  if (Math.abs(j.px + PW / 2 - j.gx * TILE - 8) < 12 && Math.abs(j.py + PH / 2 - j.gy * TILE - 8) < 14) gagner();
-  // caméra verticale
-  const max = Math.max(0, j.rows.length * TILE - SH);
-  j.cam += (Math.max(0, Math.min(max, j.py - SH / 2)) - j.cam) * Math.min(1, dt * 8);
-}
-function mourir() { jeu.mort++; respawn(); }
-function gagner() {
-  jeu.gagne = true;
-  resultat(jeu.niv, 'web', jeu.t, jeu.mort, jeu.stars.filter(s => s.pris).length);
+  jeu = j;
+  cv.height = rows.length * TILE; dessiner();
+  requestAnimationFrame(() => apercu.scrollTop = apercu.scrollHeight);   // on voit le bas, la ou on commence
 }
 
 function dessiner() {
@@ -435,54 +395,44 @@ function dessiner() {
     ctx.fillText('Décris ton jeu', SW / 2, SH / 2 - 8); ctx.fillStyle = '#888'; ctx.font = '13px system-ui';
     ctx.fillText('puis appuie sur « Créer »', SW / 2, SH / 2 + 14); return;
   }
-  const th = THEMES[j.niv.params.theme], cam = Math.round(j.cam);
-  const grd = ctx.createLinearGradient(0, 0, 0, SH); grd.addColorStop(0, th.ciel[0]); grd.addColorStop(1, th.ciel[1]);
-  ctx.fillStyle = grd; ctx.fillRect(0, 0, SW, SH);
-  const y0 = Math.floor(cam / TILE), y1 = Math.min(j.rows.length - 1, y0 + SH / TILE + 1);
+  const th = THEMES[j.niv.params.theme], cam = 0, H = cv.height;
+  const grd = ctx.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, th.ciel[0]); grd.addColorStop(1, th.ciel[1]);
+  ctx.fillStyle = grd; ctx.fillRect(0, 0, SW, H);
+  const y0 = 0, y1 = j.rows.length - 1;
   for (let y = y0; y <= y1; y++) for (let x = 0; x < COLS; x++) {
     const c = j.rows[y][x], X = x * TILE, Y = y * TILE - cam;
     if (c === '#') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y, TILE, TILE); ctx.fillStyle = th.bord; ctx.fillRect(X, Y, TILE, 3); }
     else if (c === 'I') { ctx.fillStyle = th.glace; ctx.fillRect(X, Y, TILE, TILE); ctx.fillStyle = '#fff'; ctx.fillRect(X + 2, Y + 3, 6, 2); }
     else if (c === 'R') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y + 8, TILE, 8); ctx.fillStyle = '#ffd400'; ctx.fillRect(X + 1, Y + 2, 14, 5); ctx.fillStyle = '#888'; ctx.fillRect(X + 4, Y + 7, 8, 2); }
     else if (c === 'C') {
-      const k = j.crumbs[x + ',' + y]; if (k && k.t >= CRUMB_DELAY + .1) continue;
-      const sh = k ? (Math.random() - .5) * 2 : 0;
+      const sh = 0;
       ctx.fillStyle = '#a0703c'; ctx.fillRect(X + sh, Y, TILE, TILE); ctx.strokeStyle = '#5a3a18'; ctx.beginPath(); ctx.moveTo(X + 3 + sh, Y + 3); ctx.lineTo(X + 8 + sh, Y + 9); ctx.lineTo(X + 13 + sh, Y + 5); ctx.stroke();
     }
     else if (c === '^') { ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.moveTo(X, Y + 16); ctx.lineTo(X + 4, Y + 6); ctx.lineTo(X + 8, Y + 16); ctx.lineTo(X + 12, Y + 6); ctx.lineTo(X + 16, Y + 16); ctx.fill(); }
   }
   const ic = j.niv.icones || {};
-  for (const s of j.stars) if (!s.pris) ic.e ? ctx.drawImage(icImg(ic.e), s.x * TILE, s.y * TILE - cam) : etoile(s.x * TILE + 8, s.y * TILE + 8 - cam);
+  for (const s of j.stars) ic.e ? ctx.drawImage(icImg(ic.e), s.x * TILE, s.y * TILE - cam) : etoile(s.x * TILE + 8, s.y * TILE + 8 - cam);
   // arrivée
   const gx = j.gx * TILE, gy = j.gy * TILE - cam;
   ctx.fillStyle = '#eee'; ctx.fillRect(gx + 3, gy - 16, 2, 32);
   if (ic.g) ctx.drawImage(icImg(ic.g), gx + 5, gy - 20); else { ctx.fillStyle = '#4ade80'; ctx.fillRect(gx + 5, gy - 16, 10, 8); }
   for (const s of j.saws) {
-    const a = j.t * 10, Y = s.y - cam; ctx.fillStyle = '#bbb'; ctx.beginPath();
+    const a = 0, Y = s.y - cam; ctx.fillStyle = '#bbb'; ctx.beginPath();
     for (let i = 0; i < 16; i++) { const r = i % 2 ? 6 : 9, an = a + i * Math.PI / 8; ctx.lineTo(s.x + Math.cos(an) * r, Y + Math.sin(an) * r); }
     ctx.fill(); ctx.fillStyle = '#555'; ctx.fillRect(s.x - 2, Y - 2, 4, 4);
   }
   // héros
-  const hx = Math.round(j.px), hy = Math.round(j.py - cam), hero = j.niv.params.hero;
+  const hx = j.sx, hy = j.sy - cam, hero = j.niv.params.hero, vx = 1;   // héros posé au départ
   if (ic.h) {                                           // héros choisi : 16x16 ancré aux pieds, retourné vers la gauche (comme la console)
-    if (j.vx < 0) { ctx.save(); ctx.translate(2 * hx + PW, 0); ctx.scale(-1, 1); }
+    if (vx < 0) { ctx.save(); ctx.translate(2 * hx + PW, 0); ctx.scale(-1, 1); }
     ctx.drawImage(icImg(ic.h), hx + PW / 2 - 8, hy + PH - 16);
-    if (j.vx < 0) ctx.restore();
+    if (vx < 0) ctx.restore();
   } else {
   ctx.fillStyle = HEROS[hero]; ctx.fillRect(hx, hy, PW, PH);
   if (hero === 'chat') { ctx.fillRect(hx, hy - 3, 3, 3); ctx.fillRect(hx + 9, hy - 3, 3, 3); }
-  if (hero === 'ninja') { ctx.fillStyle = '#e8322b'; ctx.fillRect(hx, hy + 3, PW, 2); ctx.fillRect(hx - 4 * Math.sign(j.vx || 1), hy + 3, 4, 2); }
+  if (hero === 'ninja') { ctx.fillStyle = '#e8322b'; ctx.fillRect(hx, hy + 3, PW, 2); ctx.fillRect(hx - 4 * 1, hy + 3, 4, 2); }
   if (hero === 'robot') { ctx.fillStyle = '#ffcc33'; ctx.fillRect(hx + 5, hy - 4, 2, 4); }
-  ctx.fillStyle = '#fff'; const ox = j.vx < 0 ? 1 : 5; ctx.fillRect(hx + ox, hy + 4, 3, 3); ctx.fillRect(hx + ox + 4, hy + 4, 3, 3);
-  }
-  // HUD
-  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, 0, SW, 16);
-  ctx.fillStyle = '#fff'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'left';
-  ctx.fillText(`★ ${j.stars.filter(s => s.pris).length}/${j.total}   ☠ ${j.mort}   ⏱ ${j.t.toFixed(1)}s`, 6, 12);
-  if (j.gagne) {
-    ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(0, 0, SW, SH); ctx.textAlign = 'center';
-    ctx.fillStyle = '#4ade80'; ctx.font = 'bold 26px system-ui'; ctx.fillText('BRAVO !', SW / 2, SH / 2 - 10);
-    ctx.fillStyle = '#fff'; ctx.font = '13px system-ui'; ctx.fillText('Dis ce que tu veux changer, puis recrée le jeu', SW / 2, SH / 2 + 16);
+  ctx.fillStyle = '#fff'; const ox = vx < 0 ? 1 : 5; ctx.fillRect(hx + ox, hy + 4, 3, 3); ctx.fillRect(hx + ox + 4, hy + 4, 3, 3);
   }
 }
 function etoile(x, y) {
@@ -491,18 +441,7 @@ function etoile(x, y) {
   ctx.fill();
 }
 
-let tPrec = performance.now();
-(function boucle(t) { const dt = Math.min(1 / 30, (t - tPrec) / 1000); tPrec = t; if (jeu) maj(dt); dessiner(); requestAnimationFrame(boucle); })(tPrec);
-
-// ---------- Entrées ----------
-const TOUCHES = { ArrowLeft:'g', KeyA:'g', KeyQ:'g', ArrowRight:'d', KeyD:'d', Space:'s', ArrowUp:'s', KeyW:'s', KeyZ:'s' };
-addEventListener('keydown', e => { if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return; const k = TOUCHES[e.code]; if (k) { keys[k] = 1; e.preventDefault(); } });
-addEventListener('keyup', e => { const k = TOUCHES[e.code]; if (k) keys[k] = 0; });
-document.querySelectorAll('.pad button').forEach(b => {
-  const k = b.dataset.b;
-  b.onpointerdown = e => { keys[k] = 1; b.setPointerCapture(e.pointerId); };
-  b.onpointerup = b.onpointercancel = () => keys[k] = 0;
-});
+dessiner();
 
 // ---------- Création + historique ----------
 let historique = [], params = null;
@@ -532,7 +471,7 @@ go.onclick = async () => {
   historique.push({ demande: [...avant, texte].filter(Boolean).join(' · ') || '(sans phrase)', vu, niv, duree, corr: '' });
   rendreHist(); capot.textContent = JSON.stringify(niv, null, 1).replace(/\n\s+"(\.|#|S|G)/g, '\n  "$1');
   go.disabled = false; go.textContent = '✨ Recréer avec ma correction'; demande.value = '';
-  envoi.textContent = ''; ecran.focus();
+  envoi.textContent = '';
 };
 
 function rendreHist() {
@@ -543,9 +482,8 @@ function rendreHist() {
       <div class="q">« ${esc(e.demande)} »</div>
       <div class="r">${e.vu.length ? 'Compris : ' + e.vu.map(esc).join(', ') + '<br>' : ''}
         ${e.duree ? `Créé en ${e.duree.toFixed(1)} s · ` : ''}${e.niv.rows.length} lignes${e.niv.id ? ' · 🌐 en ligne' : ''}<br>
-        ${e.web ? `💻 fini en ${e.web.t.toFixed(1)} s, ${e.web.morts} ☠, ${e.web.etoiles} ★<br>` : ''}
         ${e.console ? `📟 fini sur la console en ${e.console.t.toFixed(1)} s, ${e.console.morts} ☠, ${e.console.etoiles} ★` : ''}
-        ${!e.web && !e.console ? '⏳ pas encore fini' : ''}</div>
+        ${!e.console ? '📟 pas encore joué sur la console' : ''}</div>
       <input data-i="${i}" placeholder="Ce qui ne va pas / ce que je change…" value="${esc(e.corr)}">
     </div>`).reverse().join('');
   hist.querySelectorAll('input').forEach(inp => inp.oninput = () => {
@@ -554,10 +492,9 @@ function rendreHist() {
   });
 }
 
-rejouer.onclick = () => jeu && charger(jeu.niv);
 nouveau.onclick = () => {
   if (historique.length && !confirm('Tout recommencer ? L\'historique sera effacé.')) return;
-  params = null; jeu = null; historique = []; capot.textContent = ''; go.textContent = '✨ Créer mon jeu';
+  params = null; jeu = null; historique = []; cv.height = 240; dessiner(); capot.textContent = ''; go.textContent = '✨ Créer mon jeu';
   hist.innerHTML = '<p class="vide">Tes essais apparaîtront ici.</p>'; compris.textContent = 'Choisis, écris une phrase, puis appuie sur « Créer ».';
 };
 // ---------- Icônes perso (héros, étoile, arrivée), trouvées sur le web ----------
@@ -698,30 +635,47 @@ function ligneConsole(l) {
   if (m && nivConsole) resultat(nivConsole, 'console', +m[1] / 1000, +m[2], +m[3]);
 }
 
-// ---------- Résultat d'une partie (aperçu web ou console) ----------
+// ---------- Résultat d'une partie (console) ----------
 function resultat(niv, source, t, morts, etoiles) {
   const e = historique.findLast(e => e.niv === niv);
   if (e) { e[source] = { t, morts, etoiles }; rendreHist(); }
   if (source === 'console') dire(`🏁 Console : fini en ${t.toFixed(1)} s, ${morts} ☠, ${etoiles} ★`, true);
   if (niv.id && EN_LIGNE && pseudo())
-    api('api/parties', { niveau: niv.id, pseudo: pseudo(), t: Math.round(t * 1000), morts, etoiles, source }).then(rafraichir).catch(() => {});
+    api('api/parties', { niveau: niv.id, ...ident(), t: Math.round(t * 1000), morts, etoiles, source }).then(rafraichir).catch(() => {});
 }
 
 // ---------- En ligne : pseudo, publication, classement, jeu commun ----------
 let EN_LIGNE = false;   // vrai seulement si server.js répond (GitHub Pages ou fichier ouvert : création + console, sans classement)
-const pseudo = () => /^[A-Za-z0-9_-]{2,12}$/.test(pseudoIn.value) ? pseudoIn.value : '';
-try { pseudoIn.value = localStorage.getItem('brique-pseudo') || ''; } catch {}
-pseudoIn.oninput = () => { try { localStorage.setItem('brique-pseudo', pseudoIn.value); } catch {} };
-async function api(url, corps) {
-  const r = await fetch(url, corps ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) } : {});
-  const j = await r.json(); if (!r.ok) throw new Error(j.erreur); return j;
+// identité de l'enfant : pseudo + secret reçus en rejoignant son groupe, gardés dans ce navigateur
+const lire = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let moi = lire('brique-moi');                          // { pseudo, secret, groupe }
+const pseudo = () => moi?.pseudo || '';
+const ident = () => ({ pseudo: moi?.pseudo, secret: moi?.secret });
+function majMoi() {
+  moiTxt.innerHTML = moi ? `${avatar(moi.pseudo)} <b>${esc(moi.pseudo)}</b> <small style="color:var(--mute)">${esc(moi.groupe)}</small>` : '';
+  rejoindreBtn.textContent = moi ? '↩ Changer' : '👤 Rejoindre mon groupe';
+}
+rejoindreBtn.onclick = () => {
+  if (moi && !confirm('Quitter « ' + moi.pseudo + ' » sur cet ordinateur ? Pour le reprendre ailleurs, ton animateur devra le libérer.')) return;
+  moi = null; ecrire('brique-moi', null); majMoi(); rjMsg.textContent = ''; dlgRejoindre.showModal();
+};
+rjAnnuler.onclick = () => dlgRejoindre.close();
+rjOk.onclick = async () => {
+  try { moi = await api('api/joueur', { pseudo: rjPseudo.value.trim(), code: rjCode.value.trim() }); ecrire('brique-moi', moi); majMoi(); dlgRejoindre.close(); }
+  catch (e) { rjMsg.innerHTML = `<span style="color:var(--ko)">${esc(e.message)}</span>`; }
+};
+async function api(url, corps, session) {
+  const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;
+  const r = await fetch(url, corps ? { method: 'POST', headers, body: JSON.stringify(corps) } : { headers });
+  const j = await r.json(); if (!r.ok) throw Object.assign(new Error(j.erreur), { code: r.status }); return j;
 }
 async function publier(commun) {
   if (!jeu) return dire('Crée un jeu d\'abord !');
   if (!EN_LIGNE) return dire('Hors ligne : lance le serveur (node server.js) et ouvre http://localhost:8080');
-  if (!pseudo()) { pseudoIn.focus(); return dire('Choisis d\'abord un pseudo (2 à 12 lettres ou chiffres, sans espace, pas ton vrai nom).'); }
+  if (!moi) { dlgRejoindre.showModal(); return dire('Rejoins d\'abord ton groupe avec le code de ton animateur.'); }
   try {
-    const { id } = await api('api/niveaux', { pseudo: pseudo(), titre: titreIn.value, commun, niv: jeu.niv });
+    const { id } = await api('api/niveaux', { ...ident(), titre: titreIn.value, commun, niv: jeu.niv });
     jeu.niv.id = id;
     dire(commun ? '✓ Ton niveau est ajouté au jeu commun !' : '✓ Ton jeu est publié, signé ' + pseudo() + ' !', true);
     rafraichir();
@@ -737,7 +691,7 @@ const depuis = d => { const m = Math.floor((Date.now() - d) / 60000);
   return m < 1 ? 'à l\'instant' : m < 60 ? `il y a ${m} min` : m < 1440 ? `il y a ${Math.floor(m / 60)} h` : `il y a ${Math.floor(m / 1440)} j`; };
 const teinte = s => [...s].reduce((h, c) => h * 31 + c.charCodeAt(0) | 0, 7) & 359;   // une couleur fixe par pseudo
 const avatar = p => `<span class="avatar" style="background:hsl(${teinte(p)} 80% 70%)">${esc(p[0].toUpperCase())}</span>`;
-const bouton = n => `<button class="jouer" data-id="${n.id}">▶ Jouer</button>`;
+const bouton = n => `<button class="jouer" data-id="${n.id}">📥 Prendre</button>`;
 const COUL = { '#': '#6d5bd0', R: '#ffd400', '^': '#eee', W: '#bbb', C: '#a0703c', I: '#9ef', '*': '#ffd400', G: '#4ade80', S: '#f472b6' };
 function vignette(rows) {                                // le niveau entier en petit (3 px par case), vu du bas comme au départ
   const c = document.createElement('canvas'); c.width = COLS; c.height = rows.length; c.className = 'mini';
@@ -752,7 +706,7 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 async function rafraichir() {
   let c;
   try { c = await api('api/communaute'); EN_LIGNE = true; }
-  catch { EN_LIGNE = false; vCommu.classList.add('hide'); if (vue === 'commu') afficher('creer'); return; }   // GitHub Pages / fichier : pas de communauté
+  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox].forEach(e => e.classList.add('hide')); if (vue !== 'creer') afficher('creer'); return; }   // GitHub Pages / fichier : pas de communauté
   enLigne = c.niveaux;
   nJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = c.chiffres.aujourdhui;
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
@@ -785,17 +739,62 @@ document.addEventListener('click', e => {
   const n = enLigne.find(n => n.id === id); if (n) jouerNiveau(n);
 });
 
-// ---------- Deux vues : Communauté (accueil) / Créer ----------
+// ---------- Espace animateur : connexion par lien mail, groupes, modération ----------
+let session = lire('brique-session');                  // jeton de session animateur (30 jours)
+const animDire = (t, ok) => animMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
+animLienBtn.onclick = async () => {
+  try { await api('api/animateur/lien', { email: animMail.value }); animDire('📧 Lien envoyé ! Ouvre-le depuis ta boîte mail (pense aux indésirables).', true); }
+  catch (e) { animDire(e.message); }
+};
+async function rendreAnim(donnees) {
+  let d = donnees;
+  if (!d && session) try { d = await api('api/animateur', null, session); } catch (e) { if (e.code === 401) { session = null; ecrire('brique-session', null); } }
+  animConnexion.classList.toggle('hide', !!d); animEspace.classList.toggle('hide', !d);
+  if (!d) return;
+  animQui.textContent = d.email;
+  animGroupes.innerHTML = d.groupes.map(g => `<section>
+    <h2><b>${esc(g.nom)}</b></h2>
+    <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span></p>
+    <h3>👤 Joueurs (${g.joueurs.length})</h3>
+    <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
+    <h3>🎮 Niveaux publiés (${g.niveaux.length})</h3>
+    <div class="liste">${g.niveaux.sort((a, b) => b.cree - a.cree).map(n => `<div class="rang ${n.masque ? 'masque' : ''}"><div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div>
+      <small>${depuis(n.cree)} · ${n.parties} partie${n.parties > 1 ? 's' : ''}${n.masque ? ' · masqué' : ''}</small></div>
+      <button class="jouer" data-masquer="${n.id}" data-etat="${n.masque ? 0 : 1}">${n.masque ? '👁 Remontrer' : '🚫 Masquer'}</button></div>`).join('') || '<span class="vide">Aucun niveau pour l\'instant.</span>'}</div>
+  </section>`).join('') || '';
+}
+grCreer.onclick = async () => { try { rendreAnim(await api('api/animateur/groupe', { nom: grNom.value }, session)); grNom.value = ''; } catch (e) { alert(e.message); } };
+animGroupes.onclick = async e => {
+  const t = e.target;
+  try {
+    if (t.dataset.masquer) rendreAnim(await api('api/animateur/masquer', { id: t.dataset.masquer, masque: t.dataset.etat === '1' }, session));
+    if (t.dataset.liberer) { e.preventDefault(); if (confirm(`Libérer le pseudo « ${t.dataset.liberer} » ?`)) rendreAnim(await api('api/animateur/liberer', { pseudo: t.dataset.liberer }, session)); }
+    rafraichir();
+  } catch (err) { alert(err.message); }
+};
+animSortir.onclick = async e => { e.preventDefault(); try { await api('api/animateur/deconnexion', {}, session); } catch {} session = null; ecrire('brique-session', null); rendreAnim(); };
+async function connexionParLien() {                     // arrivée depuis le lien du mail : ?connexion=…
+  const jeton = new URLSearchParams(location.search).get('connexion'); if (!jeton) return false;
+  history.replaceState(null, '', location.pathname);
+  try { const r = await api('api/animateur/connexion', { jeton }); session = r.session; ecrire('brique-session', session); }
+  catch (e) { animDire(e.message); }
+  afficher('anim'); return true;
+}
+
+// ---------- Trois vues : Communauté (accueil) / Créer / Animateur ----------
 let vue = 'commu';
 function afficher(v) {
   vue = v;
-  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); niveauScolaire.classList.toggle('hide', v !== 'creer');
-  vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer');
+  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim');
+  niveauScolaire.classList.toggle('hide', v !== 'creer');
+  vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vAnim.classList.toggle('on', v === 'anim');
+  if (v === 'anim') rendreAnim();
   scrollTo(0, 0);
 }
-vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer');
+vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim');
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
-afficher('commu');
+majMoi();
+connexionParLien().then(fait => fait || afficher('commu'));
 rafraichir(); setInterval(rafraichir, 15000);
 </script>
 </body>

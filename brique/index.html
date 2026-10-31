@@ -193,7 +193,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .sh-console{max-width:1205px;justify-self:center}
 .sh-bouton{max-width:300px;justify-self:center}
 body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
-:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)){background:#fff}   /* thème clair : boutique sur blanc, la photo se fond dans la page */
+:root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
 .sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}
 .sh-titre{margin:8px 0 16px;font-size:clamp(36px,7vw,64px);line-height:1.05;letter-spacing:-.02em;text-transform:none;font-weight:700}
 .sh-sous{margin:0 auto;max-width:560px;color:var(--mute);font-size:clamp(17px,2.4vw,21px)}
@@ -241,8 +241,9 @@ body{overflow-x:clip}                                           /* la bande 100v
 <header>
   <h1>BRI<span>QUE</span></h1>
   <nav class="mode">
-    <button id="vCommu" class="on" title="Accueil" style="font-weight:900">B</button>
+    <button id="vAccueil" class="on" title="Accueil" style="font-weight:900">B</button>
     <button id="vBoutique">🛒 Boutique</button>
+    <button id="vCommu">🏆 Communauté</button>
     <button id="vCreer">🛠 Créer</button>
     <button id="vProfs">📚 Atelier</button>
     <button id="vSupport">🧰 Support</button>
@@ -256,8 +257,26 @@ body{overflow-x:clip}                                           /* la bande 100v
   </div>
 </header>
 
-<!-- ===== ACCUEIL : ce qui se passe dans la communauté ===== -->
-<main id="commu" class="commu">
+<!-- ===== ACCUEIL : le projet (la console, les étapes, les photos) ; aucun prix ici ===== -->
+<main id="accueil">
+<div class="shop">
+  <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
+  <div class="sh-hero">
+    <p class="sh-sur">Console Brique · kit à souder + IA</p>
+    <h2 class="sh-titre">Le jeu que tu inventes.<br>Dans ta main.<br>Tu y joues seul ou à plusieurs.</h2>
+  </div>
+  <figure class="sh-photo">
+    <img class="sh-bouton" src="images/bouton1.jpg" alt="Un bouton poussoir, vu de dessus" width="463" height="337">
+    <img class="sh-console" src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
+    <img class="sh-bouton" src="images/bouton2.jpg" alt="Un bouton poussoir, vu de dessous avec ses quatre pattes" width="471" height="330">
+  </figure>
+  <div class="sh-apres">
+    <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA le construit : il part dans la console par le câble USB.</p>
+    <div class="cta" style="justify-content:center;margin-top:20px"><button id="accCreer" class="big">✨ Créer mon jeu</button><button id="accBoutique" class="big alt">🛒 Voir la boutique</button></div>
+  </div>
+
+</div>
+<div class="commu">
   <!-- ce qui fait Brique : on soude soi-même, l'IA aide à créer. Trois étapes reliées par une piste de circuit -->
   <section class="c-intro">
     <div class="intro-txt">
@@ -294,6 +313,11 @@ body{overflow-x:clip}                                           /* la bande 100v
     <figure><img src="images/bouton-circuit.jpg" alt="Un bouton et ses pistes de cuivre sur le circuit hexagonal" width="1200" height="1200" loading="lazy">
       <figcaption><b>Le circuit</b> : hexagonal, ses pistes relient chaque bouton au cerveau</figcaption></figure>
   </section>
+</div>
+</main>
+
+<!-- ===== COMMUNAUTÉ : créations, classement, joueurs ===== -->
+<main id="commu" class="commu hide">
   <!-- bandeau du haut : les chiffres et qui joue en ce moment, sur toute la largeur -->
   <section class="c-stats">
     <div id="atelierBan" class="atelierBan hide"></div>
@@ -326,18 +350,11 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
 <main id="boutique" class="shop hide">
-  <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
     <p class="sh-sur">Console Brique · kit à souder + IA</p>
-    <h2 class="sh-titre">Le jeu que tu inventes.<br>Dans ta main.<br>Tu y joues seul ou à plusieurs.</h2>
+    <h2 class="sh-titre">La boutique</h2>
   </div>
-  <figure class="sh-photo">
-    <img class="sh-bouton" src="images/bouton1.jpg" alt="Un bouton poussoir, vu de dessus" width="463" height="337">
-    <img class="sh-console" src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
-    <img class="sh-bouton" src="images/bouton2.jpg" alt="Un bouton poussoir, vu de dessous avec ses quatre pattes" width="471" height="330">
-  </figure>
   <div class="sh-apres">
-    <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA le construit : il part dans la console par le câble USB.</p>
     <p id="btDepuis" class="sh-prix">À partir de 28 €</p>
   </div>
 
@@ -1725,7 +1742,7 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 async function rafraichir() {
   let c;
   try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); EN_LIGNE = true; }
-  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('boutique'); return; }   // GitHub Pages / fichier : pas de communauté
+  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('accueil'); return; }   // GitHub Pages / fichier : pas de communauté
   enLigne = c.niveaux; modeAtelier(c.atelier);
   if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant : la tranche d'âge choisie par son animateur
   nJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = c.chiffres.aujourdhui;
@@ -1915,15 +1932,17 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
                                    : donMsg.textContent = `Merci ! Le soutien en ligne arrive très bientôt (${don} € noté dans ton cœur 💜).`;
 
 // ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
-let vue = 'commu';
+let vue = 'accueil';
 function afficher(v) {
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
+  accueil.classList.toggle('hide', v !== 'accueil'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); support.classList.toggle('hide', v !== 'support');
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
   scrollTo(0, 0);
 }
+vAccueil.onclick = () => afficher('accueil'); accCreer.onclick = () => afficher('creer'); accBoutique.onclick = () => afficher('boutique');
 vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique'); vSupport.onclick = () => afficher('support');
 ficheImprimer.onclick = () => {                         // la fiche seule, en A4, dans un nouvel onglet
   const w = open(URL.createObjectURL(new Blob([fiche.innerHTML], { type: 'image/svg+xml' })));
@@ -1932,7 +1951,7 @@ ficheImprimer.onclick = () => {                         // la fiche seule, en A4
 vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
 majMoi();
-connexionParLien().then(fait => fait || afficher(vue));   // vue d'accueil : la communauté (la boutique sans serveur)
+connexionParLien().then(fait => fait || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 </script>
 </body>

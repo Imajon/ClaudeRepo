@@ -235,11 +235,11 @@ body{overflow-x:clip}                                           /* la bande 100v
 <header>
   <h1>BRI<span>QUE</span></h1>
   <nav class="mode">
-    <button id="vCommu" class="on">🏠 Communauté</button>
+    <button id="vBoutique" class="on">🛒 Boutique</button>
+    <button id="vCommu">🏠 Communauté</button>
     <button id="vCreer">🛠 Créer</button>
-    <button id="vBoutique">🛒 Boutique</button>
-    <button id="vSupport">🧰 Support</button>
     <button id="vProfs">📚 Atelier</button>
+    <button id="vSupport">🧰 Support</button>
   </nav>
   <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
   <button id="vAnim" class="sec">🎓 Animateur</button>
@@ -251,7 +251,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : ce qui se passe dans la communauté ===== -->
-<main id="commu" class="commu">
+<main id="commu" class="commu hide">
   <!-- ce qui fait Brique : on soude soi-même, l'IA aide à créer. Trois étapes reliées par une piste de circuit -->
   <section class="c-intro">
     <div class="intro-txt">
@@ -311,7 +311,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
-<main id="boutique" class="shop hide">
+<main id="boutique" class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
     <p class="sh-sur">Console Brique · kit à souder + IA</p>
@@ -1630,7 +1630,7 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 async function rafraichir() {
   let c;
   try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); EN_LIGNE = true; }
-  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox].forEach(e => e.classList.add('hide')); if (vue !== 'creer') afficher('creer'); return; }   // GitHub Pages / fichier : pas de communauté
+  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('boutique'); return; }   // GitHub Pages / fichier : pas de communauté
   enLigne = c.niveaux; modeAtelier(c.atelier);
   nJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = c.chiffres.aujourdhui;
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
@@ -1814,8 +1814,8 @@ donLibre.oninput = () => { don = Math.max(1, parseInt(donLibre.value) || 0); doc
 donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes('?') ? '&' : '?'}montant=${don}`, '_blank', 'noopener')
                                    : donMsg.textContent = `Merci ! Le soutien en ligne arrive très bientôt (${don} € noté dans ton cœur 💜).`;
 
-// ---------- Vues : Communauté (accueil) / Créer / Boutique / Animateur ----------
-let vue = 'commu';
+// ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
+let vue = 'boutique';
 function afficher(v) {
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
@@ -1833,7 +1833,7 @@ ficheImprimer.onclick = () => {                         // la fiche seule, en A4
 vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
 majMoi();
-connexionParLien().then(fait => fait || afficher('commu'));
+connexionParLien().then(fait => fait || afficher(vue));   // vue d'accueil : la boutique (la communauté en mode atelier)
 rafraichir(); setInterval(rafraichir, 15000);
 </script>
 </body>

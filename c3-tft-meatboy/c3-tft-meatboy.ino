@@ -778,7 +778,9 @@ struct BqHero { const char* nom; uint16_t col; };
 const BqHero BQ_HEROS[] = { { "cube", RGB565(232, 50, 43) }, { "ninja", RGB565(34, 34, 51) }, { "robot", RGB565(154, 164, 176) }, { "chat", RGB565(255, 153, 51) } };
 int bqTheme = -1, bqHero = -1;        // -1 = pas choisi : dessin habituel de la console
 float bqGrav = 1, bqVit = 1;
-long bqCiel = -1, bqSol = -1;          // couleurs choisies sur la page (0xRRGGBB), -1 = celles du theme
+long bqCiel = -1, bqSol = -1;
+int bqVies = 0, bqChrono = 0; bool bqTout = false, bqTimeout = false;   // 0 = illimite / pas de chrono ; bqTout = tout ramasser avant le drapeau
+char bqTitre[31] = "", bqMsg[41] = "";  // titre du jeu et message de victoire (ecran de fin)          // couleurs choisies sur la page (0xRRGGBB), -1 = celles du theme
 #define bqOn() (curLevel == CUSTOM_IDX && customH)   // macro : curLevel est declare plus bas
 int bqFind(const char* p, const char* cle, const char* const* noms, int n, int pas) {   // "cle":"nom" -> indice dans la table, -1 sinon
   const char* q = strstr(p, cle); if (!q) return -1; q = strchr(q + strlen(cle), '"'); if (!q) return -1; q++;
@@ -790,14 +792,20 @@ long bqHex(const char* p, const char* cle) {   // "cle":"#rrggbb" -> 0xRRGGBB, -
   char h[7]; memcpy(h, q + 2, 6); h[6] = 0; for (int i = 0; i < 6; i++) if (!isxdigit((unsigned char)h[i])) return -1;
   return strtol(h, nullptr, 16);
 }
+float bqNum0(const char* p, const char* cle, float lo, float hi) {   // comme bqNum, mais 0 si absent
+  const char* q = strstr(p, cle); if (!q) return 0; float v = atof(q + strlen(cle)); return v < lo ? lo : v > hi ? hi : v;
+}
 float bqNum(const char* p, const char* cle, float lo, float hi) {
   const char* q = strstr(p, cle); if (!q) return 1; float v = atof(q + strlen(cle)); return v < lo ? lo : v > hi ? hi : v;
 }
 void bqParams(const char* s) {
   const char* p = strstr(s, "\"params\"");
-  bqTheme = bqHero = -1; bqGrav = bqVit = 1; bqCiel = bqSol = -1;
+  bqTheme = bqHero = -1; bqGrav = bqVit = 1; bqCiel = bqSol = -1; bqVies = bqChrono = 0; bqTout = false;
+  jsonStr(s, "titre", bqTitre, sizeof bqTitre); jsonStr(s, "message", bqMsg, sizeof bqMsg);
   if (!p) return;
   bqCiel = bqHex(p, "\"ciel\":"); bqSol = bqHex(p, "\"sol\":");
+  bqVies = (int)bqNum0(p, "\"vies\":", 0, 9); bqChrono = (int)bqNum0(p, "\"chrono\":", 0, 600);
+  bqTout = strstr(p, "\"objectif\":\"tout\"") != nullptr;
   bqTheme = bqFind(p, "\"theme\":", &BQ_THEMES[0].nom, 5, sizeof(BqTheme));
   bqHero  = bqFind(p, "\"hero\":",  &BQ_HEROS[0].nom, 4, sizeof(BqHero));
   bqGrav = bqNum(p, "\"gravite\":", 0.3f, 2.0f);
@@ -2601,8 +2609,9 @@ int maxUnlockedIdx() {
 // mort du joueur : respawn immediat en course 2J, sinon ecran PERDU
 void die() {
   snd(SND_DIE);
-  deaths++;
+  deaths++; bqTimeout = false;
   if (raceMode) { respawn(); drawGame(); return; }   // course : on continue
+  if (bqOn() && bqVies && (int)deaths < bqVies) { respawn(); drawGame(); return; }   // BRIQUE : encore des vies, on repart du depart
   combo = 0;                 // enchainement brise
   deadChoice = 0;
   state = ST_DEAD;
@@ -5753,6 +5762,11 @@ static const char* IC_K = "hegnd";        // heros, etoile, arrivee (goal), enne
 uint16_t icPx[5][256]; bool icUse[5];
 String icWait;                            // lignes "icone" recues, gardees en flash avec le niveau qui suit
 bool icOn(int k) { return curLevel == CUSTOM_IDX && icUse[k]; }
+bool bqFlagOk() {                          // objectif "tout ramasser" : le drapeau n'accepte qu'une fois toutes les etoiles prises
+  if (!bqOn() || !bqTout) return true;
+  for (int i = 0; i < nStarPos; i++) if (!starGot[i]) return false;
+  return true;
+}
 const char* icParse(const char* s) {      // toutes les icones contenues dans s (une ligne recue, ou un fichier de Mes niveaux)
   for (const char* p = strstr(s, "\"icone\""); p; p = strstr(p + 1, "\"icone\"")) {
     char k[2]; jsonStr(p, "icone", k, 2);
@@ -6473,6 +6487,9 @@ void finishLevel(int got) {
 void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
   static unsigned long lastMs = 0;
   unsigned long now = millis();
+  if (bqOn() && bqChrono && !raceMode && now - levelStartMs > (unsigned long)bqChrono * 1000) {   // BRIQUE : temps ecoule
+    snd(SND_DIE); deaths++; combo = 0; deadChoice = 0; bqTimeout = true; state = ST_DEAD; drawDead(); return;
+  }
   float dt = (now - lastMs) / 1000.0;
   lastMs = now;
   if (dt <= 0 || dt > 0.045) dt = 0.02;
@@ -6727,7 +6744,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
     float gx = goalTX * TILE + 8, gy = goalTY * TILE + 8;
     float dxg = (px + PW / 2) - gx, dyg = (py + PH / 2) - gy;
     float gBase = (goalTY + 1) * TILE, gTop = gBase - min((float)POLE_H, gBase);
-    bool poleHit = !(bossOn && bossHp > 0) && (px + PW > goalTX * TILE + 1 && px < goalTX * TILE + 7 && py + PH > gTop && py < gBase);
+    bool poleHit = !(bossOn && bossHp > 0) && bqFlagOk() && (px + PW > goalTX * TILE + 1 && px < goalTX * TILE + 7 && py + PH > gTop && py < gBase);
     bool touch = flagDone || (raceMode && poleHit);   // course 2J : arrivee immediate, sans glissade
     flagDone = false;
     if (gpIdx < gpN - 1) {
@@ -7380,9 +7397,13 @@ void drawGame() {
   if (sTop == 0) {
   fb.setTextColor(COL_TXT); fb.setTextSize(1);
   { char hb[24];
-    snprintf(hb, sizeof(hb), "NIV %d/%d", curLevel + 1, NUM_LEVELS); gfxPrintAt(fb, 1, 4, 2 - sTop, hb);
+    if (bqOn() && bqChrono) { int r = bqChrono - (int)((millis() - levelStartMs) / 1000); snprintf(hb, sizeof(hb), "Temps: %d", r < 0 ? 0 : r); fb.setTextColor(r <= 5 ? COL_MEAT : COL_TXT); }
+    else if (bqOn()) snprintf(hb, sizeof(hb), "%.20s", bqTitre[0] ? bqTitre : "Mon jeu");
+    else snprintf(hb, sizeof(hb), "NIV %d/%d", curLevel + 1, NUM_LEVELS);
+    gfxPrintAt(fb, 1, 4, 2 - sTop, hb); fb.setTextColor(COL_TXT);
     for (int i = 0; i < nStarPos; i++) drawStarFancy(fb, 138 + i * 18, 8 - sTop, 4, 1.0f + i * 1.7f, starGot[i]);   // mini-etoiles du niveau
-    snprintf(hb, sizeof(hb), "Morts: %u", deaths); gfxPrintAt(fb, 1, 316 - textW(fb, 1, hb), 2 - sTop, hb); } }
+    if (bqOn() && bqVies) snprintf(hb, sizeof(hb), "Vies: %d", bqVies - (int)deaths); else snprintf(hb, sizeof(hb), "Morts: %u", deaths);
+    gfxPrintAt(fb, 1, 316 - textW(fb, 1, hb), 2 - sTop, hb); } }
 
 #ifdef GAME_BENCH
   gT[4] += micros() - gq; gq = micros();
@@ -7813,7 +7834,7 @@ void drawSelect() {
 void drawEnd() {
   brickFill(0, 0, SCREEN_W, SCREEN_H);
   tft.setTextColor(COL_GOAL); tft.setTextSize(3);
-  ctextf(12, "NIVEAU %d", curLevel + 1);
+  if (bqOn()) ctext(12, bqTitre[0] ? bqTitre : "BRAVO !"); else ctextf(12, "NIVEAU %d", curLevel + 1);
   drawStars3(118, 46, lastStars, 11);
 
   tft.setTextSize(1);
@@ -7826,7 +7847,8 @@ void drawEnd() {
   ctextf(106, "Score +%d", lastScore);
   // globaux
   tft.setTextColor(tft.color565(150,160,180));
-  ctextf(122, "Total: %u pts   Best combo: %d", (unsigned)totalScore, bestCombo);
+  if (bqOn() && bqMsg[0]) { tft.setTextColor(COL_STAR); ctext(122, bqMsg); }   // BRIQUE : message de victoire choisi sur la page
+  else ctextf(122, "Total: %u pts   Best combo: %d", (unsigned)totalScore, bestCombo);
 
   // grille 2x2 : Continuer/Rejouer (haut), Niveaux/Accueil (bas, "Accueil" = rechoisir 1/2 joueurs)
   const char* opt[4] = { "Continuer", "Rejouer", "Niveaux", "Accueil" };
@@ -7846,7 +7868,9 @@ void drawDead() {
   tft.setTextColor(COL_MEAT); tft.setTextSize(5);
   ctext(46, "PERDU");
   tft.setTextColor(COL_TXT); tft.setTextSize(1);
-  ctextf(110, "Niveau %d", curLevel + 1);
+  if (bqTimeout) { tft.setTextColor(COL_STAR); tft.setTextSize(2); ctext(108, "TEMPS ECOULE !"); tft.setTextSize(1); }
+  else if (bqOn()) ctext(110, bqTitre[0] ? bqTitre : "Mon jeu");
+  else ctextf(110, "Niveau %d", curLevel + 1);
   const char* opt[2] = { "Rejouer", "Niveaux" };
   tft.setTextSize(2);
   int y = 160;

@@ -77,7 +77,8 @@ dialog::backdrop{background:rgba(5,2,15,.7)}
 .partage{margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(34,211,238,.08);box-shadow:var(--glow);text-align:left}
 .cta{max-width:520px}
 .palette{display:flex;align-items:center;gap:8px;margin:6px 0}
-.palette>span{width:86px;font-size:13px;color:var(--mute)}
+.palette>span{width:86px;flex:none;font-size:13px;color:var(--mute)}
+.regle{flex:1;width:auto;padding:6px 10px}
 .pastille{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
 .pastille.on{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.6)}
 .pastille.auto{background:conic-gradient(#e8322b,#ffd400,#3f8f3a,#2f6fe0,#8b5cf6,#e8322b)}
@@ -160,6 +161,12 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .sh-lien{color:#2997ff;text-decoration:none;font-size:17px}
 .sh-lien:hover{text-decoration:underline}
 .icDrop label{color:var(--acc);cursor:pointer;text-decoration:underline}
+/* ----- support : notice d'assemblage ----- */
+.support table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}
+.support th,.support td{text-align:left;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.1);vertical-align:top}
+.support li{margin:6px 0}
+.support code{color:var(--acc)}
+.support .tab{overflow-x:auto}
 </style>
 </head>
 <body>
@@ -169,6 +176,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <button id="vCommu" class="on">🏠 Communauté</button>
     <button id="vCreer">🛠 Créer</button>
     <button id="vBoutique">🛒 Boutique</button>
+    <button id="vSupport">🧰 Support</button>
   </nav>
   <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
   <button id="vAnim" class="sec">🎓 Animateur</button>
@@ -257,6 +265,95 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
   </div>
 </main>
 
+<!-- ===== SUPPORT : notice d'assemblage et de prise en main ===== -->
+<main id="support" class="anim support hide">
+  <section>
+    <h2><b>01</b>— La console Brique</h2>
+    <p>Une console à souder soi-même : un ESP32-C3, un écran TFT 2" et 3 boutons. Une fois montée, elle fait tourner Pixel Run et reçoit par câble USB les niveaux créés ici.</p>
+    <p class="aide">Environ 1 h 30 de montage pour un enfant accompagné (CM1 → 4ᵉ), puis 10 minutes pour la première programmation.</p>
+  </section>
+  <section>
+    <h2><b>02</b>— Matériel et outils</h2>
+    <div class="tab"><table>
+      <tr><th>Qté</th><th>Pièce</th><th>Détail</th></tr>
+      <tr><td>1</td><td>ESP32-C3 Super Mini</td><td>Microcontrôleur, prise USB-C</td></tr>
+      <tr><td>1</td><td>Écran TFT 2" ST7789</td><td>SPI, 320×240, 7 broches (GND, VCC, SCL, SDA, RES, DC, CS)</td></tr>
+      <tr><td>2</td><td>Bouton-poussoir 6×6 mm</td><td>Gauche, Droite</td></tr>
+      <tr><td>1</td><td>Bouton-poussoir 12×12 mm</td><td>Saut</td></tr>
+      <tr><td>1</td><td>Support</td><td>Plaque à pastilles (V1) ou PCB hexagonal (V2)</td></tr>
+      <tr><td>~15</td><td>Fils fins</td><td>Seulement pour la plaque à pastilles</td></tr>
+      <tr><td>1</td><td>Câble USB-C <b>de données</b></td><td>Pas un câble de charge seule</td></tr>
+    </table></div>
+    <p><b>Outils :</b> fer à souder (~330 °C), étain, pince coupante, multimètre (conseillé), lunettes de protection.</p>
+    <p><b>Pour programmer :</b> un ordinateur avec Chrome ou Edge.</p>
+  </section>
+  <section>
+    <h2><b>03</b>— Assemblage pas à pas</h2>
+    <p>Câblage <b>standard</b>, celui du firmware principal : chaque fil relie une broche de l'écran ou d'un bouton à une broche de l'ESP32-C3.</p>
+    <div class="tab"><table>
+      <tr><th>Élément</th><th>Broche</th><th>ESP32-C3</th></tr>
+      <tr><td>Écran</td><td>GND</td><td>GND</td></tr>
+      <tr><td>Écran</td><td>VCC</td><td>3V3</td></tr>
+      <tr><td>Écran</td><td>SCL (horloge)</td><td>GPIO 4</td></tr>
+      <tr><td>Écran</td><td>SDA (données)</td><td>GPIO 6</td></tr>
+      <tr><td>Écran</td><td>RES</td><td>GPIO 10</td></tr>
+      <tr><td>Écran</td><td>DC</td><td>GPIO 5</td></tr>
+      <tr><td>Écran</td><td>CS</td><td>GPIO 7</td></tr>
+      <tr><td>Bouton Gauche</td><td>une patte</td><td>GPIO 2</td></tr>
+      <tr><td>Bouton Droite</td><td>une patte</td><td>GPIO 1</td></tr>
+      <tr><td>Bouton Saut</td><td>une patte</td><td>GPIO 3</td></tr>
+      <tr><td>Les 3 boutons</td><td>autre patte</td><td>GND</td></tr>
+    </table></div>
+    <p class="aide">Aucune résistance pour les boutons : le firmware active celles de l'ESP32.</p>
+    <ol>
+      <li><b>Repérer les faces.</b> Écran et boutons en façade, ESP32-C3 au dos (prise USB-C vers le bord, accessible).</li>
+      <li><b>Souder les boutons</b> en premier, ce sont les pièces les plus basses. Gauche et Droite à gauche, Saut (le gros) à droite.</li>
+      <li><b>Souder l'ESP32-C3</b> au dos. Sur le PCB, poser d'abord une seule patte, vérifier qu'il est à plat, puis souder le reste.</li>
+      <li><b>Souder l'écran</b> en façade, bien parallèle à la carte avant de souder toutes les broches.</li>
+      <li><b>Plaque à pastilles uniquement :</b> tirer les fils au dos selon le tableau, puis relier une patte de chaque bouton à GND.</li>
+      <li><b>Contrôler :</b> pas de pont d'étain entre deux broches voisines ; au multimètre, aucun contact entre 3V3 et GND.</li>
+      <li><b>Fixer</b> la carte dans le boîtier (4 trous de fixation, alignés sur l'écran).</li>
+    </ol>
+  </section>
+  <section>
+    <h2><b>04</b>— Premier démarrage</h2>
+    <p>Une console d'atelier a déjà son firmware : on branche, l'écran titre s'affiche. Sinon, l'installer une fois depuis un ordinateur avec l'IDE Arduino 2 :</p>
+    <ol>
+      <li>Brancher la console en USB.</li>
+      <li>Lancer <code>c3-tft-meatboy/compiler-upload-c3-tft-meatboy.bat</code> : il trouve le port COM, compile et téléverse.</li>
+      <li>Au tout premier démarrage, la console prépare sa mémoire quelques secondes : normal, une seule fois.</li>
+    </ol>
+    <p><b>À vérifier :</b> l'écran titre s'affiche dans le bon sens · Gauche/Droite déplacent le sélecteur · Saut valide · « 1 Joueur » lance le niveau 1.</p>
+  </section>
+  <section>
+    <h2><b>05</b>— Programmer sa console</h2>
+    <p class="aide" style="margin-top:0">Chrome ou Edge sur ordinateur, IDE Arduino et moniteur série fermés, console sur l'accueil ou dans un menu.</p>
+    <ol>
+      <li><b>Créer</b> : onglet 🛠 Créer, choisir le monde, le héros, le danger, compléter par une phrase, puis ✨ Créer mon jeu.</li>
+      <li><b>Tester</b> dans la page avec ◀ ▶ ⤒ (ou le clavier). Corriger la phrase et recréer si besoin.</li>
+      <li><b>Mes icônes (facultatif)</b> : chercher une image en anglais (cat, dragon…), la coller ou la glisser.</li>
+      <li><b>Envoyer</b> : brancher la console, 📟 Envoyer sur la console, choisir le port. Le niveau démarre aussitôt.</li>
+      <li><b>Rejouer plus tard</b> : accueil de la console → <b>Mes niveaux</b> (les 8 derniers, gardés même éteinte).</li>
+    </ol>
+  </section>
+  <section>
+    <h2><b>06</b>— Dépannage</h2>
+    <div class="tab"><table>
+      <tr><th>Symptôme</th><th>Cause probable</th><th>Solution</th></tr>
+      <tr><td>Écran noir ou blanc</td><td>Fil SCL/SDA/DC/CS inversé, ou soudure sèche</td><td>Comparer au tableau, refaire les soudures de l'écran</td></tr>
+      <tr><td>Un bouton ne répond pas</td><td>Patte non soudée ou pas reliée à GND</td><td>Ressouder, tester au multimètre</td></tr>
+      <tr><td>L'ESP32 chauffe</td><td>Pont entre 3V3 et GND</td><td>Débrancher tout de suite, chercher le pont</td></tr>
+      <tr><td>Aucun port proposé</td><td>Câble de charge seule</td><td>Changer de câble USB</td></tr>
+      <tr><td>« Port occupé »</td><td>IDE Arduino ou moniteur série ouvert</td><td>Les fermer, réessayer</td></tr>
+      <tr><td>« Console occupée »</td><td>Partie à 2, monde ou mini-jeu en cours</td><td>Revenir à l'accueil de la console</td></tr>
+      <tr><td>« Pas de réponse »</td><td>Ancien firmware sans lecture USB</td><td>Réinstaller le firmware (section 04)</td></tr>
+      <tr><td>« Niveau trop gros »</td><td>Niveau trop haut</td><td>Demander un niveau plus court</td></tr>
+      <tr><td>Téléversement échoue</td><td>Liaison USB capricieuse</td><td>Maintenir BOOT en branchant, ou <code>esptool --no-stub</code></td></tr>
+      <tr><td>Recherche d'icônes vide</td><td>Filtre réseau de l'école</td><td>Autoriser <code>api.iconify.design</code></td></tr>
+    </table></div>
+  </section>
+</main>
+
 <!-- ===== ESPACE ANIMATEUR ===== -->
 <main id="anim" class="anim hide">
   <section id="animConnexion">
@@ -330,6 +427,12 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <h3>🌈 Mes couleurs (pas obligé)</h3>
     <div class="palette"><span>Ciel</span><div id="palCiel" class="chips"></div></div>
     <div class="palette"><span>Plateformes</span><div id="palSol" class="chips"></div></div>
+
+    <h3>⚙️ Mes règles (pas obligé)</h3>
+    <div class="palette"><span>But</span><div id="rgObjectif" class="chips"><button class="chip on" data-v="arriver">🏁 Arriver</button><button class="chip" data-v="tout">⭐ Tout ramasser d'abord</button></div></div>
+    <div class="palette"><span>Chrono</span><select id="rgChrono" class="pseudo regle"><option value="0">Sans chrono</option><option>30</option><option>45</option><option>60</option><option>90</option><option>120</option></select></div>
+    <div class="palette"><span>Vies</span><select id="rgVies" class="pseudo regle"><option value="0">On recommence à chaque chute</option><option value="3">3 vies</option><option value="5">5 vies</option><option value="9">9 vies</option></select></div>
+    <div class="palette"><span>Victoire</span><input id="rgMsg" class="pseudo regle" maxlength="40" placeholder="Message quand on gagne"></div>
   </section>
 
   <!-- ===== CONSOLE / APERÇU ===== -->
@@ -403,7 +506,8 @@ mGuide.onclick = () => setMode('guide'); mLibre.onclick = () => setMode('libre')
 // ---------- "IA" simulée : texte -> paramètres ----------
 // ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
 const DEFAUT = { theme:'foret', hero:'cube', hauteur:30, difficulte:2, gravite:1, vitesse:1,
-                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3, doubleSaut:false, ennemis:0, couleurs:{} };
+                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3, doubleSaut:false, ennemis:0, couleurs:{},
+                 objectif:'arriver', chrono:0, vies:0, message:'' };
 // palette (même liste que server.js ; le firmware lit le code hexa)
 const PALETTE = { rouge:'#e8322b', orange:'#ff8a1f', jaune:'#ffd400', vert:'#3f8f3a', 'vert clair':'#7ee06a', turquoise:'#22d3ee',
   'bleu ciel':'#9be7ff', bleu:'#2f6fe0', violet:'#8b5cf6', rose:'#ff7ab8', marron:'#8a5a2b', bordeaux:'#7a1020',
@@ -427,6 +531,9 @@ function comprendre(texte, base) {
   }
   if (non('(double[ -]?saut)')) { if (p.doubleSaut) vu.push('sans double saut'); p.doubleSaut = false; }
   else if (a(/double[ -]?saut|sauter deux fois|saut en l'air/)) { p.doubleSaut = true; vu.push('double saut'); }
+  if (a(/tout ramasser|toutes les etoiles|tous les objets|tout recuperer/)) { p.objectif = 'tout'; vu.push('tout ramasser avant l\'arrivée'); }
+  const ch = t.match(/(\d{2,3}) ?(s\b|sec)/); if (ch || a(/chrono|temps limite|contre la montre/)) { p.chrono = Math.min(180, ch ? +ch[1] : 60); vu.push(`chrono ${p.chrono} s`); }
+  const vi = t.match(/(\d) vies?/); if (vi) { p.vies = +vi[1]; vu.push(`${p.vies} vies`); }
   if (non('(ennemis?|monstres?)')) { if (p.ennemis) vu.push('sans ennemis'); p.ennemis = 0; }
   else if (a(/ennemi|monstre|mechant/)) { p.ennemis = Math.min(6, (p.ennemis || 0) + 3); vu.push(p.ennemis + ' ennemis'); }
   p.couleurs = { ...(p.couleurs || {}) };                // "plateformes rouges", "ciel violet"…
@@ -590,7 +697,7 @@ go.onclick = async () => {
     for (const k of ['pic', 'scie', 'fragile']) base.briques[k] = choix.danger === k;
     avant = [CHOIX.theme.find(c => c[0] === choix.theme)[1], CHOIX.hero.find(c => c[0] === choix.hero)[1], CHOIX.danger.find(c => c[0] === choix.danger)[1]];
   }
-  base.couleurs = { ...couleurs };                       // couleurs choisies à la main (l'IA peut les changer si l'enfant en parle)
+  base.couleurs = { ...couleurs }; Object.assign(base, regles());   // couleurs et règles choisies à la main (l'IA peut les changer si l'enfant en parle)
   go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
   const t0 = performance.now();
   // vraie IA (Mistral, via server.js) si le serveur la propose ; sinon les mots-clés locaux
@@ -598,7 +705,7 @@ go.onclick = async () => {
   if (texte && EN_LIGNE) try { ia = await api('api/ia', { texte, base, ...ident() }); } catch {}
   if (!ia) await new Promise(r => setTimeout(r, 600 + Math.random() * 900));   // latence simulée (mots-clés)
   const { p, vu } = ia ?? comprendre(texte, base);
-  p.seed = (Math.random() * 1e9) | 0; params = p; couleurs = { ...(p.couleurs || {}) }; majPalette();
+  p.seed = (Math.random() * 1e9) | 0; params = p; couleurs = { ...(p.couleurs || {}) }; majPalette(); afficherRegles(p);
   if (ia?.icones) { await Promise.all(Object.entries(ia.icones).map(([k, mot]) => iconeAuto(k, mot))); majIcones(); }   // « un dragon en fond » -> icône décor trouvée sur Iconify
   const niv = { format: 'brique-v1', params: p, rows: generer(p), icones: { ...icones } };
   const duree = (performance.now() - t0) / 1000;
@@ -750,6 +857,20 @@ palCiel.onclick = palSol.onclick = e => {
 };
 majPalette();
 
+// ---------- Règles : but, chrono, vies, message de victoire ----------
+const regles = () => ({ objectif: rgObjectif.querySelector('.on').dataset.v, chrono: +rgChrono.value, vies: +rgVies.value, message: rgMsg.value.trim().slice(0, 40) });
+function afficherRegles(p) {
+  rgObjectif.querySelectorAll('.chip').forEach(b => b.classList.toggle('on', b.dataset.v === (p.objectif || 'arriver')));
+  if (![...rgChrono.options].some(o => +o.value === (p.chrono || 0))) rgChrono.add(new Option(p.chrono, p.chrono));   // chrono donné par l'IA (ex. 75 s)
+  rgChrono.value = p.chrono || 0; rgVies.value = [0, 3, 5, 9].includes(p.vies) ? p.vies : 0; rgMsg.value = p.message || '';
+}
+function appliquerRegles() {
+  if (params) Object.assign(params, regles());
+  if (jeu && !jeu.niv.pseudo) jeu.niv.params = { ...jeu.niv.params, ...regles() };   // ton jeu change tout de suite
+}
+rgObjectif.onclick = e => { const b = e.target.closest('.chip'); if (!b) return; rgObjectif.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); appliquerRegles(); };
+rgChrono.onchange = rgVies.onchange = rgMsg.oninput = appliquerRegles;
+
 // ---------- Console par Web Serial (Chrome / Edge) ----------
 // Envoi : une ligne JSON. La console répond "BRIQUE OK <lignes>" / "BRIQUE ERR <raison>",
 // puis "BRIQUE FIN <ms> <morts> <étoiles>" quand le niveau est fini. Le port reste ouvert et écouté en continu.
@@ -770,7 +891,8 @@ envoyer.onclick = async () => {
     const ascii = t => norm(t || '').replace(/[^ -~]/g, '').replace(/"/g, '').slice(0, 30);
     // code de partage (jeu publié) : la console s'en sert pour retrouver la même version en course à plusieurs
     const l = await ligneSerie({ rows: jeu.niv.rows, titre: ascii(jeu.niv.titre || titreIn.value), pseudo: jeu.niv.pseudo || pseudo(),
-                                 ...(jeu.niv.code ? { code: jeu.niv.code } : {}), format: jeu.niv.format, params: jeu.niv.params });
+                                 ...(jeu.niv.code ? { code: jeu.niv.code } : {}), format: jeu.niv.format,
+                                 params: { ...jeu.niv.params, message: ascii(jeu.niv.params.message).slice(0, 40) } });   // message sans accents : police de la console
     if (l.startsWith('BRIQUE OK')) {
       nivConsole = jeu.niv;
       dire(jeu.niv.code ? `✓ « ${jeu.niv.titre || 'Ton jeu'} » est sur la console (code ${jeu.niv.code}) : jouable à plusieurs dans « Mes jeux » !` : '✓ Ton jeu est sur la console. À toi de jouer ! (Publie-le pour y jouer à plusieurs.)', true);
@@ -826,7 +948,10 @@ function ligneConsole(l) {
 function resultat(niv, source, t, morts, etoiles) {
   const e = historique.findLast(e => e.niv === niv);
   if (e) { e[source] = { t, morts, etoiles }; rendreHist(); }
-  if (source === 'console') dire(`🏁 Console : fini en ${t.toFixed(1)} s, ${morts} ☠, ${etoiles} ★`, true);
+  if (source === 'console') {
+    niv.fini = true;                                     // fini au moins une fois : il peut être partagé
+    dire(`🏁 Console : fini en ${t.toFixed(1)} s, ${morts} ☠, ${etoiles} ★${niv.id ? '' : ' — tu peux maintenant le publier !'}`, true);
+  }
   if (niv.id && EN_LIGNE && pseudo())
     api('api/parties', { niveau: niv.id, ...ident(), t: Math.round(t * 1000), morts, etoiles, source }).then(rafraichir).catch(() => {});
 }
@@ -861,6 +986,8 @@ async function publier(commun) {
   if (!jeu) return dire('Crée un jeu d\'abord !');
   if (!EN_LIGNE) return dire('Hors ligne : lance le serveur (node server.js) et ouvre http://localhost:8080');
   if (!moi) { dlgRejoindre.showModal(); return dire('Rejoins d\'abord ton groupe avec le code de ton animateur.'); }
+  // ponytail: vérifié dans la page seulement (la console n'est pas authentifiée) ; suffit pour l'atelier
+  if (!jeu.niv.fini) return dire('Termine ton jeu au moins une fois sur la console avant de le partager : on ne publie que des jeux faisables !');
   try {
     const { id, code } = await api('api/niveaux', { ...ident(), titre: titreIn.value, commun, niv: jeu.niv });
     Object.assign(jeu.niv, { id, code, titre: jeu.niv.titre || titreIn.value });
@@ -1038,13 +1165,13 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
 let vue = 'commu';
 function afficher(v) {
   vue = v;
-  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique');
+  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); support.classList.toggle('hide', v !== 'support');
   niveauScolaire.classList.toggle('hide', v !== 'creer');
-  vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim');
+  vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
   scrollTo(0, 0);
 }
-vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique');
+vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique'); vSupport.onclick = () => afficher('support');
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
 majMoi();
 connexionParLien().then(fait => fait || afficher('commu'));

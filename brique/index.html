@@ -8,84 +8,89 @@
      Génération SIMULÉE en local (mots-clés -> paramètres -> niveau). Le format de niveau est celui du firmware :
      lignes de 20 caractères, tuiles . # S G * R ^ W C I (cf. hand_levels.txt). -->
 <style>
-/* style "HUD de jeu" : fond nuit violet, panneaux lumineux, titres numérotés 01 — … */
-:root{--bg:#0c0820;--panel:#1a1238;--panel2:#241a4c;--txt:#f1ecff;--mute:#9b90c8;--acc:#a78bfa;--acc2:#22d3ee;--hot:#ffcc33;--ok:#4ade80;--ko:#f87171;--line:#3b2c78;
-      --glow:0 0 0 1px #4d3a9e inset,0 0 26px rgba(139,92,246,.16)}
+/* thème clair par défaut (lisible) ; thème sombre "HUD de jeu" au choix (bouton 🌙, gardé dans le navigateur) */
+:root{--bg:#f6f4fb;--panel:#ffffff;--panel2:#f1edfa;--txt:#1d1638;--mute:#625a85;--acc:#6d28d9;--acc2:#0e7490;--hot:#b45309;--ok:#15803d;--ko:#dc2626;--line:#ddd5f2;
+      --glow:0 0 0 1px #e4ddf6 inset,0 1px 3px rgba(40,25,90,.06);--surface:#fff;--head:rgba(255,255,255,.88);--soft:#f6f3fd;--soft2:#ece6fa;
+      --onacc:#fff;--chipon:#ede5ff;--brille:none;--deco:none;color-scheme:light}
+:root[data-theme="dark"]{--bg:#0c0820;--panel:#1a1238;--panel2:#241a4c;--txt:#f1ecff;--mute:#a79dd2;--acc:#a78bfa;--acc2:#22d3ee;--hot:#ffcc33;--ok:#4ade80;--ko:#f87171;--line:#3b2c78;
+      --glow:0 0 0 1px #4d3a9e inset,0 0 26px rgba(139,92,246,.16);--surface:linear-gradient(180deg,rgba(46,31,100,.55),rgba(22,15,48,.9));--head:rgba(12,8,32,.7);
+      --soft:rgba(255,255,255,.04);--soft2:rgba(255,255,255,.09);--onacc:#160c33;--chipon:#2f2266;--brille:0 0 12px rgba(34,211,238,.5);color-scheme:dark;
+      --deco:radial-gradient(1100px 520px at 50% -8%,#2b1a66 0,transparent 65%),linear-gradient(rgba(120,90,220,.05) 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,rgba(120,90,220,.05) 1px,transparent 1px) 0 0/32px 32px}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;color:var(--txt);font:16px/1.4 system-ui,"Segoe UI",sans-serif;
-     background:radial-gradient(1100px 520px at 50% -8%,#2b1a66 0,transparent 65%),
-                linear-gradient(rgba(120,90,220,.05) 1px,transparent 1px) 0 0/32px 32px,
-                linear-gradient(90deg,rgba(120,90,220,.05) 1px,transparent 1px) 0 0/32px 32px,var(--bg)}
-header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:rgba(12,8,32,.7);position:sticky;top:0;z-index:5;backdrop-filter:blur(6px);flex-wrap:wrap}
+body{margin:0;min-height:100vh;color:var(--txt);font:16px/1.45 system-ui,"Segoe UI",sans-serif;background:var(--deco),var(--bg)}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--head);position:sticky;top:0;z-index:5;backdrop-filter:blur(6px);flex-wrap:wrap}
+.theme{width:40px;height:40px;padding:0;font-size:18px;flex:none}
 header h1{margin:0;font-size:24px;letter-spacing:3px}
-header h1 span{color:var(--acc);text-shadow:0 0 14px rgba(167,139,250,.7)}
+header h1 span{color:var(--acc)}
 header .pseudo{margin-left:auto}
 header .mode{margin-left:0}
 .mode{margin-left:auto;display:flex;background:var(--panel);border-radius:999px;padding:4px;box-shadow:var(--glow)}
 .mode button{border:0;background:none;color:var(--mute);padding:8px 16px;border-radius:999px;font:inherit;cursor:pointer}
-.mode button.on{background:var(--acc);color:#160c33;font-weight:700;box-shadow:0 0 16px rgba(167,139,250,.5)}
+.mode button.on{background:var(--acc);color:var(--onacc);font-weight:700}
 main{display:grid;grid-template-columns:340px 1fr 320px;gap:16px;padding:16px;align-items:start}
-@media (max-width:1100px){main{grid-template-columns:1fr}}
-section{background:linear-gradient(180deg,rgba(46,31,100,.55),rgba(22,15,48,.9));border-radius:14px;padding:16px;box-shadow:var(--glow)}
-h2{margin:0 0 12px;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--txt)}
+@media (max-width:1100px){main{grid-template-columns:minmax(0,1fr)}}
+section{background:var(--surface);border-radius:14px;padding:18px;box-shadow:var(--glow)}
+h2{margin:0 0 12px;font-size:17px;font-weight:700;color:var(--txt)}
 h2 b{color:var(--acc);margin-right:6px}
 h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:2px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:12px;padding:6px 10px;font:inherit;font-size:15px;cursor:pointer}
-.chip.on{border-color:var(--acc);background:#2f2266;box-shadow:0 0 12px rgba(167,139,250,.35)}
+.chip.on{border-color:var(--acc);background:var(--chipon)}
 /* ----- accueil communauté ----- */
-.commu{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;padding:16px;max-width:1400px;margin:0 auto}
+.commu{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;padding:16px;max-width:1400px;margin:0 auto}
 .commu>section{grid-column:span 4;min-width:0}
-.commu .c-hero{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:20px}
-.commu .c-class{grid-column:span 5}.commu .c-new{grid-column:span 7}
+.commu .c-stats,.commu .c-hero{grid-column:1/-1}
+.commu .c-class,.commu .c-new{grid-column:span 6}           /* classement et nouveaux niveaux : même taille, même hauteur, se replient ensemble */
+.commu .c-class .liste,.commu .c-new .cartes{max-height:520px;overflow:auto}
 @media (max-width:1000px){.commu>section,.commu .c-class,.commu .c-new{grid-column:1/-1}}
-.c-hero .accroche{flex:1;min-width:260px}
-.c-hero .accroche p{margin:4px 0 0;color:var(--mute)}
-.tuiles{display:flex;gap:12px;flex-wrap:wrap}
-.tuile{min-width:120px;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.25);box-shadow:var(--glow)}
-.tuile b{display:block;font-size:28px;color:var(--acc2);text-shadow:0 0 12px rgba(34,211,238,.5)}
-.tuile span{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:1px}
-.cta{display:flex;gap:10px;flex-wrap:wrap}
+.bande{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,2fr);gap:12px}
+@media (max-width:800px){.bande{grid-template-columns:repeat(3,minmax(0,1fr))}.bande .actifs{grid-column:1/-1}.tuile{padding:10px}.tuile>b{font-size:26px}.tuile>span{font-size:11px;letter-spacing:0}}
+header nav.mode{max-width:100%;overflow-x:auto}   /* téléphone : le menu défile au lieu d'élargir la page */
+.tuile{padding:12px 16px;border-radius:12px;background:var(--soft);box-shadow:var(--glow);min-width:0}
+.tuile>b{display:block;font-size:34px;line-height:1.1;color:var(--acc2);text-shadow:var(--brille)}
+.tuile>span{font-size:13px;color:var(--mute);text-transform:uppercase;letter-spacing:1px}
+.tuile.actifs .liste{margin-top:6px;max-height:112px;overflow:auto;gap:4px}
+.tuile.actifs .rang{padding:4px 8px}
+.cta{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .cta .big{width:auto;margin:0;padding:12px 20px;font-size:17px}
 .liste{display:flex;flex-direction:column;gap:8px}
-.rang{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid transparent}
+.rang{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--soft);border:1px solid transparent}
 .rang:hover{border-color:var(--line)}
 .rang .pos{width:30px;text-align:center;font-weight:800;color:var(--acc);font-size:18px}
 .rang .qui{flex:1;min-width:0}
 .rang .qui div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rang small{color:var(--mute)}
-.barre{height:4px;margin-top:5px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.barre{height:4px;margin-top:5px;background:var(--line);border-radius:2px;overflow:hidden}
 .barre i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2))}
-.jouer{border:1px solid var(--acc);background:rgba(167,139,250,.12);color:var(--txt);border-radius:9px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
-.jouer:hover{background:var(--acc);color:#160c33}
+.jouer{border:1px solid var(--acc);background:var(--chipon);color:var(--txt);border-radius:9px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.jouer:hover{background:var(--acc);color:var(--onacc)}
 .cartes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.carte{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:12px;background:rgba(0,0,0,.25);box-shadow:var(--glow)}
+.carte{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:12px;background:var(--soft);box-shadow:var(--glow)}
 .carte .t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vig{height:84px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;border-radius:8px;background:#0a0618}
 .mini{width:60px;image-rendering:pixelated}
 .avatar{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#160c33}
 header .moi{margin-left:auto;display:flex;align-items:center;gap:8px}
 header .moi b{color:var(--acc2)}
-#vAnim.on{border-color:var(--acc);box-shadow:0 0 12px rgba(167,139,250,.35)}
+#vAnim.on{border-color:var(--acc);background:var(--chipon)}
 dialog{background:var(--panel);color:var(--txt);border:0;border-radius:14px;padding:20px;box-shadow:var(--glow),0 20px 60px rgba(0,0,0,.6);max-width:min(420px,92vw)}
 dialog::backdrop{background:rgba(5,2,15,.7)}
 .champ{display:flex;flex-direction:column;gap:4px;margin:10px 0}
 .champ input{width:100%}
 .anim{max-width:1000px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px}
-.code{white-space:nowrap;font:800 22px/1 ui-monospace,monospace;letter-spacing:2px;color:var(--acc2);text-shadow:0 0 12px rgba(34,211,238,.5)}
+.code{white-space:nowrap;font:800 22px/1 ui-monospace,monospace;letter-spacing:2px;color:var(--acc2);text-shadow:var(--brille)}
 .masque{opacity:.45}
 .partage{margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(34,211,238,.08);box-shadow:var(--glow);text-align:left}
-.cta{max-width:520px}
 .palette{display:flex;align-items:center;gap:8px;margin:6px 0}
 .palette>span{width:86px;flex:none;font-size:13px;color:var(--mute)}
 .regle{flex:1;width:auto;padding:6px 10px}
-.pastille{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
-.pastille.on{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.6)}
+.pastille{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.pastille.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--panel) inset}
 .pastille.auto{background:conic-gradient(#e8322b,#ffd400,#3f8f3a,#2f6fe0,#8b5cf6,#e8322b)}
 .sh-versions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.sh-versions button{display:flex;flex-direction:column;gap:6px;text-align:left;padding:16px;border-radius:16px;border:2px solid var(--line);background:rgba(0,0,0,.2);color:var(--txt);font:inherit;cursor:pointer}
+.sh-versions button{display:flex;flex-direction:column;gap:6px;text-align:left;padding:16px;border-radius:16px;border:2px solid var(--line);background:var(--soft);color:var(--txt);font:inherit;cursor:pointer}
 .sh-versions button span{color:var(--mute);font-size:14px}
-.sh-versions button.on{border-color:var(--acc);box-shadow:0 0 16px rgba(167,139,250,.35)}
+.sh-versions button.on{border-color:var(--acc);background:var(--chipon)}
 @media (max-width:600px){.sh-versions{grid-template-columns:1fr}}
 .atelierBan{margin-bottom:12px;padding:10px 14px;border-radius:12px;background:rgba(34,211,238,.1);box-shadow:var(--glow);font-size:17px}
 .atelierBan b{color:var(--acc2)}
@@ -95,13 +100,13 @@ dialog::backdrop{background:rgba(5,2,15,.7)}
 .qform{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
 .qform .rep{display:flex;gap:6px;align-items:center}
 .qform .rep input[type=text]{flex:1}
-.nomJeu{width:100%;font-size:20px;font-weight:800;padding:12px 14px;border-color:var(--acc);box-shadow:0 0 14px rgba(167,139,250,.3);margin-bottom:12px}
+.nomJeu{width:100%;font-size:20px;font-weight:800;padding:12px 14px;border-color:var(--acc);margin-bottom:12px}
 .neuf{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--acc2);color:#04212a;font-weight:800;margin-left:6px}
 textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
 textarea:focus{outline:none;border-color:var(--acc)}
 .big{width:100%;margin-top:12px;border:0;border-radius:14px;padding:14px;font:inherit;font-size:19px;font-weight:800;cursor:pointer;color:#fff;
      background:linear-gradient(90deg,#8b5cf6,#6d28d9);box-shadow:0 0 22px rgba(139,92,246,.45)}
-.big.alt{background:none;box-shadow:var(--glow)}
+.big.alt{background:none;color:var(--txt);box-shadow:var(--glow)}
 .big:disabled{opacity:.5;cursor:wait}
 .sec{border:2px solid var(--line);background:none;color:var(--txt);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer}
 .sec:hover{border-color:var(--acc)}
@@ -143,46 +148,50 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 /* ----- boutique : présentation épurée ----- */
 .shop{display:block;max-width:860px;margin:0 auto;padding:40px 16px 80px;text-align:center}
 .sh-hero{padding:60px 0 40px}
+.sh-photo{margin:32px auto 0;max-width:640px;padding:16px;border-radius:24px;background:#fff}   /* photo sur fond blanc : posée sur une carte blanche, même en mode sombre */
+.sh-photo img{display:block;width:100%;height:auto}
 .sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}
 .sh-titre{margin:8px 0 16px;font-size:clamp(36px,7vw,64px);line-height:1.05;letter-spacing:-.02em;text-transform:none;font-weight:700}
 .sh-sous{margin:0 auto;max-width:560px;color:var(--mute);font-size:clamp(17px,2.4vw,21px)}
 .sh-prix{margin:20px 0 0;font-size:17px}
-.sh-bloc{padding:56px 0;border-top:1px solid rgba(255,255,255,.08)}
+.sh-bloc{padding:56px 0;border-top:1px solid var(--soft)}
 .sh-h{margin:0 0 28px;font-size:clamp(26px,4.5vw,40px);color:var(--txt);font-weight:700;letter-spacing:-.01em}
 .sh-paliers{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
-.sh-paliers div{padding:22px 10px;border-radius:18px;background:rgba(255,255,255,.04);transition:.2s}
-.sh-paliers div.on{background:rgba(255,255,255,.1);outline:1px solid var(--acc)}
+.sh-paliers div{padding:22px 10px;border-radius:18px;background:var(--soft);transition:.2s}
+.sh-paliers div.on{background:var(--line);outline:1px solid var(--acc)}
 .sh-paliers b{display:block;font-size:30px;font-weight:700}
 .sh-paliers span{display:block;color:var(--mute);font-size:14px;margin-top:4px}
 .sh-paliers i{display:block;font-style:normal;color:var(--ok);font-size:13px;margin-top:6px;min-height:1em}
-.sh-qte{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:rgba(255,255,255,.06)}
+.sh-qte{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--soft)}
 .sh-qte input{width:80px;text-align:center;background:none;border:0;color:var(--txt);font:600 24px system-ui;-moz-appearance:textfield}
 .sh-qte input::-webkit-inner-spin-button{-webkit-appearance:none}
-.sh-pm{width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:var(--txt);font-size:22px;cursor:pointer}
+.sh-pm{width:44px;height:44px;border:0;border-radius:50%;background:var(--soft);color:var(--txt);font-size:22px;cursor:pointer}
 .sh-total{margin:24px 0 4px;font-size:clamp(44px,8vw,64px);font-weight:700;letter-spacing:-.02em}
 .sh-detail{margin:0;color:var(--mute);min-height:1.4em}
 .sh-btn{margin-top:28px;border:0;border-radius:999px;padding:14px 36px;font:600 17px system-ui;background:#0071e3;color:#fff;cursor:pointer}
 .sh-btn:hover{background:#0077ed}
 .sh-liens{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:32px 0 24px;text-align:left}
-.sh-liens a{display:block;padding:20px;border-radius:18px;background:rgba(255,255,255,.04);color:var(--txt);text-decoration:none}
-.sh-liens a:hover{background:rgba(255,255,255,.08)}
+.sh-liens a{display:block;padding:20px;border-radius:18px;background:var(--soft);color:var(--txt);text-decoration:none}
+.sh-liens a:hover{background:var(--soft)}
 .sh-liens b{display:block;font-size:19px}
 .sh-liens span{color:var(--mute);font-size:14px}
 .sh-dons{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:28px}
-.sh-don{border:0;border-radius:999px;padding:12px 22px;font:600 17px system-ui;background:rgba(255,255,255,.06);color:var(--txt);cursor:pointer}
+.sh-don{border:0;border-radius:999px;padding:12px 22px;font:600 17px system-ui;background:var(--soft);color:var(--txt);cursor:pointer}
 .sh-don.on{background:var(--txt);color:var(--bg)}
 .sh-lien{color:#2997ff;text-decoration:none;font-size:17px}
 .sh-lien:hover{text-decoration:underline}
 .icDrop label{color:var(--acc);cursor:pointer;text-decoration:underline}
 /* ----- support : notice d'assemblage ----- */
 .support table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}
-.support th,.support td{text-align:left;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.1);vertical-align:top}
+.support th,.support td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 .support li{margin:6px 0}
 .support code{color:var(--acc)}
 .support .tab{overflow-x:auto}
 .support .fiche{background:#fff;border-radius:8px;padding:8px;margin:10px 0}
 .support .fiche svg{display:block;width:100%;height:auto}
 </style>
+<script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js?module"></script>   <!-- bouton "Mettre a jour ma console" (flash par Web Serial) -->
+<script>try { if (JSON.parse(localStorage.getItem("brique-theme")) === "dark") document.documentElement.dataset.theme = "dark"; } catch {}</script>   <!-- thème choisi, avant l'affichage : pas de flash clair -->
 </head>
 <body>
 <header>
@@ -196,6 +205,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
   </nav>
   <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
   <button id="vAnim" class="sec">🎓 Animateur</button>
+  <button id="themeBtn" class="sec theme" title="Mode sombre / mode clair">🌙</button>
   <div id="niveauScolaire" class="mode hide">
     <button id="mGuide" class="on">CM1 · CM2 — guidé</button>
     <button id="mLibre">6ᵉ · 4ᵉ — libre</button>
@@ -204,16 +214,17 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 
 <!-- ===== ACCUEIL : ce qui se passe dans la communauté ===== -->
 <main id="commu" class="commu">
-  <section class="c-hero">
-    <div class="accroche">
-      <div id="atelierBan" class="atelierBan hide"></div>
-      <h2><b>01</b>— En ce moment</h2>
-      <div class="tuiles">
-        <div class="tuile"><b id="nJeux">–</b><span>jeux créés</span></div>
-        <div class="tuile"><b id="nParties">–</b><span>parties finies</span></div>
-        <div class="tuile"><b id="nAujourdhui">–</b><span>joueurs aujourd'hui</span></div>
-      </div>
+  <!-- bandeau du haut : les chiffres et qui joue en ce moment, sur toute la largeur -->
+  <section class="c-stats">
+    <div id="atelierBan" class="atelierBan hide"></div>
+    <div class="bande">
+      <div class="tuile"><b id="nJeux">–</b><span>jeux créés</span></div>
+      <div class="tuile"><b id="nParties">–</b><span>parties finies</span></div>
+      <div class="tuile"><b id="nAujourdhui">–</b><span>joueurs aujourd'hui</span></div>
+      <div class="tuile actifs"><span>Joueurs actifs</span><div id="actifs" class="liste"></div></div>
     </div>
+  </section>
+  <section class="c-hero">
     <div class="cta">
       <button id="ctaCreer" class="big">✨ Créer mon jeu</button>
       <button id="ctaCommun" class="big alt">🧱 Jouer au jeu commun</button>
@@ -221,13 +232,12 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
       <div id="codeMsg" class="envoi" style="margin:0;flex-basis:100%"></div>
     </div>
   </section>
-  <section class="c-class"><h2><b>02</b>— Classement des jeux</h2><div id="classement" class="liste"></div></section>
-  <section class="c-new"><h2><b>03</b>— Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
-  <section><h2><b>04</b>— Joueurs actifs</h2><div id="actifs" class="liste"></div></section>
-  <section><h2><b>05</b>— Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
-  <section><h2><b>06</b>— Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu : chacun y ajoute un niveau signé de son pseudo.</p><div id="commun" class="liste"></div></section>
+  <section class="c-class"><h2>🏆 Classement des jeux</h2><div id="classement" class="liste"></div></section>
+  <section class="c-new"><h2>🆕 Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
+  <section><h2>🔥 Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
+  <section><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu : chacun y ajoute un niveau signé de son pseudo.</p><div id="commun" class="liste"></div></section>
   <section class="c-idees">
-    <h2><b>07</b>— Idées des joueurs</h2>
+    <h2>💡 Idées des joueurs</h2>
     <p class="aide" style="margin-top:0">Ce que vous voulez dans le jeu et que la console ne sait pas encore faire. Les plus demandées arriveront dans les prochaines mises à jour !</p>
     <div class="icRow" style="margin-bottom:10px"><input id="ideeIn" class="pseudo" maxlength="60" placeholder="Mon idée : ex. des ennemis qui volent"><button id="ideeBtn" class="sec">💡 Proposer</button></div>
     <div id="idees" class="liste"></div>
@@ -241,6 +251,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <h2 class="sh-titre">Le jeu que tu inventes.<br>Dans ta main.</h2>
     <p class="sh-sous">Crée ton jeu ici, envoie-le dans la console, joue partout.</p>
     <p id="btDepuis" class="sh-prix">À partir de 28 €</p>
+    <figure class="sh-photo"><img src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1000" height="730"></figure>
   </div>
 
   <div class="sh-bloc">
@@ -760,6 +771,17 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
       <button id="communBtn" class="sec">➕ Ajouter au jeu commun</button>
     </div>
     <div id="envoi" class="envoi"></div>
+    <details id="majDetails" class="hide">
+      <summary>🔄 Mettre à jour ma console</summary>
+      <div id="majBox" class="envoi"></div>
+      <p class="aide">La nouvelle version du jeu de la console. <b>Attention : on repart du niveau 1</b> (niveaux, pièces, skins remis à zéro) ; tes jeux de « Mes niveaux » sont gardés. Chrome ou Edge sur ordinateur, câble USB branché, environ 1 minute.</p>
+      <esp-web-install-button id="majBtn" manifest="firmware/manifest.json">
+        <button slot="activate" class="sec">🔄 Mettre à jour ma console</button>
+        <span slot="unsupported" class="aide">Ce navigateur ne sait pas mettre à jour la console : ouvre la page dans Chrome ou Edge, sur un ordinateur.</span>
+        <span slot="not-allowed" class="aide">Il faut ouvrir la page en https (ou sur localhost).</span>
+      </esp-web-install-button>
+      <p class="aide">La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la, puis réessaie.</p>
+    </details>
     <details>
       <summary>🔧 Voir sous le capot</summary>
       <pre id="capot"></pre>
@@ -1343,7 +1365,7 @@ envoyer.onclick = async () => {
   if (!jeu) return dire('Crée un jeu d\'abord !');
   if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.');
   try {
-    if (!port) { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter(); await syncCourses(); }
+    if (!port) { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter(); await syncCourses(); await verifierVersion(); }
     envoi.textContent = '📟 Envoi…';
     // une ligne par icône d'abord (la console les garde avec le niveau qui suit), puis le niveau
     let qs = jeu.niv.questions;                          // jeu publié : ses questions ; sinon celles du groupe de l'enfant
@@ -1379,17 +1401,36 @@ async function ligneSerie(obj) {                         // écrit une ligne JSO
   await w.write(new TextEncoder().encode(JSON.stringify(obj) + '\n')); w.releaseLock();
   const l = await rep; attente = null; return l;
 }
-async function fermer() { const p = port; port = null; if (p) try { await p.close(); } catch {} }
+let lecteur = null;                                     // lecture en cours : à annuler avant de fermer le port (sinon il reste verrouillé)
+async function fermer() { const p = port; port = null; if (!p) return; try { await lecteur?.cancel(); } catch {} try { await p.close(); } catch {} }
 async function ecouter() {
   const dec = new TextDecoder(); let txt = '';
   try {
-    const r = port.readable.getReader();
+    const r = lecteur = port.readable.getReader();
     while (true) {
       const { value, done } = await r.read(); if (done) break;
       txt += dec.decode(value, { stream: true });
       let i; while ((i = txt.indexOf('\n')) >= 0) { ligneConsole(txt.slice(0, i).trim()); txt = txt.slice(i + 1); }
     }
-  } catch { dire('Console débranchée.'); fermer(); }
+  } catch { if (port) { dire('Console débranchée.'); fermer(); } }   // port déjà nul : on l'a fermé exprès (mise à jour)
+}
+// ---------- Mise à jour de la console (esp-web-tools) : fichiers publiés par c3-tft-meatboy/publier-firmware-brique.bat ----------
+let manifeste = null, attenteVersion = null;
+fetch('firmware/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null)
+  .then(m => { manifeste = m; majDetails.classList.toggle('hide', !m); }).catch(() => {});
+majBtn.addEventListener('click', () => fermer(), true);   // esp-web-tools ouvre le port lui-même : on lui laisse
+async function verifierVersion() {                       // la console dit sa version ; plus ancienne que celle publiée -> on propose la mise à jour
+  if (!manifeste || !port) return;
+  const v = await new Promise(async ok => {
+    attenteVersion = ok; setTimeout(() => ok(''), 1500);
+    const w = port.writable.getWriter(); await w.write(new TextEncoder().encode('VERSION\n')); w.releaseLock();
+  });
+  attenteVersion = null;
+  const num = s => (s.match(/\d+/g) || []).map(Number);   // "v54.10" -> [54, 10] : comparé nombre par nombre
+  const plusVieille = (a, b) => { const x = num(a), y = num(b); for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
+  if (v && !plusVieille(v, manifeste.version)) return;   // à jour (ou version de développement plus récente)
+  majDetails.open = true;
+  majBox.innerHTML = `<span style="color:var(--acc)">✨ Une nouvelle version de la console est disponible${v ? '' : ' (les casse-briques et Invaders en ont besoin)'} : clique sur « Mettre à jour ma console ».</span>`;
 }
 // courses à plusieurs jouées depuis la dernière connexion : la console les garde, on les envoie au classement au nom de l'enfant connecté
 let resBuf = [], resAttente = null;
@@ -1411,6 +1452,7 @@ async function syncCourses() {
 function ligneConsole(l) {
   if ((l.startsWith('BRIQUE OK') || l.startsWith('BRIQUE ERR')) && attente) return attente(l);
   if (l.startsWith('BRIQUE RES ')) return resBuf.push(l.slice(11));
+  const vm = l.match(/^BRIQUE VERSION (\S+)/); if (vm && attenteVersion) return attenteVersion(vm[1]);
   const qz = l.match(/^BRIQUE QUIZ (\S+) ([01])/);                  // question de cours répondue sur la console
   if (qz) { if (moi && EN_LIGNE) api('api/reponses', { ...ident(), reponses: [{ id: qz[1], ok: qz[2] === '1' }] }).catch(() => {});
     return dire(qz[2] === '1' ? '✅ Bonne réponse à la question !' : '❌ Pas tout à fait… la bonne réponse est affichée sur la console.', qz[2] === '1'); }
@@ -1436,6 +1478,10 @@ let EN_LIGNE = false;   // vrai seulement si server.js répond (GitHub Pages ou 
 // identité de l'enfant : pseudo + secret reçus en rejoignant son groupe, gardés dans ce navigateur
 const lire = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
 const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+// thème clair / sombre : bouton 🌙 de l'en-tête, gardé dans ce navigateur (lu avant l'affichage dans <head>)
+const majTheme = () => themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
+themeBtn.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; ecrire('brique-theme', t); majTheme(); };
+majTheme();
 let moi = lire('brique-moi');                          // { pseudo, secret, groupe }
 const pseudo = () => moi?.pseudo || '';
 const ident = () => ({ pseudo: moi?.pseudo, secret: moi?.secret });

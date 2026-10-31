@@ -12,6 +12,14 @@ Page web de l'atelier : décrire un jeu avec l'IA, choisir ses icônes, le publi
 - **Enfants** : pseudo + code du groupe, aucun mail ni nom.
 - **Multi différé** : chaque jeu publié a un code de partage (`K7P2QX`). Chacun le récupère sur sa console quand il veut ; ensemble, l'hôte lance la course dans « 2 à 4 joueurs → Mes jeux ». Les résultats remontent au classement à la connexion suivante.
 
+## Mettre à jour les consoles déjà distribuées
+
+1. Incrémenter `FW_VERSION` dans `c3-tft-meatboy.ino` (ex. `v55.0` → `v55.1`).
+2. Lancer `c3-tft-meatboy/publier-firmware-brique.bat` : compile et dépose `brique/firmware/` (4 morceaux + `manifest.json`).
+3. Commit + push : Render sert la nouvelle version. En branchant sa console sur Brique, chacun voit « Une nouvelle version est disponible » et clique sur **Mettre à jour ma console** (esp-web-tools, Chrome/Edge).
+
+La progression repart de zéro (voulu : le firmware efface la sauvegarde quand `FW_VERSION` change) ; « Mes niveaux » est gardé. Si la console n’est pas trouvée : brancher en maintenant BOOT.
+
 ## Côté navigateur et console
 
 - **Navigateur :** Chrome ou Edge sur ordinateur (Web Serial). Pas Firefox, Safari ni tablette.

@@ -117,7 +117,7 @@ struct __attribute__((packed)) LbMsg { uint8_t type; uint8_t n; LbEnt e[LB_MAX];
 
 
 #define SAVE_FORMAT 1       // format de la sauvegarde NVS : ne change que si la structure des donnees sauvegardees devient incompatible
-#define FW_VERSION "v54.4"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
+#define FW_VERSION "v55.0"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
 const char* rstReason = "?";  // raison du dernier reset (affichee a l'ecran titre)
 RTC_NOINIT_ATTR uint32_t dbgStage;  // dernier marqueur atteint (survit au reset)
 uint32_t lastStage = 0;
@@ -6014,6 +6014,7 @@ void briquePoll() {
       while (f && f.available()) { String l = f.readStringUntil('\n'); l.trim(); if (l.length()) { Serial.printf("BRIQUE RES %s\n", l.c_str()); n++; } }
       if (f) f.close(); Serial.printf("BRIQUE RESFIN %d\n", n); continue;
     }
+    if (!strncmp(buf, "VERSION", 7)) { Serial.printf("BRIQUE VERSION %s\n", FW_VERSION); continue; }   // la page compare a la version de firmware/manifest.json
     if (!strncmp(buf, "LISTE", 5)) {                                    // ce que contient "Mes niveaux" (du plus recent au plus ancien)
       myLvScan(); for (int i = 0; i < myLvN; i++) Serial.printf("BRIQUE NIV %s|%s\n", myLvTitre[i], myLvPseudo[i]);
       Serial.printf("BRIQUE LISTE %d%s\n", myLvN, fsOk ? "" : " (flash indisponible)"); continue;
@@ -6093,6 +6094,7 @@ void setup() {
   COL_FRAG   = tft.color565(224, 51, 63);   // brique fragile : rouge dedie (independant du joueur)
   COL_BOUNCE  = tft.color565(90, 235, 140);  // ressort : vert "gelatine" dedie
   COL_BOUNCED = tft.color565(40, 170, 95);
+  bootIntro();                                     // BRIQUE : logo + chargement, avant de lire la sauvegarde
 
   // palette de fond/blocs par dizaine (1-10 .. 41-50) -- change tous les 10
   // niveaux, jamais niveau par niveau. Dizaine 1 = valeurs actuelles (aucun
@@ -7444,15 +7446,16 @@ void drawGame() {
   // recompense : palier 0..4 derive de rewardPower() (bonnes reponses + niveaux reussis) --
   // cumulatif, evolue au fil de la session. Le corps ET la
   // trainee se teintent ensemble -- COL_MEAT/COL_MEATD (UI) ne changent jamais.
-  int tier = computePlayerTier();
+  // BRIQUE : dans un jeu de la page (seul ou en course), pas d'avatar de progression (palier, skin, trainee) : tout le monde part egal
+  int tier = bqOn() ? 0 : computePlayerTier();
   uint16_t bodyCol  = COL_PLAYER_TIER[tier];
   uint16_t bodyColD = COL_PLAYERD_TIER[tier];
-  if (skinSel > 0) { bodyCol = skinColor(skinSel); bodyColD = SKIN_COLD[skinSel]; }   // skin achete en boutique
+  if (skinSel > 0 && !bqOn()) { bodyCol = skinColor(skinSel); bodyColD = SKIN_COLD[skinSel]; }   // skin achete en boutique
 
   // trainee de particules derriere le joueur (voir updateTrail()) : chaque
   // particule s'efface en retrecissant avec son age -- pas de canal alpha
   // sur GFXcanvas16, on simule le fondu par la taille.
-  int ttier = effTier();
+  int ttier = bqOn() ? 0 : effTier();
   if (ttier > 0) {
     uint16_t trailCols[NUM_PLAYER_TIERS - 1] = { tft.color565(180, 120, 60), tft.color565(210, 210, 220),
                                                   COL_STAR, tft.color565(120, 230, 255) };   // bronze/argent/or/diamant
@@ -7481,7 +7484,7 @@ void drawGame() {
     int bx = (int)(px + PW / 2) + lean, by = (int)(py + PH) - cy;
     int x0 = bx - w / 2, y0 = by - h;
     if (bqOn() && bqHero >= 0) { bodyCol = BQ_HEROS[bqHero].col; bodyColD = blendCol(bodyCol, 0x0000, 0.45f); }   // niveau perso : heros choisi sur la page
-    skinBody(fb, bqOn() && bqHero >= 0 ? 0 : skinSel, x0, y0, w, h, 3, bodyCol, bodyColD);
+    skinBody(fb, bqOn() ? 0 : skinSel, x0, y0, w, h, 3, bodyCol, bodyColD);
     int ey = y0 + h * 4 / 14, eh = max(2, h * 3 / 14);
     int ex1 = x0 + w * 3 / 12, ex2 = x0 + w * 7 / 12;
     if (pushVis) { ex1 += lean / 2; ex2 += lean / 2; }
@@ -7824,6 +7827,45 @@ void drawEvoInfo() {                                   // progression de l'avata
   if (evo < EVO_MAX) { ltextf(4, 185, "Encore %d pour", EVO_STEP - evoPts); ltextAt(4, 195, "evoluer"); } else ltextAt(4, 185, "Stade max !");
 }
 
+// intro au demarrage (~2,4 s, un bouton = passer) : les lettres de BRIQUE tombent comme des briques, rond de chargement au centre
+bool bootBtn() { return digitalRead(BTN_LEFT) == LOW || digitalRead(BTN_RIGHT) == LOW || digitalRead(BTN_JUMP) == LOW; }
+void bootIntro() {
+  const char* T = "BRIQUE";
+  const uint16_t C[6] = { RGB565(255, 90, 90), RGB565(255, 160, 60), RGB565(255, 220, 70), RGB565(120, 230, 90), RGB565(90, 200, 255), RGB565(200, 120, 255) };
+  const int Y = 56, SY = 168, R = 18;                   // ligne d'arrivee des lettres, centre du rond de chargement
+  tft.fillScreen(COL_BG); tft.setTextSize(5);
+  int adv[6], tot = 0;
+  for (int i = 0; i < 6; i++) { char b[2] = { T[i], 0 }; adv[i] = textW(tft, 5, b); tot += adv[i] + 4; }
+  int py[6] = { -99, -99, -99, -99, -99, -99 }, lastA = -1; bool sous = false;
+  const uint32_t t0 = millis();
+  for (uint32_t t = 0; t < 2400 && !(t > 300 && bootBtn()); t = millis() - t0) {
+    int x = (SCREEN_W - tot) / 2;
+    for (int i = 0; i < 6; i++) {                       // une lettre toutes les 120 ms : chute acceleree en 300 ms, puis petit rebond
+      const float k = constrain(((int)t - i * 120) / 300.0f, 0.0f, 1.0f), b = ((int)t - i * 120 - 300) / 150.0f;
+      int y = k < 1 ? -50 + (int)((Y + 50) * k * k) : (b < 1 ? Y - (int)(6 * sinf(b * 3.14159f)) : Y);
+      if (k > 0 && y != py[i]) {
+        tft.fillRect(x - 2, max(0, py[i] - 2), adv[i] + 6, 58, COL_BG);
+        char s[2] = { T[i], 0 };
+        if (y > -45) { tft.setTextSize(5); tft.setTextColor(RGB565(10, 8, 16)); ltextAt(x + 3, y + 3, s); tft.setTextColor(C[i]); ltextAt(x, y, s); }
+        py[i] = y;
+      }
+      x += adv[i] + 4;
+    }
+    if (t > 1300 && !sous) { tft.setTextSize(1); tft.setTextColor(RGB565(150, 150, 170)); ctext(124, "la console que tu as soudee"); sous = true; }
+    const int a = (t / 90) % 8;                         // rond de chargement : 8 points, le plus clair tourne
+    if (a != lastA) {
+      for (int k = 0; k < 8; k++) {
+        const int d = (a - k + 8) % 8, cx = SCREEN_W / 2 + (int)(R * cosf(k * 0.7854f)), cy = SY + (int)(R * sinf(k * 0.7854f));
+        tft.fillCircle(cx, cy, 4, COL_BG);
+        tft.fillCircle(cx, cy, d == 0 ? 4 : 3, d == 0 ? COL_TXT : d < 3 ? RGB565(150, 150, 170) : RGB565(60, 60, 80));
+      }
+      lastA = a;
+    }
+    delay(16);
+  }
+  while (bootBtn()) delay(10);                          // le bouton qui a passe l'intro ne valide pas l'ecran suivant
+}
+
 void drawSplash() {
   tft.fillScreen(COL_BG);
   titleWiz = random(0, 6);                              // un sorcier different a chaque retour a l'ecran titre
@@ -8035,13 +8077,24 @@ void drawHome() {
   brickFill(0, 0, SCREEN_W, SCREEN_H);
   tft.setTextColor(COL_MEAT); tft.setTextSize(4);
   ctext(28, "PIXEL RUN");
+  // mon avatar : il reprend la progression (palier de couleur, skin, accessoires de savoir) -- jamais utilise dans les jeux Brique (bqOn)
+  tft.fillRoundRect(8, 74, 96, 128, 8, RGB565(26, 22, 34)); tft.drawRoundRect(8, 74, 96, 128, 8, RGB565(70, 70, 90));
+  quizShown = knowledge; quizAvatar(56, 128, false, 1);
+  int etoiles = 0; for (int i = 0; i < NUM_LEVELS; i++) etoiles += bestStars[i];
+  char ln[16]; tft.setTextSize(1);
+  tft.setTextColor(COL_TXT);  ctextAt(56, 140, playerName[0] ? playerName : "Joueur");
+  tft.setTextColor(COL_STAR); ctextAt(56, 154, KN_NAME[knowLvl(knowledge)]);
+  tft.setTextColor(RGB565(170, 170, 190));
+  snprintf(ln, sizeof ln, "Niveau %d", maxUnlockedIdx() + 1); ctextAt(56, 168, ln);
+  snprintf(ln, sizeof ln, "%d etoiles", etoiles); ctextAt(56, 180, ln);
+  snprintf(ln, sizeof ln, "%lu pieces", (unsigned long)coins); ctextAt(56, 192, ln);
   const char* opt[3] = { "1 Joueur", "2 a 4 Joueurs", "Mes niveaux" };
-  tft.setTextSize(3);
+  tft.setTextSize(2);
   for (int i = 0; i < 3; i++) {
-    int yy = 88 + i * 40;
-    if (i == homeChoice) { tft.fillRoundRect(40, yy - 7, 240, 36, 6, COL_MEAT); tft.setTextColor(COL_BG); }
+    int yy = 90 + i * 40;
+    if (i == homeChoice) { tft.fillRoundRect(114, yy - 9, 198, 32, 6, COL_MEAT); tft.setTextColor(COL_BG); }
     else tft.setTextColor(COL_TXT);
-    ctext(yy, opt[i]);
+    ctextAt(213, yy, opt[i]);
   }
   tft.setTextColor(tft.color565(120, 130, 150)); tft.setTextSize(1);
   ctext(208, FW_VERSION);

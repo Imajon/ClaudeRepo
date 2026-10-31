@@ -305,6 +305,16 @@ const serveur = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
   }
+  if (req.method === 'GET' && url === '/images/console-v2.jpg') {   // photo de la console (boutique)
+    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'max-age=86400' }); return fs.createReadStream(path.join(__dirname, 'images', 'console-v2.jpg')).pipe(res);
+  }
+  const fw = req.method === 'GET' && url.match(/^\/firmware\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);
+  if (fw) {                                             // mise a jour des consoles (esp-web-tools) : fichiers deposes par publier-firmware-brique.bat
+    const f = path.join(__dirname, 'firmware', fw[1]);
+    if (!fs.existsSync(f)) return repondre(res, 404, { erreur: 'pas de firmware publie' });
+    res.writeHead(200, { 'Content-Type': fw[1].endsWith('.json') ? 'application/json' : 'application/octet-stream', 'Cache-Control': 'no-cache' });
+    return fs.createReadStream(f).pipe(res);
+  }
   if (req.method === 'GET' && url === '/api/communaute') {   // ?pseudo=… : l'enfant d'un groupe en mode atelier ne voit que son groupe
     const ps = new URLSearchParams(req.url.split('?')[1] || '').get('pseudo') || '';
     const jr = db.joueurs.find(j => j.pseudo.toLowerCase() === ps.toLowerCase()), g = jr && db.groupes.find(g => g.code === jr.groupe && g.prive);

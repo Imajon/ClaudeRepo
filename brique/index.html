@@ -154,6 +154,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .console{display:flex;flex-direction:column;align-items:center;min-width:0}   /* min-width : la photo (873 px) ne doit pas élargir la colonne, elle est réduite par zoom */
 .coque{position:relative;width:873px;flex:none}               /* la vraie console : l'écran (320x240, comme la console) est posé sur la photo, à l'échelle 1 */
 .coque>img{display:block;width:100%;height:auto}
+.cons-ligne{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;width:100%}
+.actions.col{flex-direction:column;align-items:stretch}
 .coque .apercu{position:absolute;left:265px;top:112px;width:320px;height:240px;max-width:none;max-height:none;border-radius:0;scrollbar-width:none}   /* niveau haut ou large : il défile dans l écran, sans barre (elle rognerait le 320 px) */
 .coque canvas{border:0;border-radius:0}
 @media (min-width:1101px) and (max-width:1650px){#atelier{grid-template-columns:340px minmax(0,1fr)}#atelier>section:last-of-type{grid-column:1/-1}}   /* la console d'abord : l'historique passe dessous */
@@ -923,19 +925,19 @@ body{overflow-x:clip}                                           /* la bande 100v
   <!-- ===== CONSOLE / APERÇU ===== -->
   <section class="console">
     <h2>Mon niveau</h2>
-    <div class="coque">
-      <img src="images/console-face.png" alt="" width="1105" height="763">
-      <div id="apercu" class="apercu"><canvas id="ecran" width="320" height="240"></canvas></div>
+    <div class="cons-ligne">                       <!-- la console en petit, les boutons à sa droite -->
+      <div class="coque">
+        <img src="images/console-face.png" alt="" width="1105" height="763">
+        <div id="apercu" class="apercu"><canvas id="ecran" width="320" height="240"></canvas></div>
+      </div>
+      <div class="actions col">
+        <button id="envoyer" class="sec">📟 Envoyer sur la console</button>
+        <button id="publierBtn" class="sec">📢 Publier mon jeu</button>
+        <button id="communBtn" class="sec">➕ Ajouter au jeu commun</button>
+        <button id="nouveau" class="sec">🗑 Nouveau jeu</button>
+      </div>
     </div>
     <p class="aide">Pour jouer, envoie ton niveau sur la console : c'est elle qui fait tourner le jeu.</p>
-    <div class="actions">
-      <button id="nouveau" class="sec">🗑 Nouveau jeu</button>
-      <button id="envoyer" class="sec">📟 Envoyer sur la console</button>
-    </div>
-    <div class="actions" style="margin-top:10px">
-      <button id="publierBtn" class="sec">📢 Publier mon jeu</button>
-      <button id="communBtn" class="sec">➕ Ajouter au jeu commun</button>
-    </div>
     <div id="envoi" class="envoi"></div>
     <details id="majDetails" class="hide">
       <summary>🔄 Mettre à jour ma console <span id="majEnLigne" class="ref"></span></summary>
@@ -1351,9 +1353,10 @@ function charger(niv) {
   requestAnimationFrame(() => { apercu.scrollTop = apercu.scrollHeight; apercu.scrollLeft = 0; });   // on voit le bas, la ou on commence
 }
 
-function ajusterConsole() {                             // console (873 px) trop large pour la colonne : on la réduit, l'écran garde ses proportions
+function ajusterConsole() {                             // console (873 px) réduite à 60 % au plus ; les boutons à sa droite s'il reste la place, sinon dessous
   const s = document.querySelector('section.console'), cs = getComputedStyle(s), w = s.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  if (w > 0) document.querySelector('.coque').style.zoom = Math.min(1, w / 873);
+  const col = document.querySelector('.cons-ligne .col').offsetWidth + 16, cote = w - col >= 873 * .4;
+  if (w > 0) document.querySelector('.coque').style.zoom = Math.min(.6, (cote ? w - col : w) / 873);
 }
 addEventListener('resize', ajusterConsole);
 function dessiner() {

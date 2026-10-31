@@ -74,6 +74,7 @@ dialog::backdrop{background:rgba(5,2,15,.7)}
 .anim{max-width:1000px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px}
 .code{white-space:nowrap;font:800 22px/1 ui-monospace,monospace;letter-spacing:2px;color:var(--acc2);text-shadow:0 0 12px rgba(34,211,238,.5)}
 .masque{opacity:.45}
+.nomJeu{width:100%;font-size:20px;font-weight:800;padding:12px 14px;border-color:var(--acc);box-shadow:0 0 14px rgba(167,139,250,.3);margin-bottom:12px}
 .neuf{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--acc2);color:#04212a;font-weight:800;margin-left:6px}
 textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
 textarea:focus{outline:none;border-color:var(--acc)}
@@ -90,8 +91,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .cat code{color:var(--acc);font-weight:700}
 .console{display:flex;flex-direction:column;align-items:center}
 .coque{background:#c9302c;border-radius:28px;padding:22px 28px 18px;box-shadow:0 10px 0 #8d1f1c;max-width:100%}
-canvas{display:block;width:640px;max-width:100%;image-rendering:pixelated;background:#000;border-radius:6px;border:6px solid #222}
-.apercu{width:652px;max-width:100%;max-height:480px;overflow-y:auto;border-radius:6px}
+canvas{display:block;width:320px;max-width:100%;image-rendering:pixelated;background:#000;border-radius:6px;border:6px solid #222}
+.apercu{width:332px;max-width:100%;max-height:360px;overflow-y:auto;border-radius:6px}
 .aide{color:var(--mute);font-size:13px;margin:10px 0}
 .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .pseudo{background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:inherit;width:160px}
@@ -157,6 +158,12 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
   <section><h2><b>04</b>— Joueurs actifs</h2><div id="actifs" class="liste"></div></section>
   <section><h2><b>05</b>— Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
   <section><h2><b>06</b>— Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu : chacun y ajoute un niveau signé de son pseudo.</p><div id="commun" class="liste"></div></section>
+  <section class="c-idees">
+    <h2><b>07</b>— Idées des joueurs</h2>
+    <p class="aide" style="margin-top:0">Ce que vous voulez dans le jeu et que la console ne sait pas encore faire. Les plus demandées arriveront dans les prochaines mises à jour !</p>
+    <div class="icRow" style="margin-bottom:10px"><input id="ideeIn" class="pseudo" maxlength="60" placeholder="Mon idée : ex. des ennemis qui volent"><button id="ideeBtn" class="sec">💡 Proposer</button></div>
+    <div id="idees" class="liste"></div>
+  </section>
 </main>
 
 <!-- ===== ESPACE ANIMATEUR ===== -->
@@ -190,6 +197,8 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 <main id="atelier" class="hide">
   <!-- ===== DEMANDE ===== -->
   <section>
+    <label class="champ" style="margin-top:0"><span style="font-weight:700">🎮 Nom de mon jeu</span>
+      <input id="titreIn" class="pseudo nomJeu" maxlength="30" placeholder="Ex : La tour de Zorro"></label>
     <h2 id="titreDemande"><b>01</b>— Je décris mon jeu</h2>
 
     <div id="guide">
@@ -213,6 +222,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
       <div class="cat">
         <div>hauteur (court / haut)</div><div>difficulté</div>
         <div>gravité (lune / lourd)</div><div>vitesse (lent / vite)</div>
+        <div>double saut</div>
       </div>
     </div>
 
@@ -239,7 +249,6 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
       <button id="envoyer" class="sec">📟 Envoyer sur la console</button>
     </div>
     <div class="actions" style="margin-top:10px">
-      <input id="titreIn" class="pseudo" maxlength="30" placeholder="Nom de mon jeu">
       <button id="publierBtn" class="sec">📢 Publier mon jeu</button>
       <button id="communBtn" class="sec">➕ Ajouter au jeu commun</button>
     </div>
@@ -299,7 +308,7 @@ mGuide.onclick = () => setMode('guide'); mLibre.onclick = () => setMode('libre')
 // ---------- "IA" simulée : texte -> paramètres ----------
 // ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
 const DEFAUT = { theme:'foret', hero:'cube', hauteur:30, difficulte:2, gravite:1, vitesse:1,
-                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3 };
+                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3, doubleSaut:false };
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 function comprendre(texte, base) {
@@ -317,6 +326,8 @@ function comprendre(texte, base) {
     if (non(`(${BRIQ[k]})`)) { if (p.briques[k]) vu.push('sans ' + k); p.briques[k] = false; }
     else if (a(new RegExp(BRIQ[k]))) { p.briques[k] = true; vu.push(k); }
   }
+  if (non('(double[ -]?saut)')) { if (p.doubleSaut) vu.push('sans double saut'); p.doubleSaut = false; }
+  else if (a(/double[ -]?saut|sauter deux fois|saut en l'air/)) { p.doubleSaut = true; vu.push('double saut'); }
   if (a(/tres (haut|grand|long)|immense|gigantesque|enorme/)) { p.hauteur = 60; vu.push('très haut'); }
   else if (a(/haut|grand|long/)) { p.hauteur = Math.min(60, p.hauteur + 12); vu.push('plus haut'); }
   if (a(/court|petit|mini/)) { p.hauteur = Math.max(15, p.hauteur - 12); vu.push('plus court'); }
@@ -342,7 +353,9 @@ function generer(p) {
   let y = H - 2, cx = 3, plats = [], prevRessort = false;
   while (true) {
     // saut mesuré ~4,7 cases, ressort ~6,5 (à gravité 1) : l'écart reste sous ce plafond quelle que soit la gravité
-    const ecart = Math.min((prevRessort ? 6 : 3) + (p.difficulte === 3 ? 1 : 0), Math.floor((prevRessort ? 6.2 : 4.2) / p.gravite));
+    // double saut : ~1,8 fois plus haut -> plateformes plus espacées
+    const ecart = Math.min((prevRessort ? 6 : 3) + (p.difficulte === 3 ? 1 : 0) + (p.doubleSaut ? 3 : 0),
+                           Math.floor((prevRessort ? 6.2 : 4.2) * (p.doubleSaut ? 1.8 : 1) / p.gravite));
     if (y - ecart < 4) break;
     y -= ecart;
     cx = Math.max(1, Math.min(COLS - larg - 1, cx + (R() < .5 ? -1 : 1) * ri(3, 7)));
@@ -458,7 +471,7 @@ go.onclick = async () => {
   const t0 = performance.now();
   // vraie IA (Mistral, via server.js) si le serveur la propose ; sinon les mots-clés locaux
   let ia = null;
-  if (texte && EN_LIGNE) try { ia = await api('api/ia', { texte, base }); } catch {}
+  if (texte && EN_LIGNE) try { ia = await api('api/ia', { texte, base, ...ident() }); } catch {}
   if (!ia) await new Promise(r => setTimeout(r, 600 + Math.random() * 900));   // latence simulée (mots-clés)
   const { p, vu } = ia ?? comprendre(texte, base);
   p.seed = (Math.random() * 1e9) | 0; params = p;
@@ -466,7 +479,7 @@ go.onclick = async () => {
   const duree = (performance.now() - t0) / 1000;
   charger(niv);
   compris.innerHTML = !texte ? 'Jeu créé avec tes choix. Ajoute une phrase pour aller plus loin.'
-    : ia ? `🤖 L'IA a compris : <b>${vu.map(esc).join(', ') || 'rien à changer'}</b>${ia.remarque ? '<br>' + esc(ia.remarque) : ''}`
+    : ia ? `🤖 L'IA a compris : <b>${vu.map(esc).join(', ') || 'rien à changer'}</b>${ia.remarque ? '<br>' + esc(ia.remarque) : ''}${ia.souhaits?.length ? `<br>💡 Noté dans les <a href="#" onclick="afficher('commu');document.querySelector('.c-idees').scrollIntoView();return false" style="color:var(--acc)">idées des joueurs</a> : ${ia.souhaits.map(esc).join(', ')}` : ''}`
     : vu.length ? `J'ai compris : <b>${vu.map(esc).join(', ')}</b>` : `Je n'ai reconnu aucun mot-clé, j'ai gardé les réglages d'avant. Essaie d'être plus précis !`;
   historique.push({ demande: [...avant, texte].filter(Boolean).join(' · ') || '(sans phrase)', vu, niv, duree, corr: '' });
   rendreHist(); capot.textContent = JSON.stringify(niv, null, 1).replace(/\n\s+"(\.|#|S|G)/g, '\n  "$1');
@@ -728,7 +741,31 @@ async function rafraichir() {
   const niv = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree);
   commun.innerHTML = niv.map((n, i) => ligneRang(n, i + 1, n.stats.parties ? `record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'jamais fini')).join('')
     || vide('Le jeu commun est vide : ajoute le premier niveau !');
+  rendreIdees(c.idees);
 }
+// ---------- Idées des joueurs (ce que le firmware ne sait pas encore faire) ----------
+const STATUT = { idee: '💡 idée', prevu: '🛠 prévue', fait: '✅ faite' };
+function rendreIdees(liste) {
+  const max = Math.max(1, ...liste.map(s => s.votes));
+  idees.innerHTML = liste.map(s => `<div class="rang ${s.statut === 'fait' ? 'masque' : ''}"><span class="pos">${s.votes}</span>
+    <div class="qui"><div><b>${esc(s.texte)}</b> <small>${STATUT[s.statut]}</small></div><div class="barre"><i style="width:${Math.round(100 * s.votes / max)}%"></i></div></div>
+    ${s.statut === 'fait' ? '' : `<button class="jouer" data-voter="${s.id}">👍 Moi aussi</button>`}
+    ${session ? `<select data-statut="${s.id}" class="jouer">${Object.entries(STATUT).map(([k, v]) => `<option value="${k}" ${k === s.statut ? 'selected' : ''}>${v}</option>`).join('')}<option value="x">🗑 supprimer</option></select>` : ''}</div>`).join('')
+    || vide('Aucune idée pour l\'instant : propose la première !');
+}
+async function idee(corps) {
+  if (!moi) { dlgRejoindre.showModal(); return; }
+  try { rendreIdees((await api('api/idee', { ...ident(), ...corps })).idees); ideeIn.value = ''; } catch (e) { alert(e.message); }
+}
+ideeBtn.onclick = () => idee({ texte: ideeIn.value });
+ideeIn.onkeydown = e => { if (e.key === 'Enter') ideeBtn.click(); };
+idees.onclick = e => { if (e.target.dataset.voter) idee({ id: e.target.dataset.voter }); };
+idees.onchange = async e => {                            // animateur connecté : statut de l'idée
+  const id = e.target.dataset.statut; if (!id) return;
+  const v = e.target.value;
+  if (v === 'x' && !confirm('Supprimer cette idée ?')) return rafraichir();
+  try { rendreIdees((await api('api/animateur/idee', v === 'x' ? { id, supprimer: true } : { id, statut: v }, session)).idees); } catch (err) { alert(err.message); }
+};
 function jouerNiveau(n) {
   charger({ ...n.niv, id: n.id, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params);
   historique.push({ demande: `Jouer « ${n.titre} » de ${n.pseudo}`, vu: [], niv: jeu.niv, duree: 0, corr: '' }); rendreHist();

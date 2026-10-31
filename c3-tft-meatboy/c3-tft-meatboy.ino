@@ -778,19 +778,26 @@ struct BqHero { const char* nom; uint16_t col; };
 const BqHero BQ_HEROS[] = { { "cube", RGB565(232, 50, 43) }, { "ninja", RGB565(34, 34, 51) }, { "robot", RGB565(154, 164, 176) }, { "chat", RGB565(255, 153, 51) } };
 int bqTheme = -1, bqHero = -1;        // -1 = pas choisi : dessin habituel de la console
 float bqGrav = 1, bqVit = 1;
+long bqCiel = -1, bqSol = -1;          // couleurs choisies sur la page (0xRRGGBB), -1 = celles du theme
 #define bqOn() (curLevel == CUSTOM_IDX && customH)   // macro : curLevel est declare plus bas
 int bqFind(const char* p, const char* cle, const char* const* noms, int n, int pas) {   // "cle":"nom" -> indice dans la table, -1 sinon
   const char* q = strstr(p, cle); if (!q) return -1; q = strchr(q + strlen(cle), '"'); if (!q) return -1; q++;
   for (int i = 0; i < n; i++) { const char* nm = *(const char* const*)((const char*)noms + i * pas); size_t l = strlen(nm); if (!strncmp(q, nm, l) && q[l] == '"') return i; }
   return -1;
 }
+long bqHex(const char* p, const char* cle) {   // "cle":"#rrggbb" -> 0xRRGGBB, -1 sinon
+  const char* q = strstr(p, cle); if (!q) return -1; q = strchr(q + strlen(cle), '"'); if (!q || q[1] != '#') return -1;
+  char h[7]; memcpy(h, q + 2, 6); h[6] = 0; for (int i = 0; i < 6; i++) if (!isxdigit((unsigned char)h[i])) return -1;
+  return strtol(h, nullptr, 16);
+}
 float bqNum(const char* p, const char* cle, float lo, float hi) {
   const char* q = strstr(p, cle); if (!q) return 1; float v = atof(q + strlen(cle)); return v < lo ? lo : v > hi ? hi : v;
 }
 void bqParams(const char* s) {
   const char* p = strstr(s, "\"params\"");
-  bqTheme = bqHero = -1; bqGrav = bqVit = 1;
+  bqTheme = bqHero = -1; bqGrav = bqVit = 1; bqCiel = bqSol = -1;
   if (!p) return;
+  bqCiel = bqHex(p, "\"ciel\":"); bqSol = bqHex(p, "\"sol\":");
   bqTheme = bqFind(p, "\"theme\":", &BQ_THEMES[0].nom, 5, sizeof(BqTheme));
   bqHero  = bqFind(p, "\"hero\":",  &BQ_HEROS[0].nom, 4, sizeof(BqHero));
   bqGrav = bqNum(p, "\"gravite\":", 0.3f, 2.0f);
@@ -2606,7 +2613,22 @@ void die() {
 // sures : >= 4 tuiles de sol continu, 2 tuiles de vide au-dessus, loin du depart/drapeau.
 void spawnEnemies(int n) {
   nEnemies = 0; popT = 0;
-  if (n < 2 || (n == CUSTOM_IDX && customH)) return;   // les 2 premiers niveaux restent calmes ; niveau perso : seulement ce que l'enfant a mis
+  if (n == CUSTOM_IDX && customH) {                    // niveau perso : un ennemi par 'E', qui patrouille sur la plateforme du dessous
+    auto dur = [](char b) { return b == '#' || b == 'I' || b == 'C'; };
+    for (int r = 0; r + 1 < levH && nEnemies < ME; r++) for (int c = 0; c < COLS && nEnemies < ME; c++) {
+      if (grid[r][c] != 'E') continue;
+      grid[r][c] = '.';
+      if (!dur(grid[r + 1][c])) continue;                // pose en l'air : ignore
+      int c0 = c, c1 = c;
+      while (c0 > 0 && dur(grid[r + 1][c0 - 1]) && grid[r][c0 - 1] != '#') c0--;
+      while (c1 < COLS - 1 && dur(grid[r + 1][c1 + 1]) && grid[r][c1 + 1] != '#') c1++;
+      Enemy &e = enemies[nEnemies++];
+      e.active = true; e.lo = c0 * TILE + EW / 2 + 1; e.hi = max(e.lo, (float)((c1 + 1) * TILE - EW / 2 - 1));
+      e.x = c * TILE + TILE / 2; e.y = (r + 1) * TILE; e.dir = (c & 1) ? 1 : -1; e.spd = 30;
+    }
+    return;
+  }
+  if (n < 2) return;   // les 2 premiers niveaux restent calmes
   randomSeed((uint32_t)n * 40503u + 77u);
   for (int pass = 0; pass < 2 && (pass == 0 || nEnemies < 3); pass++)   // 2e passe : garantit au moins 3 ennemis par niveau
   for (int r = 2; r < levH && nEnemies < ME; r++) {
@@ -5671,7 +5693,7 @@ const char* briqueParse(const char* s) {
     int c = 0;
     for (; *p && *p != '"'; p++, c++) {
       if (c >= COLS) return "ligne trop longue";
-      if (!strchr(".#SG*R^WCI", *p)) return "brique inconnue";
+      if (!strchr(".#SG*R^WCIE", *p)) return "brique inconnue";
       nS += *p == 'S'; nG += *p == 'G';
       tmp[h][c] = *p;
     }
@@ -5727,8 +5749,8 @@ void jsonStr(const char* s, const char* cle, char* out, int n) {
 // ---- BRIQUE : icones choisies sur la page (0 heros, 1 etoile, 2 arrivee) ----
 // 16x16, chaque pixel = 3 chiffres hexa "rgb" (4 bits), "---" = transparent. Une ligne {"icone":"h","px":"..."} par icone, avant le niveau.
 #define IC_TR 0x0020                      // cle de transparence : jamais produite par la conversion 444 -> 565 (vert 6 bits = g*4 + g/4)
-static const char* IC_K = "heg";
-uint16_t icPx[3][256]; bool icUse[3];
+static const char* IC_K = "hegnd";        // heros, etoile, arrivee (goal), ennemi, decor
+uint16_t icPx[5][256]; bool icUse[5];
 String icWait;                            // lignes "icone" recues, gardees en flash avec le niveau qui suit
 bool icOn(int k) { return curLevel == CUSTOM_IDX && icUse[k]; }
 const char* icParse(const char* s) {      // toutes les icones contenues dans s (une ligne recue, ou un fichier de Mes niveaux)
@@ -5746,6 +5768,9 @@ const char* icParse(const char* s) {      // toutes les icones contenues dans s 
     memcpy(icPx[w - IC_K], tmp, sizeof tmp); icUse[w - IC_K] = true;
   }
   return nullptr;
+}
+void drawIcon2(int k, int x, int y) {      // en double (32x32) : le decor dans le ciel
+  for (int j = 0; j < 16; j++) for (int i = 0; i < 16; i++) { uint16_t c = icPx[k][j * 16 + i]; if (c != IC_TR) fb.fillRect(x + i * 2, y + j * 2, 2, 2, c); }
 }
 void drawIcon(int k, int x, int y, bool flip) {   // dans la bande fb (coordonnees deja decalees de la camera)
   for (int j = 0; j < 16; j++) for (int i = 0; i < 16; i++) {
@@ -7021,9 +7046,14 @@ void drawGame() {
   gq = micros();
 #endif
   int cy = (int)camY + sTop;
-  if (bqOn() && bqTheme >= 0) {                                          // niveau perso : ciel du theme choisi, en degrade sur tout le niveau
-    const BqTheme &t = BQ_THEMES[bqTheme]; const int H = levH * TILE;
-    for (int y = 0; y < STRIP_H; y++) fb.drawFastHLine(0, y, SCREEN_W, bqMix(t.c0, t.c1, constrain(cy + y, 0, H), H));
+  if (bqOn() && (bqTheme >= 0 || bqCiel >= 0)) {                        // niveau perso : ciel du theme (ou de la couleur choisie), en degrade sur tout le niveau
+    uint8_t c0[3], c1[3]; const int H = levH * TILE;
+    if (bqCiel >= 0) { c0[0] = bqCiel >> 16; c0[1] = bqCiel >> 8; c0[2] = bqCiel; for (int k = 0; k < 3; k++) c1[k] = c0[k] + (255 - c0[k]) * 11 / 20; }   // vers le blanc en bas
+    else { memcpy(c0, BQ_THEMES[bqTheme].c0, 3); memcpy(c1, BQ_THEMES[bqTheme].c1, 3); }
+    for (int y = 0; y < STRIP_H; y++) fb.drawFastHLine(0, y, SCREEN_W, bqMix(c0, c1, constrain(cy + y, 0, H), H));
+    if (icOn(4)) for (int wy = 48; wy < H; wy += 112) {                 // BRIQUE : decor choisi sur la page, en grand dans le ciel
+      const int sy = wy - cy; if (sy > -32 && sy < STRIP_H) drawIcon2(4, ((wy / 112) & 1) ? 214 : 74, sy);
+    }
   } else {
   fb.fillRect(0, 0, SCREEN_W, STRIP_H, COL_LVLBG);
   if (curLevel < 10 || (curLevel / 10) % 2 == 0) drawMountainDecor();   // dizaines paires : montagnes
@@ -7046,10 +7076,11 @@ void drawGame() {
           fb.fillTriangle(x, y + TILE, x + TILE / 2, y, x + TILE, y + TILE, COL_SPK);
           fb.drawTriangle(x, y + TILE, x + TILE / 2, y, x + TILE, y + TILE, COL_MEATD);
         }
-      } else if (c == '#' && bqOn() && bqTheme >= 0) {   // niveau perso : sol du theme (comme l'apercu web)
-        const BqTheme &t = BQ_THEMES[bqTheme];
-        fb.fillRect(x, y, TILE, TILE, RGB565(t.sol[0], t.sol[1], t.sol[2]));
-        fb.fillRect(x, y, TILE, 3, RGB565(t.bord[0], t.bord[1], t.bord[2]));
+      } else if (c == '#' && bqOn() && (bqTheme >= 0 || bqSol >= 0)) {   // niveau perso : sol du theme ou de la couleur choisie (comme l'apercu web)
+        if (bqSol >= 0) { const int r = bqSol >> 16 & 255, g = bqSol >> 8 & 255, b = bqSol & 255;
+          fb.fillRect(x, y, TILE, TILE, RGB565(r, g, b)); fb.fillRect(x, y, TILE, 3, RGB565(r * 3 / 5, g * 3 / 5, b * 3 / 5)); }
+        else { const BqTheme &t = BQ_THEMES[bqTheme];
+          fb.fillRect(x, y, TILE, TILE, RGB565(t.sol[0], t.sol[1], t.sol[2])); fb.fillRect(x, y, TILE, 3, RGB565(t.bord[0], t.bord[1], t.bord[2])); }
       } else if (c == '#' || c == 'H') {   // H de loin : rendu identique a '#'
         int pi = platIdx[ty][tx]; if (pi > 7) pi = 0;     // cube du ton de sa plateforme
         fb.fillRect(x, y, TILE, TILE, toneF[pi]);
@@ -7134,6 +7165,7 @@ void drawGame() {
     Enemy &e = enemies[i]; if (!e.active) continue;
     int ex = (int)e.x, ey = (int)e.y - cy;
     if (ey < -14 || ey > SCREEN_H + 14) continue;
+    if (icOn(3)) { drawIcon(3, ex - 8, ey - 16, e.dir < 0); continue; }   // BRIQUE : ennemi choisi sur la page
     int fo = ((int)(sawPhase * 0.6 + i) & 1) ? 1 : 0;           // pas alternes
     fb.fillRect(ex - 5 + fo, ey - 2, 3, 2, COL_ENMD);
     fb.fillRect(ex + 2 - fo, ey - 2, 3, 2, COL_ENMD);

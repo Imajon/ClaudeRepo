@@ -76,6 +76,11 @@ dialog::backdrop{background:rgba(5,2,15,.7)}
 .masque{opacity:.45}
 .partage{margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(34,211,238,.08);box-shadow:var(--glow);text-align:left}
 .cta{max-width:520px}
+.palette{display:flex;align-items:center;gap:8px;margin:6px 0}
+.palette>span{width:86px;font-size:13px;color:var(--mute)}
+.pastille{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
+.pastille.on{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.6)}
+.pastille.auto{background:conic-gradient(#e8322b,#ffd400,#3f8f3a,#2f6fe0,#8b5cf6,#e8322b)}
 .nomJeu{width:100%;font-size:20px;font-weight:800;padding:12px 14px;border-color:var(--acc);box-shadow:0 0 14px rgba(167,139,250,.3);margin-bottom:12px}
 .neuf{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--acc2);color:#04212a;font-weight:800;margin-left:6px}
 textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
@@ -321,6 +326,10 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <div id="icRes" class="icRes"></div>
     <div id="icDrop" class="icDrop">…ou trouve une image sur le web : clic droit → « Copier l'image », puis <b>Ctrl+V</b> ici.<br>
       Tu peux aussi la glisser ici ou <label>choisir un fichier<input id="icFile" type="file" accept="image/*" hidden></label>.</div>
+
+    <h3>🌈 Mes couleurs (pas obligé)</h3>
+    <div class="palette"><span>Ciel</span><div id="palCiel" class="chips"></div></div>
+    <div class="palette"><span>Plateformes</span><div id="palSol" class="chips"></div></div>
   </section>
 
   <!-- ===== CONSOLE / APERÇU ===== -->
@@ -394,7 +403,11 @@ mGuide.onclick = () => setMode('guide'); mLibre.onclick = () => setMode('libre')
 // ---------- "IA" simulée : texte -> paramètres ----------
 // ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
 const DEFAUT = { theme:'foret', hero:'cube', hauteur:30, difficulte:2, gravite:1, vitesse:1,
-                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3, doubleSaut:false };
+                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3, doubleSaut:false, ennemis:0, couleurs:{} };
+// palette (même liste que server.js ; le firmware lit le code hexa)
+const PALETTE = { rouge:'#e8322b', orange:'#ff8a1f', jaune:'#ffd400', vert:'#3f8f3a', 'vert clair':'#7ee06a', turquoise:'#22d3ee',
+  'bleu ciel':'#9be7ff', bleu:'#2f6fe0', violet:'#8b5cf6', rose:'#ff7ab8', marron:'#8a5a2b', bordeaux:'#7a1020',
+  gris:'#8a8a9a', blanc:'#f4f4f8', noir:'#1a1a22', nuit:'#0b0a2a' };
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 function comprendre(texte, base) {
@@ -414,6 +427,14 @@ function comprendre(texte, base) {
   }
   if (non('(double[ -]?saut)')) { if (p.doubleSaut) vu.push('sans double saut'); p.doubleSaut = false; }
   else if (a(/double[ -]?saut|sauter deux fois|saut en l'air/)) { p.doubleSaut = true; vu.push('double saut'); }
+  if (non('(ennemis?|monstres?)')) { if (p.ennemis) vu.push('sans ennemis'); p.ennemis = 0; }
+  else if (a(/ennemi|monstre|mechant/)) { p.ennemis = Math.min(6, (p.ennemis || 0) + 3); vu.push(p.ennemis + ' ennemis'); }
+  p.couleurs = { ...(p.couleurs || {}) };                // "plateformes rouges", "ciel violet"…
+  for (const nom of Object.keys(PALETTE).sort((x, y) => y.length - x.length)) {
+    const n = norm(nom);
+    if (a(new RegExp(`(plateforme|sol|bloc)s?[^.,]{0,20}\\b${n}`)) && !p.couleurs.sol) { p.couleurs.sol = PALETTE[nom]; vu.push('plateformes ' + nom); }
+    if (a(new RegExp(`ciel[^.,]{0,20}\\b${n}`)) && !p.couleurs.ciel) { p.couleurs.ciel = PALETTE[nom]; vu.push('ciel ' + nom); }
+  }
   if (a(/tres (haut|grand|long)|immense|gigantesque|enorme/)) { p.hauteur = 60; vu.push('très haut'); }
   else if (a(/haut|grand|long/)) { p.hauteur = Math.min(60, p.hauteur + 12); vu.push('plus haut'); }
   if (a(/court|petit|mini/)) { p.hauteur = Math.max(15, p.hauteur - 12); vu.push('plus court'); }
@@ -460,6 +481,12 @@ function generer(p) {
       if (g[pl.y - 1][sx] === '.') g[pl.y - 1][sx] = 'W';
     }
   });
+  // ennemis : un 'E' au-dessus d'une plateforme assez large (la console le fait patrouiller), jamais sur celle de l'arrivée
+  const larges = plats.slice(0, -1).filter(pl => pl.x1 - pl.x0 >= 2);
+  for (let i = 0; i < (p.ennemis || 0) && larges.length; i++) {
+    const pl = larges.splice(ri(0, larges.length - 1), 1)[0], x = (pl.x0 + pl.x1) >> 1;
+    if (g[pl.y - 1][x] === '.') g[pl.y - 1][x] = 'E';
+  }
   // étoiles au-dessus de plateformes au hasard
   for (let i = 0, essais = 0; i < p.etoiles && essais < 50; essais++) {
     const pl = plats[ri(0, Math.max(0, plats.length - 2))]; if (!pl) break;
@@ -474,12 +501,13 @@ let jeu = null;
 
 function charger(niv) {
   const rows = niv.rows.map(r => r.split(''));
-  const j = { niv, rows, saws:[], stars:[] };
+  const j = { niv, rows, saws:[], stars:[], ennemis:[] };
   rows.forEach((r, y) => r.forEach((c, x) => {
     if (c === 'S') { j.sx = x * TILE + 2; j.sy = y * TILE + TILE - PH; r[x] = '.'; }
     if (c === 'G') { j.gx = x; j.gy = y; r[x] = '.'; }
     if (c === '*') { j.stars.push({ x, y }); r[x] = '.'; }
     if (c === 'W') { j.saws.push({ x: x * TILE + 8, y: y * TILE }); r[x] = '.'; }
+    if (c === 'E') { j.ennemis.push({ x, y }); r[x] = '.'; }
   }));
   jeu = j;
   cv.height = rows.length * TILE; dessiner();
@@ -494,9 +522,14 @@ function dessiner() {
     ctx.fillText('Décris ton jeu', SW / 2, SH / 2 - 8); ctx.fillStyle = '#888'; ctx.font = '13px system-ui';
     ctx.fillText('puis appuie sur « Créer »', SW / 2, SH / 2 + 14); return;
   }
-  const th = THEMES[j.niv.params.theme], cam = 0, H = cv.height;
+  const coul = j.niv.params.couleurs || {}, base = THEMES[j.niv.params.theme] || THEMES.foret, cam = 0, H = cv.height;
+  // couleurs choisies : comme la console (ciel -> vers le blanc en bas, bord du sol = sol assombri)
+  const melange = (h, k) => '#' + [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)).map(v => Math.round(k > 0 ? v + (255 - v) * k : v * -k).toString(16).padStart(2, '0')).join('');
+  const th = { ...base, ...(coul.ciel ? { ciel: [coul.ciel, melange(coul.ciel, .55)] } : {}), ...(coul.sol ? { sol: coul.sol, bord: melange(coul.sol, -.6) } : {}) };
   const grd = ctx.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, th.ciel[0]); grd.addColorStop(1, th.ciel[1]);
   ctx.fillStyle = grd; ctx.fillRect(0, 0, SW, H);
+  const ic = j.niv.icones || {};
+  if (ic.d) { ctx.imageSmoothingEnabled = false; for (let wy = 48; wy < H; wy += 112) ctx.drawImage(icImg(ic.d), ((wy / 112) & 1) ? 214 : 74, wy, 32, 32); }   // décor dans le ciel (comme la console)
   const y0 = 0, y1 = j.rows.length - 1;
   for (let y = y0; y <= y1; y++) for (let x = 0; x < COLS; x++) {
     const c = j.rows[y][x], X = x * TILE, Y = y * TILE - cam;
@@ -509,7 +542,11 @@ function dessiner() {
     }
     else if (c === '^') { ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.moveTo(X, Y + 16); ctx.lineTo(X + 4, Y + 6); ctx.lineTo(X + 8, Y + 16); ctx.lineTo(X + 12, Y + 6); ctx.lineTo(X + 16, Y + 16); ctx.fill(); }
   }
-  const ic = j.niv.icones || {};
+  for (const e of j.ennemis) {                          // ennemi : icône choisie, ou le petit monstre rouge de la console
+    const X = e.x * TILE, Y = e.y * TILE - cam;
+    if (ic.n) ctx.drawImage(icImg(ic.n), X, Y);
+    else { ctx.fillStyle = '#d23c3c'; ctx.beginPath(); ctx.roundRect(X + 2, Y + 6, 12, 9, 4); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(X + 4, Y + 8, 3, 3); ctx.fillRect(X + 9, Y + 8, 3, 3); }
+  }
   for (const s of j.stars) ic.e ? ctx.drawImage(icImg(ic.e), s.x * TILE, s.y * TILE - cam) : etoile(s.x * TILE + 8, s.y * TILE + 8 - cam);
   // arrivée
   const gx = j.gx * TILE, gy = j.gy * TILE - cam;
@@ -553,6 +590,7 @@ go.onclick = async () => {
     for (const k of ['pic', 'scie', 'fragile']) base.briques[k] = choix.danger === k;
     avant = [CHOIX.theme.find(c => c[0] === choix.theme)[1], CHOIX.hero.find(c => c[0] === choix.hero)[1], CHOIX.danger.find(c => c[0] === choix.danger)[1]];
   }
+  base.couleurs = { ...couleurs };                       // couleurs choisies à la main (l'IA peut les changer si l'enfant en parle)
   go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
   const t0 = performance.now();
   // vraie IA (Mistral, via server.js) si le serveur la propose ; sinon les mots-clés locaux
@@ -560,7 +598,8 @@ go.onclick = async () => {
   if (texte && EN_LIGNE) try { ia = await api('api/ia', { texte, base, ...ident() }); } catch {}
   if (!ia) await new Promise(r => setTimeout(r, 600 + Math.random() * 900));   // latence simulée (mots-clés)
   const { p, vu } = ia ?? comprendre(texte, base);
-  p.seed = (Math.random() * 1e9) | 0; params = p;
+  p.seed = (Math.random() * 1e9) | 0; params = p; couleurs = { ...(p.couleurs || {}) }; majPalette();
+  if (ia?.icones) { await Promise.all(Object.entries(ia.icones).map(([k, mot]) => iconeAuto(k, mot))); majIcones(); }   // « un dragon en fond » -> icône décor trouvée sur Iconify
   const niv = { format: 'brique-v1', params: p, rows: generer(p), icones: { ...icones } };
   const duree = (performance.now() - t0) / 1000;
   charger(niv);
@@ -598,7 +637,7 @@ nouveau.onclick = () => {
 };
 // ---------- Icônes perso (héros, étoile, arrivée), trouvées sur le web ----------
 // 16x16 ; chaque pixel = 3 chiffres hexa "rgb" (4 bits), "---" = transparent. Même rendu ici et sur la console.
-const IC = [['h', '🦸 Héros'], ['e', '⭐ Étoile'], ['g', '🏁 Arrivée']];
+const IC = [['h', '🦸 Héros'], ['e', '⭐ Objets'], ['g', '🏁 Arrivée'], ['n', '👾 Ennemi'], ['d', '🖼 Décor']];
 let icones = {}, icSlot = 'h';
 const icCache = new Map();
 function icImg(s) {                                     // chaîne -> petit canvas 16x16 (mis en cache)
@@ -683,6 +722,33 @@ icDrop.ondrop = e => {
 };
 icFile.onchange = () => icFile.files[0] && depuisUrl(URL.createObjectURL(icFile.files[0]));
 majIcones();
+// icône demandée à l'IA (mot anglais) : première image en couleur trouvée sur Iconify, posée dans sa case
+async function iconeAuto(slot, mot) {
+  try {
+    const r = await (await fetch('https://api.iconify.design/search?limit=4&prefixes=noto,twemoji,fluent-emoji-flat,openmoji&query=' + encodeURIComponent(mot))).json();
+    if (!r.icons?.length) return;
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.src = `https://api.iconify.design/${r.icons[0].replace(':', '/')}.svg?width=64&height=64`; await img.decode();
+    icones[slot] = versIcone(img);
+  } catch {}
+}
+
+// ---------- Couleurs : palette ciel / plateformes ----------
+let couleurs = {};
+function majPalette() {
+  for (const [k, boite] of [['ciel', palCiel], ['sol', palSol]]) {
+    boite.innerHTML = `<button class="pastille auto ${couleurs[k] ? '' : 'on'}" data-k="${k}" data-c="" title="Couleur du monde"></button>`
+      + Object.entries(PALETTE).map(([nom, h]) => `<button class="pastille ${couleurs[k] === h ? 'on' : ''}" style="background:${h}" data-k="${k}" data-c="${h}" title="${nom}"></button>`).join('');
+  }
+}
+palCiel.onclick = palSol.onclick = e => {
+  const b = e.target.closest('.pastille'); if (!b) return;
+  if (b.dataset.c) couleurs[b.dataset.k] = b.dataset.c; else delete couleurs[b.dataset.k];
+  if (params) params.couleurs = { ...couleurs };
+  if (jeu && !jeu.niv.pseudo) { jeu.niv.params = { ...jeu.niv.params, couleurs: { ...couleurs } }; dessiner(); }   // ton jeu change tout de suite
+  majPalette();
+};
+majPalette();
 
 // ---------- Console par Web Serial (Chrome / Edge) ----------
 // Envoi : une ligne JSON. La console répond "BRIQUE OK <lignes>" / "BRIQUE ERR <raison>",

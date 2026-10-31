@@ -74,6 +74,8 @@ dialog::backdrop{background:rgba(5,2,15,.7)}
 .anim{max-width:1000px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px}
 .code{white-space:nowrap;font:800 22px/1 ui-monospace,monospace;letter-spacing:2px;color:var(--acc2);text-shadow:0 0 12px rgba(34,211,238,.5)}
 .masque{opacity:.45}
+.partage{margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(34,211,238,.08);box-shadow:var(--glow);text-align:left}
+.cta{max-width:520px}
 .nomJeu{width:100%;font-size:20px;font-weight:800;padding:12px 14px;border-color:var(--acc);box-shadow:0 0 14px rgba(167,139,250,.3);margin-bottom:12px}
 .neuf{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--acc2);color:#04212a;font-weight:800;margin-left:6px}
 textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
@@ -119,6 +121,39 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .icRes img:hover{outline:2px solid var(--acc)}
 .icDrop{margin-top:8px;padding:10px;border:2px dashed var(--line);border-radius:12px;font-size:13px;color:var(--mute);text-align:center}
 .icDrop.sur{border-color:var(--acc);color:var(--txt)}
+/* ----- boutique : présentation épurée ----- */
+.shop{max-width:860px;margin:0 auto;padding:40px 16px 80px;text-align:center}
+.sh-hero{padding:60px 0 40px}
+.sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}
+.sh-titre{margin:8px 0 16px;font-size:clamp(36px,7vw,64px);line-height:1.05;letter-spacing:-.02em;text-transform:none;font-weight:700}
+.sh-sous{margin:0 auto;max-width:560px;color:var(--mute);font-size:clamp(17px,2.4vw,21px)}
+.sh-prix{margin:20px 0 0;font-size:17px}
+.sh-bloc{padding:56px 0;border-top:1px solid rgba(255,255,255,.08)}
+.sh-h{margin:0 0 28px;font-size:clamp(26px,4.5vw,40px);color:var(--txt);font-weight:700;letter-spacing:-.01em}
+.sh-paliers{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.sh-paliers div{padding:22px 10px;border-radius:18px;background:rgba(255,255,255,.04);transition:.2s}
+.sh-paliers div.on{background:rgba(255,255,255,.1);outline:1px solid var(--acc)}
+.sh-paliers b{display:block;font-size:30px;font-weight:700}
+.sh-paliers span{display:block;color:var(--mute);font-size:14px;margin-top:4px}
+.sh-paliers i{display:block;font-style:normal;color:var(--ok);font-size:13px;margin-top:6px;min-height:1em}
+.sh-qte{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:rgba(255,255,255,.06)}
+.sh-qte input{width:80px;text-align:center;background:none;border:0;color:var(--txt);font:600 24px system-ui;-moz-appearance:textfield}
+.sh-qte input::-webkit-inner-spin-button{-webkit-appearance:none}
+.sh-pm{width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:var(--txt);font-size:22px;cursor:pointer}
+.sh-total{margin:24px 0 4px;font-size:clamp(44px,8vw,64px);font-weight:700;letter-spacing:-.02em}
+.sh-detail{margin:0;color:var(--mute);min-height:1.4em}
+.sh-btn{margin-top:28px;border:0;border-radius:999px;padding:14px 36px;font:600 17px system-ui;background:#0071e3;color:#fff;cursor:pointer}
+.sh-btn:hover{background:#0077ed}
+.sh-liens{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:32px 0 24px;text-align:left}
+.sh-liens a{display:block;padding:20px;border-radius:18px;background:rgba(255,255,255,.04);color:var(--txt);text-decoration:none}
+.sh-liens a:hover{background:rgba(255,255,255,.08)}
+.sh-liens b{display:block;font-size:19px}
+.sh-liens span{color:var(--mute);font-size:14px}
+.sh-dons{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:28px}
+.sh-don{border:0;border-radius:999px;padding:12px 22px;font:600 17px system-ui;background:rgba(255,255,255,.06);color:var(--txt);cursor:pointer}
+.sh-don.on{background:var(--txt);color:var(--bg)}
+.sh-lien{color:#2997ff;text-decoration:none;font-size:17px}
+.sh-lien:hover{text-decoration:underline}
 .icDrop label{color:var(--acc);cursor:pointer;text-decoration:underline}
 </style>
 </head>
@@ -128,6 +163,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
   <nav class="mode">
     <button id="vCommu" class="on">🏠 Communauté</button>
     <button id="vCreer">🛠 Créer</button>
+    <button id="vBoutique">🛒 Boutique</button>
   </nav>
   <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
   <button id="vAnim" class="sec">🎓 Animateur</button>
@@ -151,6 +187,8 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <div class="cta">
       <button id="ctaCreer" class="big">✨ Créer mon jeu</button>
       <button id="ctaCommun" class="big alt">🧱 Jouer au jeu commun</button>
+      <div class="icRow" style="margin:0;flex-basis:100%"><input id="codeIn" class="pseudo" maxlength="6" placeholder="Code d'un copain (ex. K7P2QX)" style="text-transform:uppercase"><button id="codeBtn" class="sec">📥 Récupérer</button></div>
+      <div id="codeMsg" class="envoi" style="margin:0;flex-basis:100%"></div>
     </div>
   </section>
   <section class="c-class"><h2><b>02</b>— Classement des jeux</h2><div id="classement" class="liste"></div></section>
@@ -164,6 +202,54 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
     <div class="icRow" style="margin-bottom:10px"><input id="ideeIn" class="pseudo" maxlength="60" placeholder="Mon idée : ex. des ennemis qui volent"><button id="ideeBtn" class="sec">💡 Proposer</button></div>
     <div id="idees" class="liste"></div>
   </section>
+</main>
+
+<!-- ===== BOUTIQUE (présentation épurée) ===== -->
+<main id="boutique" class="shop hide">
+  <div class="sh-hero">
+    <p class="sh-sur">Console Brique</p>
+    <h2 class="sh-titre">Le jeu que tu inventes.<br>Dans ta main.</h2>
+    <p class="sh-sous">Crée ton jeu ici, envoie-le dans la console, joue partout.</p>
+    <p class="sh-prix">À partir de 28 €</p>
+  </div>
+
+  <div class="sh-bloc">
+    <h3 class="sh-h">Plus vous êtes, moins c'est cher.</h3>
+    <div id="paliers" class="sh-paliers"></div>
+  </div>
+
+  <div class="sh-bloc">
+    <div class="sh-qte">
+      <button class="sh-pm" data-d="-1" aria-label="Une console de moins">−</button>
+      <input id="btQte" type="number" min="1" max="999" value="1" aria-label="Nombre de consoles">
+      <button class="sh-pm" data-d="1" aria-label="Une console de plus">+</button>
+    </div>
+    <p id="btTotal" class="sh-total"></p>
+    <p id="btDetail" class="sh-detail"></p>
+    <button id="btCommander" class="sh-btn">Commander</button>
+  </div>
+
+  <div class="sh-bloc sh-libre">
+    <h3 class="sh-h">Entièrement open source.</h3>
+    <p class="sh-sous">Rien n'est caché. Le code de la console, le site, les plans de la carte et du boîtier : tout est sur GitHub, libre de lire, modifier, refabriquer.</p>
+    <div class="sh-liens">
+      <a href="https://github.com/Imajon/ClaudeRepo/tree/main/c3-tft-meatboy" target="_blank" rel="noopener"><b>Firmware</b><span>Le programme de la console</span></a>
+      <a href="https://github.com/Imajon/ClaudeRepo/tree/main/c3-tft-meatboy/materiel" target="_blank" rel="noopener"><b>Matériel</b><span>Carte, boîtier, découpes</span></a>
+      <a href="https://github.com/Imajon/ClaudeRepo/tree/main/brique" target="_blank" rel="noopener"><b>Brique</b><span>Ce site et son serveur</span></a>
+    </div>
+    <a class="sh-lien" href="https://github.com/Imajon/ClaudeRepo" target="_blank" rel="noopener">Voir tout le projet sur GitHub ›</a>
+  </div>
+
+  <div class="sh-bloc">
+    <h3 class="sh-h">Soutenir le projet.</h3>
+    <p class="sh-sous">Pas besoin d'acheter une console pour aider. Donne ce que tu veux, quand tu veux : chaque euro finance du temps de développement libre.</p>
+    <div class="sh-dons">
+      <button class="sh-don" data-m="5">5 €</button><button class="sh-don on" data-m="10">10 €</button><button class="sh-don" data-m="20">20 €</button>
+      <span class="sh-qte" style="padding:0 14px"><input id="donLibre" type="number" min="1" placeholder="Autre" aria-label="Montant libre en euros" style="width:90px;font-size:17px"> €</span>
+    </div>
+    <button id="donBtn" class="sh-btn">Soutenir</button>
+    <p id="donMsg" class="sh-detail" style="margin-top:12px"></p>
+  </div>
 </main>
 
 <!-- ===== ESPACE ANIMATEUR ===== -->
@@ -607,7 +693,7 @@ envoyer.onclick = async () => {
   if (!jeu) return dire('Crée un jeu d\'abord !');
   if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.');
   try {
-    if (!port) { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter(); }
+    if (!port) { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter(); await syncCourses(); }
     envoi.textContent = '📟 Envoi…';
     // une ligne par icône d'abord (la console les garde avec le niveau qui suit), puis le niveau
     for (const [k, px] of Object.entries(jeu.niv.icones || {})) {
@@ -616,8 +702,13 @@ envoyer.onclick = async () => {
     }
     // rows en premier (le firmware cherche "rows" avant tout) ; titre/pseudo sans accents (police de la console) -> liste "Mes niveaux"
     const ascii = t => norm(t || '').replace(/[^ -~]/g, '').replace(/"/g, '').slice(0, 30);
-    const l = await ligneSerie({ rows: jeu.niv.rows, titre: ascii(jeu.niv.titre || titreIn.value), pseudo: jeu.niv.pseudo || pseudo(), format: jeu.niv.format, params: jeu.niv.params });
-    if (l.startsWith('BRIQUE OK')) { nivConsole = jeu.niv; dire('✓ Ton jeu est sur la console. À toi de jouer !', true); }
+    // code de partage (jeu publié) : la console s'en sert pour retrouver la même version en course à plusieurs
+    const l = await ligneSerie({ rows: jeu.niv.rows, titre: ascii(jeu.niv.titre || titreIn.value), pseudo: jeu.niv.pseudo || pseudo(),
+                                 ...(jeu.niv.code ? { code: jeu.niv.code } : {}), format: jeu.niv.format, params: jeu.niv.params });
+    if (l.startsWith('BRIQUE OK')) {
+      nivConsole = jeu.niv;
+      dire(jeu.niv.code ? `✓ « ${jeu.niv.titre || 'Ton jeu'} » est sur la console (code ${jeu.niv.code}) : jouable à plusieurs dans « Mes jeux » !` : '✓ Ton jeu est sur la console. À toi de jouer ! (Publie-le pour y jouer à plusieurs.)', true);
+    }
     else dire(l ? 'La console dit : ' + l.replace('BRIQUE ERR ', '') : 'Pas de réponse : la console a-t-elle le bon firmware ?');
   } catch (e) {
     fermer();
@@ -642,8 +733,25 @@ async function ecouter() {
     }
   } catch { dire('Console débranchée.'); fermer(); }
 }
+// courses à plusieurs jouées depuis la dernière connexion : la console les garde, on les envoie au classement au nom de l'enfant connecté
+let resBuf = [], resAttente = null;
+async function syncCourses() {
+  if (!moi || !EN_LIGNE || !port) return;                // sans pseudo : la console les garde pour plus tard
+  resBuf = []; const fin = new Promise(ok => { resAttente = ok; setTimeout(ok, 2000); });
+  const ecrireLigne = async t => { const w = port.writable.getWriter(); await w.write(new TextEncoder().encode(t + '\n')); w.releaseLock(); };
+  await ecrireLigne('RESULTATS'); await fin; resAttente = null;
+  if (!resBuf.length) return;
+  const resultats = resBuf.map(l => { const [code, t, g, n] = l.split(' '); return { code, t: +t, gagne: g === '1', joueurs: +n }; });
+  try {
+    const r = await api('api/courses', { ...ident(), resultats });
+    await ecrireLigne('RESULTATS OK');                     // la console peut les oublier
+    if (r.enregistrees) { dire(`🏁 ${r.enregistrees} course${r.enregistrees > 1 ? 's' : ''} à plusieurs ajoutée${r.enregistrees > 1 ? 's' : ''} au classement !`, true); rafraichir(); }
+  } catch {}
+}
 function ligneConsole(l) {
   if ((l.startsWith('BRIQUE OK') || l.startsWith('BRIQUE ERR')) && attente) return attente(l);
+  if (l.startsWith('BRIQUE RES ')) return resBuf.push(l.slice(11));
+  if (l.startsWith('BRIQUE RESFIN') && resAttente) return resAttente();
   const m = l.match(/^BRIQUE FIN (\d+) (\d+) (\d+)/);
   if (m && nivConsole) resultat(nivConsole, 'console', +m[1] / 1000, +m[2], +m[3]);
 }
@@ -688,9 +796,11 @@ async function publier(commun) {
   if (!EN_LIGNE) return dire('Hors ligne : lance le serveur (node server.js) et ouvre http://localhost:8080');
   if (!moi) { dlgRejoindre.showModal(); return dire('Rejoins d\'abord ton groupe avec le code de ton animateur.'); }
   try {
-    const { id } = await api('api/niveaux', { ...ident(), titre: titreIn.value, commun, niv: jeu.niv });
-    jeu.niv.id = id;
-    dire(commun ? '✓ Ton niveau est ajouté au jeu commun !' : '✓ Ton jeu est publié, signé ' + pseudo() + ' !', true);
+    const { id, code } = await api('api/niveaux', { ...ident(), titre: titreIn.value, commun, niv: jeu.niv });
+    Object.assign(jeu.niv, { id, code, titre: jeu.niv.titre || titreIn.value });
+    envoi.innerHTML = `<span style="color:var(--ok)">✓ ${commun ? 'Ton niveau est ajouté au jeu commun' : 'Ton jeu est publié, signé ' + esc(pseudo())} !</span>
+      <div class="partage">Code de ton jeu : <span class="code">${code}</span><br>
+      <small>Donne-le à tes copains : ils le récupèrent sur Brique et vous jouez ensemble dans « Mes jeux ». <b>Renvoie-le sur ta console</b> pour qu'elle connaisse ce code.</small></div>`;
     rafraichir();
   } catch (e) { dire(e.message); }
 }
@@ -725,12 +835,13 @@ async function rafraichir() {
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
   const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
   classement.innerHTML = top.map((n, i) => ligneRang(n, MEDAILLE[i] || i + 1,
-      n.stats.parties ? `${n.stats.parties} fois fini · record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'personne ne l\'a encore fini',
+      (n.stats.parties ? `${n.stats.parties} fois fini · record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'personne ne l\'a encore fini')
+      + (n.stats.multi?.courses ? `<br>🏁 ${n.stats.multi.courses} course${n.stats.multi.courses > 1 ? 's' : ''} à plusieurs${n.stats.multi.roi ? ` · 👑 ${esc(n.stats.multi.roi.pseudo)} (${n.stats.multi.roi.victoires} victoire${n.stats.multi.roi.victoires > 1 ? 's' : ''})` : ''}` : ''),
       top[0].stats.parties, n.stats.parties)).join('') || vide('Aucun jeu publié pour l\'instant : sois le premier !');
   nouveaux.innerHTML = [...enLigne].sort((a, b) => b.cree - a.cree).slice(0, 8).map(n => `<div class="carte">
       <div class="vig"><img class="mini" src="${vignette(n.niv.rows)}" alt=""></div>
       <div class="t">${esc(n.titre)}${Date.now() - n.cree < 864e5 ? '<span class="neuf">NEUF</span>' : ''}</div>
-      <small class="r" style="color:var(--mute)">par ${esc(n.pseudo)} · ${depuis(n.cree)}${n.commun ? ' · 🧱 commun' : ''}</small>${bouton(n)}</div>`).join('')
+      <small class="r" style="color:var(--mute)">par ${esc(n.pseudo)} · ${depuis(n.cree)}${n.commun ? ' · 🧱 commun' : ''}<br>code <b style="color:var(--acc2)">${esc(n.code || '')}</b></small>${bouton(n)}</div>`).join('')
     || vide('Aucun niveau pour l\'instant.');
   actifs.innerHTML = c.actifs.map(a => `<div class="rang">${avatar(a.pseudo)}<div class="qui"><div><b>${esc(a.pseudo)}</b></div>
       <small>${a.quoi === 'cree' ? '✨ a créé' : '🏁 a fini'} « ${esc(a.titre)} » · ${depuis(a.date)}</small></div></div>`).join('')
@@ -767,10 +878,17 @@ idees.onchange = async e => {                            // animateur connecté 
   try { rendreIdees((await api('api/animateur/idee', v === 'x' ? { id, supprimer: true } : { id, statut: v }, session)).idees); } catch (err) { alert(err.message); }
 };
 function jouerNiveau(n) {
-  charger({ ...n.niv, id: n.id, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params);
+  charger({ ...n.niv, id: n.id, code: n.code, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params);
+  envoi.innerHTML = `<div class="partage">« ${esc(n.titre)} » de ${esc(n.pseudo)} · code <span class="code">${esc(n.code)}</span><br><small>Envoie-le sur ta console pour y jouer, seul ou à plusieurs (« Mes jeux »).</small></div>`;
   historique.push({ demande: `Jouer « ${n.titre} » de ${n.pseudo}`, vu: [], niv: jeu.niv, duree: 0, corr: '' }); rendreHist();
   afficher('creer'); ecran.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+// récupérer le jeu d'un copain par son code -> l'atelier, prêt à envoyer sur sa console
+codeBtn.onclick = async () => {
+  try { jouerNiveau(await api('api/jeu/' + encodeURIComponent(codeIn.value.trim().toUpperCase()))); codeIn.value = ''; codeMsg.textContent = ''; }
+  catch (e) { codeMsg.innerHTML = `<span style="color:var(--ko)">${esc(e.message)}</span>`; }
+};
+codeIn.onkeydown = e => { if (e.key === 'Enter') codeBtn.click(); };
 document.addEventListener('click', e => {
   const id = e.target.dataset?.id; if (!id) return;
   const n = enLigne.find(n => n.id === id); if (n) jouerNiveau(n);
@@ -818,17 +936,49 @@ async function connexionParLien() {                     // arrivée depuis le li
   afficher('anim'); return true;
 }
 
-// ---------- Trois vues : Communauté (accueil) / Créer / Animateur ----------
+// ---------- Boutique : prix unitaire dégressif selon la quantité ----------
+const PALIERS = [[30, 28], [10, 31], [3, 34], [2, 36], [1, 39]]; // [à partir de n consoles, prix unitaire €]
+const BOUTIQUE_MAIL = 'commande@exemple.fr'; // ponytail: commande par mail, brancher un paiement (Stripe…) si besoin
+const prixUnitaire = n => PALIERS.find(([min]) => n >= min)[1];
+function majBoutique() {
+  const n = Math.max(1, Math.min(999, parseInt(btQte.value) || 1)), pu = prixUnitaire(n);
+  paliers.innerHTML = [...PALIERS].reverse().map(([min, p], i, a) => `<div class="${p === pu ? 'on' : ''}"><b>${p} €</b><span>${a[i + 1] ? (a[i + 1][0] - 1 > min ? `${min} à ${a[i + 1][0] - 1}` : min) : `${min} et +`} console${min > 1 ? 's' : ''}</span><i>${p < 39 ? `−${Math.round((1 - p / 39) * 100)} %` : ''}</i></div>`).join('');
+  btTotal.textContent = (n * pu) + ' €';
+  btDetail.textContent = `${n} × ${pu} €` + (pu < 39 ? ` · ${n * (39 - pu)} € d'économie` : '');
+  return { n, pu };
+}
+btQte.oninput = majBoutique; majBoutique();
+document.querySelectorAll('.sh-pm').forEach(b => b.onclick = () => { btQte.value = Math.max(1, (parseInt(btQte.value) || 1) + +b.dataset.d); majBoutique(); });
+btCommander.onclick = () => {
+  const { n, pu } = majBoutique();
+  location.href = `mailto:${BOUTIQUE_MAIL}?subject=${encodeURIComponent(`Commande Brique : ${n} console(s)`)}&body=${encodeURIComponent(`Bonjour,
+
+Je souhaite commander ${n} console(s) Brique à ${pu} € l'unité, soit ${n * pu} € au total.
+
+Nom :
+Adresse de livraison :
+`)}`;
+};
+
+// Soutien libre : plateforme à choisir (Liberapay, Ko-fi, HelloAsso…) -> mettre son lien ici, le montant est ajouté en ?montant=
+const SOUTIEN_URL = '';
+let don = 10;
+document.querySelectorAll('.sh-don').forEach(b => b.onclick = () => { don = +b.dataset.m; donLibre.value = ''; document.querySelectorAll('.sh-don').forEach(x => x.classList.toggle('on', x === b)); });
+donLibre.oninput = () => { don = Math.max(1, parseInt(donLibre.value) || 0); document.querySelectorAll('.sh-don').forEach(x => x.classList.remove('on')); };
+donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes('?') ? '&' : '?'}montant=${don}`, '_blank', 'noopener')
+                                   : donMsg.textContent = `Merci ! Le soutien en ligne arrive très bientôt (${don} € noté dans ton cœur 💜).`;
+
+// ---------- Vues : Communauté (accueil) / Créer / Boutique / Animateur ----------
 let vue = 'commu';
 function afficher(v) {
   vue = v;
-  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim');
+  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique');
   niveauScolaire.classList.toggle('hide', v !== 'creer');
-  vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vAnim.classList.toggle('on', v === 'anim');
+  vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim');
   if (v === 'anim') rendreAnim();
   scrollTo(0, 0);
 }
-vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim');
+vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique');
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
 majMoi();
 connexionParLien().then(fait => fait || afficher('commu'));

@@ -355,7 +355,7 @@ const serveur = http.createServer(async (req, res) => {
     if (typeof b.texte !== 'string' || !b.texte.trim() || typeof b.base !== 'object' || !b.base) return repondre(res, 400, { erreur: 'demande vide' });
     try {
       const r = await iaMistral(b.texte.slice(0, 300), b.base);
-      if (!r.vu.length && !r.souhaits.length) r.souhaits = [b.texte.trim().slice(0, 60)];   // rien de faisable : la demande entiere devient une idee
+      if (!r.vu.length && !r.souhaits.length && !r.remarque) r.remarque = 'Tout est déjà réglé comme tu le demandes : regarde l’aperçu !';   // rien a changer (les reglages actuels font deja ce qui est demande)
       if (r.souhaits.length && !r.remarque) r.remarque = 'Ça, la console ne sait pas encore le faire : je l\'ajoute aux idées des joueurs !';
       if (r.souhaits.length) { const j = joueurDe(b); r.souhaits.forEach(s => ajouterIdee(s, j?.pseudo, 'ia')); sauver(); }
       return repondre(res, 200, r);

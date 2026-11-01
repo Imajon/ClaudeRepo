@@ -243,6 +243,9 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
   font:600 clamp(11px,2.1cqw,17px)/1.4 var(--mono);border-radius:14px 14px 14px 4px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
 .demo-caret{display:inline-block;width:.55em;height:1.1em;margin-left:2px;vertical-align:-.2em;background:#3ddc84;animation:clignote 1s steps(1) infinite}
 @keyframes clignote{50%{opacity:0}}
+.caler-point{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#ff2bd6;color:#fff;font:700 13px/26px var(--mono);font-style:normal;text-align:center;cursor:grab;touch-action:none;box-shadow:0 0 0 3px #fff,0 2px 8px rgba(0,0,0,.4);z-index:3}
+.caler-boite{margin:12px auto 0;max-width:760px;padding:10px 14px;border-radius:12px;background:#13241a;color:#d9f5e3;font-size:14px;text-align:left}
+.caler-boite code{font:13px var(--mono);color:#ffd400}
 /* le montage (data-kit = 1 à 5 : photos empilées en fondu ; 6 = elles s'effacent, la console apparaît) */
 .kit{position:absolute;inset:4% 3%;display:grid;place-items:center;pointer-events:none}
 .kit img{grid-area:1/1;width:100%;height:auto;border-radius:16px;opacity:0;transition:opacity .5s;box-shadow:0 8px 24px rgba(0,0,0,.15)}
@@ -1972,6 +1975,29 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
     demoEcran.style.transform = `matrix3d(${a / 320},${d / 320},0,${g / 320},${b / 240},${e / 240},0,${h / 240},0,0,1,0,${x0},${y0},0,1)`;
   }
   addEventListener('resize', caler); img.complete ? caler() : img.addEventListener('load', caler);
+  const reglage = new URLSearchParams(location.search).has('caler');   // ?caler : 4 poignées à glisser sur les coins de l'écran de la photo, coordonnées à copier
+  if (reglage) {
+    const boite = document.createElement('div'); boite.className = 'caler-boite';
+    boite.innerHTML = '<b>Réglage de l’écran</b> : glisse les 4 points sur les coins de l’écran de la photo.<br><code></code> <button class="sec">📋 Copier</button>';
+    demoConsole.after(boite);
+    const code = boite.querySelector('code'), poignees = COINS.map((p, i) => {
+      const h = document.createElement('i'); h.className = 'caler-point'; h.textContent = i + 1; demoConsole.appendChild(h);
+      h.onpointerdown = e => {
+        h.setPointerCapture(e.pointerId);
+        h.onpointermove = m => { const r = img.getBoundingClientRect(), k = 1205 / r.width;
+          p[0] = Math.round(Math.max(0, Math.min(1205, (m.clientX - r.left) * k))); p[1] = Math.round(Math.max(0, Math.min(880, (m.clientY - r.top) * k))); majReglage(); };
+        h.onpointerup = () => h.onpointermove = null;
+      };
+      return h;
+    });
+    function majReglage() {
+      const k = img.clientWidth / 1205;
+      poignees.forEach((h, i) => { h.style.left = COINS[i][0] * k + 'px'; h.style.top = COINS[i][1] * k + 'px'; });
+      code.textContent = JSON.stringify(COINS); caler();
+    }
+    boite.querySelector('button').onclick = () => navigator.clipboard?.writeText(code.textContent).then(() => boite.querySelector('button').textContent = '✅ Copié');
+    addEventListener('resize', majReglage); img.complete ? majReglage() : img.addEventListener('load', majReglage);
+  }
   const rows = generer({ ...structuredClone(DEFAUT), seed: 21, hauteur: 15, etoiles: 4, couleurs: { ciel: '#2f6fe0', sol: '#ff7ab8' } });
   const ARC = ['#e8322b', '#ff8a1f', '#ffd400', '#3ddc84', '#2f6fe0', '#8b5cf6'];
   function niveau(nl, t) {                              // les nl premières lignes du niveau (de haut en bas), le reste encore éteint
@@ -2004,7 +2030,7 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
   function image(now) {
     requestAnimationFrame(image);
     if (accueil.classList.contains('hide')) return;
-    if (calme) { if (dernier < 0) { demoTxt.textContent = TEXTE; niveau(15, 0); dernier = 0; } return; }
+    if (calme || reglage) { if (dernier < 0) { demoTxt.textContent = TEXTE; delete demoConsole.dataset.kit; dernier = 0; } niveau(15, now); return; }   // réglage : le jeu reste affiché
     let t = (now - t0) % (KIT + FIN);
     const e = t < KIT ? ETAPES.filter(([d]) => t >= d).pop() : null, k = e ? e[1] : '';
     if (demoConsole.dataset.kit !== k) { k ? demoConsole.dataset.kit = k : delete demoConsole.dataset.kit; if (e && e[2]) kitTxt.textContent = e[2]; }

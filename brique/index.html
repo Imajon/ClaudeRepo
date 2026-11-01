@@ -110,6 +110,8 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 @media (max-width:800px){.acc-commu .apropos{grid-template-columns:minmax(0,1fr)}}
 #partipris.acc-commu{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);align-items:start}   /* parti pris : 3 boutons, et à côté le défi */
 @media (max-width:800px){#partipris.acc-commu{grid-template-columns:minmax(0,1fr)}}
+.acc-blague{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:0 auto 32px;max-width:900px;padding:18px 22px;border:2px dashed var(--acc);border-radius:14px;background:var(--soft);text-align:center}
+.acc-blague p{margin:0;font-size:clamp(18px,2.2vw,24px);line-height:1.3}.acc-blague button{width:auto;margin:0}
 .acc-defi b.pc{font:800 40px/1 var(--mono);color:var(--acc2);text-shadow:var(--brille)}
 .pp-tab{border-collapse:collapse;width:100%;max-width:640px;font-size:15px}
 .pp-tab th,.pp-tab td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center;color:var(--txt)}
@@ -408,6 +410,10 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">39 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">28 €</b> par console pour une classe</span></p>
     <div class="cta" style="justify-content:center;margin-top:20px"><button id="accCreer" class="big">✨ Créer mon jeu</button><button id="accBoutique" class="big alt">🛒 Voir la boutique</button></div>
   </div>
+  <aside class="acc-blague">                    <!-- la console se moque d'elle-même : renvoie vers le défi -->
+    <p><b>Ça ne vaut pas une Switch, ni même la calculette de ta sœur.<br>Mais sauras-tu en explorer les limites pour autant ?</b></p>
+    <button id="accBlagueDefi" class="sec">🎯 Relever le défi</button>
+  </aside>
 
 </div>
 <div class="commu">
@@ -2329,7 +2335,7 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 async function rafraichir() {
   let c;
   try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); EN_LIGNE = true; }
-  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox, accCommu, accVoirDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('accueil'); return; }   // GitHub Pages / fichier : pas de communauté
+  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox, accCommu, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('accueil'); return; }   // GitHub Pages / fichier : pas de communauté
   enLigne = c.niveaux; modeAtelier(c.atelier);
   if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant : la tranche d'âge choisie par son animateur
   nJeux.textContent = accJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = accAujourdhui.textContent = c.chiffres.aujourdhui;
@@ -2625,11 +2631,8 @@ ficheImprimer.onclick = () => {                         // la fiche seule, en A4
 };
 vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
 accVoirCommu.onclick = () => afficher('commu');
-accVoirDefi.onclick = () => { afficher('commu'); document.querySelector('.c-defi').scrollIntoView(); };
-setTimeout(() => {                                       // accueil : au bout de quelques secondes, le titre se moque gentiment de la console
-  const t = document.querySelector('#accueil .sh-titre'), j = 'Ça ne vaut pas une Switch, ni même la calculette de ta sœur.\nMais sauras-tu en explorer les limites pour autant ?';
-  t.dataset.text = j; t.innerHTML = esc(j).replace('\n', '<br>');
-}, 6000); accAjouter.onclick = () => afficher('creer'); accCommun.onclick = () => ctaCommun.onclick();
+accVoirDefi.onclick = accBlagueDefi.onclick = () => { afficher('commu'); document.querySelector('.c-defi').scrollIntoView(); };
+accAjouter.onclick = () => afficher('creer'); accCommun.onclick = () => ctaCommun.onclick();
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
 document.querySelector('.pied').onclick = e => {      // pied de page : mêmes vues que le menu
   const a = e.target.closest('a[data-vue],a[data-clic]'); if (!a) return;

@@ -256,7 +256,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .caler-boite code{font:13px var(--mono);color:#ffd400}
 /* le montage (data-kit = 1 à 5 : photos empilées en fondu ; 6 = elles s'effacent, la console apparaît) */
 .kit{position:absolute;inset:4% 3%;display:grid;place-items:center;pointer-events:none}
-.kit img{grid-area:1/1;width:100%;height:auto;border-radius:16px;opacity:0;transition:opacity .5s;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.kit img{grid-area:1/1;width:100%;height:auto;opacity:0;transition:opacity .5s}   /* sans ombre ni cadre : les rendus sur blanc se fondent dans la page */
 .kit p{grid-area:1/1;align-self:end;margin:0 0 4%;padding:.35em .9em;border-radius:999px;background:#13241a;color:#d9f5e3;font:700 clamp(12px,2.2cqw,18px) var(--mono);opacity:0;transition:opacity .4s}
 .demo-console[data-kit="1"] .kit img:nth-child(-n+1),.demo-console[data-kit="2"] .kit img:nth-child(-n+2),.demo-console[data-kit="3"] .kit img:nth-child(-n+3),
 .demo-console[data-kit="4"] .kit img:nth-child(-n+4),.demo-console[data-kit="5"] .kit img,.demo-console[data-kit]:not([data-kit="6"]) .kit p{opacity:1}

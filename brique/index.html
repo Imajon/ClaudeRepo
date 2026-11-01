@@ -108,6 +108,13 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .acc-commu .apropos{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;align-items:center}   /* à propos : la photo à gauche */
 .apropos img{width:100%;height:auto;border-radius:10px;display:block}.apropos>div{display:flex;flex-direction:column;gap:8px}
 @media (max-width:800px){.acc-commu .apropos{grid-template-columns:minmax(0,1fr)}}
+.acc-commu .partipris{grid-column:1/-1}   /* parti pris : 3 boutons */
+.pp-tab{border-collapse:collapse;width:100%;max-width:640px;font-size:15px}
+.pp-tab th,.pp-tab td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center;color:var(--txt)}
+.pp-tab th:first-child,.pp-tab td:first-child{text-align:left}.pp-tab th{color:var(--acc)}
+.pp-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.pp-cols b{color:var(--txt)}
+.pp-note{font-size:13px}
+@media (max-width:800px){.pp-cols{grid-template-columns:minmax(0,1fr)}}
 .pied{margin-top:32px;padding:32px 16px 16px;background:#14201a;color:#c9d6cd;font-size:15px}   /* pied de page : plan du site */
 .pied-in{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:24px}
 .pied h4{margin:0 0 10px;color:#fff;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
@@ -463,6 +470,28 @@ body{overflow-x:clip}                                           /* la bande 100v
       <figcaption><b>Les boutons</b> : soudés à la main, juste à côté de l'écran couleur</figcaption></figure>
     <figure><img src="images/bouton-circuit.jpg" alt="Un bouton et ses pistes de cuivre sur le circuit hexagonal" width="1200" height="1200" loading="lazy">
       <figcaption><b>Le circuit</b> : hexagonal, ses pistes relient chaque bouton au cerveau</figcaption></figure>
+  </section>
+  <section id="partipris" class="acc-commu">     <!-- parti pris : 3 boutons plutôt qu'une croix -->
+    <article class="partipris">
+      <span class="ref">Parti pris</span><h3>Pourquoi 3 boutons, et pas de croix ?</h3>
+      <p>Gauche, action, droite. Nous avons classé 30 genres de jeux selon les commandes qu'ils demandent : avec 3 boutons, presque tout reste jouable, il suffit parfois d'inventer la façon de jouer.</p>
+      <table class="pp-tab">
+        <thead><tr><th></th><th>3 boutons</th><th>Croix + 1 bouton</th></tr></thead>
+        <tbody>
+          <tr><td>✅ Se joue tel quel</td><td><b>16 / 30</b></td><td><b>27 / 30</b></td></tr>
+          <tr><td>🟡 Se joue en adaptant les commandes</td><td>11 / 30</td><td>2 / 30</td></tr>
+          <tr><td>❌ Ne se joue pas</td><td>3 / 30</td><td>1 / 30</td></tr>
+          <tr><td><b>Jouable au total</b></td><td><b>90 %</b></td><td><b>97 %</b></td></tr>
+        </tbody>
+      </table>
+      <div class="pp-cols">
+        <p><b>Tels quels</b> : plateforme, course, runner, oiseau entre les tuyaux, casse-briques, Pong, tir, rythme, Simon, empileur, quiz, histoire à choix, golf, pêche.</p>
+        <p><b>En adaptant</b> : Snake et labyrinthe (on tourne à gauche ou à droite), Pac-Man, Tetris (la pièce tombe seule), Sokoban, 2048, morpion (un curseur fait le tour de la grille), menus de RPG.</p>
+        <p><b>Ce que 3 boutons font mieux</b> : le duel à deux sur une seule console, un bouton chacun, et les jeux qu'on joue sans regarder ses mains.</p>
+      </div>
+      <p><b style="color:var(--txt)">La contrainte fait inventer.</b> « Comment je fais un Pac-Man avec 3 boutons ? » est une vraie question de créateur de jeux : c'est l'enfant qui trouve la réponse, pas la manette. Une croix ramène vers les jeux qui existent déjà ; 3 boutons poussent vers des jeux qui n'existent pas encore. C'est aussi ce qui rend la console reconnaissable : la console à 3 boutons.</p>
+      <p class="pp-note">Classement fait par nos soins sur 30 genres courants : une estimation de game design, pas une étude.</p>
+    </article>
   </section>
   <section id="apropos" class="acc-commu">       <!-- à propos de nous -->
     <article class="apropos">
@@ -1178,6 +1207,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ul></nav>
     <div><h4>Espaces</h4><ul>
       <li><a data-clic="rejoindreBtn">Rejoindre mon groupe</a></li><li><a data-vue="anim">Espace animateur</a></li>
+      <li><a data-vue="accueil" data-ancre="partipris">Pourquoi 3 boutons</a></li>
       <li><a data-vue="accueil" data-ancre="apropos">À propos de nous</a></li>
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>

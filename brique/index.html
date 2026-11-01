@@ -99,7 +99,7 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .c-console figure{margin:0}
 .commu .acc-commu{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .acc-commu article{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:14px;background:var(--panel);box-shadow:var(--glow)}
-.acc-commu h3{margin:0;font-size:19px}.acc-commu p{margin:0;color:var(--mute)}
+.acc-commu h3{margin:0;font-size:clamp(22px,2.4vw,30px);font-weight:800;line-height:1.15;color:var(--txt)}.acc-commu p{margin:0;color:var(--mute)}
 .acc-chiffres{display:flex;gap:16px;flex-wrap:wrap}.acc-chiffres>div{display:flex;flex-direction:column}
 .acc-chiffres b{font:800 28px/1.1 var(--mono);color:var(--acc)}.acc-chiffres span{font-size:12px;color:var(--mute)}
 .acc-signes small{font-weight:700;color:var(--acc2)}
@@ -408,7 +408,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <button id="accVoirCommu" class="sec">🏆 Voir la communauté</button>
     </article>
     <article>
-      <span class="ref">Le jeu commun</span><h3>🧱 Un seul grand jeu, à plusieurs mains</h3>
+      <span class="ref">Le jeu commun</span><h3>🧱 Un seul grand jeu, où chacun signe son niveau</h3>
       <p>Chacun y ajoute un niveau, signé de son pseudo. Niveau après niveau, le jeu commun grandit avec tous les joueurs de Brique.</p>
       <div class="acc-chiffres"><div><b id="accNivCommun">–</b><span>niveaux dans le jeu commun</span></div><div class="acc-signes"><span>Derniers à l'avoir agrandi</span><small id="accSignes">–</small></div></div>
       <div class="actions" style="justify-content:flex-start"><button id="accCommun" class="sec">🧱 Jouer au jeu commun</button><button id="accAjouter" class="sec">➕ Ajouter mon niveau</button></div>

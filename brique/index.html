@@ -221,6 +221,13 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .sh-photo{width:100vw;margin:0 0 0 calc(50% - 50vw);background:#fff;display:grid;justify-items:center;padding:0 3vw}   /* à fond perdu : bande blanche bord à bord, blanc sur blanc */
 .sh-photo img{display:block;width:100%;height:auto}
 .sh-console{max-width:760px;justify-self:center}
+.demo-console{position:relative;width:100%;container-type:inline-size}
+.demo-console canvas{position:absolute;left:0;top:0;width:320px;height:240px;max-width:none;transform-origin:0 0;border:0;border-radius:0;background:none}
+.demo-bulle{position:absolute;left:1%;top:3%;width:33%;min-height:5.6em;margin:0;padding:.7em .9em;text-align:left;background:#13241a;color:#d9f5e3;
+  font:600 clamp(11px,2.1cqw,17px)/1.4 var(--mono);border-radius:14px 14px 14px 4px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.demo-caret{display:inline-block;width:.55em;height:1.1em;margin-left:2px;vertical-align:-.2em;background:#3ddc84;animation:clignote 1s steps(1) infinite}
+@keyframes clignote{50%{opacity:0}}
+@container (max-width:520px){.demo-bulle{position:static;width:auto;min-height:4.2em;margin:8px 0 0}}
 body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
 :root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
 .sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}
@@ -305,7 +312,11 @@ body{overflow-x:clip}                                           /* la bande 100v
     <h2 class="sh-titre glitch" data-text="Le jeu que tu inventes.&#10;Dans ta main.">Le jeu que tu inventes.<br>Dans ta main.</h2>
   </div>
   <figure class="sh-photo">
-    <img class="sh-console" src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
+    <div id="demoConsole" class="sh-console demo-console">   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->
+      <img src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
+      <canvas id="demoEcran" width="320" height="240" aria-hidden="true"></canvas>
+      <p class="demo-bulle" aria-label="Je veux un jeu de plateforme, fond bleu, plateformes roses, avec un personnage arc-en-ciel"><span id="demoTxt" aria-hidden="true"></span><i class="demo-caret"></i></p>
+    </div>
   </figure>
   <div class="sh-apres">
     <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA le construit : il part dans la console par le câble USB.</p>
@@ -328,7 +339,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       </article>
       <article class="etape">
         <div class="ia-demo" aria-hidden="true">
-          <div class="bulle">« un volcan très haut avec des scies »</div>
+          <div class="bulle">« <span id="iaTxt">un volcan très haut avec des scies</span><i class="demo-caret"></i> »</div>
           <div class="puce">IA</div>
           <img id="iaDemo" class="mini" alt="">
         </div>
@@ -1915,7 +1926,79 @@ function vignette(rows) {                                // le niveau entier en 
   return c.toDataURL();
 }
 // accueil, étape 2 : un vrai niveau sorti du générateur, comme si l'IA venait de lire « un volcan très haut avec des scies »
-iaDemo.src = vignette(generer({ ...structuredClone(DEFAUT), theme: 'lave', hauteur: 48, seed: 7, forme: 'mixte', briques: { ...DEFAUT.briques, scie: true } }));
+// accueil : une demande se tape dans la bulle, puis le jeu se dessine sur l'écran de la photo (vue en perspective)
+(() => {
+  const img = demoConsole.querySelector('img'), c = demoEcran.getContext('2d');
+  const TEXTE = 'Je veux un jeu de plateforme, fond bleu, plateformes roses, avec un personnage arc-en-ciel';
+  const COINS = [[446, 262], [786, 190], [851, 446], [477, 524]];   // coins de l'écran sur la photo (1205 x 880) : haut-gauche, haut-droit, bas-droit, bas-gauche
+  function caler() {                                    // 320 x 240 -> les 4 coins (homographie, en matrix3d)
+    const k = img.clientWidth / 1205; if (!k) return;
+    const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = COINS.map(([x, y]) => [x * k, y * k]);
+    const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2, sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3, den = dx1 * dy2 - dx2 * dy1;
+    const g = (sx * dy2 - dx2 * sy) / den, h = (dx1 * sy - sx * dy1) / den;
+    const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3, d = y1 - y0 + g * y1, e = y3 - y0 + h * y3;
+    demoEcran.style.transform = `matrix3d(${a / 320},${d / 320},0,${g / 320},${b / 240},${e / 240},0,${h / 240},0,0,1,0,${x0},${y0},0,1)`;
+  }
+  addEventListener('resize', caler); img.complete ? caler() : img.addEventListener('load', caler);
+  const rows = generer({ ...structuredClone(DEFAUT), seed: 21, hauteur: 15, etoiles: 4, couleurs: { ciel: '#2f6fe0', sol: '#ff7ab8' } });
+  const ARC = ['#e8322b', '#ff8a1f', '#ffd400', '#3ddc84', '#2f6fe0', '#8b5cf6'];
+  function niveau(nl, t) {                              // les nl premières lignes du niveau (de haut en bas), le reste encore éteint
+    c.fillStyle = '#0b0d14'; c.fillRect(0, 0, 320, 240);
+    const grd = c.createLinearGradient(0, 0, 0, 240); grd.addColorStop(0, '#2f6fe0'); grd.addColorStop(1, '#9cc3ff');
+    c.fillStyle = grd; c.fillRect(0, 0, 320, nl * 16);
+    rows.forEach((r, y) => y < nl && [...r].forEach((ch, x) => {
+      const X = x * 16, Y = y * 16;
+      if (ch === '#') { c.fillStyle = '#ff7ab8'; c.fillRect(X, Y, 16, 16); c.fillStyle = '#c2387a'; c.fillRect(X, Y + 13, 16, 3); c.fillStyle = '#ffc2df'; c.fillRect(X, Y, 16, 3); }
+      else if (ch === '*') etoileDemo(X + 8, Y + 8 + Math.sin(t / 300 + x) * 1.5);
+      else if (ch === '^') { c.fillStyle = '#eee'; c.beginPath(); c.moveTo(X, Y + 16); c.lineTo(X + 4, Y + 6); c.lineTo(X + 8, Y + 16); c.lineTo(X + 12, Y + 6); c.lineTo(X + 16, Y + 16); c.fill(); }
+      else if (ch === 'G') { c.fillStyle = '#eee'; c.fillRect(X + 3, Y - 16, 2, 32); c.fillStyle = '#4ade80'; c.fillRect(X + 5, Y - 16, 10, 8); }
+      else if (ch === 'S') {                            // le héros arc-en-ciel, qui sautille
+        const hy = Y + 2 - Math.abs(Math.sin(t / 260)) * 10;
+        ARC.forEach((col, i) => { c.fillStyle = col; c.fillRect(X + 2, hy + i * 2 + 1, 12, i === 5 ? 3 : 2); });
+        c.fillStyle = '#fff'; c.fillRect(X + 6, hy + 4, 3, 3); c.fillRect(X + 10, hy + 4, 3, 3);
+      }
+    }));
+  }
+  function etoileDemo(x, y) { c.fillStyle = '#ffd400'; c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 2.5 : 6, a = -Math.PI / 2 + i * Math.PI / 5; c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } c.fill(); }
+  function eteint(t, pense) {                           // écran noir ; pendant que « l'IA réfléchit », trois points
+    c.fillStyle = '#0b0d14'; c.fillRect(0, 0, 320, 240);
+    if (pense) { c.fillStyle = '#3ddc84'; for (let i = 0; i < 3; i++) if ((t / 250 | 0) % 4 > i) c.fillRect(140 + i * 16, 116, 8, 8); }
+  }
+  // déroulé (ms) : on tape (45 ms par lettre), l'IA réfléchit, le niveau s'allume ligne à ligne, on joue un moment, on recommence
+  const TAPE = TEXTE.length * 45, PENSE = TAPE + 500, ALLUME = PENSE + 1100, JOUE = ALLUME + 700, FIN = JOUE + 5000;
+  const calme = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let t0 = performance.now(), dernier = -1;
+  function image(now) {
+    requestAnimationFrame(image);
+    if (accueil.classList.contains('hide')) return;
+    if (calme) { if (dernier < 0) { demoTxt.textContent = TEXTE; niveau(15, 0); dernier = 0; } return; }
+    const t = (now - t0) % FIN, n = Math.min(TEXTE.length, Math.floor(t / 45));
+    if (n !== dernier) { demoTxt.textContent = TEXTE.slice(0, n); dernier = n; }
+    if (t < PENSE) eteint(t, false); else if (t < ALLUME) eteint(t, true);
+    else niveau(t < JOUE ? Math.ceil(15 * (t - ALLUME) / 700) : 15, now);
+  }
+  requestAnimationFrame(image);
+})();
+// accueil, étape 2 : des demandes se tapent l'une après l'autre ; à chaque fin de phrase, le niveau qui va avec apparaît à côté
+(() => {
+  const B = DEFAUT.briques, DEMANDES = [
+    ['un volcan très haut avec des scies', { theme: 'lave', hauteur: 48, seed: 7, forme: 'mixte', briques: { ...B, scie: true } }],
+    ['une banquise glissante avec des ressorts', { theme: 'glace', hauteur: 40, seed: 11, forme: 'escalier', briques: { ...B, glace: true, ressort: true } }],
+    ['un monde de bonbons plein d’étoiles', { theme: 'bonbon', hauteur: 44, seed: 5, forme: 'iles', etoiles: 8 }],
+    ['l’espace, avec des puits à escalader', { theme: 'espace', hauteur: 52, seed: 3, forme: 'puits' }],
+  ].map(([t, p]) => [t, vignette(generer({ ...structuredClone(DEFAUT), ...p })), THEMES[p.theme].ciel]);
+  const montrer = ([, src, ciel]) => { iaDemo.src = src; iaDemo.style.background = `linear-gradient(${ciel[0]},${ciel[1]})`; };
+  montrer(DEMANDES[0]);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let i = 0, n = DEMANDES[0][0].length, sens = -1, pause = 60;          // on part de la phrase complète, puis on l'efface
+  setInterval(() => {
+    if (pause > 0) return pause--;
+    const t = DEMANDES[i][0];
+    n += sens; iaTxt.textContent = t.slice(0, Math.max(0, n));
+    if (sens < 0 && n <= 0) { i = (i + 1) % DEMANDES.length; n = 0; sens = 1; pause = 6; }
+    else if (sens > 0 && n >= DEMANDES[i][0].length) { montrer(DEMANDES[i]); sens = -1; pause = 60; }   // phrase finie : l'IA "construit", on la laisse lire ~3 s
+  }, 50);
+})();
 const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="pos">${pos}</span>
   <div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div><small>${detail}</small>
   ${max ? `<div class="barre"><i style="width:${Math.round(100 * val / max)}%"></i></div>` : ''}</div>${bouton(n)}</div>`;

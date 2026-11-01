@@ -132,6 +132,13 @@ dialog::backdrop{background:rgba(5,2,15,.7)}
 .en-atelier #vBoutique,.en-atelier #vSupport,.en-atelier #vProfs{display:none}
 .profs-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
 .profs-grille section p{margin:0 0 8px}
+.profs-grille section>img{display:block;width:100%;height:200px;object-fit:cover;border-radius:10px;margin:0 0 10px}
+.profs-photos{margin:16px 0}
+.galerie{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.galerie figure{margin:0;border-radius:12px;overflow:hidden;background:var(--panel2)}
+.galerie img{display:block;width:100%;aspect-ratio:1;height:auto;object-fit:cover}
+.galerie figcaption{padding:8px 10px;font-size:13px;color:var(--mute);display:flex;flex-direction:column;gap:2px}
+.galerie figcaption b{color:var(--txt);font-size:14px}
 .qform{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
 .qform .rep{display:flex;gap:6px;align-items:center}
 .qform .rep input[type=text]{flex:1}
@@ -760,8 +767,24 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p style="margin:0;font-size:18px">Les élèves <b>fabriquent leur console</b>, <b>créent leurs jeux en parlant à une IA</b>, et chaque jeu <b>reprend la leçon du jour</b> : vos questions de cours s'affichent quand on atteint l'arrivée.</p>
     <p class="aide">Du CM1 à la 4ᵉ · par groupes de 8 à 30 · de 1 séance à un projet sur l'année.</p>
   </section>
+  <section class="profs-photos">
+    <h2>En atelier, de la plaque à trous à la console</h2>
+    <div class="galerie">
+      <figure><img src="images/atelier-01.jpg" alt="La plaque à trous" width="800" height="800" loading="lazy"><figcaption><b>La plaque à trous</b>Une plaque d'essai en main : tout commence ici.</figcaption></figure>
+      <figure><img src="images/atelier-02.jpg" alt="Les composants" width="800" height="800" loading="lazy"><figcaption><b>Les composants</b>Écran, boutons, connecteurs : on prépare son plan de travail.</figcaption></figure>
+      <figure><img src="images/atelier-04.jpg" alt="Souder" width="800" height="800" loading="lazy"><figcaption><b>Souder</b>Le fer d'une main, l'étain de l'autre, la plaque tenue par un support.</figcaption></figure>
+      <figure><img src="images/atelier-12.jpg" alt="Pas à pas" width="800" height="800" loading="lazy"><figcaption><b>Pas à pas</b>Chaque patte soudée, une par une, avec soin.</figcaption></figure>
+      <figure><img src="images/atelier-05.jpg" alt="L'écran est posé" width="800" height="800" loading="lazy"><figcaption><b>L'écran est posé</b>La console prend forme sur le support.</figcaption></figure>
+      <figure><img src="images/atelier-06.jpg" alt="Ça s'allume !" width="800" height="800" loading="lazy"><figcaption><b>Ça s'allume !</b>Le premier jeu tourne sur l'écran : le moment préféré.</figcaption></figure>
+      <figure><img src="images/atelier-07.jpg" alt="Les fils dessous" width="800" height="800" loading="lazy"><figcaption><b>Les fils dessous</b>Le câblage vu de dessous : chaque fil relie une broche à l'ESP32-C3.</figcaption></figure>
+      <figure><img src="images/atelier-08.jpg" alt="Le circuit Brique" width="800" height="800" loading="lazy"><figcaption><b>Le circuit Brique</b>Le circuit imprimé hexagonal remplace les fils : plus simple à monter.</figcaption></figure>
+      <figure><img src="images/atelier-09.jpg" alt="Les consoles terminées" width="800" height="800" loading="lazy"><figcaption><b>Les consoles terminées</b>Chacun repart avec la sienne, et ses jeux dedans.</figcaption></figure>
+      <figure><img src="images/atelier-10.jpg" alt="La console Brique" width="800" height="709" loading="lazy"><figcaption><b>La console Brique</b>Écran couleur, trois boutons, un cerveau ESP32-C3.</figcaption></figure>
+    </div>
+  </section>
   <div class="profs-grille">
     <section><h2>Atelier manuel</h2>
+      <img src="images/atelier-03.jpg" alt="Soudure de la console en atelier, la plaque tenue par un support" width="800" height="800" loading="lazy">
       <p>Chaque élève monte sa console : microcontrôleur ESP32-C3, écran couleur, trois boutons, soudure et assemblage du boîtier.</p>
       <p><b>Pas de soudure possible</b> (âge, matériel, temps) ? La console existe en <b>version pré-soudée</b>, montée et testée : l'atelier commence directement par la création.</p>
       <p class="aide">Comprendre ce qu'il y a dans un objet numérique, suivre un plan de montage, travailler avec soin et sécurité (lunettes, fer à souder encadré).</p></section>
@@ -778,6 +801,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p>Le jour de l'atelier, activez le <b>mode atelier</b> du groupe et indiquez la matière du jour : vos élèves ne voient que les jeux de leur groupe (pas la communauté publique ni la boutique), et leurs créations restent privées au groupe.</p>
       <p class="aide">Une prof de français fait une séance de français, un prof de maths des maths : les jeux portent la leçon que vous avez choisie.</p></section>
     <section><h2>Déroulé type</h2>
+      <img src="images/atelier-11.jpg" alt="Séance de soudure : le fer et le fil d'étain au-dessus de la plaque" width="800" height="800" loading="lazy">
       <ol style="margin:0;padding-left:20px;line-height:1.6">
         <li><b>Séance 1</b> — montage et soudure de la console <span class="aide">(à sauter avec des consoles pré-soudées)</span>.</li>
         <li><b>Séance 2</b> — découverte : premier jeu guidé, envoi sur la console.</li>

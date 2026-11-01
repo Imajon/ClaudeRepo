@@ -8,7 +8,7 @@
 <meta name="description" content="Soude ta console, invente ton jeu avec l'IA, joue seul ou à plusieurs. Kit à souder et ateliers pour les 9-14 ans.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Brique">
-<meta property="og:title" content="Brique · Le jeu que tu inventes. Dans ta main.">
+<meta property="og:title" content="Brique · La console que tu assembles, les jeux que tu inventes.">
 <meta property="og:description" content="Soude ta console, invente ton jeu avec l'IA, joue seul ou à plusieurs. Kit à souder et ateliers pour les 9-14 ans.">
 <meta property="og:url" content="https://brique-p436.onrender.com/">
 <meta property="og:image" content="https://brique-p436.onrender.com/images/apercu-partage.jpg">
@@ -257,14 +257,16 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .sh-photo img{display:block;width:100%;height:auto}
 .sh-console{max-width:760px;justify-self:center}
 .demo-console{position:relative;width:100%;container-type:inline-size}
+#accueil.shop,#accueil .shop{max-width:1200px}   /* titre sur deux lignes */
 #accueil .sh-hero{padding-top:4px}                    /* accueil : titre, console et boutons visibles d'un coup sur un écran 1920 x 1080 */
 #accueil .sh-titre{margin:0 0 6px}
-#accueil .demo-console{max-width:min(760px,calc((100vh - 420px) * 1.37))}   /* la console suit la hauteur de l'écran (rapport de la photo : 1,37) */
+#accueil .demo-console{max-width:min(988px,calc((100vh - 420px) * 1.78))}   /* la console suit la hauteur de l'écran (rapport de la photo : 1,37) */
 #accueil .sh-apres{padding-top:0}
 #accueil .sh-apres .cta{margin-top:10px !important}
 .demo-console canvas{position:absolute;left:0;top:0;width:320px;height:240px;max-width:none;transform-origin:0 0;border:0;border-radius:0;background:none}
-.demo-bulle{position:absolute;left:1%;top:3%;width:33%;min-height:5.6em;margin:0;padding:.7em .9em;text-align:left;background:#13241a;color:#d9f5e3;
-  font:600 clamp(11px,2.1cqw,17px)/1.4 var(--mono);border-radius:14px 14px 14px 4px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.demo-bulle{position:absolute;right:0;top:7%;width:31%;min-height:5.6em;margin:0;padding:.7em .9em;text-align:left;background:#13241a;color:#d9f5e3;
+  font:600 clamp(8px,2cqw,16px)/1.35 var(--mono);border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.18)}   /* une vraie bulle, en haut à droite, la pointe vers l'écran */
+.demo-bulle::after{content:"";position:absolute;left:14%;bottom:-.9em;border:.5em solid transparent;border-top:.9em solid #13241a;border-bottom:0;transform:skewX(25deg)}
 .demo-caret{display:inline-block;width:.55em;height:1.1em;margin-left:2px;vertical-align:-.2em;background:#3ddc84;animation:clignote 1s steps(1) infinite}
 @keyframes clignote{50%{opacity:0}}
 .caler-point{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#ff2bd6;color:#fff;font:700 13px/26px var(--mono);font-style:normal;text-align:center;cursor:grab;touch-action:none;box-shadow:0 0 0 3px #fff,0 2px 8px rgba(0,0,0,.4);z-index:3}
@@ -273,12 +275,12 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 /* le montage (data-kit = 1 à 5 : photos empilées en fondu ; 6 = elles s'effacent, la console apparaît) */
 .kit{position:absolute;inset:4% 3%;display:grid;place-items:center;pointer-events:none}
 .kit img{grid-area:1/1;width:100%;height:auto;opacity:0;transition:opacity .5s}   /* sans ombre ni cadre : les rendus sur blanc se fondent dans la page */
-.kit p{grid-area:1/1;align-self:end;margin:0 0 4%;padding:.35em .9em;border-radius:999px;background:#13241a;color:#d9f5e3;font:700 clamp(12px,2.2cqw,18px) var(--mono);opacity:0;transition:opacity .4s}
+.kit p{grid-area:1/1;align-self:start;justify-self:start;margin:2% 0 0 2%;padding:.35em .9em;border-radius:999px;background:#13241a;color:#d9f5e3;font:700 clamp(12px,2.2cqw,18px) var(--mono);opacity:0;transition:opacity .4s}
 .demo-console[data-kit="1"] .kit img:nth-child(-n+1),.demo-console[data-kit="2"] .kit img:nth-child(-n+2),.demo-console[data-kit="3"] .kit img:nth-child(-n+3),
 .demo-console[data-kit="4"] .kit img:nth-child(-n+4),.demo-console[data-kit="5"] .kit img,.demo-console[data-kit]:not([data-kit="6"]) .kit p{opacity:1}
 .demo-console>img,.demo-console>canvas,.demo-bulle{transition:opacity .6s}
 .demo-console[data-kit]:not([data-kit="6"])>img,.demo-console[data-kit]>canvas,.demo-console[data-kit] .demo-bulle{opacity:0}
-@container (max-width:520px){.demo-bulle{position:static;width:auto;min-height:4.2em;margin:8px 0 0}}
+@container (max-width:520px){.demo-bulle{top:12%;width:38%;padding:.5em .6em;border-radius:12px}}
 body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
 :root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
 .sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}
@@ -364,7 +366,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
-    <h2 class="sh-titre glitch" data-text="Le jeu que tu inventes.&#10;Dans ta main.">Le jeu que tu inventes.<br>Dans ta main.</h2>
+    <h2 class="sh-titre glitch" data-text="La console que tu assembles,&#10;les jeux que tu inventes.">La console que tu assembles,<br>les jeux que tu inventes.</h2>
   </div>
   <figure class="sh-photo">
     <div id="demoConsole" class="sh-console demo-console">   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->

@@ -248,7 +248,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .demo-console{position:relative;width:100%;container-type:inline-size}
 #accueil .sh-hero{padding-top:4px}                    /* accueil : titre, console et boutons visibles d'un coup sur un écran 1920 x 1080 */
 #accueil .sh-titre{margin:0 0 6px}
-#accueil .demo-console{max-width:min(760px,calc((100vh - 330px) * 1.37))}   /* la console suit la hauteur de l'écran (rapport de la photo : 1,37) */
+#accueil .demo-console{max-width:min(760px,calc((100vh - 420px) * 1.37))}   /* la console suit la hauteur de l'écran (rapport de la photo : 1,37) */
 #accueil .sh-apres{padding-top:0}
 #accueil .sh-apres .cta{margin-top:10px !important}
 .demo-console canvas{position:absolute;left:0;top:0;width:320px;height:240px;max-width:none;transform-origin:0 0;border:0;border-radius:0;background:none}
@@ -284,6 +284,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 .sh-titre{margin:8px 0 16px;font-size:clamp(36px,7vw,64px);line-height:1.05;letter-spacing:-.02em;text-transform:none;font-weight:700}
 .sh-sous{margin:0 auto;max-width:560px;color:var(--mute);font-size:clamp(17px,2.4vw,21px)}
 .sh-prix{margin:20px 0 0;font-size:17px}
+.acc-prix{margin:10px 0 0;display:flex;justify-content:center;align-items:center;gap:10px 16px;flex-wrap:wrap}   /* accueil : le prix en avant */
+.acc-etiquette{padding:8px 18px;border-radius:999px;background:var(--acc);color:#fff;font-size:clamp(17px,2vw,21px)}
+.acc-etiquette b{font:800 clamp(24px,3vw,32px)/1 var(--mono)}
+.acc-classe{color:var(--mute);font-size:16px}.acc-classe b{color:var(--acc2)}
 .sh-bloc{padding:56px 0;border-top:1px solid var(--soft)}
 .sh-h{margin:0 0 28px;font-size:clamp(26px,4.5vw,40px);color:var(--txt);font-weight:700;letter-spacing:-.01em}
 .sh-paliers{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
@@ -344,7 +348,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   </div>
 </header>
 
-<!-- ===== ACCUEIL : le projet (la console, les étapes, les photos) ; aucun prix ici ===== -->
+<!-- ===== ACCUEIL : le projet (la console, les étapes, les photos) et le prix en avant ===== -->
 <main id="accueil">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
@@ -364,6 +368,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   </figure>
   <div class="sh-apres">
     <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA le construit : il part dans la console par le câble USB.</p>
+    <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">39 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">28 €</b> par console pour une classe</span></p>
     <div class="cta" style="justify-content:center;margin-top:20px"><button id="accCreer" class="big">✨ Créer mon jeu</button><button id="accBoutique" class="big alt">🛒 Voir la boutique</button></div>
   </div>
 
@@ -2286,6 +2291,7 @@ const PRESOUDE_SUPPLEMENT = 12;   // ponytail: prix a confirmer, a changer ici
 let version = 'kit';
 const sup = () => version === 'presoude' ? PRESOUDE_SUPPLEMENT : 0;
 const prixUnitaire = n => PALIERS.find(([min]) => n >= min)[1] + sup();
+accPrix1.textContent = PALIERS.at(-1)[1] + ' €'; accPrixMin.textContent = PALIERS[0][1] + ' €';   // accueil : même grille que la boutique (kit)
 function majBoutique() {
   const n = Math.max(1, Math.min(999, parseInt(btQte.value) || 1)), pu = prixUnitaire(n);
   const max = PALIERS.at(-1)[1] + sup();

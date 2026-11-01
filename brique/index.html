@@ -87,6 +87,8 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 /* la console sous toutes ses coutures : grandes photos sur fond blanc */
 .commu .c-console{grid-column:1/-1;background:#fff;border-radius:16px;padding:24px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .c-console figure{margin:0}
+.c-soude h2{grid-column:1/-1;margin:0;color:#13241a}
+.c-soude img{object-fit:cover;border-radius:10px}
 .c-console img{width:100%;height:auto;aspect-ratio:1;object-fit:contain;display:block}
 .c-console figcaption{color:#1a2a20;text-align:center;font-size:15px;margin-top:8px}
 @media (max-width:800px){.commu .c-console{grid-template-columns:minmax(0,1fr)}}
@@ -320,7 +322,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <div class="etapes">
       <article class="etape">
-        <img src="images/souder.jpg" alt="Un bouton poussoir soudé sur le circuit vert de la console" width="900" height="720">
+        <img src="images/atelier-03.jpg" alt="Un enfant soude sa console au fer à souder, la plaque tenue par un support" width="800" height="800">
         <span class="ref">Étape 1 · SW1</span><h3>Je soude ma console</h3>
         <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p>
       </article>
@@ -339,6 +341,15 @@ body{overflow-x:clip}                                           /* la bande 100v
         <p>Le jeu part dans la console par le câble USB. Un code le partage aux copains, pour jouer jusqu'à 4.</p>
       </article>
     </div>
+  </section>
+  <section class="c-console c-soude">           <!-- en atelier : ce sont les enfants qui soudent -->
+    <h2>Ce sont eux qui soudent</h2>
+    <figure><img src="images/atelier-04.jpg" alt="Un enfant soude, le fer d'une main et l'étain de l'autre" width="800" height="800" loading="lazy">
+      <figcaption><b>Le fer d'une main</b>, l'étain de l'autre, la plaque tenue par un support</figcaption></figure>
+    <figure><img src="images/atelier-12.jpg" alt="Gros plan sur la soudure d'un connecteur" width="800" height="800" loading="lazy">
+      <figcaption><b>Patte par patte</b>, avec soin, encadré par un adulte</figcaption></figure>
+    <figure><img src="images/atelier-06.jpg" alt="La console fabriquée en atelier s'allume sur son premier jeu" width="800" height="800" loading="lazy">
+      <figcaption><b>Ça s'allume !</b> Le premier jeu tourne sur la console qu'on vient de souder</figcaption></figure>
   </section>
   <section class="c-console">
     <figure><img src="images/cerveau-esp32.jpg" alt="Le cerveau de la console : une carte ESP32-C3 grande comme un doigt, avec prise USB-C" width="1192" height="900" loading="lazy">

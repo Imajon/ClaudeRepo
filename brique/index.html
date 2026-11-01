@@ -97,6 +97,14 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 /* la console sous toutes ses coutures : grandes photos sur fond blanc */
 .commu .c-console{grid-column:1/-1;background:#fff;border-radius:16px;padding:24px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .c-console figure{margin:0}
+.commu .acc-commu{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.acc-commu article{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:14px;background:var(--panel);box-shadow:var(--glow)}
+.acc-commu h3{margin:0;font-size:19px}.acc-commu p{margin:0;color:var(--mute)}
+.acc-chiffres{display:flex;gap:16px;flex-wrap:wrap}.acc-chiffres>div{display:flex;flex-direction:column}
+.acc-chiffres b{font:800 28px/1.1 var(--mono);color:var(--acc)}.acc-chiffres span{font-size:12px;color:var(--mute)}
+.acc-signes small{font-weight:700;color:var(--acc2)}
+.acc-commu article>button,.acc-commu .actions{align-self:flex-start;margin-top:auto}
+@media (max-width:800px){.commu .acc-commu{grid-template-columns:minmax(0,1fr)}}
 .c-soude h2{grid-column:1/-1;margin:0;color:#13241a}
 .c-soude img{object-fit:cover;border-radius:10px}
 .c-console img{width:100%;height:auto;aspect-ratio:1;object-fit:contain;display:block}
@@ -386,6 +394,20 @@ body{overflow-x:clip}                                           /* la bande 100v
         <p>Le jeu part dans la console par le câble USB. Un code le partage aux copains, pour jouer jusqu'à 4.</p>
       </article>
     </div>
+  </section>
+  <section id="accCommu" class="acc-commu">      <!-- la communauté et le jeu commun, en bref (chiffres en direct) -->
+    <article>
+      <span class="ref">Communauté</span><h3>🏆 Les jeux des autres</h3>
+      <p>Chaque jeu publié reçoit un code. On récupère les jeux des copains, on bat leurs records, on grimpe au classement.</p>
+      <div class="acc-chiffres"><div><b id="accJeux">–</b><span>jeux créés</span></div><div><b id="accAujourdhui">–</b><span>joueurs aujourd'hui</span></div></div>
+      <button id="accVoirCommu" class="sec">🏆 Voir la communauté</button>
+    </article>
+    <article>
+      <span class="ref">Le jeu commun</span><h3>🧱 Un seul grand jeu, à plusieurs mains</h3>
+      <p>Chacun y ajoute un niveau, signé de son pseudo. Niveau après niveau, le jeu commun grandit avec tous les joueurs de Brique.</p>
+      <div class="acc-chiffres"><div><b id="accNivCommun">–</b><span>niveaux dans le jeu commun</span></div><div class="acc-signes"><span>Derniers à l'avoir agrandi</span><small id="accSignes">–</small></div></div>
+      <div class="actions" style="justify-content:flex-start"><button id="accCommun" class="sec">🧱 Jouer au jeu commun</button><button id="accAjouter" class="sec">➕ Ajouter mon niveau</button></div>
+    </article>
   </section>
   <section class="c-console c-soude">           <!-- en atelier : ce sont les enfants qui soudent -->
     <h2>Ce sont eux qui soudent</h2>
@@ -2098,10 +2120,10 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 async function rafraichir() {
   let c;
   try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); EN_LIGNE = true; }
-  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('accueil'); return; }   // GitHub Pages / fichier : pas de communauté
+  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox, accCommu].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('accueil'); return; }   // GitHub Pages / fichier : pas de communauté
   enLigne = c.niveaux; modeAtelier(c.atelier);
   if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant : la tranche d'âge choisie par son animateur
-  nJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = c.chiffres.aujourdhui;
+  nJeux.textContent = accJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = accAujourdhui.textContent = c.chiffres.aujourdhui;
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
   const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
   classement.innerHTML = top.map((n, i) => ligneRang(n, MEDAILLE[i] || i + 1,
@@ -2120,6 +2142,8 @@ async function rafraichir() {
   tendance.innerHTML = chauds.map((n, i) => ligneRang(n, '🔥', `${n.stats.semaine} partie${n.stats.semaine > 1 ? 's' : ''} cette semaine`, chauds[0].stats.semaine, n.stats.semaine)).join('')
     || vide('Rien cette semaine : joue un niveau pour le faire monter !');
   const niv = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree);
+  accNivCommun.textContent = niv.length;                 // accueil : le jeu commun en bref
+  accSignes.textContent = [...new Set(niv.slice().reverse().map(n => n.pseudo))].slice(0, 4).join(', ') || 'personne encore : sois le premier !';
   commun.innerHTML = niv.map((n, i) => ligneRang(n, i + 1, n.stats.parties ? `record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'jamais fini')).join('')
     || vide('Le jeu commun est vide : ajoute le premier niveau !');
   rendreIdees(c.idees);
@@ -2306,6 +2330,7 @@ ficheImprimer.onclick = () => {                         // la fiche seule, en A4
   if (w) w.onload = () => w.print();
 };
 vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
+accVoirCommu.onclick = () => afficher('commu'); accAjouter.onclick = () => afficher('creer'); accCommun.onclick = () => ctaCommun.onclick();
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
 majMoi();
 connexionParLien().then(fait => fait || afficher(vue));   // vue d'accueil : la présentation du projet

@@ -331,6 +331,14 @@ body{overflow-x:clip}                                           /* la bande 100v
 .sh-pm{width:44px;height:44px;border:0;border-radius:50%;background:var(--soft);color:var(--txt);font-size:22px;cursor:pointer}
 .sh-total{margin:24px 0 4px;font-size:clamp(44px,8vw,64px);font-weight:700;letter-spacing:-.02em}
 .sh-detail{margin:0;color:var(--mute);min-height:1.4em}
+.sh-panier,.sh-donnees{text-align:left}
+.sh-panier .sh-h,.sh-donnees .sh-h{text-align:center}
+.sh-etape{margin:16px 0;padding:16px;border-radius:16px;background:var(--soft)}
+.sh-etape .aide{margin:6px 0 10px}
+#mrZone:not(:empty){margin-top:12px;background:#fff;border-radius:12px;overflow:hidden}
+.sh-btn:disabled{opacity:.4;cursor:default}
+.sh-colonnes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 24px}
+.sh-donnees li{margin:4px 0}
 .sh-btn{margin-top:28px;border:0;border-radius:999px;padding:14px 36px;font:600 17px system-ui;background:#0071e3;color:#fff;cursor:pointer}
 .sh-btn:hover{background:#0077ed}
 .sh-liens{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:32px 0 24px;text-align:left}
@@ -614,7 +622,61 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <p id="btTotal" class="sh-total"></p>
     <p id="btDetail" class="sh-detail"></p>
-    <button id="btCommander" class="sh-btn">Commander</button>
+    <button id="btCommander" class="sh-btn">Ajouter au panier</button>
+  </div>
+
+  <div id="panierBloc" class="sh-bloc sh-panier">
+    <h3 class="sh-h">Mon panier.</h3>
+    <div id="panierLignes"></div>
+    <div class="sh-etape"><b>1. Mon compte</b>
+      <div id="cliConnexion">
+        <p class="aide">Pas de mot de passe : vous recevez un lien de connexion par mail. Nous ne gardons pas votre adresse.</p>
+        <div class="icRow"><input id="cliMail" class="pseudo" type="email" autocomplete="email" placeholder="votre.adresse@exemple.fr"><button id="cliLienBtn" class="sec">📧 Recevoir mon lien</button></div>
+      </div>
+      <p id="cliConnecte" class="aide hide">✅ Connecté · <a href="#" id="cliSortir">se déconnecter</a> · <a href="#" id="cliSupprimer">supprimer mon compte</a></p>
+    </div>
+    <div class="sh-etape"><b>2. Mon point relais</b>
+      <p id="relaisChoisi" class="aide">Livraison uniquement en point relais Mondial Relay (4,90 €).</p>
+      <button id="relaisBtn" class="sec">📍 Choisir mon point relais</button>
+      <div id="mrZone"></div><input id="mrRetour" type="hidden">
+    </div>
+    <div class="sh-etape"><b>3. Paiement</b>
+      <p class="aide">Sur la page sécurisée de Stripe : vous y donnez votre carte, le nom pour retirer le colis et un téléphone pour l'avis d'arrivée. Rien de tout cela ne passe par notre serveur.</p>
+      <button id="cmdPayer" class="sh-btn" disabled>Payer</button>
+    </div>
+    <p id="cmdMsg" class="envoi"></p>
+    <div id="mesCommandes"></div>
+  </div>
+
+  <div id="donnees" class="sh-bloc sh-donnees">
+    <h3 class="sh-h">Pourquoi on ne vous demande pas votre adresse.</h3>
+    <p class="sh-sous">Parce que la donnée la mieux protégée, c'est celle qu'on n'a pas. Si notre serveur était piraté demain, on n'y trouverait rien d'utile sur vous.</p>
+    <div class="sh-colonnes">
+      <div><h4>Ce que nous gardons</h4><ul>
+        <li>Une empreinte chiffrée de votre e-mail (HMAC), impossible à relire : elle sert seulement à reconnaître votre compte.</li>
+        <li>Vos commandes : nombre de consoles, montant, statut.</li>
+        <li>Le numéro et l'adresse du <b>point relais</b> choisi : un commerce, pas votre domicile.</li>
+      </ul></div>
+      <div><h4>Ce que nous ne gardons jamais</h4><ul>
+        <li>Votre adresse postale : on ne la demande pas.</li>
+        <li>Votre e-mail en clair : il sert à envoyer le lien de connexion, puis il est oublié.</li>
+        <li>Votre nom, votre téléphone, votre carte bancaire : saisis chez Stripe, jamais chez nous.</li>
+        <li>Aucun mot de passe, aucun cookie publicitaire, aucun traceur.</li>
+      </ul></div>
+    </div>
+    <h4>Qui détient quoi</h4>
+    <ul>
+      <li><b>Stripe</b> (paiement, certifié PCI-DSS) : carte, nom, téléphone, e-mail pour le reçu. C'est Stripe qui garde les preuves de paiement exigées par la loi.</li>
+      <li><b>Mondial Relay</b> : le nom et le téléphone imprimés sur l'étiquette, pour vous remettre le colis. La carte des relais n'est chargée depuis leurs serveurs que lorsque vous cliquez sur « Choisir mon point relais ».</li>
+    </ul>
+    <h4>Combien de temps</h4>
+    <ul>
+      <li>Commande non payée : effacée après 7 jours.</li>
+      <li>Commande livrée : détachée de votre compte et du relais 1 an après l'envoi (il ne reste qu'une ligne anonyme pour nos comptes).</li>
+      <li>Compte inutilisé pendant 3 ans : supprimé automatiquement.</li>
+    </ul>
+    <h4>Vos droits</h4>
+    <p>Le bouton « supprimer mon compte » efface votre compte immédiatement ; vos commandes passées deviennent anonymes. Pour toute question (RGPD : accès, rectification, effacement), écrivez-nous ; vous pouvez aussi saisir la CNIL. Les échanges avec le site sont chiffrés (HTTPS), la base de données aussi en transit.</p>
   </div>
 
   <div class="sh-bloc sh-libre">
@@ -1041,6 +1103,9 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p class="aide" style="margin-top:0">Connecté : <b id="animQui"></b> · <a href="#" id="animSortir" style="color:var(--acc)">se déconnecter</a></p>
       <div class="icRow"><input id="grNom" class="pseudo" maxlength="40" placeholder="Nom du groupe (ex. CM2 Jules Ferry)"><button id="grCreer" class="sec">➕ Créer un groupe</button></div>
     </section>
+    <section id="animCommandes" class="hide"><h2>🛒 Commandes boutique</h2>
+      <p class="aide" style="margin-top:0">Le nom et le téléphone pour l'étiquette sont chez Stripe (lien sur chaque commande) : on ne les copie pas ici.</p>
+      <div id="animCmdListe" class="liste"></div></section>
     <div id="animGroupes" style="display:flex;flex-direction:column;gap:16px"></div>
   </div>
 </main>
@@ -1226,6 +1291,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <li><a data-clic="rejoindreBtn">Rejoindre mon groupe</a></li><li><a data-vue="anim">Espace animateur</a></li>
       <li><a data-vue="accueil" data-ancre="partipris">Pourquoi 3 boutons</a></li>
       <li><a data-vue="accueil" data-ancre="apropos">À propos de nous</a></li>
+      <li><a data-vue="boutique" data-ancre="donnees">Vos données</a></li>
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
   </div>
@@ -2507,6 +2573,10 @@ async function rendreAnim(donnees) {
   animConnexion.classList.toggle('hide', !!d); animEspace.classList.toggle('hide', !d);
   if (!d) return;
   animQui.textContent = d.email; animDonnees = d;
+  animCommandes.classList.toggle('hide', !d.commandes);  // admin boutique seulement (ADMIN_EMAILS)
+  if (d.commandes) animCmdListe.innerHTML = d.commandes.map(c => `<div class="rang"><div class="qui"><div><b>${c.kit ? c.kit + ' kit' : ''}${c.kit && c.presoude ? ' + ' : ''}${c.presoude ? c.presoude + ' pré-soudée' : ''}</b> · ${(c.total / 100).toFixed(2)} € · ${STATUT_CMD[c.statut]}</div>
+    <small>${new Date(c.cree).toLocaleString('fr-FR')}${c.relais ? ` · relais n° ${esc(c.relais.id)} : ${esc(c.relais.nom)}, ${esc(c.relais.cp)} ${esc(c.relais.ville)}` : ''}${c.stripe ? ` · <a href="${esc(c.stripe)}" target="_blank" rel="noopener">nom et téléphone sur Stripe ›</a>` : ''}</small></div>
+    ${c.statut === 'payee' ? `<button class="jouer" data-expedier="${esc(c.id)}">📦 Expédiée</button>` : ''}</div>`).join('') || '<span class="vide">Aucune commande payée pour le moment.</span>';
   animGroupes.innerHTML = d.groupes.map(g => `<section>
     <h2><b>${esc(g.nom)}</b></h2>
     <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span></p>
@@ -2563,6 +2633,7 @@ animGroupes.onclick = async e => {
     rafraichir();
   } catch (err) { alert(err.message); }
 };
+animCmdListe.onclick = async e => { const id = e.target.dataset.expedier; if (id) try { rendreAnim(await api('api/animateur/expedier', { id }, session)); } catch (err) { alert(err.message); } };
 animSortir.onclick = async e => { e.preventDefault(); try { await api('api/animateur/deconnexion', {}, session); } catch {} session = null; ecrire('brique-session', null); rendreAnim(); };
 async function connexionParLien() {                     // arrivée depuis le lien du mail : ?connexion=…
   const jeton = new URLSearchParams(location.search).get('connexion'); if (!jeton) return false;
@@ -2573,10 +2644,12 @@ async function connexionParLien() {                     // arrivée depuis le li
 }
 
 // ---------- Boutique : prix unitaire dégressif selon la quantité ----------
+// même grille que server.js (c'est le serveur qui calcule le prix payé)
 const PALIERS = [[30, 28], [10, 31], [3, 34], [2, 36], [1, 39]]; // [à partir de n consoles, prix unitaire €]
-const BOUTIQUE_MAIL = 'commande@exemple.fr'; // ponytail: commande par mail, brancher un paiement (Stripe…) si besoin
 // version pre-soudee : meme degressivite, + un supplement par console (montage + test)
-const PRESOUDE_SUPPLEMENT = 12;   // ponytail: prix a confirmer, a changer ici
+const PRESOUDE_SUPPLEMENT = 12;   // ponytail: prix a confirmer, a changer ici (et dans server.js)
+const PORT_RELAIS = 4.9;
+const MR_ENSEIGNE = 'BDTEST  ';   // ponytail: code enseigne Mondial Relay de test (avertissement sur la carte) ; mettre le vrai code du compte Boxtal/Mondial Relay
 let version = 'kit';
 const sup = () => version === 'presoude' ? PRESOUDE_SUPPLEMENT : 0;
 const prixUnitaire = n => PALIERS.find(([min]) => n >= min)[1] + sup();
@@ -2592,16 +2665,81 @@ function majBoutique() {
 btQte.oninput = majBoutique; majBoutique();
 btVersions.onclick = e => { const b = e.target.closest('[data-v]'); if (!b) return; version = b.dataset.v; btVersions.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); majBoutique(); };
 document.querySelectorAll('.sh-pm').forEach(b => b.onclick = () => { btQte.value = Math.max(1, (parseInt(btQte.value) || 1) + +b.dataset.d); majBoutique(); });
+// ---------- Panier -> compte (lien mail) -> point relais -> paiement Stripe ----------
+let panier = { kit: +lire('brique-panier')?.kit || 0, presoude: +lire('brique-panier')?.presoude || 0 }, relais = null, client = lire('brique-client');
+const prix = e => (Math.round(e * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: e % 1 ? 2 : 0 }) + ' €';
+function majPanier() {
+  ecrire('brique-panier', panier);
+  const n = panier.kit + panier.presoude, pu = n && PALIERS.find(([m]) => n >= m)[1];
+  const lignes = [['kit', 'kit à souder', pu], ['presoude', 'pré-soudée', pu + PRESOUDE_SUPPLEMENT]].filter(([k]) => panier[k]);
+  panierLignes.innerHTML = n ? lignes.map(([k, nom, p]) => `<div class="rang"><div class="qui"><b>${panier[k]} × console ${nom}</b> <small>${p} € pièce</small></div>
+    <span>${prix(panier[k] * p)}</span><button class="jouer" data-retirer="${k}" aria-label="Retirer">🗑</button></div>`).join('')
+    + `<div class="rang"><div class="qui">Livraison en point relais</div><span>${prix(PORT_RELAIS)}</span></div>` : '<p class="vide">Votre panier est vide.</p>';
+  const total = n ? lignes.reduce((s, [k, , p]) => s + panier[k] * p, 0) + PORT_RELAIS : 0;
+  cliConnexion.classList.toggle('hide', !!client); cliConnecte.classList.toggle('hide', !client);
+  relaisChoisi.innerHTML = relais ? `📍 <b>${esc(relais.nom)}</b>, ${esc(relais.cp)} ${esc(relais.ville)} (n° ${esc(relais.id)})` : 'Livraison uniquement en point relais Mondial Relay (4,90 €).';
+  cmdPayer.textContent = n ? `Payer ${prix(total)}` : 'Payer';
+  cmdPayer.disabled = !(n && client && relais);
+}
+const cmdDire = (t, ok) => cmdMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
 btCommander.onclick = () => {
-  const { n, pu } = majBoutique();
-  location.href = `mailto:${BOUTIQUE_MAIL}?subject=${encodeURIComponent(`Commande Brique : ${n} console(s) ${version === 'presoude' ? 'pré-soudée(s)' : 'en kit'}`)}&body=${encodeURIComponent(`Bonjour,
-
-Je souhaite commander ${n} console(s) Brique, version ${version === 'presoude' ? 'pré-soudée' : 'kit à souder'}, à ${pu} € l'unité, soit ${n * pu} € au total.
-
-Nom :
-Adresse de livraison :
-`)}`;
+  const { n } = majBoutique(); panier[version] = Math.min(999, panier[version] + n); majPanier();
+  panierBloc.scrollIntoView({ behavior: 'smooth' });
 };
+panierLignes.onclick = e => { const k = e.target.dataset.retirer; if (k) { panier[k] = 0; majPanier(); } };
+cliLienBtn.onclick = async () => {
+  try { await api('api/client/lien', { email: cliMail.value }); cmdDire('📧 Lien envoyé ! Ouvrez-le depuis ce navigateur pour garder votre panier.', true); }
+  catch (e) { cmdDire(e.message); }
+};
+const sortirClient = () => { client = null; ecrire('brique-client', null); mesCommandes.innerHTML = ''; majPanier(); };
+cliSortir.onclick = async e => { e.preventDefault(); try { await api('api/client/deconnexion', {}, client); } catch {} sortirClient(); };
+cliSupprimer.onclick = async e => {
+  e.preventDefault(); if (!confirm('Supprimer votre compte ? Vos commandes passées deviendront anonymes (vous ne pourrez plus les suivre ici).')) return;
+  try { await api('api/client/supprimer', {}, client); sortirClient(); cmdDire('Compte supprimé.', true); } catch (err) { cmdDire(err.message); }
+};
+const STATUT_CMD = { attente: '⏳ en attente de paiement', payee: '✅ payée, en préparation', expediee: '📦 expédiée' };
+function rendreCommandes(cs) {
+  mesCommandes.innerHTML = cs.length ? `<h4>Mes commandes</h4>` + cs.map(c => `<div class="rang"><div class="qui"><div><b>${c.kit + c.presoude} console${c.kit + c.presoude > 1 ? 's' : ''}</b> · ${prix(c.total / 100)}</div>
+    <small>${new Date(c.cree).toLocaleDateString('fr-FR')} · ${STATUT_CMD[c.statut]}${c.relais ? ` · ${esc(c.relais.nom)}, ${esc(c.relais.ville)}` : ''}</small></div></div>`).join('') : '';
+}
+async function chargerCommandes() {
+  if (!client) return;
+  try { rendreCommandes((await api('api/client', {}, client)).commandes); } catch (e) { if (e.code === 401) sortirClient(); }
+}
+const chargerScript = src => new Promise((ok, ko) => document.head.append(Object.assign(document.createElement('script'), { src, onload: ok, onerror: ko })));
+relaisBtn.onclick = async () => {                       // la carte Mondial Relay (et ses scripts) ne se charge qu'à la demande
+  relaisBtn.disabled = true;
+  try {
+    if (!window.jQuery) await chargerScript('https://code.jquery.com/jquery-3.7.1.min.js');
+    await chargerScript('https://widget.mondialrelay.com/parcelshop-picker/jquery.plugin.mondialrelay.parcelshoppicker.min.js');
+    jQuery('#mrZone').MR_ParcelShopPicker({ Target: '#mrRetour', Brand: MR_ENSEIGNE, Country: 'FR', ColLivMod: '24R', NbResults: 7, Responsive: true, ShowResultsOnMap: true,
+      OnParcelShopSelected: d => { relais = d.ID ? { id: d.ID, nom: d.Nom, cp: d.CP, ville: d.Ville, pays: d.Pays } : null; majPanier(); } });
+    relaisBtn.classList.add('hide');
+  } catch { relaisBtn.disabled = false; cmdDire('La carte des points relais ne se charge pas : réessayez.'); }
+};
+cmdPayer.onclick = async () => {
+  cmdPayer.disabled = true;
+  try { location.href = (await api('api/client/commande', { panier, relais }, client)).url; }
+  catch (e) { cmdDire(e.message); if (e.code === 401) sortirClient(); else cmdPayer.disabled = false; }
+};
+async function retourBoutique() {                       // arrivée depuis le lien du mail (?client=…) ou retour de Stripe (?paye=… / ?boutique=annule)
+  const p = new URLSearchParams(location.search), jeton = p.get('client'), paye = p.get('paye');
+  if (!jeton && !paye && !p.has('boutique')) return false;
+  history.replaceState(null, '', location.pathname);
+  afficher('boutique');
+  try {
+    if (jeton) { client = (await api('api/client/connexion', { jeton })).session; ecrire('brique-client', client); cmdDire('✅ Connecté : choisissez votre point relais.', true); }
+    if (paye && client) {
+      const r = await api('api/client/paye', { id: paye }, client);
+      if (r.statut !== 'attente') { panier = { kit: 0, presoude: 0 }; cmdDire('🎉 Merci ! Paiement reçu : on prépare votre colis.', true); }
+      else cmdDire('Paiement pas encore confirmé : actualisez dans un instant.');
+    }
+    if (p.get('boutique') === 'annule') cmdDire('Paiement annulé : votre panier vous attend.');
+  } catch (e) { cmdDire(e.message); }
+  majPanier(); await chargerCommandes(); panierBloc.scrollIntoView();
+  return true;
+}
+majPanier(); chargerCommandes();
 
 // Soutien libre : plateforme à choisir (Liberapay, Ko-fi, HelloAsso…) -> mettre son lien ici, le montant est ajouté en ?montant=
 const SOUTIEN_URL = '';
@@ -2641,7 +2779,7 @@ document.querySelector('.pied').onclick = e => {      // pied de page : mêmes v
 };
 piedSite.textContent = location.host;
 majMoi();
-connexionParLien().then(fait => fait || afficher(vue));   // vue d'accueil : la présentation du projet
+connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 </script>
 </body>

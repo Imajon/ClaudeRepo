@@ -7,7 +7,7 @@ const Fiche = require('./fiche.js');                   // la fiche de jeu : meme
 const PORT = process.env.PORT || 8080, FICHIER = process.env.DATA || path.join(__dirname, 'data.json');
 // adresse publique pour les liens envoyes par mail (jamais l'en-tete Host : il pourrait envoyer un lien piege)
 const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
-const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [], courses: [], reponses: [] };
+const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [], courses: [], reponses: [], clients: [], commandes: [] };
 let db;
 
 // ---------- stockage : tout l'etat dans une ligne MySQL (ou un fichier) ----------
@@ -103,6 +103,46 @@ async function envoyerMail(email, sujet, html) {
   if (!r.ok) throw new Error('Brevo ' + r.status + ' ' + (await r.text()).slice(0, 200));
 }
 
+// ---------- boutique : panier -> point relais -> paiement Stripe Checkout. Aucune donnee perso chez nous ----------
+// Le compte acheteur = HMAC(e-mail, BOUTIQUE_SECRET) : ni e-mail, ni mot de passe, ni nom, ni adresse stockes.
+// Nom, telephone et carte sont saisis chez Stripe ; on ne garde que le numero du point relais (lieu public).
+const PALIERS = [[30, 28], [10, 31], [3, 34], [2, 36], [1, 39]], PRESOUDE = 12, PORT_RELAIS = 490;   // € ; port en centimes ; meme grille que index.html
+const LOCAL = PUBLIC_URL.startsWith('http://localhost');
+const SECRET = process.env.BOUTIQUE_SECRET || (LOCAL ? 'dev-local' : null);   // en ligne : obligatoire (sinon les comptes seraient devinables)
+const ADMINS = (process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+const compteDe = email => crypto.createHmac('sha256', SECRET).update(email).digest('hex');
+function devis(p) {                                      // { kit, presoude } -> lignes [libelle, quantite, centimes] + total, ou null
+  const kit = entier(p?.kit, 999) ? p.kit : 0, pre = entier(p?.presoude, 999) ? p.presoude : 0, n = kit + pre;
+  if (!n || n > 999) return null;
+  const pu = PALIERS.find(([m]) => n >= m)[1];
+  const lignes = [kit && ['Console Brique, kit à souder', kit, pu * 100], pre && ['Console Brique, pré-soudée', pre, (pu + PRESOUDE) * 100],
+                  ['Livraison en point relais', 1, PORT_RELAIS]].filter(Boolean);
+  return { kit, presoude: pre, lignes, total: lignes.reduce((s, [, q, c]) => s + q * c, 0) };
+}
+async function stripe(chemin, corps) {                   // API Stripe en direct (pas de SDK) ; corps = champs du formulaire
+  const r = await fetch('https://api.stripe.com/v1/' + chemin, { method: corps ? 'POST' : 'GET', signal: AbortSignal.timeout(10000),
+    headers: { Authorization: 'Bearer ' + process.env.STRIPE_SECRET_KEY }, body: corps && new URLSearchParams(corps) });
+  const j = await r.json(); if (!r.ok) throw new Error('Stripe ' + r.status + ' ' + j.error?.message); return j;
+}
+async function verifierPaiement(c) {                     // sans webhook : on demande a Stripe si la session est payee
+  if (c.statut !== 'attente' || !process.env.STRIPE_SECRET_KEY || c.stripe.startsWith('simu_')) return;
+  const s = await stripe('checkout/sessions/' + c.stripe);
+  if (s.payment_status === 'paid' && s.client_reference_id === c.id) { c.statut = 'payee'; c.paiement = s.payment_intent; c.payee = Date.now(); sauver(); }
+}
+const vueCommande = c => ({ id: c.id, cree: c.cree, kit: c.kit, presoude: c.presoude, total: c.total, relais: c.relais, statut: c.statut, expediee: c.expediee });
+function purgerBoutique() {                              // durees de conservation annoncees sur la page
+  const now = Date.now();
+  db.commandes = db.commandes.filter(c => c.statut !== 'attente' || now - c.cree < 7 * JOUR);   // paiement jamais fait
+  for (const c of db.commandes) if (c.expediee && now - c.expediee > 365 * JOUR) { delete c.compte; delete c.relais; }   // 1 an apres l'envoi : anonyme
+  db.clients = db.clients.filter(c => now - c.vu < 3 * 365 * JOUR);                     // compte inutilise 3 ans : supprime
+  sauver();
+}
+function clientDe(req) {
+  const s = db.sessions[empreinte(req.headers['x-session'] || '')], c = s?.compte && s.exp > Date.now() && db.clients.find(c => c.id === s.compte);
+  if (c) c.vu = Date.now();
+  return c || null;
+}
+
 // ---------- stats d'un niveau ----------
 function stats(id) {
   const ps = db.parties.filter(p => p.niveau === id);
@@ -163,7 +203,9 @@ function statsQuestion(id) {
   return { reponses: rs.length, justes: rs.filter(r => r.ok).length };
 }
 function espaceAnimateur(email) {
-  return { email, groupes: db.groupes.filter(g => g.email === email).map(g => ({
+  const test = (process.env.STRIPE_SECRET_KEY || '').startsWith('sk_test') ? 'test/' : '';
+  return { email, commandes: ADMINS.includes(email) ? db.commandes.filter(c => c.statut !== 'attente').sort((a, b) => b.cree - a.cree)   // admin boutique
+    .map(c => ({ ...vueCommande(c), stripe: c.paiement ? `https://dashboard.stripe.com/${test}payments/${c.paiement}` : '' })) : undefined, groupes: db.groupes.filter(g => g.email === email).map(g => ({
     code: g.code, nom: g.nom, matiere: g.matiere || '', prive: !!g.prive, age: g.age || 'libre', questions: (g.questions || []).map(q => ({ ...q, stats: statsQuestion(q.id) })),
     joueurs: db.joueurs.filter(j => j.groupe === g.code).map(j => ({ pseudo: j.pseudo, cree: j.cree })),
     niveaux: db.niveaux.filter(n => n.groupe === g.code).map(n => ({ id: n.id, titre: n.titre, pseudo: n.pseudo, cree: n.cree, masque: !!n.masque, parties: stats(n.id).parties })),
@@ -431,7 +473,10 @@ const serveur = http.createServer(async (req, res) => {
     return n ? repondre(res, 200, { ...n, stats: { ...stats(n.id), multi: statsCourses(n.id) } }) : repondre(res, 404, { erreur: 'Aucun jeu avec ce code : vérifie les 6 caractères.' });
   }
   if (req.method === 'GET' && url === '/api/animateur') {
-    const email = animateurDe(req); return email ? repondre(res, 200, espaceAnimateur(email)) : repondre(res, 401, { erreur: 'non connecté' });
+    const email = animateurDe(req); if (!email) return repondre(res, 401, { erreur: 'non connecté' });
+    // ponytail: paiements en attente reverifies a l'ouverture de l'admin (client parti avant le retour) ; webhook Stripe si le volume grossit
+    if (ADMINS.includes(email)) await Promise.all(db.commandes.map(c => verifierPaiement(c).catch(e => console.error(e.message))));
+    return repondre(res, 200, espaceAnimateur(email));
   }
 
   if (req.method !== 'POST' || !url.startsWith('/api/')) return repondre(res, 404, { erreur: 'introuvable' });
@@ -516,9 +561,88 @@ const serveur = http.createServer(async (req, res) => {
       const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });
       g.questions = questionsValides(b.questions, g.questions || []); sauver(); return repondre(res, 200, espaceAnimateur(email));
     }
+    if (url === '/api/animateur/expedier') {          // admin boutique : colis deposé au relais
+      const c = ADMINS.includes(email) && db.commandes.find(c => c.id === b.id && c.statut === 'payee');
+      if (!c) return repondre(res, 404, { erreur: 'commande introuvable' });
+      c.statut = 'expediee'; c.expediee = Date.now(); sauver(); return repondre(res, 200, espaceAnimateur(email));
+    }
     if (url === '/api/animateur/liberer') {           // l'enfant a perdu son secret (autre ordinateur) : il pourra reprendre son pseudo
       const j = db.joueurs.find(j => j.pseudo === b.pseudo); if (!j || !groupe(j.groupe)) return repondre(res, 404, { erreur: 'joueur introuvable' });
       db.joueurs = db.joueurs.filter(x => x !== j); sauver(); return repondre(res, 200, espaceAnimateur(email));
+    }
+    return repondre(res, 404, { erreur: 'introuvable' });
+  }
+
+  // ----- boutique : compte acheteur par lien mail (l'adresse sert a envoyer le lien, puis est oubliee) -----
+  if (url.startsWith('/api/client/') && !SECRET) return repondre(res, 503, { erreur: 'Boutique non configurée.' });
+  if (url === '/api/client/lien') {
+    const email = String(b.email || '').trim().toLowerCase();
+    if (!MAIL.test(email)) return repondre(res, 400, { erreur: 'Adresse mail invalide.' });
+    const compte = compteDe(email);
+    if (Date.now() - (dernierMail.get(compte) || 0) < 60000) return repondre(res, 429, { erreur: 'Un lien vient d\'être envoyé : regardez vos mails (et les indésirables).' });
+    if (tropDeLiens(ipDe(req))) return repondre(res, 429, { erreur: 'Trop de demandes de lien : réessayez dans une heure.' });
+    dernierMail.set(compte, Date.now());
+    const jeton = aleatoire(24);
+    for (const [k, l] of Object.entries(db.liens)) if (l.exp < Date.now()) delete db.liens[k];
+    db.liens[empreinte(jeton)] = { compte, exp: Date.now() + 30 * 60000 }; sauver();
+    const lien = `${PUBLIC_URL}/?client=${jeton}`;
+    try {
+      await envoyerMail(email, 'Votre lien de connexion à la boutique Brique',
+        `<p>Bonjour,</p><p>Pour retrouver votre panier et vos commandes Brique, cliquez ici (valable 30 minutes) :</p><p><a href="${lien}">${lien}</a></p>
+         <p>Nous ne gardons pas votre adresse mail : elle a servi à envoyer ce message, c'est tout.</p><p>Si vous n'avez rien demandé, ignorez ce mail.</p>`);
+    } catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'Le mail n\'a pas pu partir, réessayez plus tard.' }); }
+    return repondre(res, 200, { ok: true });
+  }
+  if (url === '/api/client/connexion') {
+    const k = empreinte(b.jeton || ''), l = db.liens[k]; delete db.liens[k];
+    if (!l?.compte || l.exp < Date.now()) { sauver(); return repondre(res, 400, { erreur: 'Lien expiré ou déjà utilisé : demandez-en un nouveau.' }); }
+    if (!db.clients.some(c => c.id === l.compte)) db.clients.push({ id: l.compte, cree: Date.now(), vu: Date.now() });
+    const session = aleatoire(24);
+    for (const [k2, s] of Object.entries(db.sessions)) if (s.exp < Date.now()) delete db.sessions[k2];
+    db.sessions[empreinte(session)] = { compte: l.compte, exp: Date.now() + 30 * JOUR }; sauver();
+    return repondre(res, 200, { session });
+  }
+  if (url.startsWith('/api/client')) {                // tout le reste demande une session acheteur
+    const client = clientDe(req); if (!client) return repondre(res, 401, { erreur: 'Reconnectez-vous.' });
+    const mes = () => db.commandes.filter(c => c.compte === client.id).sort((a, b) => b.cree - a.cree).map(vueCommande);
+    if (url === '/api/client') {                      // mes commandes (on revérifie celles en attente de paiement)
+      await Promise.all(db.commandes.filter(c => c.compte === client.id).map(c => verifierPaiement(c).catch(e => console.error(e.message))));
+      return repondre(res, 200, { commandes: mes() });
+    }
+    if (url === '/api/client/commande') {             // panier + relais -> session de paiement Stripe ; le prix est recalcule ici
+      const d = devis(b.panier), r = b.relais;
+      if (!d) return repondre(res, 400, { erreur: 'Panier vide.' });
+      if (!/^\d{6}$/.test(r?.id || '') || r.pays !== 'FR') return repondre(res, 400, { erreur: 'Choisissez un point relais.' });
+      const c = { id: aleatoire(8), compte: client.id, cree: Date.now(), kit: d.kit, presoude: d.presoude, total: d.total, statut: 'attente',
+                  relais: { id: r.id, nom: propre(r.nom, 60), cp: propre(r.cp, 10), ville: propre(r.ville, 60) } };
+      if (process.env.STRIPE_SECRET_KEY) {
+        const champs = { mode: 'payment', locale: 'fr', client_reference_id: c.id, 'metadata[relais]': r.id,
+          success_url: `${PUBLIC_URL}/?paye={CHECKOUT_SESSION_ID}`, cancel_url: `${PUBLIC_URL}/?boutique=annule`,
+          'phone_number_collection[enabled]': 'true',                 // le relais previent par SMS ; reste chez Stripe
+          'custom_fields[0][key]': 'nom', 'custom_fields[0][type]': 'text', 'custom_fields[0][label][type]': 'custom',
+          'custom_fields[0][label][custom]': 'Nom pour retirer le colis' };
+        d.lignes.forEach(([nom, q, cts], i) => Object.assign(champs, { [`line_items[${i}][quantity]`]: q, [`line_items[${i}][price_data][currency]`]: 'eur',
+          [`line_items[${i}][price_data][unit_amount]`]: cts, [`line_items[${i}][price_data][product_data][name]`]: nom }));
+        try { const s = await stripe('checkout/sessions', champs); c.stripe = s.id; db.commandes.push(c); sauver(); return repondre(res, 200, { url: s.url }); }
+        catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'Le paiement est indisponible, réessayez plus tard.' }); }
+      }
+      if (!LOCAL) return repondre(res, 503, { erreur: 'Paiement non configuré.' });
+      c.stripe = 'simu_' + c.id; db.commandes.push(c); sauver();   // en local sans cle Stripe : paiement simule
+      return repondre(res, 200, { url: `${PUBLIC_URL}/?paye=${c.stripe}` });
+    }
+    if (url === '/api/client/paye') {                 // retour de Stripe : on verifie aupres de Stripe, jamais sur la seule parole de la page
+      const c = db.commandes.find(c => c.compte === client.id && c.stripe === b.id);
+      if (!c) return repondre(res, 404, { erreur: 'Commande introuvable.' });
+      if (c.stripe.startsWith('simu_') && LOCAL && !process.env.STRIPE_SECRET_KEY && c.statut === 'attente') { c.statut = 'payee'; c.payee = Date.now(); sauver(); }
+      try { await verifierPaiement(c); } catch (e) { console.error(e.message); }
+      return repondre(res, 200, { statut: c.statut, commandes: mes() });
+    }
+    if (url === '/api/client/deconnexion') { delete db.sessions[empreinte(req.headers['x-session'])]; sauver(); return repondre(res, 200, { ok: true }); }
+    if (url === '/api/client/supprimer') {            // droit a l'effacement : compte et sessions supprimes, commandes detachees
+      db.clients = db.clients.filter(c => c !== client);
+      for (const [k, s] of Object.entries(db.sessions)) if (s.compte === client.id) delete db.sessions[k];
+      for (const c of db.commandes) if (c.compte === client.id) delete c.compte;
+      sauver(); return repondre(res, 200, { ok: true });
     }
     return repondre(res, 404, { erreur: 'introuvable' });
   }
@@ -586,5 +710,6 @@ const serveur = http.createServer(async (req, res) => {
 charger().then(d => {
   db = { ...VIDE, ...d };
   for (const n of db.niveaux) if (!n.code) n.code = codeJeu();   // jeux publies avant les codes de partage
+  purgerBoutique(); setInterval(purgerBoutique, JOUR);
   serveur.listen(PORT, () => console.log(`Brique sur ${PUBLIC_URL} (données : ${pool ? 'MySQL ' + process.env.DB_HOST : FICHIER})`));
 }).catch(e => { console.error('Impossible de charger les données :', e.message); process.exit(1); });

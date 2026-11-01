@@ -40,6 +40,9 @@ Sans variables, tout marche en local : données dans `data.json`, liens de conne
 | `DB_CA` | certificat de la base (connexion chiffrée **et** vérifiée) |
 | `BREVO_API_KEY`, `MAIL_FROM` | envoi des liens de connexion animateur (désactiver le blocage d'IP dans Brevo) |
 | `MISTRAL_API_KEY` (`MISTRAL_MODEL`) | vraie IA ; sans elle, mots-clés |
+| `STRIPE_SECRET_KEY` | boutique : paiement Stripe Checkout (`sk_test_…` pour tester) ; sans clé en local, paiement simulé |
+| `BOUTIQUE_SECRET` | boutique : clé du HMAC des e-mails acheteurs (longue, aléatoire, **ne jamais la changer** : sinon les comptes sont perdus) ; obligatoire en ligne |
+| `ADMIN_EMAILS` | boutique : e-mails animateurs qui voient les commandes (séparés par des virgules) |
 | `PUBLIC_URL` | adresse des liens envoyés par mail (sur Render, prise automatiquement) |
 | `DATA` | chemin du fichier de données quand il n'y a pas de MySQL |
 

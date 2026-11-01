@@ -202,6 +202,11 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .big:disabled{opacity:.5;cursor:wait}
 .sec{border:2px solid var(--line);background:none;color:var(--txt);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer}
 .sec:hover{border-color:var(--acc)}
+.fiche-lue{margin:6px 0 0;padding:8px 12px 8px 26px;border-radius:12px;background:var(--panel2);font:13px/1.55 var(--mono)}
+.fiche-lue:empty{display:none}
+.fiche-manque{border-left:3px solid var(--ko)}
+.fiche-manque .ko{color:var(--ko);font-weight:700}
+.fiche-expert textarea{width:100%;min-height:220px;font:12px/1.4 var(--mono);margin:6px 0}
 .compris{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--panel2);font:13px/1.5 var(--mono);min-height:40px;border-left:3px solid var(--acc)}   /* réponse de l'IA, façon console */
 .compris::before{content:"IA › ";font-weight:800;color:var(--acc)}
 .compris b{color:var(--ok)}
@@ -993,6 +998,16 @@ body{overflow-x:clip}                                           /* la bande 100v
     <h2 id="titreDemande">Je décris mon jeu <span class="ref" style="margin-left:6px">l'IA le construit</span></h2>
 
     <h3>Quel jeu ?</h3><div class="chips" id="genreChoix"></div>
+    <div data-jeu="fiche">
+      <h3>Je pars de…</h3><div class="chips" data-k="depart"></div>
+      <h3>📋 Ma fiche, telle que la console la lit</h3>
+      <ul id="ficheLue" class="fiche-lue"></ul>
+      <ul id="ficheManque" class="fiche-lue fiche-manque"></ul>
+      <details class="fiche-expert"><summary>🧑‍💻 Mode expert : écrire la fiche moi-même</summary>
+        <textarea id="ficheJson" spellcheck="false"></textarea>
+        <button id="ficheAppliquer" class="sec">✔ Appliquer ma fiche</button> <span id="ficheMsg" class="aide"></span>
+      </details>
+    </div>
     <div id="guide">
       <div data-jeu="plateforme">
         <h3>Le monde</h3><div class="chips" data-k="theme"></div>
@@ -1030,6 +1045,17 @@ body{overflow-x:clip}                                           /* la bande 100v
         <div>taille : 6 à 12 cases</div><div>relief : plat, collines, montagnes</div><div>trous</div><div>pics, pics qui sortent, pics cachés</div>
         <div>étoiles</div><div>un drapeau au fond</div><div>difficulté</div><div>vies, chrono</div>
       </div>
+      <div data-jeu="fiche" style="margin-bottom:10px">
+        <h3>Ce que la fiche sait faire</h3>
+        <div class="cat"><div><b>boutons</b> G, D, P3 : aller à gauche / droite / en haut / en bas, sauter, tirer, tourner, avancer d'une case</div>
+          <div><b>héros</b> : vitesse, élan, hauteur du saut, sauts en l'air, glisser et sauter aux murs, vies</div>
+          <div><b>monde</b> : gravité (0 = rien ne tombe), bord (mur, vide, boucle), caméra (suit, fixe)</div>
+          <div><b>briques</b> : solide, mortel, glisse, rebond, disparaît, se ramasse, arrivée</div>
+          <div><b>objets</b> : pic, scie, bloc, ennemi, projectile ; fixe, aller-retour, boucle, patrouille, tombe, suit ; démarre quand on approche ; caché</div>
+          <div><b>contact</b> : perdre, rebondir, ramasser, une vie en moins, rien (un bloc qui bouge = plateforme) ; écrasé par-dessus</div>
+          <div><b>règles</b> : quand on touche une lettre / tout est ramassé / tout est écrasé / au bout de … s / à … points, alors gagner, perdre, ouvrir, fermer, une vie en plus, un message, plus vite</div>
+          <div><b>but</b> : arriver, tout ramasser, tout écraser, survivre … s, ou les règles</div></div>
+      </div>
       <div data-jeu="briques invaders" class="cat" style="margin-bottom:10px">
         <div>dessin : plein, pyramide, damier, cadre, au hasard</div><div>vitesse (lent / vite)</div><div>difficulté</div><div>vies</div>
         <div data-jeu="briques">briques d'acier</div><div data-jeu="briques">sans bonus</div><div data-jeu="invaders">nombre de vagues</div>
@@ -1054,7 +1080,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <button id="go" class="big">✨ Créer mon jeu</button>
     <div id="compris" class="compris">Choisis, écris une phrase, puis appuie sur « Créer ».</div>
 
-    <div data-jeu="plateforme invaders">
+    <div data-jeu="plateforme invaders fiche">
     <h3>🎨 Mes icônes (pas obligé) : choisis quoi remplacer</h3>
     <div id="icSlots" class="chips"></div>
     <div class="icRow"><input id="icRech" class="pseudo" placeholder="Cherche en anglais : cat, dragon, pizza…"><button id="icGo" class="sec">🔍</button></div>
@@ -1063,14 +1089,14 @@ body{overflow-x:clip}                                           /* la bande 100v
       Tu peux aussi la glisser ici ou <label>choisir un fichier<input id="icFile" type="file" accept="image/*" hidden></label>.</div>
     </div>
 
-    <h3 data-jeu="plateforme briques invaders iso">🌈 Mes couleurs (pas obligé)</h3>
-    <div class="palette" data-jeu="plateforme briques invaders iso"><span id="palCielNom">Ciel</span><div id="palCiel" class="chips"></div></div>
-    <div class="palette" data-jeu="plateforme iso"><span>Plateformes</span><div id="palSol" class="chips"></div></div>
+    <h3 data-jeu="plateforme briques invaders iso fiche">🌈 Mes couleurs (pas obligé)</h3>
+    <div class="palette" data-jeu="plateforme briques invaders iso fiche"><span id="palCielNom">Ciel</span><div id="palCiel" class="chips"></div></div>
+    <div class="palette" data-jeu="plateforme iso fiche"><span>Plateformes</span><div id="palSol" class="chips"></div></div>
 
     <h3>⚙️ Mes règles (pas obligé)</h3>
     <div class="palette" data-jeu="plateforme iso"><span>But</span><div id="rgObjectif" class="chips"><button class="chip on" data-v="arriver">🏁 Arriver</button><button class="chip" data-v="tout">⭐ Tout ramasser d'abord</button></div></div>
     <div class="palette" data-jeu="plateforme iso"><span>Chrono</span><select id="rgChrono" class="pseudo regle"><option value="0">Sans chrono</option><option>30</option><option>45</option><option>60</option><option>90</option><option>120</option></select></div>
-    <div class="palette"><span>Vies</span><select id="rgVies" class="pseudo regle"><option value="0">On recommence à chaque chute</option><option value="3">3 vies</option><option value="5">5 vies</option><option value="9">9 vies</option></select></div>
+    <div class="palette" data-jeu="plateforme cote briques invaders iso"><span>Vies</span><select id="rgVies" class="pseudo regle"><option value="0">On recommence à chaque chute</option><option value="3">3 vies</option><option value="5">5 vies</option><option value="9">9 vies</option></select></div>
     <div class="palette"><span>Victoire</span><input id="rgMsg" class="pseudo regle" maxlength="40" placeholder="Message quand on gagne"></div>
   </section>
 
@@ -1136,6 +1162,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <div class="pied-bas"><span>© 2026 Brique · Jonathan Moriot et Anti</span><a id="piedSite" href="/">brique.studioeya.com</a></div>
 </footer>
 
+<script src="fiche.js"></script>   <!-- la fiche de jeu (FICHE-JEU.md) : même code que server.js -->
 <script>
 // ---------- Constantes reprises du firmware (c3-tft-meatboy.ino) ----------
 const TILE = 16, COLS = 20, SW = 320, SH = 240;
@@ -1159,9 +1186,10 @@ const CHOIX = {
   taille: [['6','Petit'],['8','Moyen'],['10','Grand'],['12','Géant']],   // isométrique
   relief: [['plat','Plat'],['collines','Collines'],['montagnes','Montagnes']],
   vide: [['0','Aucun'],['1','Quelques-uns'],['3','Beaucoup']],
+  depart: [['vide','⬜ Un jeu vide'],['plateforme','🧗 Copie de la plateforme'],['cote','🏃 Copie du jeu de côté'],['iso','🧊 Copie de l\'isométrique']],   // fiche
 };
 // les jeux que la console sait faire tourner avec des réglages (firmware : bqMiniParse / briqueParse)
-const GENRES = [['plateforme','🧗 Plateforme (on grimpe)'],['cote','🏃 De côté (on avance)'],['briques','🧱 Casse-briques'],['invaders','👾 Invaders'],['iso','🧊 Isométrique (en 3D)']];
+const GENRES = [['plateforme','🧗 Plateforme (on grimpe)'],['cote','🏃 De côté (on avance)'],['briques','🧱 Casse-briques'],['invaders','👾 Invaders'],['iso','🧊 Isométrique (en 3D)'],['fiche','📋 Ma fiche (j\'invente les règles)']];
 const THEMES = {
   foret:  { ciel:['#9be7ff','#e8fff0'], sol:'#3f8f3a', bord:'#2a5e27', glace:'#b8f0ff' },
   lave:   { ciel:['#3a0b0b','#a8361a'], sol:'#4a3b3b', bord:'#ff6a00', glace:'#ffd0a0' },
@@ -1171,17 +1199,18 @@ const THEMES = {
 };
 const HEROS = { cube:'#e8322b', ninja:'#222233', robot:'#9aa4b0', chat:'#ff9933' };
 
-let mode = 'guide', genre = 'plateforme', choix = { theme:'foret', hero:'cube', danger:'pic', forme:'mixte', motif:'pleine', acier:'non', vagues:'3', ecrans:'2', ecransL:'2', ecransH:'1', plafond:'oui', trous:'1', plateformes:'non', taille:'8', relief:'collines', vide:'1' };
+let mode = 'guide', genre = 'plateforme', choix = { theme:'foret', hero:'cube', danger:'pic', forme:'mixte', motif:'pleine', acier:'non', vagues:'3', ecrans:'2', ecransL:'2', ecransH:'1', plafond:'oui', trous:'1', plateformes:'non', taille:'8', relief:'collines', vide:'1', depart:'vide' };
 for (const [v, lab] of GENRES) {
   const b = document.createElement('button'); b.className = 'chip'; b.dataset.v = v; b.textContent = lab;
-  b.onclick = () => { if (genre !== v) { params = null; setGenre(v); } };
+  b.onclick = () => { if (genre !== v) { params = null; setGenre(v); if (v === 'fiche') { if (!fiche) ficheDepart(choix.depart); ficheAfficher(); } } };
   genreChoix.appendChild(b);
 }
 function setGenre(g) {                                  // n'affiche que ce qui sert au jeu choisi
   genre = g;
   genreChoix.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.v === g));
   document.querySelectorAll('[data-jeu]').forEach(e => e.classList.toggle('hide', !e.dataset.jeu.split(' ').includes(g)));
-  palCielNom.textContent = g === 'plateforme' ? 'Ciel' : 'Fond';
+  palCielNom.textContent = g === 'plateforme' || g === 'fiche' ? 'Ciel' : 'Fond';
+  if (g === 'fiche') demande.placeholder = 'Ex : « D fait sauter », « une scie qui va et vient », « quand je touche la clé la porte s\'ouvre »'; else if (typeof mGuide !== 'undefined') setMode(mode);
   motifTitre.textContent = g === 'briques' ? 'Le dessin des briques' : 'La formation des envahisseurs';
   majIcones();
 }
@@ -1190,7 +1219,7 @@ for (const k in CHOIX) {
   for (const [v, lab] of CHOIX[k]) {
     const b = document.createElement('button');
     b.className = 'chip' + (choix[k] === v ? ' on' : ''); b.textContent = lab;
-    b.onclick = () => { choix[k] = v; box.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); };
+    b.onclick = () => { choix[k] = v; box.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); if (k === 'depart') changerDepart(v); };
     box.appendChild(b);
   }
 }
@@ -1509,9 +1538,10 @@ let jeu = null;
 function charger(niv) {
   cv.width = SW; cv.style.width = cv.style.maxWidth = '';
   if (estMini(niv.params)) { jeu = { niv, mini: true }; cv.height = SH; dessiner(); return; }
-  if (niv.params?.jeu === 'iso') { jeu = { niv, iso: true }; cv.height = SH; dessiner(); return; }
-  const rows = niv.rows.map(r => r.split(''));
-  const j = { niv, rows, saws:[], stars:[], ennemis:[] };
+  const vue = niv.fiche ? Fiche.apercu(niv) : niv;     // fiche : ses lettres traduites en briques du moteur
+  if (vue.params?.jeu === 'iso') { jeu = { niv, vue, iso: true }; cv.height = SH; dessiner(); return; }
+  const rows = vue.rows.map(r => r.split(''));
+  const j = { niv, vue, rows, saws:[], stars:[], ennemis:[] };
   rows.forEach((r, y) => r.forEach((c, x) => {
     if (c === 'S') { j.sx = x * TILE + 2; j.sy = y * TILE + TILE - PH; r[x] = '.'; }
     if (c === 'G') { j.gx = x; j.gy = y; r[x] = '.'; }
@@ -1540,14 +1570,15 @@ function dessiner() {
     ctx.fillText('puis appuie sur « Créer »', SW / 2, SH / 2 + 14); return;
   }
   if (j.mini) return dessinerMini(j.niv);
-  if (j.iso) return dessinerIso(j.niv);
-  const coul = j.niv.params.couleurs || {}, base = THEMES[j.niv.params.theme] || THEMES.foret, cam = 0, H = cv.height;
+  const nv = j.vue || j.niv;
+  if (j.iso) return dessinerIso(nv);
+  const coul = nv.params.couleurs || {}, base = THEMES[nv.params.theme] || THEMES.foret, cam = 0, H = cv.height;
   // couleurs choisies : comme la console (ciel -> vers le blanc en bas, bord du sol = sol assombri)
   const melange = (h, k) => '#' + [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)).map(v => Math.round(k > 0 ? v + (255 - v) * k : v * -k).toString(16).padStart(2, '0')).join('');
   const th = { ...base, ...(coul.ciel ? { ciel: [coul.ciel, melange(coul.ciel, .55)] } : {}), ...(coul.sol ? { sol: coul.sol, bord: melange(coul.sol, -.6) } : {}) };
   const grd = ctx.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, th.ciel[0]); grd.addColorStop(1, th.ciel[1]);
   ctx.fillStyle = grd; ctx.fillRect(0, 0, cv.width, H);
-  const ic = j.niv.icones || {};
+  const ic = nv.icones || {};
   if (ic.d) { ctx.imageSmoothingEnabled = false; for (let wy = 48; wy < H; wy += 112) ctx.drawImage(icImg(ic.d), ((wy / 112) & 1) ? 214 : 74, wy, 32, 32); }   // décor dans le ciel (comme la console)
   const y0 = 0, y1 = j.rows.length - 1;
   for (let y = y0; y <= y1; y++) for (let x = 0; x < j.rows[y].length; x++) {
@@ -1571,7 +1602,7 @@ function dessiner() {
   for (const s of j.stars) ic.e ? ctx.drawImage(icImg(ic.e), s.x * TILE, s.y * TILE - cam) : etoile(s.x * TILE + 8, s.y * TILE + 8 - cam);
   // arrivée
   const gx = j.gx * TILE, gy = j.gy * TILE - cam;
-  if (j.niv.params.jeu === 'cote') { ctx.fillStyle = '#a8693c'; ctx.fillRect(gx, gy - 14, 16, 30); ctx.fillStyle = '#6e4422'; ctx.fillRect(gx + 7, gy - 12, 2, 27); ctx.fillStyle = '#ffd400'; ctx.fillRect(gx + 11, gy + 1, 2, 2); }   // la porte
+  if (nv.params.jeu === 'cote') { ctx.fillStyle = '#a8693c'; ctx.fillRect(gx, gy - 14, 16, 30); ctx.fillStyle = '#6e4422'; ctx.fillRect(gx + 7, gy - 12, 2, 27); ctx.fillStyle = '#ffd400'; ctx.fillRect(gx + 11, gy + 1, 2, 2); }   // la porte
   else {
   ctx.fillStyle = '#eee'; ctx.fillRect(gx + 3, gy - 16, 2, 32);
   if (ic.g) ctx.drawImage(icImg(ic.g), gx + 5, gy - 20); else { ctx.fillStyle = '#4ade80'; ctx.fillRect(gx + 5, gy - 16, 10, 8); }
@@ -1582,7 +1613,7 @@ function dessiner() {
     ctx.fill(); ctx.fillStyle = '#555'; ctx.fillRect(s.x - 2, Y - 2, 4, 4);
   }
   // héros
-  const hx = j.sx, hy = j.sy - cam, hero = j.niv.params.hero, vx = 1;   // héros posé au départ
+  const hx = j.sx, hy = j.sy - cam, hero = nv.params.hero || 'cube', vx = 1;   // héros posé au départ
   if (ic.h) {                                           // héros choisi : 16x16 ancré aux pieds, retourné vers la gauche (comme la console)
     if (vx < 0) { ctx.save(); ctx.translate(2 * hx + PW, 0); ctx.scale(-1, 1); }
     ctx.drawImage(icImg(ic.h), hx + PW / 2 - 8, hy + PH - 16);
@@ -1661,6 +1692,7 @@ let historique = [], params = null;
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c]);
 
 go.onclick = async () => {
+  if (genre === 'fiche') return ficheGo();
   let texte = demande.value.trim(), base = params ?? structuredClone(DEFAUT), avant = [];
   base.jeu = genre;
   const lab = k => CHOIX[k].find(c => c[0] === choix[k])[1];
@@ -1723,8 +1755,60 @@ function rendreHist() {
 
 nouveau.onclick = () => {
   if (historique.length && !confirm('Tout recommencer ? L\'historique sera effacé.')) return;
-  params = null; jeu = null; historique = []; cv.height = 240; dessiner(); capot.textContent = ''; go.textContent = '✨ Créer mon jeu';
+  params = null; jeu = null; historique = []; fiche = null; ficheLue.innerHTML = ficheManque.innerHTML = ''; if (genre === 'fiche') { ficheDepart(choix.depart); ficheAfficher(); } cv.height = 240; dessiner(); capot.textContent = ''; go.textContent = '✨ Créer mon jeu';
   hist.innerHTML = '<p class="vide">Tes essais apparaîtront ici.</p>'; compris.textContent = 'Choisis, écris une phrase, puis appuie sur « Créer ».';
+};
+// ---------- Ma fiche (FICHE-JEU.md) : l'enfant décrit tout son jeu ; l'IA ne renvoie que des changements, vérifiés par le serveur ----------
+let fiche = null;                                       // la fiche en cours (avec rows), toujours nettoyée par Fiche.nettoyer
+function ficheDepart(nom) {                             // jeu vide, ou copie d'un jeu de la console avec une grille toute neuve
+  const d = structuredClone(Fiche.DEPARTS[nom] || Fiche.DEPARTS.vide), p = { ...structuredClone(DEFAUT), seed: (Math.random() * 1e9) | 0 };
+  if (nom === 'plateforme') d.rows = generer({ ...p, hauteur: 30, ennemis: 2, briques: { pic: true, scie: true, ressort: true, glace: true, fragile: true, cache: true } });
+  if (nom === 'cote') d.rows = genererCote({ ...p, jeu: 'cote', ennemis: 2, briques: { ...p.briques, cache: true } });
+  if (nom === 'iso') { const q = { ...p, jeu: 'iso' }; d.rows = genererIso(q); d.haut = q.haut; }
+  fiche = Fiche.nettoyer(d).fiche;
+}
+function changerDepart(nom) {
+  if (historique.length && !confirm('Repartir de zéro avec ce point de départ ? Ta fiche actuelle sera remplacée.')) return;
+  ficheDepart(nom); const niv = ficheAfficher();
+  historique.push({ demande: 'Départ : ' + CHOIX.depart.find(c => c[0] === nom)[1], vu: [], niv, duree: 0, corr: '' }); rendreHist();
+  compris.textContent = 'Voilà ta fiche. Lis-la, puis dis ce que tu veux changer.';
+}
+const ficheNiv = () => ({ format: 'brique-v1', params: { jeu: 'fiche', theme: choix.theme, hero: choix.hero, couleurs: { ...couleurs }, message: rgMsg.value.trim().slice(0, 40) },
+                          rows: [...fiche.rows], fiche: Fiche.ligne(structuredClone(fiche)), icones: { ...icones } });
+function ficheLire() {                                  // la fiche en français + ce qui manque
+  const lu = Fiche.lire(fiche);
+  ficheLue.innerHTML = lu.phrases.map(p => `<li>${esc(p)}</li>`).join('');
+  ficheManque.innerHTML = [...lu.bloquants.map(b => `<li class="ko">⛔ ${esc(b)}</li>`), ...lu.manques.map(m => `<li>❓ ${esc(m)}</li>`)].join('');
+  ficheJson.value = JSON.stringify(Fiche.ligne(fiche), null, 1) .replace(/\n\s+(?=[\]}])/g, ' ') + '\n' + JSON.stringify({ rows: fiche.rows }, null, 0).replace(/","/g, '",\n "');
+}
+function ficheAfficher() {
+  ficheLire(); const niv = ficheNiv(); charger(niv);
+  capot.textContent = JSON.stringify({ rows: niv.rows, ...niv.fiche }, null, 1).replace(/\n\s+(?=[\]}])/g, ' ');
+  return niv;
+}
+async function ficheGo() {
+  const texte = demande.value.trim(); if (!fiche) ficheDepart(choix.depart);
+  const t0 = performance.now(); let ia = null, note = '';
+  if (texte && EN_LIGNE) {
+    go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
+    try { ia = await api('api/ia', { texte, fiche, ...ident() }); } catch (e) { note = `L'IA ne répond pas (${e.message}) : change ta fiche toi-même dans le « Mode expert ».`; }
+    go.disabled = false;
+  } else if (texte) note = 'Sans le serveur, pas d\'IA : change ta fiche toi-même dans le « Mode expert ».';
+  if (ia) fiche = ia.fiche;
+  const niv = ficheAfficher(), vu = ia?.vu || [];
+  compris.innerHTML = !texte ? 'Voilà ta fiche. Dis ce que tu veux changer.' : ia
+    ? `🤖 L'IA a changé : <b>${vu.map(esc).join(' ') || 'rien'}</b>${ia.refus?.length ? '<br>🚫 Refusé : ' + ia.refus.map(esc).join(', ') : ''}${ia.remarque ? '<br>' + esc(ia.remarque) : ''}${ia.souhaits?.length ? '<br>💡 Noté dans les idées des joueurs : ' + ia.souhaits.map(esc).join(', ') : ''}`
+    : esc(note || 'L\'IA ne répond pas.');
+  historique.push({ demande: texte || '(sans phrase)', vu, niv, duree: (performance.now() - t0) / 1000, corr: '' }); rendreHist();
+  go.textContent = '✨ Changer ma fiche'; demande.value = ''; envoi.textContent = '';
+}
+ficheAppliquer.onclick = () => {                         // mode expert : la fiche écrite à la main (même vérification que l'IA)
+  let f; try { const [haut, bas] = ficheJson.value.split(/\n(?=\{"rows")/); f = { ...JSON.parse(haut), ...(bas ? JSON.parse(bas) : { rows: fiche?.rows || [] }) }; }
+  catch (e) { ficheMsg.innerHTML = `<span style="color:var(--ko)">Le JSON est mal écrit : ${esc(e.message)}</span>`; return; }
+  const { fiche: propre, refus } = Fiche.nettoyer(f); fiche = propre;
+  const niv = ficheAfficher();
+  ficheMsg.innerHTML = refus.length ? `<span style="color:var(--ko)">🚫 Enlevé : ${refus.map(esc).join(', ')}</span>` : '<span style="color:var(--ok)">✔ Fiche appliquée</span>';
+  historique.push({ demande: '(mode expert)', vu: refus.map(r => '🚫 ' + r), niv, duree: 0, corr: '' }); rendreHist();
 };
 // ---------- Icônes perso (héros, étoile, arrivée), trouvées sur le web ----------
 // 16x16 ; chaque pixel = 3 chiffres hexa "rgb" (4 bits), "---" = transparent. Même rendu ici et sur la console.
@@ -1863,6 +1947,8 @@ let port = null, attente = null, nivConsole = null;
 const dire = (txt, ok) => envoi.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(txt)}</span>`;
 envoyer.onclick = async () => {
   if (!jeu) return dire('Crée un jeu d\'abord !');
+  const pasPret = jeu.niv.fiche && Fiche.lire({ ...jeu.niv.fiche, rows: jeu.niv.rows }).bloquants[0];
+  if (pasPret) return dire('Ta fiche n\'est pas prête : ' + pasPret);
   if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.');
   try {
     if (!port) { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter(); await syncCourses(); await verifierVersion(); }
@@ -1884,7 +1970,8 @@ envoyer.onclick = async () => {
     // code de partage (jeu publié) : la console s'en sert pour retrouver la même version en course à plusieurs
     const l = await ligneSerie({ rows: jeu.niv.rows, titre: ascii(jeu.niv.titre || titreIn.value), pseudo: jeu.niv.pseudo || pseudo(),
                                  ...(jeu.niv.code ? { code: jeu.niv.code } : {}), format: jeu.niv.format,
-                                 params: { ...jeu.niv.params, message: ascii(jeu.niv.params.message).slice(0, 40) } });   // message sans accents : police de la console
+                                 params: { ...jeu.niv.params, message: ascii(jeu.niv.params.message).slice(0, 40) },   // message sans accents : police de la console
+                                 ...(jeu.niv.fiche ? Fiche.ligne(jeu.niv.fiche) : {}) });
     if (l.startsWith('BRIQUE OK')) {
       nivConsole = jeu.niv;
       dire(jeu.niv.code ? `✓ « ${jeu.niv.titre || 'Ton jeu'} » est sur la console (code ${jeu.niv.code}) : jouable à plusieurs dans « Mes jeux » !` : '✓ Ton jeu est sur la console. À toi de jouer ! (Publie-le pour y jouer à plusieurs.)', true);
@@ -1896,6 +1983,7 @@ envoyer.onclick = async () => {
   }
 };
 async function ligneSerie(obj) {                         // écrit une ligne JSON, attend "BRIQUE OK/ERR" (2 s max)
+  if (JSON.stringify(obj).length > 3590) return 'BRIQUE ERR jeu trop long pour la console (3600 caractères au plus) : enlève des lignes ou des objets';
   const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 2000); });
   const w = port.writable.getWriter();
   await w.write(new TextEncoder().encode(JSON.stringify(obj) + '\n')); w.releaseLock();
@@ -2188,7 +2276,7 @@ async function rafraichir() {
       + (n.stats.multi?.courses ? `<br>🏁 ${n.stats.multi.courses} course${n.stats.multi.courses > 1 ? 's' : ''} à plusieurs${n.stats.multi.roi ? ` · 👑 ${esc(n.stats.multi.roi.pseudo)} (${n.stats.multi.roi.victoires} victoire${n.stats.multi.roi.victoires > 1 ? 's' : ''})` : ''}` : ''),
       top[0].stats.parties, n.stats.parties)).join('') || vide('Aucun jeu publié pour l\'instant : sois le premier !');
   nouveaux.innerHTML = [...enLigne].sort((a, b) => b.cree - a.cree).slice(0, 8).map(n => `<div class="carte">
-      <div class="vig"><img class="mini" src="${vignette(n.niv.rows)}" alt=""></div>
+      <div class="vig"><img class="mini" src="${vignette(n.niv.fiche ? Fiche.apercu(n.niv).rows : n.niv.rows)}" alt=""></div>
       <div class="t">${esc(n.titre)}${Date.now() - n.cree < 864e5 ? '<span class="neuf">NEUF</span>' : ''}</div>
       <small class="r" style="color:var(--mute)">par ${esc(n.pseudo)} · ${depuis(n.cree)}${n.commun ? ' · 🧱 commun' : ''}<br>code <b style="color:var(--acc2)">${esc(n.code || '')}</b></small>${bouton(n)}</div>`).join('')
     || vide('Aucun niveau pour l\'instant.');
@@ -2237,6 +2325,7 @@ idees.onchange = async e => {                            // animateur connecté 
 };
 function jouerNiveau(n) {
   charger({ ...n.niv, id: n.id, code: n.code, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params); setGenre(params.jeu || 'plateforme');
+  if (n.niv.fiche) { fiche = { ...structuredClone(n.niv.fiche), rows: [...n.niv.rows] }; ficheLire(); }
   envoi.innerHTML = `<div class="partage">« ${esc(n.titre)} » de ${esc(n.pseudo)} · code <span class="code">${esc(n.code)}</span><br><small>Envoie-le sur ta console pour y jouer, seul ou à plusieurs (« Mes jeux »).</small></div>`;
   historique.push({ demande: `Jouer « ${n.titre} » de ${n.pseudo}`, vu: [], niv: jeu.niv, duree: 0, corr: '' }); rendreHist();
   afficher('creer'); ecran.scrollIntoView({ behavior: 'smooth', block: 'center' });

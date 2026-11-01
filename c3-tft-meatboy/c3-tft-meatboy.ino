@@ -117,7 +117,7 @@ struct __attribute__((packed)) LbMsg { uint8_t type; uint8_t n; LbEnt e[LB_MAX];
 
 
 #define SAVE_FORMAT 1       // format de la sauvegarde NVS : ne change que si la structure des donnees sauvegardees devient incompatible
-#define FW_VERSION "v55.3"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
+#define FW_VERSION "v56.0"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
 const char* rstReason = "?";  // raison du dernier reset (affichee a l'ecran titre)
 RTC_NOINIT_ATTR uint32_t dbgStage;  // dernier marqueur atteint (survit au reset)
 uint32_t lastStage = 0;
@@ -778,6 +778,21 @@ struct BqHero { const char* nom; uint16_t col; };
 const BqHero BQ_HEROS[] = { { "cube", RGB565(232, 50, 43) }, { "ninja", RGB565(34, 34, 51) }, { "robot", RGB565(154, 164, 176) }, { "chat", RGB565(255, 153, 51) } };
 int bqTheme = -1, bqHero = -1;        // -1 = pas choisi : dessin habituel de la console
 float bqGrav = 1, bqVit = 1;
+// BRIQUE "fiche" (decodee par bqFicheParse, brique/FICHE-JEU.md) : boutons, saut, murs, objets qui bougent, regles, but
+#define FOBJ_MAX 16
+#define FREG_MAX 8
+extern int curLevel;                               // (declare plus bas) : pour bqOn() dans les fonctions qui suivent
+char bqTmp[WROWS][COLS + 1];                       // grille en cours de decodage ; fiche plateforme : garde les lettres de l'enfant (regles, remise a zero)
+char fTr[128];                                     // fiche : lettre -> brique du moteur
+struct FObj { float x, y, cx, cy, vy, duree, pause, t, proche, vit, lo, hi; int8_t pts[4][2]; uint8_t n, forme, mvt, contact; char lettre; bool dessus, cache, on, alive; };
+FObj fob[FOBJ_MAX]; int nFob = 0;
+struct FReg { uint8_t quand, alors; char qL, aL; float qv, av; char txt[21]; };   // "quand ... alors ..." (+ lettre ou nombre de chaque cote)
+FReg freg[FREG_MAX]; int nFreg = 0; uint8_t fFait = 0, fTouchK = 0;            // regles deja appliquees / "touche" vues dans cette vie
+struct FTir { float x, y, vx; bool on; } ftir[3];  // projectiles du bouton "tirer"
+bool bqFiche = false, fGlisse = true, fMural = true, fCamFixe = false, fTot = false; uint8_t fBtn[3], fBord = 1, fBut = 0;   // fBtn : indice dans F_ACT pour G, D, P3
+float fSautK = 1, fRebondV = -560, fElanK = 1, fButT = 0, fVit0 = 1, fTirV = 0;
+int fPts = 0, fOLeft = 0, fRam0 = 0, fEcr0 = 0; uint32_t fT0 = 0, fMsgFin = 0; const char* fMsg = "";
+bool fH[10], fE[10];                               // actions de la fiche tenues / juste appuyees (indices de F_ACT)
 long bqCiel = -1, bqSol = -1;
 int bqVies = 0, bqChrono = 0; bool bqTout = false, bqTimeout = false;   // 0 = illimite / pas de chrono ; bqTout = tout ramasser avant le drapeau
 char bqTitre[31] = "", bqMsg[41] = "";  // titre du jeu et message de victoire (ecran de fin)          // couleurs choisies sur la page (0xRRGGBB), -1 = celles du theme
@@ -1133,7 +1148,9 @@ void genLevel(int n) {
 }
 
 char tileAt(int tx, int ty) {
-  if (tx < 0 || tx >= COLS) return '#';
+  const bool fi = bqFiche && bqOn();                 // BRIQUE fiche : "bord" boucle = cotes ouverts, mur = fond solide
+  if (tx < 0 || tx >= COLS) return fi && fBord == 2 ? '.' : '#';
+  if (ty >= levH && fi && fBord == 0) return '#';
   if (ty < 0 || ty >= levH) return '.';
   return grid[ty][tx];
 }
@@ -1175,6 +1192,7 @@ void findSpawn() {
 
 void findGoal() {
   int fx = 1, fy = 1;
+  if (bqFiche && bqOn()) fx = fy = -9;               // BRIQUE fiche sans arrivee : drapeau hors du niveau
   for (int ty = 0; ty < levH; ty++)
     for (int tx = 0; tx < COLS; tx++)
       if (grid[ty][tx] == 'G') { fx = tx; fy = ty; grid[ty][tx] = '.'; }
@@ -1184,7 +1202,7 @@ void findGoal() {
 }
 
 float camTarget() {
-  float t = py + PH / 2 - SCREEN_H / 2;
+  float t = (bqFiche && bqOn() && fCamFixe ? spawnY : py) + PH / 2 - SCREEN_H / 2;   // BRIQUE fiche : camera fixe = l'ecran du depart
   float mx = levH * TILE - SCREEN_H; if (mx < 0) mx = 0;
   if (t < 0) t = 0; if (t > mx) t = mx;
   return t;
@@ -1240,6 +1258,7 @@ void respawn() {
   }
   gpIdx = 0; if (gpN > 0) { goalTX = gpX[0]; goalTY = gpY[0]; } goalFlash = 0;
   for (int i = 0; i < nCrumbs; i++) { crumbs[i].state = 0; crumbs[i].t = 0; }  // plateformes reformees
+  if (bqFiche && bqOn()) ficheReset();               // BRIQUE fiche : objets et briques comme au depart, regles rearmees
   for (int i = 0; i < nPB; i++) grid[pbs[i].ty][pbs[i].tx] = pbs[i].under;       // briques remises au depart
   for (int i = 0; i < nPB; i++) { PushB &b = pbs[i]; b.tx = b.sx; b.ty = b.sy; b.under = b.under0; b.ox = b.oy = 0; grid[b.ty][b.tx] = 'B'; }
   pushT = 0;
@@ -3601,8 +3620,8 @@ void desertSim(float dt, bool bl, bool br, bool bj, bool je) {   // un pas de si
       if (dsolid((int)floor((dpx - 1) / TILE), r)) touchL = true;
       if (dsolid((int)floor((dpx + PW) / TILE), r)) touchR = true;
     }
-    if (dJumpBuf > 0 && dCoyote > 0) { dvy = JUMP_V; dGround = false; dCoyote = 0; dJumpBuf = 0; }
-    else if (je && !dGround && !flying && (touchL || touchR)) { dvy = JUMP_V; dvx = (touchL ? 1 : -1) * 190.0f * max(dSpd, 0.8f); dFacingR = touchL; dJumpBuf = 0; }   // saut mural
+    if (dJumpBuf > 0 && dCoyote > 0) { dvy = JUMP_V * (bqFiche && bqOn() ? fSautK : 1); dGround = false; dCoyote = 0; dJumpBuf = 0; }
+    else if (je && !dGround && !flying && (touchL || touchR) && (!(bqFiche && bqOn()) || fMural)) { dvy = JUMP_V * (bqFiche && bqOn() ? fSautK : 1); dvx = (touchL ? 1 : -1) * 190.0f * max(dSpd, 0.8f); dFacingR = touchL; dJumpBuf = 0; }   // saut mural
     else if (je && !dGround) {                                                        // en l'air : vol (2 appuis rapproches) ou double saut
       if (flying) flying = false;
       else if (abilT[2] > 0 && flyTap > 0) { flying = true; dvy = 0; }
@@ -3615,7 +3634,7 @@ void desertSim(float dt, bool bl, bool br, bool bj, bool je) {   // un pas de si
     float target = dir * (RUN + speedBoostLv * 12.0f) * (abilT[0] > 0 ? 1.35f : 1.0f) * dSpd * (qs ? 0.35f : 1.0f), ax = (dGround ? (dTheme == 2 ? 520.0f : 2300.0f) : 1850.0f) * dt;   // glace : on glisse
     if (dvx < target) { dvx += ax; if (dvx > target) dvx = target; }
     else if (dvx > target) { dvx -= ax; if (dvx < target) dvx = target; }
-    float g = GRAVITY;
+    float g = GRAVITY * (bqFiche && bqOn() ? bqGrav : 1);   // BRIQUE fiche de cote : gravite de la fiche
     if (dvy < 0 && !bj) g *= 1.7f; else if (dvy > 0) g *= 1.12f;
     dvy += g * dt; if (dvy > MAXFALL) dvy = MAXFALL;
     if (qs && dvy > 26) dvy = 26;
@@ -5841,7 +5860,8 @@ const char* bqCoteParse(const char* s) {
 // BRIQUE : decode "rows" dans une ligne JSON. Renvoie nullptr si OK, sinon la raison (renvoyee a la page web).
 const char* briqueParse(const char* s) {
   char jeu[10]; jsonStr(s, "jeu", jeu, sizeof jeu);
-  bqCote = bqIso = false;
+  bqCote = bqIso = bqFiche = false;
+  if (!strcmp(jeu, "fiche")) return bqFicheParse(s);
   if (!strcmp(jeu, "cote")) return bqCoteParse(s);
   if (!strcmp(jeu, "iso")) return bqIsoParse(s);
   if (!strcmp(jeu, "briques") || !strcmp(jeu, "invaders")) return bqMiniParse(s, jeu[0] == 'b' ? 1 : 2);
@@ -5850,7 +5870,7 @@ const char* briqueParse(const char* s) {
   p = strchr(p, '['); if (!p) return "rows mal forme";
   p++;
   int h = 0, nS = 0, nG = 0;
-  static char tmp[WROWS][COLS + 1];
+  char (*tmp)[COLS + 1] = bqTmp;
   while (true) {
     while (*p == ' ' || *p == ',' || *p == '\n' || *p == '\r') p++;
     if (*p == ']') break;
@@ -5871,7 +5891,7 @@ const char* briqueParse(const char* s) {
   }
   if (h < 3) return "niveau trop petit";
   if (nS != 1 || nG != 1) return "il faut 1 depart S et 1 arrivee G";
-  memcpy(customRows, tmp, sizeof tmp);
+  memcpy(customRows, bqTmp, sizeof bqTmp);
   for (int r = 0; r < WROWS; r++) customPtr[r] = customRows[r];
   customH = h;
   customDJ = strstr(s, "\"doubleSaut\":true") != nullptr;
@@ -6067,6 +6087,389 @@ bool isoStep(bool bj, bool eL, bool eR, bool eJ) {
   return true;
 }
 
+// ---- BRIQUE "fiche" : le jeu decrit par l'enfant (brique/FICHE-JEU.md), joue dans le moteur de plateforme ----
+// Les lettres de la grille sont traduites en briques du moteur ('#','I','C','R','^','*','G','E','H') ; ce qui bouge devient un objet fob[].
+// Ce qui n'est pas ecrit n'existe pas : sans "boutons", le heros ne bouge pas ; sans "saut", il ne saute pas ; sans "gravite", rien ne tombe.
+static const char* jFin(const char* v) {             // fin d'une valeur JSON (objet, liste, texte ou nombre)
+  if (*v == '"') { v++; while (*v && *v != '"') v++; return *v ? v + 1 : v; }
+  if (*v != '{' && *v != '[') { while (*v && *v != ',' && *v != '}' && *v != ']') v++; return v; }
+  int d = 0;
+  for (; *v; v++) {
+    if (*v == '"') { v++; while (*v && *v != '"') v++; if (!*v) return v; continue; }
+    if (*v == '{' || *v == '[') d++;
+    else if ((*v == '}' || *v == ']') && --d == 0) return v + 1;
+  }
+  return v;
+}
+static const char* jVal(const char* p, const char* fin, const char* cle) {   // valeur de "cle" dans [p, fin), au premier niveau seulement
+  const int l = strlen(cle);
+  if (*p == '{') p++;
+  while (p < fin) {
+    while (p < fin && (*p == ' ' || *p == ',' || *p == '\n' || *p == '\r')) p++;
+    if (p >= fin || *p != '"') return nullptr;
+    const char* k = p + 1; const char* ke = jFin(p);
+    p = ke; while (p < fin && (*p == ' ' || *p == ':')) p++;
+    if (ke - k - 1 == l && !strncmp(k, cle, l)) return p;
+    p = jFin(p);
+  }
+  return nullptr;
+}
+static float jNum(const char* p, const char* fin, const char* cle, float def, float lo, float hi) {
+  const char* v = jVal(p, fin, cle); if (!v) return def;
+  float x = (*v == 't') ? 1 : (*v == 'f') ? 0 : atof(v); return x < lo ? lo : x > hi ? hi : x;
+}
+// "cle":"mot" ou "cle":{"mot":valeur} -> indice du mot dans mots (-1 si absent) ; arg = la valeur qui suit le mot (nullptr sinon)
+static int jMotArg(const char* p, const char* fin, const char* cle, const char* const* mots, int n, const char*& arg) {
+  arg = nullptr; const char* v = jVal(p, fin, cle); if (!v) return -1;
+  if (*v == '{') { v++; while (*v == ' ') v++; }
+  if (*v != '"') return -1;
+  for (int i = 0; i < n; i++) {
+    const int l = strlen(mots[i]); if (strncmp(v + 1, mots[i], l) || v[1 + l] != '"') continue;
+    const char* a = v + 2 + l; while (*a == ' ') a++;
+    if (*a == ':') { a++; while (*a == ' ') a++; arg = a; }
+    return i;
+  }
+  return -1;
+}
+static int jMot(const char* p, const char* fin, const char* cle, const char* const* mots, int n) { const char* a; return jMotArg(p, fin, cle, mots, n, a); }
+static const char* const F_ACT[] = { "rien", "aller_gauche", "aller_droite", "sauter", "aller_haut", "aller_bas", "tourner_gauche", "tourner_droite", "avancer_case", "tirer" };
+static const char* const F_FORME[] = { "pic", "scie", "bloc", "ennemi", "projectile" };
+static const char* const F_MVT[] = { "fixe", "aller_retour", "patrouille", "boucle", "tomber", "suivre" };
+static const char* const F_CONTACT[] = { "perd", "rebond", "rien", "ramasse", "vie_moins" };
+static const char* const F_DECL[] = { "toujours", "proche", "touche" };
+static const char* const F_QUAND[] = { "touche", "ramasse_tout", "ecrase_tout", "temps", "points" };
+static const char* const F_ALORS[] = { "gagne", "perd", "ouvre", "ferme", "vie_plus", "message", "vitesse" };
+static const char* const F_BUT[] = { "arriver", "ramasser_tout", "ecraser_tout", "survivre", "regles" };
+static const char* const F_BORD[] = { "mur", "vide", "boucle" };
+static const char* const F_MODELE[] = { "plateforme", "cote", "iso" };
+// modele "cote" / "iso" : la grille est traduite dans l'alphabet de ces jeux, puis decodee par bqCoteParse / bqIsoParse.
+// Ces moteurs n'ont ni objets qui bougent, ni regles : ce qu'ils ne savent pas faire est remplace (la page le dit avant l'envoi).
+static const char* ficheAutre(const char* s, int modele, const char* tr) {
+  const size_t n = strlen(s); char* c = (char*)malloc(n + 1); if (!c) return "memoire pleine";
+  memcpy(c, s, n + 1);
+  char* p = strstr(c, "\"rows\""); p = p ? strchr(p, '[') : nullptr;
+  const char* e = p ? jFin(p) : nullptr; const char* err = nullptr;
+  for (bool dans = false; p && p < e && !err; p++) {
+    if (*p == '"') { dans = !dans; continue; }
+    if (!dans) continue;
+    const unsigned char L = *p;
+    if (L >= 128 || !tr[L]) { static char m[24]; snprintf(m, sizeof m, "lettre %c inconnue", L); err = m; }
+    else *p = tr[L];
+  }
+  if (!err) err = modele == 1 ? bqCoteParse(c) : bqIsoParse(c);
+  free(c);
+  return err;
+}
+const char* bqFicheParse(const char* s) {
+  bqMiniJeu = 0;
+  const char* fin = s + strlen(s);
+  const int modele = max(0, jMot(s, fin, "modele", F_MODELE, 3));
+  // grille (plateforme : 20 cases de large ; bqTmp garde les lettres de l'enfant)
+  const char* p = jVal(s, fin, "rows"); if (!p || *p != '[') return "pas de rows";
+  char (*tmp)[COLS + 1] = bqTmp; int h = 0, nS = 0;
+  if (modele == 0) {
+    for (p++;;) {
+      while (*p == ' ' || *p == ',' || *p == '\n' || *p == '\r') p++;
+      if (*p == ']') break;
+      if (*p != '"') return "rows mal forme";
+      if (h >= WROWS) return "niveau trop haut";
+      int c = 0;
+      for (p++; *p && *p != '"'; p++, c++) { if (c >= COLS) return "ligne trop longue (20 cases)"; tmp[h][c] = *p; nS += *p == 'S'; }
+      if (*p != '"') return "ligne non fermee";
+      p++; while (c < COLS) tmp[h][c++] = '.'; tmp[h][COLS] = 0; h++;
+    }
+    if (h < 3) return "niveau trop petit";
+    if (nS != 1) return "il faut 1 depart S";
+  }
+  // briques : lettre -> brique du moteur
+  char* tr = fTr; memset(fTr, 0, sizeof fTr); tr['.'] = '.'; tr['S'] = 'S';
+  float gr = 0, rebond = 0;
+  fBord = 1; fCamFixe = false;
+  if (const char* m = jVal(s, fin, "monde")) {
+    const char* me = jFin(m);
+    gr = jNum(m, me, "gravite", 0, 0, 200);
+    int k = jMot(m, me, "bord", F_BORD, 3); fBord = k < 0 ? 1 : k;
+    const char* cm = jVal(m, me, "camera"); fCamFixe = cm && !strncmp(cm, "\"fixe\"", 6);
+  }
+  if (const char* b = jVal(s, fin, "briques")) {
+    const char* be = jFin(b);
+    for (const char* q = b + 1; q < be;) {
+      while (q < be && (*q == ' ' || *q == ',' || *q == '\n')) q++;
+      if (q >= be || *q != '"') break;
+      const unsigned char L = q[1]; if (q[2] != '"' || L >= 128 || L == 'S') return "brique : une seule lettre (pas S)";
+      q += 3; while (*q == ' ' || *q == ':') q++;
+      const char* v = q; const char* ve = jFin(v); q = ve;
+      char o = '.';
+      if (jNum(v, ve, "arrivee", 0, 0, 1)) o = 'G';
+      else if (jNum(v, ve, "ramasse", 0, 0, 1)) o = '*';
+      else if (jNum(v, ve, "mortel", 0, 0, 1)) o = '^';
+      else if (jNum(v, ve, "solide", 0, 0, 1)) {
+        const float rb = jNum(v, ve, "rebond", 0, 0, 20);
+        if (rb > 0) { o = 'R'; rebond = rb; }
+        else if (jNum(v, ve, "disparait", 0, 0, 10) > 0) o = 'C';
+        else if (jNum(v, ve, "glisse", 0, 0, 1) >= 0.5f) o = 'I';
+        else o = '#';
+      }
+      if (modele == 1) o = o == 'C' ? 'T' : (o == 'R' || o == 'I') ? '#' : o;   // de cote : bloc qui disparait = trou cache 'T'
+      if (modele == 2) o = (o == 'C' || o == 'R' || o == 'I') ? '#' : o;      // iso : pas de case vide = un trou
+      tr[L] = o;
+    }
+  }
+  // objets
+  static struct FDef { uint8_t forme, mvt, contact, dessus, cache, n; int8_t pts[4][2]; float duree, pause, proche, vit; } def[FOBJ_MAX];   // une definition par lettre d'objet
+  uint8_t iDef[128]; int nDef = 0; fTirV = 0;
+  if (const char* ob = jVal(s, fin, "objets")) {
+    const char* oe = jFin(ob);
+    for (const char* q = ob + 1; q < oe;) {
+      while (q < oe && (*q == ' ' || *q == ',' || *q == '\n')) q++;
+      if (q >= oe || *q != '"') break;
+      const unsigned char L = q[1]; if (q[2] != '"' || L < 32 || L >= 128 || L == 'S') return "objet : une seule lettre (pas S)";
+      q += 3; while (*q == ' ' || *q == ':') q++;
+      const char* v = q; const char* ve = jFin(v); q = ve;
+      if (nDef >= FOBJ_MAX) return "trop de sortes d'objets (16 au plus)";
+      iDef[L] = nDef; FDef &d = def[nDef++]; tr[L] = 'o';
+      int k = jMot(v, ve, "forme", F_FORME, 5); d.forme = k < 0 ? 2 : k;
+      k = jMot(v, ve, "mouvement", F_MVT, 6); d.mvt = k < 0 ? 0 : k;
+      k = jMot(v, ve, "contact", F_CONTACT, 5); d.contact = k < 0 ? 0 : k;
+      const char* ds = jVal(v, ve, "dessus"); d.dessus = ds && !strncmp(ds, "\"ecrase\"", 8);
+      d.cache = jNum(v, ve, "cache", 0, 0, 1) > 0;
+      k = jMot(v, ve, "declencheur", F_DECL, 3);
+      d.proche = k == 1 ? jNum(v, ve, "distance", 3, 1, 20) * TILE : k == 2 ? 1.2f * TILE : 0;   // touche = il faut arriver dessus
+      d.duree = jNum(v, ve, "duree", 1, 0.1f, 30); d.pause = jNum(v, ve, "pause", 0, 0, 30);
+      d.vit = jNum(v, ve, "vitesse", d.forme == 4 ? 10 : d.mvt == 5 ? 3 : 2, 0.5f, 30) * TILE;
+      if (d.forme == 4) fTirV = d.vit;
+      d.n = 0;
+      if (const char* pt = jVal(v, ve, "points")) {
+        const char* pe = jFin(pt);
+        for (const char* r = pt + 1; r < pe && d.n < 4; r++) if (*r == '[') {
+          char* e; long x = strtol(r + 1, &e, 10); while (*e == ' ' || *e == ',') e++; long y = strtol(e, &e, 10);
+          d.pts[d.n][0] = constrain(x, -20, 20); d.pts[d.n][1] = constrain(y, -40, 40); d.n++; r = e;
+        }
+      }
+      if (!d.n) { d.pts[0][0] = d.pts[0][1] = 0; d.n = 1; }
+      if (modele) {                                    // de cote / iso : ce que le moteur sait faire, le reste devient du sol (iso) ou du vide
+        const bool pic = d.forme == 0, fixe = d.mvt == 0;
+        tr[L] = pic && d.proche ? 'H' : pic && fixe ? '^' : pic ? (modele == 2 ? 'P' : '^')
+              : d.mvt == 2 && modele == 1 ? 'E' : d.forme == 2 && fixe ? '#' : modele == 2 ? '#' : '.';
+      }
+    }
+  }
+  // regles "quand ... alors ..." : {"quand":"ramasse_tout","alors":"gagne"}, {"quand":{"touche":"K"},"alors":{"ouvre":"P"}}
+  nFreg = 0;
+  if (const char* rg = jVal(s, fin, "regles")) if (*rg == '[') {
+    const char* re = jFin(rg);
+    for (const char* q = rg + 1; q < re && nFreg < FREG_MAX;) {
+      while (q < re && *q != '{' && *q != ']') q++;
+      if (q >= re || *q != '{') break;
+      const char* ve = jFin(q); FReg &g = freg[nFreg]; const char* a;
+      int k = jMotArg(q, ve, "quand", F_QUAND, 5, a); if (k < 0) return "regle : quand ?";
+      g.quand = k; g.qL = a && *a == '"' ? a[1] : 0; g.qv = a ? atof(a) : 0;
+      k = jMotArg(q, ve, "alors", F_ALORS, 7, a); if (k < 0) return "regle : alors ?";
+      g.alors = k; g.aL = a && *a == '"' ? a[1] : 0; g.av = a ? atof(a) : 0; g.txt[0] = 0;
+      if (k == 5 && a && *a == '"') { int n = 0; for (const char* t = a + 1; *t && *t != '"' && n < 20; t++) g.txt[n++] = *t; g.txt[n] = 0; }
+      if ((g.quand == 0 && !g.qL) || ((k == 2 || k == 3) && !g.aL)) return "regle : quelle lettre ?";
+      if (k == 6 && g.av <= 0) g.av = 1;
+      nFreg++; q = ve;
+    }
+  }
+  { const char* a; int k = jMotArg(s, fin, "but", F_BUT, 5, a); fBut = k < 0 ? 0 : k; fButT = a ? constrain(atof(a), 1, 600) : 30; }
+  if (modele) {                                      // de cote / iso
+    if (const char* e = ficheAutre(s, modele, tr)) return e;
+    nFob = nFreg = 0; fBut = 0;
+  } else {
+    int nf = 0, nEt = 0;
+    for (int r = 0; r < h; r++) {
+      for (int c = 0; c < COLS; c++) {
+        const unsigned char L = tmp[r][c];
+        if (L >= 128 || !tr[L]) { static char e[24]; snprintf(e, sizeof e, "lettre %c inconnue", L); return e; }
+        char o = tr[L];
+        if (o == '*' && nEt++ >= 3) o = 'O';             // 3 etoiles au plus dans le moteur : les suivantes sont des pieces
+        if (o == 'o') {
+          const FDef &d = def[iDef[L]];
+          if (d.mvt == 2 && d.contact == 0 && d.dessus) o = 'E';   // l'ennemi d'aujourd'hui : patrouille, tue, s'ecrase
+          else if (d.forme == 0 && d.proche && d.mvt == 0) o = 'H';        // pic qui sort quand on approche
+          else if (d.mvt == 0 && d.forme == 0 && !d.cache) o = '^';
+          else if (d.mvt == 0 && d.forme == 2 && d.contact == 2) o = '#';  // bloc immobile qu'on peut toucher : un mur
+          else {
+            o = '.';
+            if (d.forme == 4) { customRows[r][c] = o; continue; }       // projectile : c'est le heros qui le lance
+            if (nf >= FOBJ_MAX) return "trop d'objets (16 au plus)";
+            FObj &f = fob[nf++];
+            f.x = c * TILE + 8; f.y = r * TILE + 8; memcpy(f.pts, d.pts, sizeof f.pts); f.n = d.n; f.mvt = d.mvt;
+            f.duree = d.duree; f.pause = d.pause; f.forme = d.forme; f.contact = d.contact; f.dessus = d.dessus;
+            f.proche = d.proche; f.cache = d.cache; f.vit = d.vit; f.lettre = L;
+          }
+        }
+        customRows[r][c] = o;
+      }
+      customRows[r][COLS] = 0;
+    }
+    nFob = nf;
+    for (int r = 0; r < WROWS; r++) customPtr[r] = customRows[r];
+    customH = h;
+    bqParams(s);                                     // couleurs, titre, message, chrono... (comme la plateforme)
+  }
+  // heros : boutons, vitesse, elan, saut, murs, vies
+  for (int k = 0; k < 3; k++) fBtn[k] = 0;
+  float vit = 0, haut = 0, elan = 0.2f; int enAir = 0; fGlisse = fMural = false;
+  if (const char* he = jVal(s, fin, "heros")) {
+    const char* hf = jFin(he);
+    if (const char* bo = jVal(he, hf, "boutons")) {
+      const char* be = jFin(bo); const char* const K[3] = { "G", "D", "P3" };
+      for (int k = 0; k < 3; k++) { int a = jMot(bo, be, K[k], F_ACT, 10); fBtn[k] = a < 0 ? 0 : a; }
+    }
+    vit = jNum(he, hf, "vitesse", 0, 0, 20); elan = jNum(he, hf, "elan", 0.2f, 0, 1);
+    if (const char* sa = jVal(he, hf, "saut")) { const char* se = jFin(sa); haut = jNum(sa, se, "hauteur", 0, 0, 20); enAir = (int)jNum(sa, se, "en_l_air", 0, 0, 2); }
+    if (const char* mu = jVal(he, hf, "mur")) { const char* me = jFin(mu); fGlisse = jNum(mu, me, "glisse", 0, 0, 1) > 0; fMural = jNum(mu, me, "saut_mural", 0, 0, 1) > 0; }
+    bqVies = (int)jNum(he, hf, "vies", 0, 0, 9);
+  }
+  bqGrav = gr * TILE / GRAVITY; bqVit = vit * TILE / RUN / (modele == 1 ? 0.6f : 1);   // en cases : 87,5 cases/s2 et 12,5 cases/s = la plateforme d'aujourd'hui (le jeu de cote court a 60 %)
+  fVit0 = bqVit; fElanK = max(0.06f, (1.05f - elan) / 0.85f);   // elan 0,2 = l'acceleration d'aujourd'hui
+  fSautK = gr > 0 ? sqrtf(2 * gr * TILE * haut * TILE) / -JUMP_V : 0; // 4,5 cases a 87,5 cases/s2 -> 450 px/s, le saut d'aujourd'hui
+  fRebondV = gr > 0 && rebond > 0 ? -sqrtf(2 * gr * TILE * rebond * TILE) : BOUNCE_V;
+  customDJ = enAir > 0;
+  bqFiche = true;
+  return nullptr;
+}
+// un objet de la fiche qui suit ses points : aller-retour (ou boucle), duree par trajet, pause a chaque point
+void fobPos(int i, float &x, float &y) {             // (indice, pas FObj& : le prototype automatique d'Arduino passe avant la struct)
+  const FObj &f = fob[i];
+  x = f.x + f.pts[0][0] * TILE; y = f.y + f.pts[0][1] * TILE;
+  if (f.n < 2 || f.t <= 0) return;
+  const int m = f.n - 1; const float seg = f.duree + f.pause;
+  const long k = (long)(f.t / seg); const float u = min(1.0f, (f.t - k * seg) / f.duree);
+  int a, b;
+  if (f.mvt == 3) { a = k % f.n; b = (a + 1) % f.n; }  // boucle : dernier point -> premier
+  else { const int j = k % (2 * m); if (j < m) { a = j; b = j + 1; } else { a = 2 * m - j; b = a - 1; } }
+  x = f.x + (f.pts[a][0] + (f.pts[b][0] - f.pts[a][0]) * u) * TILE;
+  y = f.y + (f.pts[a][1] + (f.pts[b][1] - f.pts[a][1]) * u) * TILE;
+}
+// au depart et a chaque vie : objets a leur place, briques remises (regles "ouvre"/"ferme", pieces ramassees), regles rearmees
+void ficheReset() {
+  int nEt = 0; fOLeft = 0;
+  for (int r = 0; r < customH; r++) for (int c = 0; c < COLS; c++) {
+    const unsigned char L = bqTmp[r][c]; if (L >= 128) continue;
+    char o = fTr[L];
+    if (o == '*') { if (nEt++ < 3) continue; o = 'O'; }
+    if (!o || !strchr(".#ICR^O", o)) continue;
+    grid[r][c] = o; fOLeft += o == 'O';
+  }
+  for (int i = 0; i < nFob; i++) {
+    FObj &f = fob[i]; f.t = 0; f.vy = 0; f.on = !f.proche; f.alive = true;
+    fobPos(i, f.cx, f.cy);
+    if (f.mvt == 2) {                                // patrouille : bornes de la plateforme du dessous ; vy = vitesse signee
+      const int c0 = (int)(f.x / TILE), r = (int)(f.y / TILE); int a = c0, b = c0;
+      while (a > 0 && solid(a - 1, r + 1) && !solid(a - 1, r)) a--;
+      while (b < COLS - 1 && solid(b + 1, r + 1) && !solid(b + 1, r)) b++;
+      f.lo = a * TILE + 8; f.hi = b * TILE + 8; f.vy = f.vit;
+    }
+  }
+  for (auto &t : ftir) t.on = false;
+  fFait = fTouchK = 0; fPts = 0; bqVit = fVit0; fMsgFin = 0; fTot = false; fT0 = millis();
+}
+void ficheTouche(char L) { for (int k = 0; k < nFreg; k++) if (freg[k].quand == 0 && freg[k].qL == L) fTouchK |= 1 << k; }
+bool ficheAlors(int k) {                             // false = la partie s'arrete (perdu) ; (indice : le prototype automatique d'Arduino passe avant la struct)
+  const FReg &g = freg[k];
+  switch (g.alors) {
+    case 0: flagDone = true; break;                  // gagne : comme l'arrivee (course, question de cours, ecran de fin)
+    case 1: addStain(px + PW / 2, py + PH / 2); die(); return false;
+    case 2: case 3:
+      for (int r = 0; r < customH; r++) for (int c = 0; c < COLS; c++) if (bqTmp[r][c] == g.aL) grid[r][c] = g.alors == 2 ? '.' : '#';
+      if (g.alors == 2) for (int i = 0; i < nFob; i++) if (fob[i].lettre == g.aL) fob[i].alive = false;
+      snd(SND_COIN); break;
+    case 4: if (bqVies) { if (deaths > 0) deaths--; else if (bqVies < 9) bqVies++; } snd(SND_STAR); break;   // ponytail: la vie en plus reste jusqu'au prochain envoi
+    case 5: fMsg = g.txt; fMsgFin = millis() + 2500; break;
+    case 6: bqVit = constrain(bqVit * g.av, 0.1f, 3.0f); break;
+  }
+  return true;
+}
+bool ficheTick(float dt) {                           // objets, projectiles, regles, but ; false = le heros a perdu
+  const float hx = px + PW / 2, hy = py + PH / 2;
+  if (fBord == 2) { if (hx < 0) px += COLS * TILE; else if (hx >= COLS * TILE) px -= COLS * TILE; if (py > levH * TILE) py = -PH; }   // boucle : on ressort de l'autre cote
+  if (fBord == 1 && (hx < -PW || hx > COLS * TILE + PW)) { die(); return false; }
+  for (int i = 0; i < nFob; i++) {
+    FObj &f = fob[i]; if (!f.alive) continue;
+    if (!f.on && fabsf(hx - f.cx) < f.proche && fabsf(hy - f.cy) < f.proche) f.on = true;
+    if (!f.on) continue;
+    f.t += dt; const float ox = f.cx;
+    if (f.mvt == 1 || f.mvt == 3) fobPos(i, f.cx, f.cy);
+    else if (f.mvt == 2) { f.cx += f.vy * dt; if (f.cx > f.hi) { f.cx = f.hi; f.vy = -f.vit; } if (f.cx < f.lo) { f.cx = f.lo; f.vy = f.vit; } }
+    else if (f.mvt == 4) {                           // tomber : jusqu'au sol, ou hors du niveau
+      f.vy = min(f.vy + GRAVITY * dt, (float)MAXFALL); f.cy += f.vy * dt;
+      const int r = (int)floorf((f.cy + 8) / TILE);
+      if (r >= levH + 2) { f.alive = false; continue; }
+      if (solid((int)(f.cx / TILE), r)) { f.cy = r * TILE - 8; f.vy = 0; }
+    } else if (f.mvt == 5) {                         // suivre : tout droit vers le heros
+      const float dx = hx - f.cx, dy = hy - f.cy, d = sqrtf(dx * dx + dy * dy);
+      if (d > 1) { const float k = min(d, f.vit * dt) / d; f.cx += dx * k; f.cy += dy * k; }
+    }
+    if (f.forme == 2 && f.contact == 2) {            // bloc sans effet : une plateforme qui bouge, on tient dessus
+      if (vy >= 0 && px + PW > f.cx - 8 && px < f.cx + 8 && py + PH >= f.cy - 11 && py + PH <= f.cy - 2) { py = f.cy - 8 - PH; vy = 0; onGround = true; px += f.cx - ox; }
+      continue;
+    }
+    if (px + PW <= f.cx - 7 || px >= f.cx + 7 || py + PH <= f.cy - 7 || py >= f.cy + 7) continue;
+    ficheTouche(f.lettre);
+    if (f.dessus && vy > 60 && py + PH < f.cy - 2) { f.alive = false; fPts++; vy = JUMP_V * 0.7f; onGround = false; snd(SND_COIN); continue; }   // ecrase par le dessus
+    if (f.contact == 0) { addStain(hx, hy); die(); return false; }
+    if (f.contact == 1) { vy = JUMP_V; onGround = false; snd(SND_BOUNCE); }
+    else if (f.contact == 3) { f.alive = false; fPts++; snd(SND_STAR); burstSparks(f.cx, f.cy, COL_STAR, 8); }
+    else if (f.contact == 4) { f.alive = false; if (!bqVies || (int)deaths + 1 >= bqVies) { addStain(hx, hy); die(); return false; } deaths++; snd(SND_DIE); }
+  }
+  for (auto &t : ftir) if (t.on) {                   // projectiles : cassent les ennemis (et ce qu'on ecrase)
+    t.x += t.vx * dt;
+    if (t.x < -8 || t.x > COLS * TILE + 8 || solid((int)floorf(t.x / TILE), (int)floorf(t.y / TILE))) { t.on = false; continue; }
+    for (int i = 0; i < nFob && t.on; i++) { FObj &f = fob[i]; if (f.alive && f.on && (f.forme == 3 || f.dessus) && fabsf(t.x - f.cx) < 9 && fabsf(t.y - f.cy) < 9) { f.alive = false; t.on = false; fPts++; snd(SND_COIN); } }
+    for (int i = 0; i < nEnemies && t.on; i++) { Enemy &e = enemies[i]; if (e.active && fabsf(t.x - e.x) < 9 && fabsf(t.y - (e.y - EH / 2)) < 9) { e.active = false; t.on = false; fPts++; addStain(e.x, e.y - 4); snd(SND_COIN); } }
+  }
+  if (!nFreg && !fBut) return true;
+  // ce qui reste a ramasser / a ecraser (regles et but)
+  { const int l = (int)floorf(px / TILE), r = (int)floorf((px + PW - 1) / TILE), tp = (int)floorf(py / TILE), bt = (int)floorf((py + PH - 1) / TILE);
+    for (int y = tp; y <= bt; y++) for (int x = l; x <= r; x++) if (y >= 0 && y < customH && x >= 0 && x < COLS) ficheTouche(bqTmp[y][x]); }
+  int ram = fOLeft, ecr = 0, got = 0;
+  for (int i = 0; i < nStarPos; i++) { ram += !starGot[i]; got += starGot[i]; }
+  for (int i = 0; i < nFob; i++) if (fob[i].alive) { ram += fob[i].contact == 3; ecr += fob[i].forme == 3 || fob[i].dessus; }
+  for (int i = 0; i < nEnemies; i++) ecr += enemies[i].active;
+  if (!fTot) { fTot = true; fRam0 = ram; fEcr0 = ecr; }
+  const float tps = (millis() - fT0) / 1000.0f;
+  for (int k = 0; k < nFreg; k++) {
+    if (fFait >> k & 1) continue;
+    const FReg &g = freg[k];
+    const bool ok = g.quand == 0 ? (fTouchK >> k & 1) : g.quand == 1 ? fRam0 && !ram : g.quand == 2 ? fEcr0 && !ecr : g.quand == 3 ? tps >= g.qv : fPts + got >= g.qv;
+    if (!ok) continue;
+    fFait |= 1 << k;
+    if (!ficheAlors(k)) return false;
+  }
+  if (fBut == 1 ? fRam0 && !ram : fBut == 2 ? fEcr0 && !ecr : fBut == 3 && tps >= fButT) flagDone = true;   // gagne
+  return true;
+}
+void ficheDraw(int cy) {
+  for (int i = 0; i < nFob; i++) {
+    const FObj &f = fob[i]; if (!f.alive || (f.cache && !f.on)) continue;
+    const int x = (int)f.cx, y = (int)f.cy - cy;
+    if (y < -12 || y > STRIP_H + 12) continue;
+    if (f.forme == 1) { fb.fillCircle(x, y, 7, COL_SAW); fb.drawCircle(x, y, 7, COL_MEATD); for (int k = 0; k < 6; k++) { float a = sawPhase + k * 1.047f; fb.drawLine(x + cosf(a) * 7, y + sinf(a) * 7, x + cosf(a) * 10, y + sinf(a) * 10, COL_SAW); } fb.fillCircle(x, y, 2, COL_MEATD); }
+    else if (f.forme == 0) { fb.fillTriangle(x - 8, y + 8, x, y - 8, x + 8, y + 8, COL_SPK); fb.drawTriangle(x - 8, y + 8, x, y - 8, x + 8, y + 8, COL_MEATD); }
+    else if (f.forme == 3) { fb.fillRoundRect(x - 7, y - 4, 14, 11, 4, COL_ENM); fb.fillRect(x - 4, y - 1, 3, 3, COL_TXT); fb.fillRect(x + 1, y - 1, 3, 3, COL_TXT); }
+    else if (f.contact == 3) drawStarFancy(fb, x, y, 6, sawPhase * 0.1f, true);   // a ramasser
+    else { fb.fillRect(x - 8, y - 8, 16, 16, COL_BLK); fb.drawRect(x - 8, y - 8, 16, 16, COL_BLKT); }
+  }
+  for (auto &t : ftir) if (t.on) { const int y = (int)t.y - cy; if (y > -4 && y < STRIP_H + 4) fb.fillCircle((int)t.x, y, 3, COL_STAR); }
+}
+// boutons de la fiche -> actions (fH tenues, fE juste appuyees)
+void ficheIn(bool bL, bool bR, bool bJ, bool eL, bool eR, bool eJ) {
+  memset(fH, 0, sizeof fH); memset(fE, 0, sizeof fE);
+  const bool b[3] = { bL, bR, bJ }, e[3] = { eL, eR, eJ };
+  for (int k = 0; k < 3; k++) { fH[fBtn[k]] |= b[k]; fE[fBtn[k]] |= e[k]; }
+}
+void ficheStep(bool bL, bool bR, bool bJ, bool eL, bool eR, bool eJ) {
+  ficheIn(bL, bR, bJ, eL, eR, eJ);
+  const int v = fH[5] - fH[4];
+  if (v || bqGrav == 0) vy = v * RUN * bqVit;        // haut / bas ; sans gravite on s'arrete en lachant
+  if (fE[9]) for (auto &t : ftir) if (!t.on) { t.on = true; t.x = px + PW / 2; t.y = py + PH / 2; t.vx = (playerFacingRight ? 1 : -1) * (fTirV > 0 ? fTirV : 10 * TILE); snd(SND_JUMP); break; }
+  playStep(fH[1], fH[2], fH[3], fE[3]);
+}
+float jK() { return bqFiche && bqOn() ? fSautK : 1.0f; }   // saut de la fiche (1 = celui d'aujourd'hui)
+
 // BRIQUE : lit le port serie sans bloquer ; une ligne complete = un niveau a charger tout de suite.
 // ---- BRIQUE : "Mes niveaux" = les 8 derniers niveaux recus, gardes en flash (fichier /bN = la ligne JSON recue telle quelle) ----
 // ponytail: 8 emplacements tournants, le plus ancien est ecrase ; un vrai gestionnaire (effacer, trier) si les enfants en veulent plus
@@ -6177,6 +6580,7 @@ void bqQuizStep(bool eL, bool eR, bool eJ) {
   if (eJ) { levelStartMs += millis() - bqQT0; finishLevel(bqQGot); }   // le temps passe sur la question ne compte pas
 }
 bool bqFlagOk() {                          // objectif "tout ramasser" : le drapeau n'accepte qu'une fois toutes les etoiles prises
+  if (bqOn() && bqFiche && fBut) return false;     // BRIQUE fiche : un autre but que l'arrivee
   if (!bqOn() || !bqTout) return true;
   for (int i = 0; i < nStarPos; i++) if (!starGot[i]) return false;
   return true;
@@ -6674,7 +7078,8 @@ void loop() {
 #ifdef DESERT_BENCH
       { unsigned long m = millis() % 900; desertStep(false, true, m < 350, m < 25); }   // test : court et saute en boucle
 #else
-      desertStep(bL, bR, bJ, eJ);
+      if (bqFiche && bqOn()) { ficheIn(bL, bR, bJ, eL, eR, eJ); desertStep(fH[1], fH[2], fH[3], fE[3]); }   // BRIQUE fiche de cote
+      else desertStep(bL, bR, bJ, eJ);
 #endif
       break;
     case ST_PLAY:
@@ -6686,7 +7091,7 @@ void loop() {
         if (millis() - gbL > 3000) { Serial.printf("[GBENCH] dma=%d fps=%.1f lvl=%d | decor=%lu tiles=%lu ents=%lu player=%lu hud=%lu blit=%lu us/img\n", dDev ? 1 : 0, gbN * 1000.0f / (millis() - gbL), curLevel + 1, gT[0] / gbN, gT[1] / gbN, gT[2] / gbN, gT[3] / gbN, gT[4] / gbN, gT[5] / gbN); for (int i = 0; i < 6; i++) gT[i] = 0; gbN = 0; gbL = millis(); }
       }
 #else
-      playStep(bL, bR, bJ, eJ);
+      if (bqFiche && bqOn()) ficheStep(bL, bR, bJ, eL, eR, eJ); else playStep(bL, bR, bJ, eJ);   // BRIQUE fiche : les boutons font ce que dit la fiche
 #endif
       if (raceMode) delay(2);   // C3 mono-coeur : cede la main au WiFi (anti-watchdog)
       break;
@@ -6736,7 +7141,8 @@ void loop() {
       if (!invadersStep(bL, bR, bJ, eJ)) { prevJump = true; bqMini = 0; checkpointFinish(); }
       break;
     case ST_ISO:
-      if (!isoStep(bJ, eL, eR, eJ)) { prevJump = true; dSpiStop(); tft.setSPISpeed(40000000); checkpointFinish(); }
+      if (bqFiche && bqOn()) ficheIn(bL, bR, bJ, eL, eR, eJ);   // BRIQUE fiche iso : tourner / avancer d'une case
+      if (!(bqFiche && bqOn() ? isoStep(fH[8], fE[6], fE[7], fE[8]) : isoStep(bJ, eL, eR, eJ))) { prevJump = true; dSpiStop(); tft.setSPISpeed(40000000); checkpointFinish(); }
       break;
     case ST_SAMU:
       if (!samuraiStep(bL, bR, bJ, eJ)) { prevJump = true; dSpiStop(); tft.setSPISpeed(40000000); state = ST_MODE; drawMode(); }
@@ -6953,12 +7359,12 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
   if (onGround || wallSliding) airJumped = false;
 
   if (jumpBuf > 0) {
-    if (onGround || coyote > 0) { snd(SND_JUMP); vy = JUMP_V; onGround = false; coyote = 0; jumpBuf = 0; clingLock = 0.14; sqX = 0.7; sqY = 1.35; }
-    else if (wallSliding) { snd(SND_JUMP); sqX = 0.7; sqY = 1.35; excitedT = 0.5f; vy = WJUMP_VY; vx = -wallDir * WJUMP_VX; jumpLock = JUMPLOCK; wallSliding = false; jumpBuf = 0; clingLock = 0.14; }
+    if (onGround || coyote > 0) { snd(SND_JUMP); vy = JUMP_V * jK(); onGround = false; coyote = 0; jumpBuf = 0; clingLock = 0.14; sqX = 0.7; sqY = 1.35; }
+    else if (wallSliding && (!(bqFiche && bqOn()) || fMural)) { snd(SND_JUMP); sqX = 0.7; sqY = 1.35; excitedT = 0.5f; vy = WJUMP_VY * jK(); vx = -wallDir * WJUMP_VX; jumpLock = JUMPLOCK; wallSliding = false; jumpBuf = 0; clingLock = 0.14; }
     else if (jumpEdge) {                                       // capacites boutique : vol (2 appuis rapproches) / double saut
       if (flying) { flying = false; jumpBuf = 0; }
       else if (abilT[2] > 0 && flyTap > 0) { flying = true; vy = 0; jumpBuf = 0; }
-      else if ((abilT[1] > 0 || (curLevel == CUSTOM_IDX && customDJ)) && !airJumped) { snd(SND_JUMP); vy = JUMP_V; airJumped = true; jumpBuf = 0; sqX = 0.7; sqY = 1.35; }
+      else if ((abilT[1] > 0 || (curLevel == CUSTOM_IDX && customDJ)) && !airJumped) { snd(SND_JUMP); vy = JUMP_V * jK(); airJumped = true; jumpBuf = 0; sqX = 0.7; sqY = 1.35; }
     }
   }
   if (jumpEdge) flyTap = 0.3f;
@@ -6970,6 +7376,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
   else {
     bool onIce = (onGround || coyote > 0) && (tileAt((int)floor((px + 2) / TILE), (int)floor((py + PH + 1) / TILE)) == 'I' || tileAt((int)floor((px + PW - 2) / TILE), (int)floor((py + PH + 1) / TILE)) == 'I');
     float ax = (onIce ? 380.0 : onGround ? 2300.0 : 1850.0) * dt;   // glace : on accelere et on freine tres lentement   // retour "encore plus rapide" -- 1700/1400 -> 2000/1600 -> 2300/1850
+    if (bqFiche && bqOn()) ax *= fElanK;             // BRIQUE fiche : elan
     if (vx < target) { vx += ax; if (vx > target) vx = target; }
     else if (vx > target) { vx -= ax; if (vx < target) vx = target; }
   }
@@ -7020,7 +7427,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
   }
 
   bool pressToward = (wallDir < 0 && bLeft) || (wallDir > 0 && br);
-  wallSliding = (!onGround && wallDir != 0 && vy >= 0 && pressToward && clingLock <= 0);
+  wallSliding = (!onGround && wallDir != 0 && vy >= 0 && pressToward && clingLock <= 0) && (!(bqFiche && bqOn()) || fGlisse || fMural);
   if (wallSliding) {
     if (!wasSliding) wallTimer = 0;
     wallTimer += dt;
@@ -7046,7 +7453,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
     int fr = (int)floor((py + PH) / TILE);
     if (fr >= 0 && fr < levH)
       for (int c = (int)floor(px / TILE); c <= (int)floor((px + PW - 1) / TILE); c++)
-        if (grid[fr][c] == 'R') { snd(SND_BOUNCE); vy = BOUNCE_V; excitedT = 1.0f; onGround = false; sqX = 1.6f; sqY = 0.4f; break; }
+        if (grid[fr][c] == 'R') { snd(SND_BOUNCE); vy = bqFiche && bqOn() ? fRebondV : BOUNCE_V; excitedT = 1.0f; onGround = false; sqX = 1.6f; sqY = 0.4f; break; }
   }
 
   // --- plateformes fragiles : declenche au contact + minuterie d'effondrement ---
@@ -7071,6 +7478,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
     float dx = sxx - cx, dy = syy - cy;
     if (dx * dx + dy * dy < s.r * s.r) { addStain(px + PW / 2, py + PH / 2); die(); return; }
   }
+  if (bqFiche && bqOn() && !ficheTick(dt)) return;     // BRIQUE fiche : objets qui bougent, regles, but
 
   if (popT > 0) popT -= dt;
   // ennemis : patrouille ; tue au contact, ecrasable par le dessus (rebond)
@@ -7105,7 +7513,7 @@ void playStep(bool bLeft, bool br, bool bj, bool jumpEdge) {
     int tp = (int)floor(py / TILE), bt = (int)floor((py + PH - 1) / TILE);
     for (int ty = tp; ty <= bt; ty++) for (int tx = l; tx <= r; tx++)
       if (ty >= 0 && ty < levH && tx >= 0 && tx < COLS && grid[ty][tx] == 'O') {
-        grid[ty][tx] = '.'; if (raceMode) espSend(M_COIN, curLevel, tx, ty, 0); snd(SND_COIN); coins++; levelCoins++; prefs.putUInt("coins", coins); happyT = 0.8f; happyKind = 1; sqX = 0.8f; sqY = 1.25f; burstSparks(tx * TILE + 8, ty * TILE + 8, COL_STAR, 7);
+        grid[ty][tx] = '.'; fOLeft--; if (raceMode) espSend(M_COIN, curLevel, tx, ty, 0); snd(SND_COIN); coins++; levelCoins++; prefs.putUInt("coins", coins); happyT = 0.8f; happyKind = 1; sqX = 0.8f; sqY = 1.25f; burstSparks(tx * TILE + 8, ty * TILE + 8, COL_STAR, 7);
       }
   }
 
@@ -7640,6 +8048,7 @@ void drawGame() {
     }
     fb.fillCircle(sx, sy, 2, COL_MEATD);
   }
+  if (bqFiche && bqOn()) ficheDraw(cy);
 
   // pieges dynamiques
   for (int i = 0; i < nTraps; i++) {
@@ -7828,7 +8237,7 @@ void drawGame() {
   fb.setTextColor(COL_TXT); fb.setTextSize(1);
   { char hb[24];
     if (bqOn() && bqChrono) { int r = bqChrono - (int)((millis() - levelStartMs) / 1000); snprintf(hb, sizeof(hb), "Temps: %d", r < 0 ? 0 : r); fb.setTextColor(r <= 5 ? COL_MEAT : COL_TXT); }
-    else if (bqOn()) snprintf(hb, sizeof(hb), "%.20s", bqTitre[0] ? bqTitre : "Mon jeu");
+    else if (bqOn()) snprintf(hb, sizeof(hb), "%.20s", bqFiche && millis() < fMsgFin ? fMsg : bqTitre[0] ? bqTitre : "Mon jeu");   // BRIQUE fiche : message d'une regle
     else snprintf(hb, sizeof(hb), "NIV %d/%d", curLevel + 1, NUM_LEVELS);
     gfxPrintAt(fb, 1, 4, 2 - sTop, hb); fb.setTextColor(COL_TXT);
     for (int i = 0; i < nStarPos; i++) drawStarFancy(fb, 138 + i * 18, 8 - sTop, 4, 1.0f + i * 1.7f, starGot[i]);   // mini-etoiles du niveau

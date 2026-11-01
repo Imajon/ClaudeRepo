@@ -1,6 +1,7 @@
 // node test-iso.js : genererIso() (index.html) fait des niveaux que nivValide() (server.js) accepte et qu'on peut finir avec les regles de la console
 const fs = require('fs'), assert = require('assert');
-const page = fs.readFileSync(__dirname + '/index.html', 'utf8'), serv = fs.readFileSync(__dirname + '/server.js', 'utf8');
+const lit = f => fs.readFileSync(__dirname + f, 'utf8').split(String.fromCharCode(13)).join('');   // fins de ligne Windows (CRLF)
+const page = lit('/index.html'), serv = lit('/server.js');
 const bout = (src, debut) => { const i = src.indexOf(debut); let j = src.indexOf('\n}\n', i); return src.slice(i, j + 2); };
 const { genererIso, nivValide } = new Function(`${bout(page, 'function rnd(')}\n${bout(page, 'function genererIso(')}\n${bout(serv, 'function nivValide(')}\nreturn { genererIso, nivValide };`)();
 for (let seed = 1; seed <= 2000; seed++) {

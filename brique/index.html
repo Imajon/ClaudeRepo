@@ -1987,7 +1987,7 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
 (() => {
   const img = demoConsole.querySelector('img'), c = demoEcran.getContext('2d');
   const TEXTE = 'Je veux un jeu de plateforme, fond bleu, plateformes roses, avec un personnage arc-en-ciel';
-  const COINS = [[446, 262], [786, 190], [851, 446], [477, 524]];   // coins de l'écran sur la photo (1205 x 880) : haut-gauche, haut-droit, bas-droit, bas-gauche
+  const COINS = [[427, 266], [783, 191], [854, 438], [485, 519]];   // coins de l'écran sur la photo (1205 x 880) : haut-gauche, haut-droit, bas-droit, bas-gauche
   function caler() {                                    // 320 x 240 -> les 4 coins (homographie, en matrix3d)
     const k = img.clientWidth / 1205; if (!k) return;
     const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = COINS.map(([x, y]) => [x * k, y * k]);

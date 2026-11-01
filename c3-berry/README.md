@@ -8,7 +8,7 @@ La console `c3-tft-meatboy` fait tourner un script [Berry](https://github.com/be
 python envoyer.py jeux/drift2.be COM23
 ```
 
-La console répond `OK` ou `ERR <erreur, ligne>`, puis affiche une ligne `STAT` par seconde (images/s, temps du script, temps du rendu, tas libre). Le jeu est gardé dans `/jeu.be` et relancé au démarrage, sauf si la console vient de planter.
+La console répond `OK` ou `ERR <erreur, ligne>`. `envoyer.py` demande aussi les mesures (`STAT 1`) : une ligne par seconde (images/s, temps du script, temps du rendu, pire image, nettoyages de la mémoire, tas libre). `python conduire.py COM23` mesure le jeu chargé pendant qu'on « conduit » (`BTN 011` = D et P3 tenus). Le jeu est gardé dans `/jeu.be` et relancé au démarrage, sauf si la console vient de planter.
 
 Compiler et flasher : comme `c3-tft-meatboy` (même carte, `PartitionScheme=huge_app`, bibliothèques de `../c3-tft-meatboy/libs`).
 
@@ -47,4 +47,5 @@ Le dessin est enregistré une seule fois par image, puis rejoué pour chacune de
 
 - **Pile** : 16 Ko pour la tâche principale. Avec les 8 Ko par défaut, la pile a débordé au chargement de Drift, sur une console qui avait déjà le réseau allumé. Après ce plantage, la console a redémarré sans relancer le jeu, comme prévu.
 
-**Pas encore vérifié** : le rendu à l'œil sur l'écran (les mesures viennent du port série).
+- **Port USB** : le C3 bloquait le jeu à chaque écriture quand aucun programme ne lisait le port. Le jeu tombait vers 2 à 10 images/s à l'écran alors que les tests, port lu, mesuraient 59. Désormais l'écriture ne bloque plus (`setTxTimeoutMs(0)`) et les mesures ne s'écrivent que sur demande. Vérifié à l'œil sur les 2 consoles : fluide.
+- **En conduisant** (`conduire.py`) : `drift2.be` passe de 59 à 51 images/s quand les traces de dérapage s'accumulent (110 carrés par image), avec une pire image à 25 ms. Les nettoyages de la mémoire de Berry restent sous 3,4 ms. Les traces sont à alléger dans le script.

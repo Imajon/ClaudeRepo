@@ -137,7 +137,10 @@ extern "C" void berry_sortie(const char *s, size_t n) {   // print() et erreurs 
   for (size_t i = 0; i < n && errN < (int)sizeof erreur - 1; i++) erreur[errN++] = s[i];
   erreur[errN] = 0;
 }
+uint32_t gcT0 = 0, gcUs = 0, gcMax = 0, gcN = 0;   // nettoyages de la memoire de Berry (mesure des saccades)
 static void heartbeat(bvm *v, int ev, ...) {     // toutes les 8192 instructions : un appel du script ne doit pas bloquer la console
+  if (ev == BE_OBS_GC_START) { gcT0 = micros(); return; }
+  if (ev == BE_OBS_GC_END) { uint32_t d = micros() - gcT0; gcUs += d; gcN++; if (d > gcMax) gcMax = d; return; }
   if (ev == BE_OBS_VM_HEARTBEAT && millis() - appelDebut > 500) be_raise(v, "temps_error", "le script tourne trop longtemps (boucle sans fin ?)");
 }
 static int I(bvm *v, int i, int def = 0) { return be_top(v) >= i ? (int)be_toint(v, i) : def; }
@@ -206,6 +209,8 @@ const char *lance(const char *src, size_t n) {   // nouvelle machine, le script,
 }
 
 // ---- reception d'un script par le cable ----
+bool stats = false;                              // mesures sur le port serie : seulement si on les demande ("STAT 1")
+uint8_t btSim = 0;                               // boutons simules par le cable (mesures en jeu)
 char ligne[48]; int nLigne = 0; char *recu = nullptr; int attendu = 0, nRecu = 0; uint32_t recuT = 0;
 void ecoute() {
   while (Serial.available()) {
@@ -223,6 +228,8 @@ void ecoute() {
     }
     if (c == '\n') {
       ligne[nLigne] = 0; nLigne = 0;
+      if (!strncmp(ligne, "STAT ", 5)) stats = ligne[5] == '1';
+      if (!strncmp(ligne, "BTN ", 4)) { btSim = 0; for (int k = 0; k < 3 && ligne[4 + k]; k++) btSim |= (ligne[4 + k] == '1') << k; }   // test : boutons tenus G D P3, ex. "BTN 011"
       if (!strncmp(ligne, "SCRIPT ", 7)) {
         attendu = atoi(ligne + 7); nRecu = 0; recuT = millis();
         recu = attendu > 0 && attendu < 60000 ? (char *)malloc(attendu + 1) : nullptr;
@@ -236,6 +243,7 @@ void ecoute() {
 void setup() {
   Serial.setRxBufferSize(4096);                 // un script arrive d'un coup
   Serial.begin(115200);
+  Serial.setTxTimeoutMs(0);                      // sans programme qui lit le port USB, ecrire bloquait le jeu (~10 img/s) : on perd le texte au lieu d'attendre
   for (int k = 0; k < 3; k++) pinMode(BTN[k], INPUT_PULLUP);
   SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
   tft.init(240, 320); tft.setRotation(1); tft.setSPISpeed(80000000);
@@ -252,12 +260,13 @@ void setup() {
   } else snprintf(erreur, sizeof erreur, "Aucun jeu. Envoie un script.");
 }
 
+uint32_t tPrecImg = 0, pire = 0, lentes = 0;     // pire image (ms), images de plus de 25 ms
 uint32_t tPrec = 0, statT = 0, nImg = 0, usScript = 0, usRendu = 0;
 void loop() {
   ecoute();
   if (recu) return;                              // reception d'un script en cours : pas d'image
   if (sonFin && millis() > sonFin) { noTone(SND_PIN); sonFin = 0; }
-  for (int k = 0; k < 3; k++) { btAv[k] = bt[k]; bt[k] = !digitalRead(BTN[k]); }
+  for (int k = 0; k < 3; k++) { btAv[k] = bt[k]; bt[k] = !digitalRead(BTN[k]) || (btSim >> k & 1); }
   const uint32_t now = millis(); float dt = (now - tPrec) / 1000.0f; tPrec = now; if (dt > 0.1f) dt = 0.1f;
   uint32_t t0 = micros();
   if (jeuOk) {
@@ -276,9 +285,10 @@ void loop() {
   for (int k = 0; k < H / BH; k++) { dmaAttend(2); g.b = buf[k & 1]; rejoue(k * BH); bandeEnvoie(k); }   // la bande k-2 (meme tampon) doit etre partie
   uint32_t t2 = micros();
   usScript += t1 - t0; usRendu += t2 - t1; nImg++;
+  { const uint32_t ms = now - tPrecImg; tPrecImg = now; if (ms > pire) pire = ms; if (ms > 25) lentes++; }
   if (now - statT >= 1000) {
-    Serial.printf("STAT %u img/s  script %u us  rendu %u us  appels %d%s  tas %u  reseau %d\n", (unsigned)nImg, (unsigned)(usScript / max(1u, (unsigned)nImg)), (unsigned)(usRendu / max(1u, (unsigned)nImg)),
-                  nOps, tropOps ? " (trop !)" : "", (unsigned)ESP.getFreeHeap(), netOn);
-    statT = now; nImg = usScript = usRendu = 0;
+    if (stats) Serial.printf("STAT %u img/s  script %u us  rendu %u us  pire %u ms  lentes %u  gc %u x (max %u us)  appels %d%s  tas %u  reseau %d\n", (unsigned)nImg, (unsigned)(usScript / max(1u, (unsigned)nImg)), (unsigned)(usRendu / max(1u, (unsigned)nImg)),
+                  (unsigned)pire, (unsigned)lentes, (unsigned)gcN, (unsigned)gcMax, nOps, tropOps ? " (trop !)" : "", (unsigned)ESP.getFreeHeap(), netOn);
+    statT = now; nImg = usScript = usRendu = pire = lentes = gcN = gcMax = gcUs = 0;
   }
 }

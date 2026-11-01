@@ -105,6 +105,17 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .acc-signes small{font-weight:700;color:var(--acc2)}
 .acc-commu article>button,.acc-commu .actions{align-self:flex-start;margin-top:auto}
 @media (max-width:800px){.commu .acc-commu{grid-template-columns:minmax(0,1fr)}}
+.acc-commu .apropos{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;align-items:center}   /* à propos : la photo à gauche */
+.apropos img{width:100%;height:auto;border-radius:10px;display:block}.apropos>div{display:flex;flex-direction:column;gap:8px}
+@media (max-width:800px){.acc-commu .apropos{grid-template-columns:minmax(0,1fr)}}
+.pied{margin-top:32px;padding:32px 16px 16px;background:#14201a;color:#c9d6cd;font-size:15px}   /* pied de page : plan du site */
+.pied-in{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:24px}
+.pied h4{margin:0 0 10px;color:#fff;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
+.pied p{margin:0 0 8px}.pied ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.pied a{color:#c9d6cd;text-decoration:none;cursor:pointer}.pied a:hover{color:#fff;text-decoration:underline}
+.pied-marque{font:900 22px/1 var(--mono);color:#fff;letter-spacing:.12em;margin-bottom:10px}
+.pied-bas{max-width:1400px;margin:24px auto 0;padding-top:14px;border-top:1px solid #2c3d33;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:13px;color:#8fa497}
+@media (max-width:800px){.pied-in{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.pied-in>div:first-child{grid-column:1/-1}}
 .c-soude h2{grid-column:1/-1;margin:0;color:#13241a}
 .c-soude img{object-fit:cover;border-radius:10px}
 .c-console img{width:100%;height:auto;aspect-ratio:1;object-fit:contain;display:block}
@@ -437,7 +448,9 @@ body{overflow-x:clip}                                           /* la bande 100v
       <figcaption><b>Le circuit</b> : hexagonal, ses pistes relient chaque bouton au cerveau</figcaption></figure>
   </section>
   <section id="apropos" class="acc-commu">       <!-- à propos de nous -->
-    <article style="grid-column:1/-1">
+    <article class="apropos">
+      <img src="images/apropos.jpg" alt="Jonathan et Anti, bras en arche, dans le vaisseau Arcadia, une de leurs installations de jeu" width="1600" height="1067" loading="lazy">
+      <div>
       <span class="ref">À propos de nous</span><h3>Deux artisans du tiers-lieu Le Cercle</h3>
       <p>Brique est né dans les tiers-lieux, pour rendre l'électronique, la programmation et les outils numériques accessibles à tous.</p>
       <div class="acc-commu" style="margin-top:8px">
@@ -445,6 +458,7 @@ body{overflow-x:clip}                                           /* la bande 100v
         <p><b style="color:var(--txt)">Anti</b><br>Plasticien, cofondateur du Cercle, où il porte des projets artistiques et techniques.</p>
       </div>
       <p><b style="color:var(--txt)">Le Cercle</b>, c'est un tiers-lieu à Lunery, dans le Cher, à 20 km au sud de Bourges, installé dans l'ancienne cité ouvrière de l'usine de Rosières. Des artistes, des artisans et des créateurs y partagent ateliers, expositions et savoir-faire numérique.</p>
+      </div>
     </article>
   </section>
 </div>
@@ -1099,6 +1113,26 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div id="hist" class="hist"><p class="vide">Tes essais apparaîtront ici : ce que tu as demandé, ce qui est arrivé, ce que tu veux corriger.</p></div>
   </section>
 </main>
+
+<footer class="pied">                             <!-- pied de page : plan du site -->
+  <div class="pied-in">
+    <div>
+      <div class="pied-marque">BRIQUE</div>
+      <p>La console de jeu qu'on soude et qu'on programme soi-même, seul ou à plusieurs.</p>
+      <p>Un projet né au tiers-lieu Le Cercle, pour rendre l'électronique, la programmation et le numérique accessibles à tous.</p>
+    </div>
+    <nav aria-label="Plan du site"><h4>Plan du site</h4><ul>
+      <li><a data-vue="accueil">Accueil</a></li><li><a data-vue="boutique">Boutique</a></li><li><a data-vue="commu">Communauté</a></li>
+      <li><a data-vue="creer">Créer un jeu</a></li><li><a data-vue="profs">Atelier</a></li><li><a data-vue="support">Support</a></li>
+    </ul></nav>
+    <div><h4>Espaces</h4><ul>
+      <li><a data-clic="rejoindreBtn">Rejoindre mon groupe</a></li><li><a data-vue="anim">Espace animateur</a></li>
+      <li><a data-vue="accueil" data-ancre="apropos">À propos de nous</a></li>
+    </ul></div>
+    <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
+  </div>
+  <div class="pied-bas"><span>© 2026 Brique · Jonathan Moriot et Anti</span><a id="piedSite" href="/">brique.studioeya.com</a></div>
+</footer>
 
 <script>
 // ---------- Constantes reprises du firmware (c3-tft-meatboy.ino) ----------
@@ -2354,6 +2388,12 @@ ficheImprimer.onclick = () => {                         // la fiche seule, en A4
 vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
 accVoirCommu.onclick = () => afficher('commu'); accAjouter.onclick = () => afficher('creer'); accCommun.onclick = () => ctaCommun.onclick();
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
+document.querySelector('.pied').onclick = e => {      // pied de page : mêmes vues que le menu
+  const a = e.target.closest('a[data-vue],a[data-clic]'); if (!a) return;
+  if (a.dataset.clic) return document.getElementById(a.dataset.clic).click();
+  afficher(a.dataset.vue); if (a.dataset.ancre) document.getElementById(a.dataset.ancre).scrollIntoView();
+};
+piedSite.textContent = location.host;
 majMoi();
 connexionParLien().then(fait => fait || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);

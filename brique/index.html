@@ -108,7 +108,9 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .acc-commu .apropos{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;align-items:center}   /* à propos : la photo à gauche */
 .apropos img{width:100%;height:auto;border-radius:10px;display:block}.apropos>div{display:flex;flex-direction:column;gap:8px}
 @media (max-width:800px){.acc-commu .apropos{grid-template-columns:minmax(0,1fr)}}
-.acc-commu .partipris{grid-column:1/-1}   /* parti pris : 3 boutons */
+#partipris.acc-commu{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);align-items:start}   /* parti pris : 3 boutons, et à côté le défi */
+@media (max-width:800px){#partipris.acc-commu{grid-template-columns:minmax(0,1fr)}}
+.acc-defi b.pc{font:800 40px/1 var(--mono);color:var(--acc2);text-shadow:var(--brille)}
 .pp-tab{border-collapse:collapse;width:100%;max-width:640px;font-size:15px}
 .pp-tab th,.pp-tab td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center;color:var(--txt)}
 .pp-tab th:first-child,.pp-tab td:first-child{text-align:left}.pp-tab th{color:var(--acc)}
@@ -491,6 +493,14 @@ body{overflow-x:clip}                                           /* la bande 100v
       </div>
       <p><b style="color:var(--txt)">La contrainte fait inventer.</b> « Comment je fais un Pac-Man avec 3 boutons ? » est une vraie question de créateur de jeux : c'est l'enfant qui trouve la réponse, pas la manette. Une croix ramène vers les jeux qui existent déjà ; 3 boutons poussent vers des jeux qui n'existent pas encore. C'est aussi ce qui rend la console reconnaissable : la console à 3 boutons.</p>
       <p class="pp-note">Classement fait par nos soins sur 30 genres courants : une estimation de game design, pas une étude.</p>
+    </article>
+    <article id="accDefi" class="acc-defi">       <!-- le défi de la communauté, en bref -->
+      <span class="ref">Le défi</span><h3>🎯 Explore ta console</h3>
+      <p>Soyons honnêtes : un ESP32-C3 à 3 € ne vaut pas une Switch. Ni même une PS Vita. Ni même la calculatrice de ta grande sœur. 🤏</p>
+      <p>Mais avec 3 boutons et un petit écran, il cache bien plus de jeux qu'il n'en a l'air. Chaque jeu partagé dévoile une des possibilités secrètes de la console.</p>
+      <div><b id="accDefiPc" class="pc">–</b> <span class="aide">de la console déjà explorée par la communauté</span></div>
+      <div class="barre defi-barre"><i id="accDefiBarre" style="width:0"></i></div>
+      <button id="accVoirDefi" class="sec">🎯 Relever le défi</button>
     </article>
   </section>
   <section id="apropos" class="acc-commu">       <!-- à propos de nous -->
@@ -2319,7 +2329,7 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 async function rafraichir() {
   let c;
   try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); EN_LIGNE = true; }
-  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox, accCommu].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('accueil'); return; }   // GitHub Pages / fichier : pas de communauté
+  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox, accCommu, accVoirDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('accueil'); return; }   // GitHub Pages / fichier : pas de communauté
   enLigne = c.niveaux; modeAtelier(c.atelier);
   if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant : la tranche d'âge choisie par son animateur
   nJeux.textContent = accJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = accAujourdhui.textContent = c.chiffres.aujourdhui;
@@ -2418,7 +2428,7 @@ function rendreDefi(jeux) {                             // une case dévoilée p
   const premier = {};
   for (const n of [...jeux].sort((a, b) => a.cree - b.cree)) for (const id of possJeu(n)) premier[id] ??= n.pseudo;
   const k = POSS_TOUT.filter(p => premier[p.id]).length;
-  defiPc.textContent = pc(k); defiBarre.style.width = pc(k).replace(' ', '');
+  defiPc.textContent = accDefiPc.textContent = pc(k); defiBarre.style.width = accDefiBarre.style.width = pc(k).replace(' ', '');
   defiTxt.textContent = `${k} possibilité${k > 1 ? 's' : ''} sur ${POSS_TOUT.length} déjà explorée${k > 1 ? 's' : ''} par la communauté`;
   defiGrille.innerHTML = POSS_TOUT.map(p => premier[p.id] ? `<div class="ok"><b>${p.nom}</b><small>par ${esc(premier[p.id])}</small></div>`
     : `<div><b>❓ ???</b><small>${p.cat}</small></div>`).join('');
@@ -2614,7 +2624,12 @@ ficheImprimer.onclick = () => {                         // la fiche seule, en A4
   if (w) w.onload = () => w.print();
 };
 vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
-accVoirCommu.onclick = () => afficher('commu'); accAjouter.onclick = () => afficher('creer'); accCommun.onclick = () => ctaCommun.onclick();
+accVoirCommu.onclick = () => afficher('commu');
+accVoirDefi.onclick = () => { afficher('commu'); document.querySelector('.c-defi').scrollIntoView(); };
+setTimeout(() => {                                       // accueil : au bout de quelques secondes, le titre se moque gentiment de la console
+  const t = document.querySelector('#accueil .sh-titre'), j = 'Ce n\'est pas une Switch.\nSauras-tu explorer ses limites ?';
+  t.dataset.text = j; t.innerHTML = esc(j).replace('\n', '<br>');
+}, 6000); accAjouter.onclick = () => afficher('creer'); accCommun.onclick = () => ctaCommun.onclick();
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
 document.querySelector('.pied').onclick = e => {      // pied de page : mêmes vues que le menu
   const a = e.target.closest('a[data-vue],a[data-clic]'); if (!a) return;

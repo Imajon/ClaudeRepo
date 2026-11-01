@@ -73,7 +73,7 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .etapes::before{content:"";position:absolute;left:8%;right:8%;top:84px;height:3px;z-index:0;   /* piste de cuivre qui relie les étapes, avec ses vias */
   background:radial-gradient(circle,var(--pad) 0 5px,transparent 5.5px) 0 50%/16.66% 14px repeat-x,linear-gradient(var(--pad),var(--pad)) 0 50%/100% 3px no-repeat;opacity:.55}
 .etape{position:relative;z-index:1;display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:14px;background:var(--panel);box-shadow:var(--glow)}
-.etape>img,.ia-demo{width:100%;height:168px;max-height:none;object-fit:cover;border-radius:10px;display:block}
+.etape>img,.etape>video,.ia-demo{width:100%;height:168px;max-height:none;object-fit:cover;border-radius:10px;display:block}
 .etape>img.blanc{object-fit:contain;background:#fff}
 .etape h3{margin:0;font-size:18px;color:var(--txt)}
 .etape p{margin:0;color:var(--mute);font-size:14px}
@@ -227,6 +227,14 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
   font:600 clamp(11px,2.1cqw,17px)/1.4 var(--mono);border-radius:14px 14px 14px 4px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
 .demo-caret{display:inline-block;width:.55em;height:1.1em;margin-left:2px;vertical-align:-.2em;background:#3ddc84;animation:clignote 1s steps(1) infinite}
 @keyframes clignote{50%{opacity:0}}
+/* le montage (data-kit = 1 à 5 : photos empilées en fondu ; 6 = elles s'effacent, la console apparaît) */
+.kit{position:absolute;inset:4% 3%;display:grid;place-items:center;pointer-events:none}
+.kit img{grid-area:1/1;width:100%;height:auto;border-radius:16px;opacity:0;transition:opacity .5s;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.kit p{grid-area:1/1;align-self:end;margin:0 0 4%;padding:.35em .9em;border-radius:999px;background:#13241a;color:#d9f5e3;font:700 clamp(12px,2.2cqw,18px) var(--mono);opacity:0;transition:opacity .4s}
+.demo-console[data-kit="1"] .kit img:nth-child(-n+1),.demo-console[data-kit="2"] .kit img:nth-child(-n+2),.demo-console[data-kit="3"] .kit img:nth-child(-n+3),
+.demo-console[data-kit="4"] .kit img:nth-child(-n+4),.demo-console[data-kit="5"] .kit img,.demo-console[data-kit]:not([data-kit="6"]) .kit p{opacity:1}
+.demo-console>img,.demo-console>canvas,.demo-bulle{transition:opacity .6s}
+.demo-console[data-kit]:not([data-kit="6"])>img,.demo-console[data-kit]>canvas,.demo-console[data-kit] .demo-bulle{opacity:0}
 @container (max-width:520px){.demo-bulle{position:static;width:auto;min-height:4.2em;margin:8px 0 0}}
 body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
 :root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
@@ -315,6 +323,10 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div id="demoConsole" class="sh-console demo-console">   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->
       <img src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
       <canvas id="demoEcran" width="320" height="240" aria-hidden="true"></canvas>
+      <div class="kit" aria-hidden="true">          <!-- avant la console : le montage pas à pas (photos prises du même point de vue) -->
+        <img src="images/montage-1.jpg" alt="" width="960" height="701"><img src="images/montage-2.jpg" alt="" width="960" height="701"><img src="images/montage-3.jpg" alt="" width="960" height="701"><img src="images/montage-4.jpg" alt="" width="960" height="701"><img src="images/montage-5.jpg" alt="" width="960" height="701">
+        <p id="kitTxt"></p>
+      </div>
       <p class="demo-bulle" aria-label="Je veux un jeu de plateforme, fond bleu, plateformes roses, avec un personnage arc-en-ciel"><span id="demoTxt" aria-hidden="true"></span><i class="demo-caret"></i></p>
     </div>
   </figure>
@@ -333,7 +345,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <div class="etapes">
       <article class="etape">
-        <img src="images/atelier-03.jpg" alt="Un enfant soude sa console au fer à souder, la plaque tenue par un support" width="800" height="800">
+        <video src="images/souder.mp4" poster="images/souder-video.jpg" autoplay muted loop playsinline preload="auto" width="640" height="480" aria-label="Un enfant soude sa console : l'étain d'une main, le fer de l'autre, la plaque tenue par un support"></video>
         <span class="ref">Étape 1 · SW1</span><h3>Je soude ma console</h3>
         <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p>
       </article>
@@ -1926,6 +1938,7 @@ function vignette(rows) {                                // le niveau entier en 
   return c.toDataURL();
 }
 // accueil, étape 2 : un vrai niveau sorti du générateur, comme si l'IA venait de lire « un volcan très haut avec des scies »
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('video[autoplay]').forEach(v => { v.removeAttribute('autoplay'); v.pause(); });   // moins d'animations demandé : la vidéo reste sur son image
 // accueil : une demande se tape dans la bulle, puis le jeu se dessine sur l'écran de la photo (vue en perspective)
 (() => {
   const img = demoConsole.querySelector('img'), c = demoEcran.getContext('2d');
@@ -1966,13 +1979,19 @@ function vignette(rows) {                                // le niveau entier en 
   }
   // déroulé (ms) : on tape (45 ms par lettre), l'IA réfléchit, le niveau s'allume ligne à ligne, on joue un moment, on recommence
   const TAPE = TEXTE.length * 45, PENSE = TAPE + 500, ALLUME = PENSE + 1100, JOUE = ALLUME + 700, FIN = JOUE + 5000;
+  const KIT = 6400, ETAPES = [[0, '1', '1 · le circuit'], [1300, '2', '2 · l’écran'], [2600, '3', '3 · les boutons'], [3200, '4', '3 · les boutons'], [3800, '5', '3 · les boutons'], [5600, '6', '']];   // le montage, puis la console finie
   const calme = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let t0 = performance.now(), dernier = -1;
   function image(now) {
     requestAnimationFrame(image);
     if (accueil.classList.contains('hide')) return;
     if (calme) { if (dernier < 0) { demoTxt.textContent = TEXTE; niveau(15, 0); dernier = 0; } return; }
-    const t = (now - t0) % FIN, n = Math.min(TEXTE.length, Math.floor(t / 45));
+    let t = (now - t0) % (KIT + FIN);
+    const e = t < KIT ? ETAPES.filter(([d]) => t >= d).pop() : null, k = e ? e[1] : '';
+    if (demoConsole.dataset.kit !== k) { k ? demoConsole.dataset.kit = k : delete demoConsole.dataset.kit; if (e && e[2]) kitTxt.textContent = e[2]; }
+    if (t < KIT) return;
+    t -= KIT;
+    const n = Math.min(TEXTE.length, Math.floor(t / 45));
     if (n !== dernier) { demoTxt.textContent = TEXTE.slice(0, n); dernier = n; }
     if (t < PENSE) eteint(t, false); else if (t < ALLUME) eteint(t, true);
     else niveau(t < JOUE ? Math.ceil(15 * (t - ALLUME) / 700) : 15, now);

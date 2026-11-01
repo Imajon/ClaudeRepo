@@ -339,9 +339,17 @@ const serveur = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
   }
-  const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.(jpg|png)$/);   // photos du site (nom simple : pas de chemin) ; png = image avec transparence
+  const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.(jpg|png|mp4)$/);   // photos et videos du site (nom simple : pas de chemin) ; png = image avec transparence
   if (img && fs.existsSync(path.join(__dirname, 'images', img[1] + '.' + img[2]))) {
-    res.writeHead(200, { 'Content-Type': img[2] === 'png' ? 'image/png' : 'image/jpeg', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'images', img[1] + '.' + img[2])).pipe(res);
+    const f = path.join(__dirname, 'images', img[1] + '.' + img[2]), taille = fs.statSync(f).size;
+    const type = { png: 'image/png', jpg: 'image/jpeg', mp4: 'video/mp4' }[img[2]], plage = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+    if (plage && (plage[1] || plage[2])) {               // video : lecture par morceaux (Safari ne lit pas une video sans)
+      const debut = plage[1] ? +plage[1] : Math.max(0, taille - +plage[2]), fin = plage[1] && plage[2] ? Math.min(+plage[2], taille - 1) : taille - 1;
+      if (debut > fin || debut >= taille) { res.writeHead(416, { 'Content-Range': `bytes */${taille}` }); return res.end(); }
+      res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${debut}-${fin}/${taille}`, 'Content-Length': fin - debut + 1, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' });
+      return fs.createReadStream(f, { start: debut, end: fin }).pipe(res);
+    }
+    res.writeHead(200, { 'Content-Type': type, 'Content-Length': taille, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' }); return fs.createReadStream(f).pipe(res);
   }
   const fw = req.method === 'GET' && url.match(/^\/firmware\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);
   if (fw) {                                             // mise a jour des consoles (esp-web-tools) : fichiers deposes par publier-firmware-brique.bat

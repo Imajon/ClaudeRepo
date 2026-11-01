@@ -391,8 +391,8 @@ body{overflow-x:clip}                                           /* la bande 100v
         <p>Une phrase suffit. L'IA règle le niveau, je regarde, je corrige, je recommence : c'est moi qui décide.</p>
       </article>
       <article class="etape">
-        <div class="multi-demo" role="img" aria-label="Trois consoles jouent ensemble au même jeu : fais ton propre jeu multijoueur">
-          <div class="bulle">« <span id="multiTxt">Fais ton propre jeu multijoueur</span><i class="demo-caret"></i> »</div>
+        <div class="multi-demo" role="img" aria-label="Trois consoles jouent ensemble au même jeu : fais ton propre jeu multijoueur local">
+          <div class="bulle">« <span id="multiTxt">Fais ton propre jeu multijoueur local</span><i class="demo-caret"></i> »</div>
           <div class="multi-consoles"><div class="mc"><img src="images/console-face.png" alt="" width="1105" height="763"><canvas width="80" height="60"></canvas></div><div class="mc"><img src="images/console-face.png" alt="" width="1105" height="763"><canvas width="80" height="60"></canvas></div><div class="mc"><img src="images/console-face.png" alt="" width="1105" height="763"><canvas width="80" height="60"></canvas></div></div>
         </div>
         <span class="ref">Étape 3 · USB</span><h3>Je joue et je partage</h3>
@@ -2072,7 +2072,7 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
 })();
 // accueil, étape 3 : la phrase se tape, trois consoles arrivent et jouent la même course (chacune voit son joueur en grand)
 (() => {
-  const box = document.querySelector('.multi-demo'), cvs = [...box.querySelectorAll('canvas')], TXT = 'Fais ton propre jeu multijoueur';
+  const box = document.querySelector('.multi-demo'), cvs = [...box.querySelectorAll('canvas')], TXT = 'Fais ton propre jeu multijoueur local';
   const COUL = ['#e8322b', '#2f6fe0', '#ffd400'], VIT = [1, .92, .85];   // un joueur par console
   const sol = [[0, 52, 80], [18, 40, 12], [44, 32, 12], [62, 42, 14]];   // [x, y, largeur] : le sol et trois plateformes (écran de 80 x 60)
   function course(c, moi, p) {                          // p : 0 -> 1 au fil de la course ; arrivée à droite

@@ -152,10 +152,11 @@ go.onclick = async () => {
   go.disabled = true; etatIA.textContent = '⏳ L\'IA écrit ton programme…'; const t0 = performance.now();
   let r;
   try {
-    const rep = await fetch('api/script', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texte, script: etat.script, erreur: etat.erreur, avant: etat.essais.map(e => e.demande).slice(-6) }) });
+    const moi = JSON.parse(localStorage.getItem('brique-moi') || 'null') || {}, session = JSON.parse(localStorage.getItem('brique-session') || 'null');   // le compte de la page principale
+    const rep = await fetch('api/script', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(session && { 'X-Session': session }) },
+      body: JSON.stringify({ pseudo: moi.pseudo, secret: moi.secret, texte, script: etat.script, erreur: etat.erreur, avant: etat.essais.map(e => e.demande).slice(-6) }) });
     r = await rep.json(); if (!rep.ok) throw new Error(r.erreur || rep.status);
-  } catch (e) { etatIA.innerHTML = `<span class="ko">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : 'L\'IA ne répond pas : réessaie.')}</span>`; go.disabled = false; return; }
+  } catch (e) { etatIA.innerHTML = `<span class="ko">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : r?.erreur || 'L\'IA ne répond pas : réessaie.')}</span>`; go.disabled = false; return; }
   go.disabled = false;
   if (r.refus) { etatIA.innerHTML = `<span class="ko">${esc(r.refus)}</span>`; return; }
   etatIA.textContent = `Écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s.`;

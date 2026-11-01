@@ -112,6 +112,11 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 @media (max-width:800px){#partipris.acc-commu{grid-template-columns:minmax(0,1fr)}}
 .acc-blague{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:0 auto 32px;max-width:900px;padding:18px 22px;border:2px dashed var(--acc);border-radius:14px;background:var(--soft);text-align:center}
 .acc-blague p{margin:0;font-size:clamp(18px,2.2vw,24px);line-height:1.3}.acc-blague button{width:auto;margin:0}
+.acc-ia{margin:0 auto 32px;max-width:1100px;padding:24px;border:1px solid var(--line);border-radius:14px;background:var(--soft);text-align:left}   /* parti pris : une IA qui ne sait faire que des jeux */
+.acc-ia h3{margin:4px 0 8px;font-size:clamp(22px,2.6vw,30px)}.acc-ia>p{margin:0 0 16px}.acc-ia b{color:var(--txt)}
+.ia-points{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 20px;margin:0 0 14px;padding:0;list-style:none}
+.ia-points li{margin:0}.ia-points li>b{display:block}
+@media (max-width:800px){.ia-points{grid-template-columns:minmax(0,1fr)}}
 .acc-defi b.pc{font:800 40px/1 var(--mono);color:var(--acc2);text-shadow:var(--brille)}
 .pp-tab{border-collapse:collapse;width:100%;max-width:640px;font-size:15px}
 .pp-tab th,.pp-tab td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center;color:var(--txt)}
@@ -414,7 +419,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
   </figure>
   <div class="sh-apres">
-    <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA le construit : il part dans la console par le câble USB.</p>
+    <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA (Mistral, française) le construit : il part dans la console par le câble USB.</p>
     <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">39 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">28 €</b> par console pour une classe</span></p>
     <div class="cta" style="justify-content:center;margin-top:20px"><button id="accCreer" class="big">✨ Créer mon jeu</button><button id="accBoutique" class="big alt">🛒 Voir la boutique</button></div>
   </div>
@@ -422,6 +427,20 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p><b>Ça ne vaut pas une Switch, ni même la calculette de ta sœur.<br>Mais sauras-tu en explorer les limites pour autant ?</b></p>
     <button id="accBlagueDefi" class="sec">🎯 Relever le défi</button>
   </aside>
+  <section id="ia-francaise" class="acc-ia">     <!-- parti pris : IA spécialisée (Mistral, française), pas un assistant qui parle de tout -->
+    <span class="ref">Parti pris · IA française : Mistral AI</span>
+    <h3>Une IA qui ne sait faire que des jeux</h3>
+    <p>Brique n'utilise pas un assistant qui discute de tout. L'IA, celle de <b>Mistral AI</b>, une entreprise française, a été cantonnée à un seul travail : transformer la phrase de l'enfant en réglages de jeu. Moins de liberté pour elle, moins de débordements pour les plus jeunes.</p>
+    <ul class="ia-points">
+      <li><b>🎮 Elle ne discute pas</b>Pas de conversation, pas de recherche sur Internet, pas d'images : une phrase entre, des réglages de jeu sortent.</li>
+      <li><b>🧱 Tout est trié</b>Notre serveur ne garde que les réglages que la console connaît. Le reste est jeté avant d'arriver à l'écran.</li>
+      <li><b>🛡 Les consignes pièges sont ignorées</b>Une demande hors sujet ne la fait pas sortir de son rôle. Le garde-fou de Mistral est activé, et un filtre de gros mots passe derrière.</li>
+      <li><b>👤 Aucune donnée personnelle</b>Elle ne reçoit que la phrase et les réglages du jeu : jamais de nom, d'adresse ou de mail.</li>
+      <li><b>🔑 Réservée aux inscrits</b>L'enfant rejoint le groupe créé par un adulte (animateur, prof ou parent). Sans groupe : 3 essais par jour pour découvrir.</li>
+      <li><b>⏱ Un nombre de demandes limité</b>Quelques dizaines par jour et par enfant : de quoi créer, pas de quoi passer la journée devant l'écran.</li>
+    </ul>
+    <a href="#" class="pp-note" onclick="afficher('boutique');donneesIA.scrollIntoView();return false" style="color:var(--acc)">Ce que nous gardons sur les enfants et les adultes ›</a>
+  </section>
 
 </div>
 <div class="commu">
@@ -524,7 +543,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <span class="ref">À propos de nous</span><h3>Deux artisans du tiers-lieu Le Cercle</h3>
       <p>Brique est né dans les tiers-lieux, pour rendre l'électronique, la programmation et les outils numériques accessibles à tous.</p>
       <div class="acc-commu" style="margin-top:8px">
-        <p><b style="color:var(--txt)">Jonathan Moriot</b><br>Concepteur et développeur : la console, son programme et ce site.</p>
+        <p><b style="color:var(--txt)">Jonathan Moriot</b><br>Concepteur et développeur.</p>
         <p><b style="color:var(--txt)">Anti</b><br>Plasticien, cofondateur du Cercle, où il porte des projets artistiques et techniques.</p>
       </div>
       <p><b style="color:var(--txt)">Le Cercle</b>, c'est un tiers-lieu à Lunery, dans le Cher, à 20 km au sud de Bourges, installé dans l'ancienne cité ouvrière de l'usine de Rosières. Des artistes, des artisans et des créateurs y partagent ateliers, expositions et savoir-faire numérique.</p>
@@ -677,6 +696,28 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ul>
     <h4>Vos droits</h4>
     <p>Le bouton « supprimer mon compte » efface votre compte immédiatement ; vos commandes passées deviennent anonymes. Pour toute question (RGPD : accès, rectification, effacement), écrivez-nous ; vous pouvez aussi saisir la CNIL. Les échanges avec le site sont chiffrés (HTTPS), la base de données aussi en transit.</p>
+  </div>
+
+  <div id="donneesIA" class="sh-bloc sh-donnees">  <!-- côté création de jeux : enfants, adultes, IA -->
+    <h3 class="sh-h">Créer des jeux : ce que nous savons des enfants.</h3>
+    <p class="sh-sous">Presque rien, exprès. Un enfant n'a jamais à donner son nom ni son mail : c'est un adulte qui crée le groupe et lui en donne le code.</p>
+    <div class="sh-colonnes">
+      <div><h4>Ce que nous gardons</h4><ul>
+        <li><b>Enfant</b> : un pseudo, le groupe qu'il a rejoint, les jeux qu'il publie et ses scores.</li>
+        <li><b>Adulte</b> (animateur, prof, parent) : son e-mail, pour lui envoyer le lien de connexion (aucun mot de passe), et les groupes qu'il a créés.</li>
+      </ul></div>
+      <div><h4>Ce qui part chez Mistral AI</h4><ul>
+        <li>La phrase tapée et les réglages du jeu en cours. Rien d'autre : ni pseudo, ni groupe, ni adresse IP de l'enfant.</li>
+        <li>Mistral AI est une entreprise française ; ses serveurs sont en Europe.</li>
+      </ul></div>
+    </div>
+    <h4>Contre les abus</h4>
+    <ul>
+      <li>Nombre de demandes à l'IA limité par jour : par enfant, par groupe, et 3 essais sans compte.</li>
+      <li>Liens de connexion limités : un par minute et par adresse, cinq par heure et par connexion Internet.</li>
+      <li>Si le code d'un groupe circule, l'adulte le change en un clic : l'ancien ne marche plus, les enfants déjà inscrits restent.</li>
+      <li>L'adulte peut masquer un jeu publié et libérer un pseudo ; libérer un pseudo l'efface.</li>
+    </ul>
   </div>
 
   <div class="sh-bloc sh-libre">
@@ -1291,6 +1332,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <li><a data-clic="rejoindreBtn">Rejoindre mon groupe</a></li><li><a data-vue="anim">Espace animateur</a></li>
       <li><a data-vue="accueil" data-ancre="partipris">Pourquoi 3 boutons</a></li>
       <li><a data-vue="accueil" data-ancre="apropos">À propos de nous</a></li>
+      <li><a data-vue="accueil" data-ancre="ia-francaise">Notre IA française</a></li>
       <li><a data-vue="boutique" data-ancre="donnees">Vos données</a></li>
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
@@ -1852,8 +1894,8 @@ go.onclick = async () => {
   go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
   const t0 = performance.now();
   // vraie IA (Mistral, via server.js) si le serveur la propose ; sinon les mots-clés locaux
-  let ia = null;
-  if (texte && EN_LIGNE) try { ia = await api('api/ia', { texte, base, ...ident() }); } catch {}
+  let ia = null, iaPb = '';
+  if (texte && EN_LIGNE) try { ia = await api('api/ia', { texte, base, ...ident() }, session); } catch (e) { if (e.code === 429) iaPb = '⏸ ' + esc(e.message) + '<br>'; }   // quota : on le dit, puis mots-clés
   if (!ia) await new Promise(r => setTimeout(r, 600 + Math.random() * 900));   // latence simulée (mots-clés)
   const { p, vu } = ia ?? comprendre(texte, base);
   p.seed = (Math.random() * 1e9) | 0; params = p; couleurs = { ...(p.couleurs || {}) }; majPalette(); afficherRegles(p);
@@ -1864,7 +1906,7 @@ go.onclick = async () => {
   charger(niv);
   compris.innerHTML = !texte ? 'Jeu créé avec tes choix. Ajoute une phrase pour aller plus loin.'
     : ia ? `🤖 L'IA a compris : <b>${vu.map(esc).join(', ') || 'rien à changer'}</b>${ia.remarque ? '<br>' + esc(ia.remarque) : ''}${ia.souhaits?.length ? `<br>💡 Noté dans les <a href="#" onclick="afficher('commu');document.querySelector('.c-idees').scrollIntoView();return false" style="color:var(--acc)">idées des joueurs</a> : ${ia.souhaits.map(esc).join(', ')}` : ''}`
-    : vu.length ? `J'ai compris : <b>${vu.map(esc).join(', ')}</b>` : `Je n'ai reconnu aucun mot-clé, j'ai gardé les réglages d'avant. Essaie d'être plus précis !`;
+    : iaPb + (vu.length ? `J'ai compris : <b>${vu.map(esc).join(', ')}</b>` : `Je n'ai reconnu aucun mot-clé, j'ai gardé les réglages d'avant. Essaie d'être plus précis !`);
   historique.push({ demande: [...avant, texte].filter(Boolean).join(' · ') || '(sans phrase)', vu, niv, duree, corr: '' });
   rendreHist(); capot.textContent = JSON.stringify(niv, null, 1).replace(/\n\s+"(\.|#|S|G)/g, '\n  "$1');
   go.disabled = false; go.textContent = '✨ Recréer avec ma correction'; demande.value = '';
@@ -1927,7 +1969,7 @@ async function ficheGo() {
   const t0 = performance.now(); let ia = null, note = '';
   if (texte && EN_LIGNE) {
     go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
-    try { ia = await api('api/ia', { texte, fiche, ...ident() }); } catch (e) { note = `L'IA ne répond pas (${e.message}) : change ta fiche toi-même dans le « Mode expert ».`; }
+    try { ia = await api('api/ia', { texte, fiche, ...ident() }, session); } catch (e) { note = `L'IA ne répond pas (${e.message}) : change ta fiche toi-même dans le « Mode expert ».`; }
     go.disabled = false;
   } else if (texte) note = 'Sans le serveur, pas d\'IA : change ta fiche toi-même dans le « Mode expert ».';
   if (ia) fiche = ia.fiche;
@@ -2579,7 +2621,7 @@ async function rendreAnim(donnees) {
     ${c.statut === 'payee' ? `<button class="jouer" data-expedier="${esc(c.id)}">📦 Expédiée</button>` : ''}</div>`).join('') || '<span class="vide">Aucune commande payée pour le moment.</span>';
   animGroupes.innerHTML = d.groupes.map(g => `<section>
     <h2><b>${esc(g.nom)}</b></h2>
-    <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span></p>
+    <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span> <a href="#" data-nouveaucode="${esc(g.code)}" title="Le code a circulé hors du groupe ? Les enfants déjà inscrits restent, l'ancien code ne marche plus" style="color:var(--mute)">↻ changer le code</a></p>
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
     <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
     <h3>🎂 Tranche d'âge — c'est toi qui la choisis, les enfants ne peuvent pas la changer</h3>
@@ -2627,6 +2669,7 @@ animGroupes.onclick = async e => {
       if (r.length < 2) return alert('Il faut au moins 2 réponses.');
       return questionsDe(t.dataset.qajout, qs => qs.push({ q, r, b }));
     }
+    if (t.dataset.nouveaucode) { e.preventDefault(); if (confirm('Changer le code du groupe ? L’ancien ne marchera plus.')) rendreAnim(await api('api/animateur/code', { code: t.dataset.nouveaucode }, session)); }
     if (t.dataset.agev) rendreAnim(await api('api/animateur/age', { code: t.closest('[data-age]').dataset.age, age: t.dataset.agev }, session));
     if (t.dataset.masquer) rendreAnim(await api('api/animateur/masquer', { id: t.dataset.masquer, masque: t.dataset.etat === '1' }, session));
     if (t.dataset.liberer) { e.preventDefault(); if (confirm(`Libérer le pseudo « ${t.dataset.liberer} » ?`)) rendreAnim(await api('api/animateur/liberer', { pseudo: t.dataset.liberer }, session)); }

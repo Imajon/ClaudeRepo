@@ -219,6 +219,23 @@ const ecritures = new Map(); setInterval(() => ecritures.clear(), 60000);
 const tropDeRequetes = ip => { const n = (ecritures.get(ip) || 0) + 1; ecritures.set(ip, n); return n > 300; };
 const ipDe = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
 const dernierMail = new Map();                           // 1 lien de connexion par minute et par adresse (pas de bombardement)
+const liensIP = new Map(); setInterval(() => liensIP.clear(), 3600000);   // et 5 demandes de lien par heure et par IP (pas de comptes en rafale)
+const tropDeLiens = ip => { const n = (liensIP.get(ip) || 0) + 1; liensIP.set(ip, n); return n > 5; };
+
+// ---------- quotas IA par jour : l'IA coute, elle est reservee aux comptes (+ un petit essai sans compte) ----------
+// ponytail: compteurs en memoire, remis a zero chaque jour (et au redemarrage) ; a stocker si le serveur redemarre souvent
+const QUOTA = { essai: 3, joueur: 30, groupe: 300, animateur: 100 };
+let quotaJour = '', quotas = new Map();
+function quotaIA(req, b) {                               // -> null si ok, sinon le message a afficher
+  const jour = new Date().toISOString().slice(0, 10); if (jour !== quotaJour) { quotaJour = jour; quotas = new Map(); }
+  const j = joueurDe(b), a = !j && animateurDe(req);
+  const cles = j ? [['j:' + j.pseudo.toLowerCase(), QUOTA.joueur], ['g:' + j.groupe, QUOTA.groupe]]
+    : a ? [['a:' + a, QUOTA.animateur]] : [['ip:' + ipDe(req), QUOTA.essai]];
+  if (cles.some(([k, max]) => (quotas.get(k) || 0) >= max))
+    return j || a ? 'Tu as beaucoup créé aujourd’hui : l’IA se repose, reviens demain !' : 'Les essais du jour sont finis : rejoins ton groupe (bouton « Rejoindre » en haut) pour continuer avec l’IA.';
+  cles.forEach(([k]) => quotas.set(k, (quotas.get(k) || 0) + 1));
+  return null;
+}
 
 // palette des couleurs que l'enfant peut choisir (meme liste que la page ; le firmware lit le code hexa)
 const PALETTE = { rouge: '#e8322b', orange: '#ff8a1f', jaune: '#ffd400', vert: '#3f8f3a', 'vert clair': '#7ee06a', turquoise: '#22d3ee',
@@ -370,7 +387,7 @@ async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 
   const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
     method: 'POST', signal: AbortSignal.timeout(delai),
     headers: { Authorization: 'Bearer ' + process.env.MISTRAL_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: modele, temperature: 0.2, response_format: { type: 'json_object' },
+    body: JSON.stringify({ model: modele, temperature: 0.2, safe_prompt: true, response_format: { type: 'json_object' },   // safe_prompt : garde-fou officiel de Mistral
       messages: [{ role: 'system', content: consigne }, { role: 'user', content: JSON.stringify(contenu) }] }),
   });
   if (!r.ok) throw new Error('Mistral ' + r.status + ' ' + (await r.text()).slice(0, 200));
@@ -486,17 +503,21 @@ const serveur = http.createServer(async (req, res) => {
   if (url === '/api/script') {                        // mode script : la demande, le programme actuel, ce que la console a dit -> nouveau programme
     if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim()) return repondre(res, 400, { erreur: 'demande vide' });
+    const pas = quotaIA(req, b); if (pas) return repondre(res, 429, { erreur: pas });
     const avant = (Array.isArray(b.avant) ? b.avant : []).filter(x => typeof x === 'string').slice(-6).map(x => x.slice(0, 300));
     try {
       const r = await iaScript(b.texte.slice(0, 500), typeof b.script === 'string' ? b.script.slice(0, 20000) : '', typeof b.erreur === 'string' ? b.erreur.slice(0, 600) : '', avant);
       return repondre(res, 200, r);
     } catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
   }
-  if (url === '/api/ia') {                            // pas besoin de compte pour creer
+  if (url === '/api/ia') {                            // compte (groupe ou animateur) ; sans compte : quelques essais par jour
     if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim() || typeof (b.fiche || b.base) !== 'object' || !(b.fiche || b.base)) return repondre(res, 400, { erreur: 'demande vide' });
+    const pas = quotaIA(req, b); if (pas) return repondre(res, 429, { erreur: pas });
     try {
       const r = b.fiche ? await iaFiche(b.texte.slice(0, 300), Fiche.nettoyer(b.fiche).fiche) : await iaMistral(b.texte.slice(0, 300), b.base);
+      if (GROS_MOTS.test(r.remarque)) r.remarque = '';                       // ce que l'IA ecrit en clair passe aussi le filtre (les idees sont publiques)
+      r.souhaits = r.souhaits.filter(s => !GROS_MOTS.test(s));
       if (!r.vu.length && !r.souhaits.length && !r.remarque) r.remarque = 'Tout est déjà réglé comme tu le demandes : regarde l’aperçu !';   // rien a changer (les reglages actuels font deja ce qui est demande)
       if (r.souhaits.length && !r.remarque) r.remarque = 'Ça, la console ne sait pas encore le faire : je l\'ajoute aux idées des joueurs !';
       if (r.souhaits.length) { const j = joueurDe(b); r.souhaits.forEach(s => ajouterIdee(s, j?.pseudo, 'ia')); sauver(); }
@@ -510,6 +531,7 @@ const serveur = http.createServer(async (req, res) => {
     const email = String(b.email || '').trim().toLowerCase();
     if (!MAIL.test(email)) return repondre(res, 400, { erreur: 'Adresse mail invalide.' });
     if (Date.now() - (dernierMail.get(email) || 0) < 60000) return repondre(res, 429, { erreur: 'Un lien vient d\'être envoyé : regarde tes mails (et les indésirables).' });
+    if (tropDeLiens(ipDe(req))) return repondre(res, 429, { erreur: 'Trop de demandes de lien : réessaie dans une heure.' });
     dernierMail.set(email, Date.now());
     const jeton = aleatoire(24);
     for (const [k, l] of Object.entries(db.liens)) if (l.exp < Date.now()) delete db.liens[k];
@@ -539,6 +561,12 @@ const serveur = http.createServer(async (req, res) => {
       const nom = String(b.nom || '').replace(/[<>]/g, '').trim().slice(0, 40) || 'Mon groupe';
       db.groupes.push({ code: codeGroupe(), nom, email, cree: Date.now() }); sauver();
       return repondre(res, 200, espaceAnimateur(email));
+    }
+    if (url === '/api/animateur/code') {              // code du groupe divulgue : nouveau code, l'ancien ne marche plus (les enfants deja inscrits restent)
+      const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });
+      const neuf = codeGroupe();
+      for (const x of [...db.joueurs, ...db.niveaux]) if (x.groupe === g.code) x.groupe = neuf;
+      g.code = neuf; sauver(); return repondre(res, 200, espaceAnimateur(email));
     }
     if (url === '/api/animateur/masquer') {           // moderation : un niveau masque disparait de la communaute
       const n = db.niveaux.find(n => n.id === b.id); if (!n || !groupe(n.groupe)) return repondre(res, 404, { erreur: 'niveau introuvable' });

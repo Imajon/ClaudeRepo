@@ -273,7 +273,7 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .caler-boite{margin:12px auto 0;max-width:760px;padding:10px 14px;border-radius:12px;background:#13241a;color:#d9f5e3;font-size:14px;text-align:left}
 .caler-boite code{font:13px var(--mono);color:#ffd400}
 /* le montage (data-kit = 1 à 5 : photos empilées en fondu ; 6 = elles s'effacent, la console apparaît) */
-.kit{position:absolute;inset:4% 3%;display:grid;place-items:center;pointer-events:none}
+.kit[hidden]{display:none}.kit{position:absolute;inset:4% 3%;display:grid;place-items:center;pointer-events:none}
 .kit img{grid-area:1/1;width:100%;height:auto;opacity:0;transition:opacity .5s}   /* sans ombre ni cadre : les rendus sur blanc se fondent dans la page */
 .kit p{grid-area:1/1;align-self:start;justify-self:start;margin:2% 0 0 2%;padding:.35em .9em;border-radius:999px;background:#13241a;color:#d9f5e3;font:700 clamp(12px,2.2cqw,18px) var(--mono);opacity:0;transition:opacity .4s}
 .demo-console[data-kit="1"] .kit img:nth-child(-n+1),.demo-console[data-kit="2"] .kit img:nth-child(-n+2),.demo-console[data-kit="3"] .kit img:nth-child(-n+3),
@@ -372,7 +372,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div id="demoConsole" class="sh-console demo-console">   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->
       <img src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
       <canvas id="demoEcran" width="320" height="240" aria-hidden="true"></canvas>
-      <div class="kit" aria-hidden="true">          <!-- avant la console : le montage pas à pas (photos prises du même point de vue) -->
+      <div class="kit" aria-hidden="true" hidden>   <!-- en pause (KIT = 0) ; avant la console : le montage pas à pas (photos prises du même point de vue) -->
         <img src="images/montage-1.jpg" alt="" width="960" height="701"><img src="images/montage-2.jpg" alt="" width="960" height="701"><img src="images/montage-3.jpg" alt="" width="960" height="701"><img src="images/montage-4.jpg" alt="" width="960" height="701"><img src="images/montage-5.jpg" alt="" width="960" height="701">
         <p id="kitTxt"></p>
       </div>
@@ -2103,7 +2103,7 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
   }
   // déroulé (ms) : on tape (45 ms par lettre), l'IA réfléchit, le niveau s'allume ligne à ligne, on joue un moment, on recommence
   const TAPE = TEXTE.length * 45, PENSE = TAPE + 500, ALLUME = PENSE + 1100, JOUE = ALLUME + 700, FIN = JOUE + 5000;
-  const KIT = 6400, ETAPES = [[0, '1', '1 · le circuit'], [1300, '2', '2 · l’écran'], [2600, '3', '3 · les boutons'], [3200, '4', '3 · les boutons'], [3800, '5', '3 · les boutons'], [5600, '6', '']];   // le montage, puis la console finie
+  const KIT = 0, ETAPES = [[0, '1', '1 · le circuit'], [1300, '2', '2 · l’écran'], [2600, '3', '3 · les boutons'], [3200, '4', '3 · les boutons'], [3800, '5', '3 · les boutons'], [5600, '6', '']];   // le montage, puis la console finie
   const calme = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let t0 = performance.now(), dernier = -1;
   function image(now) {

@@ -324,15 +324,26 @@ function ajouterIdee(texte, pseudo, source) {          // meme idee (aux accents
 }
 const ideesPubliques = () => db.souhaits.map(s => ({ id: s.id, texte: s.texte, statut: s.statut, votes: s.votes.length, cree: s.cree }))
   .sort((a, b) => (a.statut === 'fait') - (b.statut === 'fait') || b.votes - a.votes).slice(0, 30);
-async function mistral(consigne, contenu) {
+async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 'mistral-small-latest', delai = 15000) {
   const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
-    method: 'POST', signal: AbortSignal.timeout(15000),
+    method: 'POST', signal: AbortSignal.timeout(delai),
     headers: { Authorization: 'Bearer ' + process.env.MISTRAL_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: process.env.MISTRAL_MODEL || 'mistral-small-latest', temperature: 0.2, response_format: { type: 'json_object' },
+    body: JSON.stringify({ model: modele, temperature: 0.2, response_format: { type: 'json_object' },
       messages: [{ role: 'system', content: consigne }, { role: 'user', content: JSON.stringify(contenu) }] }),
   });
   if (!r.ok) throw new Error('Mistral ' + r.status + ' ' + (await r.text()).slice(0, 200));
   return JSON.parse((await r.json()).choices[0].message.content);
+}
+// ---------- mode script (c3-berry) : l'IA ecrit tout le jeu en Berry ; la consigne est dans consigne-script.txt ----------
+const CONSIGNE_SCRIPT = fs.readFileSync(path.join(__dirname, 'consigne-script.txt'), 'utf8');
+async function iaScript(texte, script, erreur, avant) {
+  const r = await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur || 'rien de special',
+    demandes_precedentes: avant, demande: texte }, process.env.MISTRAL_MODEL_SCRIPT || 'codestral-latest', 40000);
+  const t = v => typeof v === 'string' ? v.trim() : '';
+  const nouveau = t(r.script);
+  if (nouveau.length < 20 || nouveau.length > 20000) throw new Error('programme vide ou trop long');
+  if (GROS_MOTS.test(nouveau) || GROS_MOTS.test(t(r.explication))) return { refus: 'Je ne peux pas mettre ça dans un jeu.' };
+  return { script: nouveau, explication: t(r.explication).slice(0, 400), limite: t(r.limite).slice(0, 300), question: t(r.question).slice(0, 200) };
 }
 const iaMistral = async (texte, base) => iaReglages(await mistral(CONSIGNE, { reglages_actuels: base, demande: texte }), base);
 // ---------- IA de la fiche : phrase de l'enfant -> changements de la fiche (FICHE-JEU.md), verifies ici ----------
@@ -396,6 +407,12 @@ const serveur = http.createServer(async (req, res) => {
     }
     res.writeHead(200, { 'Content-Type': type, 'Content-Length': taille, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' }); return fs.createReadStream(f).pipe(res);
   }
+  if (req.method === 'GET' && (url === '/script' || url === '/script.html')) { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'script.html')).pipe(res); }
+  const fwb = req.method === 'GET' && url.match(/^\/firmware-berry\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);
+  if (fwb) {                                            // firmware c3-berry (mode script) : depose par c3-berry/publier.py
+    res.writeHead(200, { 'Content-Type': fwb[1].endsWith('.json') ? 'application/json' : 'application/octet-stream', 'Cache-Control': 'no-cache' });
+    return fs.createReadStream(path.join(__dirname, 'firmware-berry', fwb[1])).pipe(res);
+  }
   if (req.method === 'GET' && url === '/fiche.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'fiche.js')).pipe(res); }
   const fw = req.method === 'GET' && url.match(/^\/firmware\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);
   if (fw) {                                             // mise a jour des consoles (esp-web-tools) : fichiers deposes par publier-firmware-brique.bat
@@ -421,6 +438,15 @@ const serveur = http.createServer(async (req, res) => {
   if (tropDeRequetes(ipDe(req))) return repondre(res, 429, { erreur: 'Doucement ! Réessaie dans une minute.' });
   let b; try { b = await lireJSON(req); } catch { return repondre(res, 400, { erreur: 'requête illisible' }); }
 
+  if (url === '/api/script') {                        // mode script : la demande, le programme actuel, ce que la console a dit -> nouveau programme
+    if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
+    if (typeof b.texte !== 'string' || !b.texte.trim()) return repondre(res, 400, { erreur: 'demande vide' });
+    const avant = (Array.isArray(b.avant) ? b.avant : []).filter(x => typeof x === 'string').slice(-6).map(x => x.slice(0, 300));
+    try {
+      const r = await iaScript(b.texte.slice(0, 500), typeof b.script === 'string' ? b.script.slice(0, 20000) : '', typeof b.erreur === 'string' ? b.erreur.slice(0, 600) : '', avant);
+      return repondre(res, 200, r);
+    } catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
+  }
   if (url === '/api/ia') {                            // pas besoin de compte pour creer
     if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim() || typeof (b.fiche || b.base) !== 'object' || !(b.fiche || b.base)) return repondre(res, 400, { erreur: 'demande vide' });

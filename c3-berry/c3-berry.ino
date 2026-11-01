@@ -19,6 +19,7 @@
 #include "esp_heap_caps.h"
 #include "op.h"                                  // struct Op (avant les prototypes automatiques d'Arduino)
 
+#define BERRY_VERSION "b1"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
 #define TFT_SCLK 4
 #define TFT_MOSI 6
 #define TFT_CS   7
@@ -228,6 +229,7 @@ void ecoute() {
     }
     if (c == '\n') {
       ligne[nLigne] = 0; nLigne = 0;
+      if (!strcmp(ligne, "VERSION")) Serial.println("BERRY VERSION " BERRY_VERSION);
       if (!strncmp(ligne, "STAT ", 5)) stats = ligne[5] == '1';
       if (!strncmp(ligne, "BTN ", 4)) { btSim = 0; for (int k = 0; k < 3 && ligne[4 + k]; k++) btSim |= (ligne[4 + k] == '1') << k; }   // test : boutons tenus G D P3, ex. "BTN 011"
       if (!strncmp(ligne, "SCRIPT ", 7)) {

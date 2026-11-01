@@ -64,7 +64,7 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .commu{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;padding:16px;max-width:1400px;margin:0 auto}
 .commu>section{grid-column:span 4;min-width:0}
 .commu .c-stats,.commu .c-hero{grid-column:1/-1}
-.commu .c-class,.commu .c-new{grid-column:span 6}           /* classement et nouveaux niveaux : même taille, même hauteur, se replient ensemble */
+.commu .c-class,.commu .c-new{grid-column:span 6}.commu .c-defi{grid-column:1/-1}           /* classement et nouveaux niveaux : même taille, même hauteur, se replient ensemble */
 .commu .c-class .liste,.commu .c-new .cartes{max-height:520px;overflow:auto}
 @media (max-width:1000px){.commu>section,.commu .c-class,.commu .c-new{grid-column:1/-1}}
 .commu .c-intro{grid-column:1/-1}
@@ -342,6 +342,16 @@ body{overflow-x:clip}                                           /* la bande 100v
 .page-hero{grid-column:1/-1;align-self:stretch;text-align:center;padding-bottom:8px}   /* titre de page : centré sur toute la largeur, au-dessus des colonnes ou des fiches */
 .support .fiche{background:#fff;border-radius:8px;padding:8px;margin:10px 0}
 .support .fiche svg{display:block;width:100%;height:auto}
+/* ----- possibilités de la console : défi « % exploré » (communauté) ----- */
+.defi-pc{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:6px}
+.defi-pc b{font:800 34px/1.1 var(--mono);color:var(--acc2);text-shadow:var(--brille)}.defi-pc span{color:var(--mute);font-size:14px}
+.defi-barre{height:10px;border-radius:5px;margin:6px 0 12px}
+.defi-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:16px}
+.defi-grille>div{padding:6px 8px;border-radius:8px;background:var(--soft);font-size:13px;min-width:0}
+.defi-grille>div.ok{background:var(--chipon);border:1px solid var(--acc)}
+.defi-grille small{display:block;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.defi-in{width:100%;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;font-size:14px;resize:vertical}
+.defi-vus{display:flex;flex-wrap:wrap;gap:4px}.defi-vus span{padding:3px 8px;border-radius:12px;background:var(--chipon);font-size:13px}
 </style>
 <script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js?module"></script>   <!-- bouton "Mettre a jour ma console" (flash par Web Serial) -->
 <script>try { if (JSON.parse(localStorage.getItem("brique-theme")) === "dark") document.documentElement.dataset.theme = "dark"; } catch {}</script>   <!-- thème choisi, avant l'affichage : pas de flash clair -->
@@ -499,6 +509,19 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section class="c-new"><h2>🆕 Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
   <section><h2>🔥 Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
   <section><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu : chacun y ajoute un niveau signé de son pseudo.</p><div id="commun" class="liste"></div></section>
+  <section class="c-defi">
+    <h2>🎯 Le défi : explorer toute la console</h2>
+    <p class="aide" style="margin-top:0">Chaque jeu créé qui utilise une nouvelle mécanique en dévoile une case. Jusqu'où irons-nous ensemble ?</p>
+    <div class="defi-pc"><b id="defiPc">0 %</b><span id="defiTxt"></span></div>
+    <div class="barre defi-barre"><i id="defiBarre" style="width:0"></i></div>
+    <div id="defiGrille" class="defi-grille"></div>
+    <h3>🧮 Pas de console ? Teste tes idées</h3>
+    <p class="aide" style="margin-top:0">Écris des jeux, un par ligne (ex. un serpent qui mange des pommes). Le pourcentage des possibilités couvertes se calcule en direct.</p>
+    <textarea id="defiIn" class="defi-in" rows="4" maxlength="2000" placeholder="un oiseau qui vole entre des tuyaux&#10;un quiz de maths&#10;une course de voitures"></textarea>
+    <div class="defi-pc"><b id="defiPc2">0 %</b><span id="defiTxt2"></span></div>
+    <div class="barre defi-barre"><i id="defiBarre2" style="width:0"></i></div>
+    <div id="defiVus" class="defi-vus"></div>
+  </section>
   <section class="c-idees">
     <h2>💡 Idées des joueurs</h2>
     <p class="aide" style="margin-top:0">Ce que vous voulez dans le jeu et que la console ne sait pas encore faire. Les plus demandées arriveront dans les prochaines mises à jour !</p>
@@ -2292,7 +2315,90 @@ async function rafraichir() {
   commun.innerHTML = niv.map((n, i) => ligneRang(n, i + 1, n.stats.parties ? `record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'jamais fini')).join('')
     || vide('Le jeu commun est vide : ajoute le premier niveau !');
   rendreIdees(c.idees);
+  rendreDefi(jeux);
 }
+// ---------- Possibilités de la console : défi « % exploré » (communauté) : une case reste masquée tant qu'aucun jeu partagé ne l'explore ----------
+// [id, nom, description, mots qui la reconnaissent dans un titre ou une liste (sans accents), 1 = déjà dans la console]
+const POSS = [
+  ['🎮 Les boutons', [
+    ['tenu', 'Appui tenu', 'Ça agit tant qu\'on appuie : avancer, accélérer.', 'tenir,tenu,maintenir,accelere', 1],
+    ['charge', 'Charger puis relâcher', 'Plus on tient longtemps, plus c\'est fort : saut, lancer.', 'charge,puissance,lancer', 1],
+    ['double', 'Simple ou double clic', 'Deux actions sur un seul bouton.', 'double clic,double saut,double', 1],
+    ['marteler', 'Marteler le bouton', 'Appuyer le plus vite possible.', 'marteler,appuyer vite,tape vite,clic rapide,bourrin', 0],
+    ['tourner', 'Tourner puis avancer', 'Se déplacer case par case avec 3 boutons.', 'tourner,case par case,iso,isometrique', 1],
+    ['combo', 'Gauche + droite ensemble', 'Une action spéciale avec deux boutons.', 'deux boutons,combinaison,combo,ensemble', 1]]],
+  ['🏃 Aventure', [
+    ['plateforme', 'Plateforme', 'Courir, sauter, éviter les pièges jusqu\'au drapeau.', 'plateforme,saut,sauter,parcours,drapeau', 1],
+    ['cote', 'Jeu de côté', 'Un monde qui monte, avec des portes.', 'de cote,cote,porte,monte', 1],
+    ['iso', 'Monde en 3D', 'Un plateau vu en biais, avec du relief.', 'iso,isometrique,3d,cube,relief', 1]]],
+  ['⏱️ Réflexe et timing', [
+    ['chrono', 'Chrono caché', 'Arrêter à la bonne seconde sans voir le chrono.', 'chrono,timing,seconde,temps cache', 1],
+    ['reaction', 'Réaction', 'Appuyer dès que l\'écran change, sans tomber dans le piège.', 'reaction,reflexe,le plus vite,signal', 0],
+    ['jauge', 'Jauge qui oscille', 'Arrêter le curseur dans la zone verte.', 'jauge,zone verte,curseur,forge', 0],
+    ['rythme', 'Rythme', 'Appuyer en mesure avec des notes qui défilent.', 'rythme,musique,danse,note,tambour', 0],
+    ['western', 'Duel du plus rapide', 'Au signal, le premier qui tire gagne.', 'western,cowboy,degaine,sherif', 0]]],
+  ['↔️ Esquive', [
+    ['pluie', 'Pluie d\'objets', 'Éviter ce qui tombe du ciel, ramasser les bonus.', 'pluie,tombe,meteorite,asteroide,esquive,eviter', 0],
+    ['couloir', 'Couloir', 'Rester sur une route qui serpente.', 'couloir,route,tunnel,riviere,chemin', 0],
+    ['attrape', 'Attrape-tout', 'Rattraper des fruits dans un panier.', 'attrape,panier,fruit,rattrape,recolte', 0]]],
+  ['☝️ Un seul bouton', [
+    ['coureur', 'Course sans fin', 'Sauter les obstacles, la vitesse monte.', 'sans fin,infini,runner,dino,obstacle', 0],
+    ['oiseau', 'Oiseau', 'Un appui pour monter, la gravité fait descendre.', 'oiseau,vole,voler,helico,tuyau,ailes', 0],
+    ['gravite', 'Gravité inversée', 'Chaque appui colle au plafond ou au sol.', 'gravite,plafond,envers,inverse', 0],
+    ['empile', 'Empileur', 'Poser des blocs qui vont et viennent, le plus haut possible.', 'empile,pile,tour,gratte-ciel,immeuble', 0]]],
+  ['👾 Arcade', [
+    ['pong', 'Pong', 'Renvoyer la balle avec sa raquette.', 'pong,raquette,tennis,ping', 1],
+    ['casse', 'Casse-briques', 'Casser toutes les briques avec une balle.', 'casse brique,casse-brique,briques,balle', 1],
+    ['invaders', 'Envahisseurs', 'Tirer sur les vaisseaux qui descendent.', 'invaders,envahisseur,alien,vaisseau,extraterrestre,espace', 1],
+    ['serpent', 'Serpent', 'Il grandit à chaque pomme, sans se mordre.', 'serpent,snake,pomme,ver de terre', 0],
+    ['traverser', 'Traversée', 'Traverser des voies pleines de voitures.', 'traverse,grenouille,voies,pieton', 0],
+    ['tourelle', 'Tourelle', 'Un canon au centre qui tourne et tire.', 'tourelle,canon,defense,tir', 0]]],
+  ['🏂 Physique et pilotage', [
+    ['glisse', 'Glisse et figures', 'Sauter, tourner en l\'air, bien atterrir.', 'glisse,ski,snow,surf,salto,figure,alto', 1],
+    ['circuit', 'Course vue de dessus', 'Piloter et déraper sur un circuit.', 'drift,circuit,voiture,kart,rallye,derapage,course de', 1],
+    ['atterrir', 'Atterrissage', 'Poser sa fusée en douceur, sans carburant de trop.', 'atterri,fusee,lune,alunir,carburant', 0],
+    ['fronde', 'Fronde', 'Régler l\'angle et la force, puis lancer.', 'fronde,catapulte,golf,angle,lance-pierre', 0]]],
+  ['🧠 Réflexion et mémoire', [
+    ['quiz', 'Quiz', '3 réponses, une par bouton.', 'quiz,question,conjugaison,devinette,reponse', 1],
+    ['memoire', 'Mémoire de séquence', 'Répéter une suite de couleurs de plus en plus longue.', 'memoire,sequence,simon,retenir,repeter', 0],
+    ['paires', 'Paires', 'Retourner les cartes deux par deux.', 'paire,memory,carte', 0],
+    ['labyrinthe', 'Labyrinthe', 'Trouver la sortie en un nombre de pas limité.', 'labyrinthe,dedale,sortie,maze', 0],
+    ['calcul', 'Calcul rapide', 'Vrai ou faux, contre la montre.', 'calcul,math,addition,multiplication,vrai ou faux,table', 0]]],
+  ['⚔️ Combat et duel', [
+    ['bagarre', 'Bagarre', 'Frapper et éjecter l\'adversaire du terrain.', 'bagarre,combat,smash,chevalier,boxe,ninja,epee', 1],
+    ['corde', 'Tir à la corde', 'Celui qui appuie le plus vite gagne.', 'corde,tirer la corde', 0],
+    ['chifoumi', 'Pierre-feuille-ciseaux', 'Une forme par bouton, à deux consoles.', 'pierre,feuille,ciseaux,chifoumi', 0]]],
+];
+const POSS_TOUT = POSS.flatMap(([cat, l]) => l.map(([id, nom, desc, mots, deja]) => ({ id, nom, desc, deja, cat,
+  re: mots.split(',').map(m => new RegExp('(^|[^a-z])' + m.replace(/[-]/g, '\\-'))) })));
+const sansAccent = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const possDans = t => { t = sansAccent(t); return POSS_TOUT.filter(p => p.re.some(r => r.test(t))).map(p => p.id); };
+const GENRE_POSS = { plateforme: ['plateforme'], cote: ['cote'], iso: ['iso', 'tourner'], briques: ['casse'], invaders: ['invaders'] };
+function possJeu(n) {                                   // ce qu'un jeu publié explore : son genre, sa fiche, les mots de son titre
+  const f = n.niv?.fiche, ids = [...(GENRE_POSS[f ? f.modele : n.niv?.params?.jeu || 'plateforme'] || []), ...possDans(n.titre)];
+  const b = f?.heros?.boutons ? Object.values(f.heros.boutons) : [];
+  if (b.some(a => /^tourner/.test(a))) ids.push('tourner');
+  if (b.includes('tirer')) ids.push('tourelle');
+  if (f?.monde?.gravite === 0 && b.includes('aller_haut')) ids.push('labyrinthe');
+  return ids;
+}
+const pc = k => Math.round(100 * k / POSS_TOUT.length) + ' %';
+function rendreDefi(jeux) {                             // une case dévoilée par mécanique explorée, avec le pseudo du premier qui l'a faite
+  const premier = {};
+  for (const n of [...jeux].sort((a, b) => a.cree - b.cree)) for (const id of possJeu(n)) premier[id] ??= n.pseudo;
+  const k = POSS_TOUT.filter(p => premier[p.id]).length;
+  defiPc.textContent = pc(k); defiBarre.style.width = pc(k).replace(' ', '');
+  defiTxt.textContent = `${k} possibilité${k > 1 ? 's' : ''} sur ${POSS_TOUT.length} déjà explorée${k > 1 ? 's' : ''} par la communauté`;
+  defiGrille.innerHTML = POSS_TOUT.map(p => premier[p.id] ? `<div class="ok"><b>${p.nom}</b><small>par ${esc(premier[p.id])}</small></div>`
+    : `<div><b>❓ ???</b><small>${p.cat}</small></div>`).join('');
+}
+defiIn.oninput = () => {                                // sans console : le % se calcule en direct sur la liste tapée
+  const ids = new Set(possDans(defiIn.value)), vus = POSS_TOUT.filter(p => ids.has(p.id));
+  defiPc2.textContent = pc(vus.length); defiBarre2.style.width = pc(vus.length).replace(' ', '');
+  defiTxt2.textContent = `de ce que la console sait faire · ${POSS_TOUT.length - vus.length} encore à découvrir`;
+  defiVus.innerHTML = vus.map(p => `<span>✓ ${p.nom}</span>`).join('');
+};
+defiIn.oninput();
 // ---------- Mode atelier : l'animateur confine son groupe (matière du jour, jeux du groupe seulement) ----------
 function modeAtelier(a) {
   document.body.classList.toggle('en-atelier', !!a);

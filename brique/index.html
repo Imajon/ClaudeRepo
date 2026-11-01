@@ -246,6 +246,11 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .sh-photo img{display:block;width:100%;height:auto}
 .sh-console{max-width:760px;justify-self:center}
 .demo-console{position:relative;width:100%;container-type:inline-size}
+#accueil .sh-hero{padding-top:4px}                    /* accueil : titre, console et boutons visibles d'un coup sur un écran 1920 x 1080 */
+#accueil .sh-titre{margin:0 0 6px}
+#accueil .demo-console{max-width:min(760px,calc((100vh - 330px) * 1.37))}   /* la console suit la hauteur de l'écran (rapport de la photo : 1,37) */
+#accueil .sh-apres{padding-top:0}
+#accueil .sh-apres .cta{margin-top:10px !important}
 .demo-console canvas{position:absolute;left:0;top:0;width:320px;height:240px;max-width:none;transform-origin:0 0;border:0;border-radius:0;background:none}
 .demo-bulle{position:absolute;left:1%;top:3%;width:33%;min-height:5.6em;margin:0;padding:.7em .9em;text-align:left;background:#13241a;color:#d9f5e3;
   font:600 clamp(11px,2.1cqw,17px)/1.4 var(--mono);border-radius:14px 14px 14px 4px;box-shadow:0 6px 18px rgba(0,0,0,.18)}

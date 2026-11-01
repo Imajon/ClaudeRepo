@@ -2627,7 +2627,7 @@ vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('an
 accVoirCommu.onclick = () => afficher('commu');
 accVoirDefi.onclick = () => { afficher('commu'); document.querySelector('.c-defi').scrollIntoView(); };
 setTimeout(() => {                                       // accueil : au bout de quelques secondes, le titre se moque gentiment de la console
-  const t = document.querySelector('#accueil .sh-titre'), j = 'Elle ne vaut pas la calculette de ta sœur.\nSauras-tu en atteindre les limites pour autant ?';
+  const t = document.querySelector('#accueil .sh-titre'), j = 'Ça ne vaut pas une Switch, ni même la calculette de ta sœur.\nMais sauras-tu en explorer les limites pour autant ?';
   t.dataset.text = j; t.innerHTML = esc(j).replace('\n', '<br>');
 }, 6000); accAjouter.onclick = () => afficher('creer'); accCommun.onclick = () => ctaCommun.onclick();
 ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };

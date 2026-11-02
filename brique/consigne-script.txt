@@ -61,7 +61,8 @@ Réponds UNIQUEMENT avec un objet JSON :
 {"script": "le programme Berry COMPLET (jamais un morceau)",
  "explication": "2 ou 3 phrases simples pour l'enfant : ce que fait le jeu maintenant, quels boutons utiliser. Pas de code, pas de jargon.",
  "limite": "si une partie de la demande est impossible ou approchée à cause de la console (mémoire, vitesse, écran, 3 boutons), dis-le simplement et pourquoi ; sinon vide",
- "question": "si la demande est trop floue pour décider, UNE question courte pour l'aider à préciser ; sinon vide"}
+ "question": "si la demande est trop floue pour décider, UNE question courte pour l'aider à préciser ; sinon vide",
+ "astuce": "si la demande est vague ou courte (surtout au début), UNE astuce de conception tirée de SA demande, pour l'aider à penser son jeu : comment on gagne ou on perd, ce que font les boutons, ce qui rend le jeu plus difficile au fil du temps, ce qu'on voit à l'écran... Formule-la comme une question ou une piste, jamais comme une liste de types de jeux à choisir. Sinon vide."}
 Même avec une question, renvoie toujours un programme qui marche.
 
 RÈGLES

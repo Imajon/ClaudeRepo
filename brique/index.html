@@ -1339,6 +1339,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:140px;font-size:17px"></textarea>
     <button id="scGo" class="big" style="margin-top:10px">✨ Envoyer</button>
     <div id="scCompris" class="compris">Écris ce que tu veux créer, puis appuie sur « Envoyer ».</div>
+    <button id="scMettre" class="big hide" style="margin-top:10px;width:100%">📟 Mettre mon jeu sur la console</button>
   </section>
   <section class="console">
     <h2>Ma console</h2>
@@ -2874,10 +2875,12 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
     if (!etat.essais.length) { scHist.innerHTML = '<p class="vide">Ce que tu demandes, ce que l\'IA a fait et ce que la console en dit apparaîtront ici.</p>'; return; }
     scHist.innerHTML = etat.essais.map((e, i) => `<div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
       <span class="n">Essai ${i + 1}</span><div class="q">« ${esc(e.demande)} »</div>
-      ${e.explication ? `<div class="r">🤖 ${esc(e.explication)}</div>` : ''}${e.limite ? `<div class="r">⚠️ ${esc(e.limite)}</div>` : ''}${e.question ? `<div class="r">❓ ${esc(e.question)}</div>` : ''}
+      ${e.explication ? `<div class="r">🤖 ${esc(e.explication)}</div>` : ''}${e.astuce ? `<div class="r">💡 ${esc(e.astuce)}</div>` : ''}${e.limite ? `<div class="r">⚠️ ${esc(e.limite)}</div>` : ''}${e.question ? `<div class="r">❓ ${esc(e.question)}</div>` : ''}
       ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`).reverse().join('');
   }
   rendre();
+  const majMettre = () => scMettre.classList.toggle('hide', !etat.script);   // le gros bouton apparaît dès qu'il y a un jeu
+  majMettre();
   let port = null, lecteur = null, attente = null, versionVue = null, errEnCours = null;
   const dire = (t, ok) => scEtat.innerHTML = ok === undefined ? esc(t) : `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
   const journal = l => { journal.l = [...(journal.l || []), l].slice(-8); scJournal.textContent = journal.l.join('\n'); scJournal.classList.remove('hide'); };
@@ -2929,8 +2932,8 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   scInstallBtn.addEventListener('click', () => { if (port) fermer(); }, true);   // l'installation a besoin du port
   async function envoyer(prog) {                         // "SCRIPT <octets>" puis le programme ; la console répond OK ou ERR
     if (!port && !(await auto())) {
-      dire('👉 Clique sur « 🔌 Connecter ma console » et choisis ta console : ton jeu partira aussitôt.', false); scBrancher.scrollIntoView({ behavior: 'smooth', block: 'center' }); scBrancher.focus();
-      return 'Pas encore envoyé : clique sur « 🔌 Connecter ma console ».';
+      dire('👉 Appuie sur « 📟 Mettre mon jeu sur la console » et choisis ta console.', false); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' }); scMettre.focus();
+      return 'Pas encore sur la console : appuie sur « 📟 Mettre mon jeu sur la console ».';
     }
     const octets = new TextEncoder().encode(prog);
     const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 6000); });
@@ -2948,10 +2951,10 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
     scGo.disabled = false; scGo.textContent = '✨ Envoyer';
     if (!r) return;
     if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return; }
-    scCompris.textContent = `Programme écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s. ${r.explication || ''}`;
+    scCompris.innerHTML = `Programme écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s. ${esc(r.explication || '')}${r.astuce ? `<br>💡 ${esc(r.astuce)}` : ''}${r.question ? `<br>❓ ${esc(r.question)}` : ''}`;
     etat.script = r.script; scCode.value = r.script; scDemande.value = '';
-    etat.essais.push({ demande: texte, explication: r.explication, limite: r.limite, question: r.question, console: '' });
-    sauver(); rendre();
+    etat.essais.push({ demande: texte, explication: r.explication, astuce: r.astuce, limite: r.limite, question: r.question, console: '' });
+    sauver(); rendre(); majMettre();
     const pb = await envoyer(r.script); if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
   };
   scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
@@ -2959,7 +2962,16 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
     etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '' }); sauver(); rendre();
     const pb = await envoyer(scCode.value); if (pb) { etat.essais.at(-1).console = pb; sauver(); rendre(); }
   };
-  scZero.onclick = () => { if (!confirm('Repartir de zéro ? Le programme et tes essais seront effacés.')) return; etat = { script: '', essais: [], erreur: '' }; scCode.value = ''; sauver(); rendre(); };
+  scZero.onclick = () => { if (!confirm('Repartir de zéro ? Le programme et tes essais seront effacés.')) return; etat = { script: '', essais: [], erreur: '' }; scCode.value = ''; sauver(); rendre(); majMettre(); };
+  scMettre.onclick = async () => {                       // envoie le jeu ; pas encore de console : ce clic ouvre le choix du port
+    if (!port && !(await auto())) {
+      if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.', false);
+      try { if (!(await relier(await navigator.serial.requestPort()))) return; }
+      catch (e) { await fermer(); return dire(e.name === 'NotFoundError' ? 'Aucune console choisie.' : 'Câble débranché ou port occupé (ferme l\'IDE Arduino, l\'autre onglet ou la fenêtre d\'installation).', false); }
+    }
+    scMettre.disabled = true; const pb = await envoyer(etat.script); scMettre.disabled = false;
+    if (pb) { const e = etat.essais.at(-1); if (e) { e.console = pb; e.consoleOk = false; } sauver(); rendre(); }
+  };
 })();
 
 // ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------

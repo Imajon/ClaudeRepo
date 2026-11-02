@@ -414,7 +414,7 @@ async function iaScript(texte, script, erreur, avant) {
     if (new RegExp(`\\b${m}\\.`).test(nouveau) && !new RegExp(`^\\s*import\\s+${m}\\b`, 'm').test(nouveau))
       nouveau = nouveau.startsWith('#') ? nouveau.replace(/^(.*\n?)/, `$1import ${m}\n`) : `import ${m}\n` + nouveau;
   if (GROS_MOTS.test(nouveau) || GROS_MOTS.test(t(r.explication))) return { refus: 'Je ne peux pas mettre ça dans un jeu.' };
-  return { script: nouveau, explication: t(r.explication).slice(0, 400), limite: t(r.limite).slice(0, 300), question: t(r.question).slice(0, 200) };
+  return { script: nouveau, explication: t(r.explication).slice(0, 400), limite: t(r.limite).slice(0, 300), question: t(r.question).slice(0, 200), astuce: t(r.astuce).slice(0, 300) };
 }
 const iaMistral = async (texte, base) => iaReglages(await mistral(CONSIGNE, { reglages_actuels: base, demande: texte }), base);
 // ---------- IA de la fiche : phrase de l'enfant -> changements de la fiche (FICHE-JEU.md), verifies ici ----------

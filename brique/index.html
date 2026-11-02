@@ -169,6 +169,8 @@ header nav.mode button{padding:5px 12px;border-radius:3px}   /* téléphone : le
 #vPanier{margin-left:auto}
 .sc-console{display:flex;align-items:center;gap:16px}
 .sc-console img{flex:1;min-width:0;max-width:560px;height:auto}
+.sc-cote{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}.sc-cote .sec{width:100%}.sc-cote .envoi{margin:0}#scBrancher.connecte{border-color:var(--ok);color:var(--ok);font-weight:700}
+@media (max-width:600px){.sc-console{flex-direction:column;align-items:stretch}}
 #vPanier b{margin-left:6px;padding:0 7px;border-radius:999px;background:var(--acc);color:#fff;font-size:12px}#vPanier b:empty{display:none}
 .sh-ajout{text-align:center;margin-top:18px}
 #vPanier.on,#vAnim.on{border-color:var(--acc);background:var(--chipon)}
@@ -1384,18 +1386,18 @@ body{overflow-x:clip}                                           /* la bande 100v
   </section>
   <section class="console">
     <h2>Ma console</h2>
-    <div class="sc-console"><img src="images/console-face.png" alt="La console Brique" width="1105" height="763"></div>
-    <div class="actions"><button id="scBrancher" class="sec">🔌 Connecter ma console</button></div>
-    <div id="scEtat" class="envoi">Console pas connectée. C'est elle qui fait tourner ton jeu.</div>
-    <details id="scInstaller">
-      <summary>⬇ Installer le moteur de jeu sur ma console</summary>
-      <p class="aide">Une fois suffit, environ 1 minute (Chrome ou Edge sur ordinateur, câble USB branché). La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la.</p>
-      <esp-web-install-button id="scInstallBtn" manifest="firmware-berry/manifest.json">
-        <button slot="activate" class="sec">⬇ Installer</button>
-        <span slot="unsupported" class="aide">Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge, sur un ordinateur.</span>
-        <span slot="not-allowed" class="aide">Il faut ouvrir la page en https (ou sur localhost).</span>
-      </esp-web-install-button>
-    </details>
+    <div class="sc-console">                     <!-- à droite de la console : connexion, son log, puis l'installation du firmware -->
+      <img src="images/console-face.png" alt="La console Brique" width="1105" height="763">
+      <div class="sc-cote">
+        <button id="scBrancher" class="sec">🔌 Connecter ma console</button>
+        <div id="scEtat" class="envoi">Console pas connectée. C'est elle qui fait tourner ton jeu.</div>
+        <esp-web-install-button id="scInstallBtn" manifest="firmware-berry/manifest.json">
+          <button slot="activate" class="sec" title="Une fois suffit, environ 1 minute (Chrome ou Edge sur ordinateur, câble USB branché). La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la.">⬇ Installer la dernière version du firmware</button>
+          <span slot="unsupported" class="aide">Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge, sur un ordinateur.</span>
+          <span slot="not-allowed" class="aide">Il faut ouvrir la page en https (ou sur localhost).</span>
+        </esp-web-install-button>
+      </div>
+    </div>
     <h3 class="code-titre">🔧 Le programme de ton jeu</h3>
     <div class="code">                           <!-- toujours visible et colorisé : on tape dans le textarea transparent, la couleur vient du pre dessous -->
       <pre id="scCouleur" aria-hidden="true"></pre>
@@ -2964,12 +2966,13 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
     }
   }
   async function ecrire(octets) { const w = port.writable.getWriter(); try { await w.write(octets); } finally { w.releaseLock(); } }
-  async function fermer() { const p = port; port = null; try { await lecteur?.cancel(); } catch {} try { await p?.close(); } catch {} dire('Console pas connectée.'); }
+  async function fermer() { const p = port; port = null; try { await lecteur?.cancel(); } catch {} try { await p?.close(); } catch {} dire('Console pas connectée.'); brancheTxt(false); }
+  const brancheTxt = ok => { scBrancher.textContent = ok ? '✓ Console connectée' : '🔌 Connecter ma console'; scBrancher.classList.toggle('connecte', ok); };   // le bouton laisse place à l'état
   async function relier(p) {                             // ouvre le port, demande la version ; true = console avec le moteur de jeu
     port = p; await port.open({ baudRate: 115200 }); ecouter();
     const v = await new Promise(ok => { versionVue = ok; setTimeout(() => ok(''), 1500); ecrire(new TextEncoder().encode('VERSION\n')); }); versionVue = null;
-    if (v.startsWith('BERRY')) { dire('✓ Console connectée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); return true; }
-    dire('Ta console n\'a pas encore le moteur de jeu : installe-le ci-dessous.', false); scInstaller.open = true; return false;
+    if (v.startsWith('BERRY')) { brancheTxt(true); dire('✓ Console connectée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); return true; }
+    dire('Ta console n\'a pas encore le moteur de jeu : installe-le avec le bouton « Installer ».', false); return false;
   }
   async function auto() {                                // une console déjà autorisée sur ce site (choisie avant, ou mise à jour ici) : reliée sans clic
     if (port || !('serial' in navigator)) return !!port;

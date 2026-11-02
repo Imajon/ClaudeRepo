@@ -1,0 +1,1939 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brique</title>
+<!-- Brique V1 : maquette de l'atelier "créer un jeu avec l'IA" (console c3-tft-meatboy).
+     Génération SIMULÉE en local (mots-clés -> paramètres -> niveau). Le format de niveau est celui du firmware :
+     lignes de 20 caractères, tuiles . # S G * R ^ W C I (cf. hand_levels.txt). -->
+<style>
+/* style "circuit imprimé" : vert de masque de soudure, pastilles cuivre, pistes en fond, étiquettes façon sérigraphie.
+   Thème clair par défaut ; thème sombre (carte nue, vert profond) au choix : bouton 🌙, gardé dans le navigateur */
+:root{--bg:#f3f6f1;--panel:#ffffff;--panel2:#eef4ec;--txt:#13241a;--mute:#55675b;--acc:#0b7a41;--acc2:#a8641b;--hot:#b45309;--ok:#15803d;--ko:#dc2626;--line:#d3e1d1;
+      --glow:0 0 0 1px #d9e6d6 inset,0 1px 3px rgba(20,60,30,.07);--surface:#fff;--head:rgba(255,255,255,.9);--soft:#f4f8f2;--soft2:#e5eee2;
+      --onacc:#fff;--chipon:#e0f2e5;--brille:none;--pad:#c99a3c;--mono:ui-monospace,"Cascadia Mono",Consolas,monospace;color-scheme:light;
+      --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' fill='none' stroke='rgba(11,122,65,.07)' stroke-width='2'%3E%3Cpath d='M0 44h64l22 22h70l22-22h42M44 220v-54l22-22V88M150 0v34l22 22v44l-22 22v98M0 160h24l22 22h48M110 220v-30l18-18h92'/%3E%3Cg fill='rgba(11,122,65,.07)' stroke='none'%3E%3Ccircle cx='66' cy='144' r='5'/%3E%3Ccircle cx='150' cy='34' r='5'/%3E%3Ccircle cx='94' cy='182' r='5'/%3E%3Ccircle cx='128' cy='172' r='4'/%3E%3C/g%3E%3Ccircle cx='172' cy='100' r='7'/%3E%3Ccircle cx='86' cy='66' r='6'/%3E%3C/svg%3E") 0 0/220px 220px}
+:root[data-theme="dark"]{--bg:#07130c;--panel:#0e2116;--panel2:#13301f;--txt:#e6f4ea;--mute:#93b29e;--acc:#3ddc84;--acc2:#e3b55a;--hot:#ffcc33;--ok:#4ade80;--ko:#f87171;--line:#1f4a31;
+      --glow:0 0 0 1px #1d4a2f inset,0 0 24px rgba(61,220,132,.07);--surface:linear-gradient(180deg,#0f2618,#0b1c12);--head:rgba(7,19,12,.82);
+      --soft:rgba(255,255,255,.04);--soft2:rgba(255,255,255,.08);--onacc:#04210f;--chipon:#173d27;--brille:0 0 12px rgba(227,181,90,.45);--pad:#e3b55a;color-scheme:dark;
+      --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' fill='none' stroke='rgba(61,220,132,.07)' stroke-width='2'%3E%3Cpath d='M0 44h64l22 22h70l22-22h42M44 220v-54l22-22V88M150 0v34l22 22v44l-22 22v98M0 160h24l22 22h48M110 220v-30l18-18h92'/%3E%3Cg fill='rgba(61,220,132,.07)' stroke='none'%3E%3Ccircle cx='66' cy='144' r='5'/%3E%3Ccircle cx='150' cy='34' r='5'/%3E%3Ccircle cx='94' cy='182' r='5'/%3E%3Ccircle cx='128' cy='172' r='4'/%3E%3C/g%3E%3Ccircle cx='172' cy='100' r='7'/%3E%3Ccircle cx='86' cy='66' r='6'/%3E%3C/svg%3E") 0 0/220px 220px}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--txt);font:16px/1.45 system-ui,"Segoe UI",sans-serif;background:var(--deco),var(--bg)}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--head);position:sticky;top:0;z-index:5;backdrop-filter:blur(6px);flex-wrap:wrap}
+.theme{width:40px;height:40px;padding:0;font-size:18px;flex:none}
+header h1{margin:0;font:800 22px/1 var(--mono);letter-spacing:4px;padding:8px 12px;border:2px solid var(--acc);border-radius:6px;position:relative}   /* le logo comme une puce : bord et pattes */
+header h1::before,header h1::after{content:"";position:absolute;left:8px;right:8px;height:4px;background:repeating-linear-gradient(90deg,var(--pad) 0 4px,transparent 4px 9px)}
+header h1::before{top:-6px}header h1::after{bottom:-6px}
+header h1 span{color:var(--acc)}
+header .pseudo{margin-left:auto}
+header .mode{margin-left:0}
+.mode{margin-left:auto;display:flex;background:var(--panel);border-radius:999px;padding:4px;box-shadow:var(--glow)}
+.mode button{border:0;background:none;color:var(--mute);padding:8px 16px;border-radius:999px;font:inherit;cursor:pointer}
+.mode button.on{background:var(--acc);color:var(--onacc);font-weight:700}
+main{display:grid;grid-template-columns:340px 1fr 320px;gap:16px;padding:16px;align-items:start}
+@media (max-width:1100px){main{grid-template-columns:minmax(0,1fr)}}
+section{background:var(--surface);border-radius:14px;padding:18px;box-shadow:var(--glow);position:relative}
+section::after{content:"";position:absolute;inset:7px;pointer-events:none;border-radius:8px;   /* trous de fixation cuivrés aux 4 coins, comme sur la carte */
+  background:radial-gradient(circle,transparent 0 2px,var(--pad) 2.5px 4px,transparent 4.5px) 0 0/10px 10px no-repeat,radial-gradient(circle,transparent 0 2px,var(--pad) 2.5px 4px,transparent 4.5px) 100% 0/10px 10px no-repeat,
+             radial-gradient(circle,transparent 0 2px,var(--pad) 2.5px 4px,transparent 4.5px) 0 100%/10px 10px no-repeat,radial-gradient(circle,transparent 0 2px,var(--pad) 2.5px 4px,transparent 4.5px) 100% 100%/10px 10px no-repeat;opacity:.7}
+.ref{font:700 11px/1 var(--mono);letter-spacing:1px;color:var(--acc2);text-transform:uppercase}   /* repère de sérigraphie : U1, SW1, IA… */
+main>section{counter-increment:u}main{counter-reset:u}
+main>section>h2::before{content:"U" counter(u);font:700 11px/1 var(--mono);color:var(--acc2);border:1px solid currentColor;border-radius:3px;padding:3px 5px;margin-right:8px;vertical-align:3px}
+h2{margin:0 0 12px;font-size:17px;font-weight:700;color:var(--txt)}
+h2 b{color:var(--acc);margin-right:6px}
+h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:2px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:12px;padding:6px 10px;font:inherit;font-size:15px;cursor:pointer}
+.chip.on{border-color:var(--acc);background:var(--chipon)}
+/* ----- accueil communauté ----- */
+.commu{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;padding:16px;max-width:1400px;margin:0 auto}
+.commu>section{grid-column:span 4;min-width:0}
+.commu .c-stats,.commu .c-hero{grid-column:1/-1}
+.commu .c-class,.commu .c-new{grid-column:span 6}           /* classement et nouveaux niveaux : même taille, même hauteur, se replient ensemble */
+.commu .c-class .liste,.commu .c-new .cartes{max-height:520px;overflow:auto}
+@media (max-width:1000px){.commu>section,.commu .c-class,.commu .c-new{grid-column:1/-1}}
+.commu .c-intro{grid-column:1/-1}
+.intro-titre{margin:6px 0 16px;font-size:clamp(26px,4vw,40px);font-weight:800;line-height:1.1}
+.etapes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;position:relative}
+.etapes::before{content:"";position:absolute;left:8%;right:8%;top:84px;height:3px;z-index:0;   /* piste de cuivre qui relie les étapes, avec ses vias */
+  background:radial-gradient(circle,var(--pad) 0 5px,transparent 5.5px) 0 50%/16.66% 14px repeat-x,linear-gradient(var(--pad),var(--pad)) 0 50%/100% 3px no-repeat;opacity:.55}
+.etape{position:relative;z-index:1;display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:14px;background:var(--panel);box-shadow:var(--glow)}
+.etape>img,.ia-demo{width:100%;height:168px;max-height:none;object-fit:cover;border-radius:10px;display:block}
+.etape>img.blanc{object-fit:contain;background:#fff}
+.etape h3{margin:0;font-size:18px;color:var(--txt)}
+.etape p{margin:0;color:var(--mute);font-size:14px}
+.ia-demo{display:grid;grid-template-columns:1fr auto 64px;align-items:center;gap:10px;padding:12px;background:#0b1a11;color:#d9f5e3}
+.ia-demo .bulle{font:13px/1.35 var(--mono);background:#13301f;border-radius:10px 10px 10px 2px;padding:10px}
+.ia-demo .puce{font:800 13px var(--mono);padding:10px 8px;border:2px solid #3ddc84;border-radius:6px;color:#3ddc84;position:relative;box-shadow:0 0 14px rgba(61,220,132,.35)}
+.ia-demo .puce::before,.ia-demo .puce::after{content:"";position:absolute;top:6px;bottom:6px;width:4px;background:repeating-linear-gradient(#e3b55a 0 3px,transparent 3px 7px)}
+.ia-demo .puce::before{left:-7px}.ia-demo .puce::after{right:-7px}
+.ia-demo .mini{width:64px;height:144px;object-fit:cover;object-position:bottom;background:linear-gradient(#3a0b0b,#a8361a);border-radius:4px}
+@media (max-width:800px){.etapes{grid-template-columns:minmax(0,1fr)}.etapes::before{display:none}}
+/* la console sous toutes ses coutures : grandes photos sur fond blanc */
+.commu .c-console{grid-column:1/-1;background:#fff;border-radius:16px;padding:24px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.c-console figure{margin:0}
+.c-console img{width:100%;height:auto;aspect-ratio:1;object-fit:contain;display:block}
+.c-console figcaption{color:#1a2a20;text-align:center;font-size:15px;margin-top:8px}
+@media (max-width:800px){.commu .c-console{grid-template-columns:minmax(0,1fr)}}
+.bande{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,2fr);gap:12px}
+@media (max-width:800px){.bande{grid-template-columns:repeat(3,minmax(0,1fr))}.bande .actifs{grid-column:1/-1}.tuile{padding:10px}.tuile>b{font-size:26px}.tuile>span{font-size:11px;letter-spacing:0}}
+header nav.mode{max-width:100%;overflow-x:auto}   /* téléphone : le menu défile au lieu d'élargir la page */
+.tuile{padding:12px 16px;border-radius:12px;background:var(--soft);box-shadow:var(--glow);min-width:0}
+.tuile>b{display:block;font:700 34px/1.1 var(--mono);color:var(--acc2);text-shadow:var(--brille)}
+.tuile>span{font:12px var(--mono);color:var(--mute);text-transform:uppercase;letter-spacing:1px}
+.tuile.actifs .liste{margin-top:6px;max-height:112px;overflow:auto;gap:4px}
+.tuile.actifs .rang{padding:4px 8px}
+.cta{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.cta .big{width:auto;margin:0;padding:12px 20px;font-size:17px}
+.liste{display:flex;flex-direction:column;gap:8px}
+.rang{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--soft);border:1px solid transparent}
+.rang:hover{border-color:var(--line)}
+.rang .pos{width:30px;text-align:center;font-weight:800;color:var(--acc);font-size:18px}
+.rang .qui{flex:1;min-width:0}
+.rang .qui div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rang small{color:var(--mute)}
+.barre{height:4px;margin-top:5px;background:var(--line);border-radius:2px;overflow:hidden}
+.barre i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.jouer{border:1px solid var(--acc);background:var(--chipon);color:var(--txt);border-radius:9px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.jouer:hover{background:var(--acc);color:var(--onacc)}
+.cartes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.carte{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:12px;background:var(--soft);box-shadow:var(--glow)}
+.carte .t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vig{height:84px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;border-radius:8px;background:#0a0618}
+.mini{width:60px;image-rendering:pixelated}
+.avatar{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#160c33}
+header .moi{margin-left:auto;display:flex;align-items:center;gap:8px}
+header .moi b{color:var(--acc2)}
+#vAnim.on{border-color:var(--acc);background:var(--chipon)}
+dialog{background:var(--panel);color:var(--txt);border:0;border-radius:14px;padding:20px;box-shadow:var(--glow),0 20px 60px rgba(0,0,0,.6);max-width:min(420px,92vw)}
+dialog::backdrop{background:rgba(5,2,15,.7)}
+.champ{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.champ input{width:100%}
+.anim{max-width:1000px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+.code{white-space:nowrap;font:800 22px/1 ui-monospace,monospace;letter-spacing:2px;color:var(--acc2);text-shadow:var(--brille)}
+.masque{opacity:.45}
+.partage{margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(34,211,238,.08);box-shadow:var(--glow);text-align:left}
+.palette{display:flex;align-items:center;gap:8px;margin:6px 0}
+.palette>span{width:86px;flex:none;font-size:13px;color:var(--mute)}
+.regle{flex:1;width:auto;padding:6px 10px}
+.pastille{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.pastille.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--panel) inset}
+.pastille.auto{background:conic-gradient(#e8322b,#ffd400,#3f8f3a,#2f6fe0,#8b5cf6,#e8322b)}
+.sh-versions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sh-versions button{display:flex;flex-direction:column;gap:6px;text-align:left;padding:16px;border-radius:16px;border:2px solid var(--line);background:var(--soft);color:var(--txt);font:inherit;cursor:pointer}
+.sh-versions button span{color:var(--mute);font-size:14px}
+.sh-versions button.on{border-color:var(--acc);background:var(--chipon)}
+@media (max-width:600px){.sh-versions{grid-template-columns:1fr}}
+.atelierBan{margin-bottom:12px;padding:10px 14px;border-radius:12px;background:rgba(34,211,238,.1);box-shadow:var(--glow);font-size:17px}
+.atelierBan b{color:var(--acc2)}
+.en-atelier #vBoutique,.en-atelier #vSupport,.en-atelier #vProfs{display:none}
+.profs-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.profs-grille section p{margin:0 0 8px}
+.qform{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
+.qform .rep{display:flex;gap:6px;align-items:center}
+.qform .rep input[type=text]{flex:1}
+.nomJeu{width:100%;font-size:20px;font-weight:800;padding:12px 14px;border-color:var(--acc);margin-bottom:12px}
+.neuf{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--acc2);color:#04212a;font-weight:800;margin-left:6px}
+textarea{width:100%;min-height:80px;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical}
+textarea:focus{outline:none;border-color:var(--acc)}
+.big{width:100%;margin-top:12px;border:0;border-radius:14px;padding:14px;font:inherit;font-size:19px;font-weight:800;cursor:pointer;color:#fff;
+     background:linear-gradient(90deg,#11904f,#0a6a37);box-shadow:0 4px 18px rgba(11,122,65,.35)}
+.big.alt{background:none;color:var(--txt);box-shadow:var(--glow)}
+.big:disabled{opacity:.5;cursor:wait}
+.sec{border:2px solid var(--line);background:none;color:var(--txt);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer}
+.sec:hover{border-color:var(--acc)}
+.compris{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--panel2);font:13px/1.5 var(--mono);min-height:40px;border-left:3px solid var(--acc)}   /* réponse de l'IA, façon console */
+.compris::before{content:"IA › ";font-weight:800;color:var(--acc)}
+.compris b{color:var(--ok)}
+.cat{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px}
+.cat div{background:var(--panel2);border-radius:8px;padding:6px 8px}
+.cat code{color:var(--acc);font-weight:700}
+.console{display:flex;flex-direction:column;align-items:center}
+.coque{background:#c9302c;border-radius:28px;padding:22px 28px 18px;box-shadow:0 10px 0 #8d1f1c;max-width:100%}
+canvas{display:block;width:320px;max-width:100%;image-rendering:pixelated;background:#000;border-radius:6px;border:6px solid #222}
+.apercu{width:332px;max-width:100%;max-height:360px;overflow:auto;border-radius:6px}
+.aide{color:var(--mute);font-size:13px;margin:10px 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.pseudo{background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:inherit;width:160px}
+.large{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:800px){.large{grid-template-columns:1fr}}
+.envoi{margin-top:10px;font-size:14px;min-height:20px}
+.hist{display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:auto}
+.it{background:var(--panel2);border-radius:12px;padding:10px;font-size:14px;border-left:4px solid var(--line)}
+.it.cur{border-left-color:var(--acc)}
+.it .n{font-weight:800;color:var(--acc)}
+.it .q{margin:4px 0;font-style:italic}
+.it .r{color:var(--mute)}
+.it input{width:100%;margin-top:6px;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px;font:inherit;font-size:13px}
+.vide{color:var(--mute);font-size:14px}
+details{margin-top:16px;width:100%;max-width:700px}
+summary{cursor:pointer;color:var(--mute)}
+pre{background:#0b0a12;border-radius:10px;padding:12px;font-size:12px;overflow:auto;max-height:340px}
+.hide{display:none!important}
+canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:0;border-radius:0;background:none;vertical-align:middle;margin-left:4px}
+.icRow{display:flex;gap:6px;margin-top:8px}
+.icRow input{flex:1;width:auto}
+.icRes{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;max-height:150px;overflow:auto}
+.icRes img{width:36px;height:36px;padding:3px;background:var(--panel2);border-radius:8px;cursor:pointer}
+.icRes img:hover{outline:2px solid var(--acc)}
+.icDrop{margin-top:8px;padding:10px;border:2px dashed var(--line);border-radius:12px;font-size:13px;color:var(--mute);text-align:center}
+.icDrop.sur{border-color:var(--acc);color:var(--txt)}
+/* ----- boutique : présentation épurée ----- */
+.shop{display:block;max-width:860px;margin:0 auto;padding:0 16px 80px;text-align:center}
+.sh-hero{padding:28px 0 0;position:relative;z-index:1}
+.sh-apres{padding:8px 0 40px}
+:root:not([data-theme="dark"]) .sh-photo{margin-top:-34px}   /* la photo remonte sous le titre (sur blanc seulement : en sombre le texte clair disparaîtrait) */
+.sh-kit{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;text-align:left}
+.sh-kit figure{margin:0;border-radius:14px;overflow:hidden;background:var(--panel);box-shadow:var(--glow)}
+.sh-kit img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+.sh-kit figcaption{padding:10px 12px;font-weight:600;display:flex;flex-direction:column;gap:4px}
+.sh-photo{width:100vw;margin:0 0 0 calc(50% - 50vw);background:#fff;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,3.2fr) minmax(0,1fr);align-items:center;gap:2vw;padding:0 3vw}   /* à fond perdu : bande blanche bord à bord, blanc sur blanc */
+.sh-photo img{display:block;width:100%;height:auto}
+.sh-console{max-width:1205px;justify-self:center}
+.sh-bouton{max-width:300px;justify-self:center}
+body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
+:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)){background:#fff}   /* thème clair : boutique sur blanc, la photo se fond dans la page */
+.sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}
+.sh-titre{margin:8px 0 16px;font-size:clamp(36px,7vw,64px);line-height:1.05;letter-spacing:-.02em;text-transform:none;font-weight:700}
+.sh-sous{margin:0 auto;max-width:560px;color:var(--mute);font-size:clamp(17px,2.4vw,21px)}
+.sh-prix{margin:20px 0 0;font-size:17px}
+.sh-bloc{padding:56px 0;border-top:1px solid var(--soft)}
+.sh-h{margin:0 0 28px;font-size:clamp(26px,4.5vw,40px);color:var(--txt);font-weight:700;letter-spacing:-.01em}
+.sh-paliers{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.sh-paliers div{padding:22px 10px;border-radius:18px;background:var(--soft);transition:.2s}
+.sh-paliers div.on{background:var(--line);outline:1px solid var(--acc)}
+.sh-paliers b{display:block;font-size:30px;font-weight:700}
+.sh-paliers span{display:block;color:var(--mute);font-size:14px;margin-top:4px}
+.sh-paliers i{display:block;font-style:normal;color:var(--ok);font-size:13px;margin-top:6px;min-height:1em}
+.sh-qte{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--soft)}
+.sh-qte input{width:80px;text-align:center;background:none;border:0;color:var(--txt);font:600 24px system-ui;-moz-appearance:textfield}
+.sh-qte input::-webkit-inner-spin-button{-webkit-appearance:none}
+.sh-pm{width:44px;height:44px;border:0;border-radius:50%;background:var(--soft);color:var(--txt);font-size:22px;cursor:pointer}
+.sh-total{margin:24px 0 4px;font-size:clamp(44px,8vw,64px);font-weight:700;letter-spacing:-.02em}
+.sh-detail{margin:0;color:var(--mute);min-height:1.4em}
+.sh-btn{margin-top:28px;border:0;border-radius:999px;padding:14px 36px;font:600 17px system-ui;background:#0071e3;color:#fff;cursor:pointer}
+.sh-btn:hover{background:#0077ed}
+.sh-liens{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:32px 0 24px;text-align:left}
+.sh-liens a{display:block;padding:20px;border-radius:18px;background:var(--soft);color:var(--txt);text-decoration:none}
+.sh-liens a:hover{background:var(--soft)}
+.sh-liens b{display:block;font-size:19px}
+.sh-liens span{color:var(--mute);font-size:14px}
+.sh-dons{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:28px}
+.sh-don{border:0;border-radius:999px;padding:12px 22px;font:600 17px system-ui;background:var(--soft);color:var(--txt);cursor:pointer}
+.sh-don.on{background:var(--txt);color:var(--bg)}
+.sh-lien{color:#2997ff;text-decoration:none;font-size:17px}
+.sh-lien:hover{text-decoration:underline}
+.icDrop label{color:var(--acc);cursor:pointer;text-decoration:underline}
+/* ----- support : notice d'assemblage ----- */
+.support table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}
+.support th,.support td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.support li{margin:6px 0}
+.support code{color:var(--acc)}
+.support .tab{overflow-x:auto}
+.support .fiche{background:#fff;border-radius:8px;padding:8px;margin:10px 0}
+.support .fiche svg{display:block;width:100%;height:auto}
+</style>
+<script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js?module"></script>   <!-- bouton "Mettre a jour ma console" (flash par Web Serial) -->
+<script>try { if (JSON.parse(localStorage.getItem("brique-theme")) === "dark") document.documentElement.dataset.theme = "dark"; } catch {}</script>   <!-- thème choisi, avant l'affichage : pas de flash clair -->
+</head>
+<body>
+<header>
+  <h1>BRI<span>QUE</span></h1>
+  <nav class="mode">
+    <button id="vCommu" class="on" title="Accueil" style="font-weight:900">B</button>
+    <button id="vBoutique">🛒 Boutique</button>
+    <button id="vCreer">🛠 Créer</button>
+    <button id="vProfs">📚 Atelier</button>
+    <button id="vSupport">🧰 Support</button>
+  </nav>
+  <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
+  <button id="vAnim" class="sec">🎓 Animateur</button>
+  <button id="themeBtn" class="sec theme" title="Mode sombre / mode clair">🌙</button>
+  <div id="niveauScolaire" class="mode hide">
+    <button id="mGuide" class="on">CM1 · CM2 — guidé</button>
+    <button id="mLibre">6ᵉ · 4ᵉ — libre</button>
+  </div>
+</header>
+
+<!-- ===== ACCUEIL : ce qui se passe dans la communauté ===== -->
+<main id="commu" class="commu">
+  <!-- ce qui fait Brique : on soude soi-même, l'IA aide à créer. Trois étapes reliées par une piste de circuit -->
+  <section class="c-intro">
+    <div class="intro-txt">
+      <span class="ref">Kit à souder · IA · USB</span>
+      <p class="intro-titre">Soude ta console.<br>Invente ton jeu avec l'IA.</p>
+    </div>
+    <div class="etapes">
+      <article class="etape">
+        <img src="images/souder.jpg" alt="Un bouton poussoir soudé sur le circuit vert de la console" width="900" height="720">
+        <span class="ref">Étape 1 · SW1</span><h3>Je soude ma console</h3>
+        <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p>
+      </article>
+      <article class="etape">
+        <div class="ia-demo" aria-hidden="true">
+          <div class="bulle">« un volcan très haut avec des scies »</div>
+          <div class="puce">IA</div>
+          <img id="iaDemo" class="mini" alt="">
+        </div>
+        <span class="ref">Étape 2 · IA</span><h3>Je décris, l'IA construit</h3>
+        <p>Une phrase suffit. L'IA règle le niveau, je regarde, je corrige, je recommence : c'est moi qui décide.</p>
+      </article>
+      <article class="etape">
+        <img src="images/console-v2.jpg" alt="La console Brique terminée" width="1205" height="880" class="blanc">
+        <span class="ref">Étape 3 · USB</span><h3>Je joue et je partage</h3>
+        <p>Le jeu part dans la console par le câble USB. Un code le partage aux copains, pour jouer jusqu'à 4.</p>
+      </article>
+    </div>
+  </section>
+  <section class="c-console">
+    <figure><img src="images/cerveau-esp32.jpg" alt="Le cerveau de la console : une carte ESP32-C3 grande comme un doigt, avec prise USB-C" width="1192" height="900" loading="lazy">
+      <figcaption><b>Le cerveau</b> : un ESP32-C3 grand comme un doigt, Wi-Fi, Bluetooth et USB-C</figcaption></figure>
+    <figure><img src="images/bouton-ecran.jpg" alt="Un bouton soudé sur le circuit vert, à côté de l'écran" width="1200" height="1200" loading="lazy">
+      <figcaption><b>Les boutons</b> : soudés à la main, juste à côté de l'écran couleur</figcaption></figure>
+    <figure><img src="images/bouton-circuit.jpg" alt="Un bouton et ses pistes de cuivre sur le circuit hexagonal" width="1200" height="1200" loading="lazy">
+      <figcaption><b>Le circuit</b> : hexagonal, ses pistes relient chaque bouton au cerveau</figcaption></figure>
+  </section>
+  <!-- bandeau du haut : les chiffres et qui joue en ce moment, sur toute la largeur -->
+  <section class="c-stats">
+    <div id="atelierBan" class="atelierBan hide"></div>
+    <div class="bande">
+      <div class="tuile"><b id="nJeux">–</b><span>jeux créés</span></div>
+      <div class="tuile"><b id="nParties">–</b><span>parties finies</span></div>
+      <div class="tuile"><b id="nAujourdhui">–</b><span>joueurs aujourd'hui</span></div>
+      <div class="tuile actifs"><span>Joueurs actifs</span><div id="actifs" class="liste"></div></div>
+    </div>
+  </section>
+  <section class="c-hero">
+    <div class="cta">
+      <button id="ctaCreer" class="big">✨ Créer mon jeu</button>
+      <button id="ctaCommun" class="big alt">🧱 Jouer au jeu commun</button>
+      <div class="icRow" style="margin:0;flex-basis:100%"><input id="codeIn" class="pseudo" maxlength="6" placeholder="Code d'un copain (ex. K7P2QX)" style="text-transform:uppercase"><button id="codeBtn" class="sec">📥 Récupérer</button></div>
+      <div id="codeMsg" class="envoi" style="margin:0;flex-basis:100%"></div>
+    </div>
+  </section>
+  <section class="c-class"><h2>🏆 Classement des jeux</h2><div id="classement" class="liste"></div></section>
+  <section class="c-new"><h2>🆕 Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
+  <section><h2>🔥 Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
+  <section><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu : chacun y ajoute un niveau signé de son pseudo.</p><div id="commun" class="liste"></div></section>
+  <section class="c-idees">
+    <h2>💡 Idées des joueurs</h2>
+    <p class="aide" style="margin-top:0">Ce que vous voulez dans le jeu et que la console ne sait pas encore faire. Les plus demandées arriveront dans les prochaines mises à jour !</p>
+    <div class="icRow" style="margin-bottom:10px"><input id="ideeIn" class="pseudo" maxlength="60" placeholder="Mon idée : ex. des ennemis qui volent"><button id="ideeBtn" class="sec">💡 Proposer</button></div>
+    <div id="idees" class="liste"></div>
+  </section>
+</main>
+
+<!-- ===== BOUTIQUE (présentation épurée) ===== -->
+<main id="boutique" class="shop hide">
+  <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
+  <div class="sh-hero">
+    <p class="sh-sur">Console Brique · kit à souder + IA</p>
+    <h2 class="sh-titre">Le jeu que tu inventes.<br>Dans ta main.<br>Tu y joues seul ou à plusieurs.</h2>
+  </div>
+  <figure class="sh-photo">
+    <img class="sh-bouton" src="images/bouton1.jpg" alt="Un bouton poussoir, vu de dessus" width="463" height="337">
+    <img class="sh-console" src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
+    <img class="sh-bouton" src="images/bouton2.jpg" alt="Un bouton poussoir, vu de dessous avec ses quatre pattes" width="471" height="330">
+  </figure>
+  <div class="sh-apres">
+    <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA le construit : il part dans la console par le câble USB.</p>
+    <p id="btDepuis" class="sh-prix">À partir de 28 €</p>
+  </div>
+
+  <div class="sh-bloc">
+    <h3 class="sh-h">Dans le kit</h3>
+    <div class="sh-kit">
+      <figure><img src="images/pcb.jpg" alt="Le circuit imprimé hexagonal, encore nu" width="900" height="675" loading="lazy"><figcaption><span class="ref">PCB1</span>Le circuit hexagonal</figcaption></figure>
+      <figure><img src="images/esp32.jpg" alt="Le module ESP32-C3 Super Mini, à peine plus grand qu'un bout de doigt" width="900" height="680" loading="lazy"><figcaption><span class="ref">U1</span>Le cerveau : ESP32-C3</figcaption></figure>
+      <figure><img src="images/boutons.jpg" alt="Des boutons poussoirs en vrac sur une table" width="900" height="750" loading="lazy"><figcaption><span class="ref">SW1-SW3</span>Les 3 boutons</figcaption></figure>
+      <figure><img src="images/connecteur.jpg" alt="Le connecteur de l'écran soudé sur la carte" width="900" height="720" loading="lazy"><figcaption><span class="ref">J1</span>Le connecteur de l'écran</figcaption></figure>
+    </div>
+    <p class="aide">Tout se soude à la main, en grosses pastilles : pensé pour une première soudure, dès 9 ans avec un adulte.</p>
+  </div>
+
+  <div class="sh-bloc">
+    <h3 class="sh-h">À souder soi-même, ou prête à jouer.</h3>
+    <div id="btVersions" class="sh-versions">
+      <button class="on" data-v="kit"><b>🔧 Kit à souder</b><span>L'atelier complet : on monte sa console, puis on crée ses jeux.</span></button>
+      <button data-v="presoude"><b>✅ Pré-soudée</b><span>Montée et testée : on commence directement par la création.</span></button>
+    </div>
+  </div>
+
+  <div class="sh-bloc">
+    <h3 class="sh-h">Plus vous êtes, moins c'est cher.</h3>
+    <div id="paliers" class="sh-paliers"></div>
+  </div>
+
+  <div class="sh-bloc">
+    <div class="sh-qte">
+      <button class="sh-pm" data-d="-1" aria-label="Une console de moins">−</button>
+      <input id="btQte" type="number" min="1" max="999" value="1" aria-label="Nombre de consoles">
+      <button class="sh-pm" data-d="1" aria-label="Une console de plus">+</button>
+    </div>
+    <p id="btTotal" class="sh-total"></p>
+    <p id="btDetail" class="sh-detail"></p>
+    <button id="btCommander" class="sh-btn">Commander</button>
+  </div>
+
+  <div class="sh-bloc sh-libre">
+    <h3 class="sh-h">Entièrement open source.</h3>
+    <p class="sh-sous">Rien n'est caché. Le code de la console, le site, les plans de la carte et du boîtier : tout est sur GitHub, libre de lire, modifier, refabriquer.</p>
+    <div class="sh-liens">
+      <a href="https://github.com/Imajon/ClaudeRepo/tree/main/c3-tft-meatboy" target="_blank" rel="noopener"><b>Firmware</b><span>Le programme de la console</span></a>
+      <a href="https://github.com/Imajon/ClaudeRepo/tree/main/c3-tft-meatboy/materiel" target="_blank" rel="noopener"><b>Matériel</b><span>Carte, boîtier, découpes</span></a>
+      <a href="https://github.com/Imajon/ClaudeRepo/tree/main/brique" target="_blank" rel="noopener"><b>Brique</b><span>Ce site et son serveur</span></a>
+    </div>
+    <a class="sh-lien" href="https://github.com/Imajon/ClaudeRepo" target="_blank" rel="noopener">Voir tout le projet sur GitHub ›</a>
+  </div>
+
+  <div class="sh-bloc">
+    <h3 class="sh-h">Soutenir le projet.</h3>
+    <p class="sh-sous">Pas besoin d'acheter une console pour aider. Donne ce que tu veux, quand tu veux : chaque euro finance du temps de développement libre.</p>
+    <div class="sh-dons">
+      <button class="sh-don" data-m="5">5 €</button><button class="sh-don on" data-m="10">10 €</button><button class="sh-don" data-m="20">20 €</button>
+      <span class="sh-qte" style="padding:0 14px"><input id="donLibre" type="number" min="1" placeholder="Autre" aria-label="Montant libre en euros" style="width:90px;font-size:17px"> €</span>
+    </div>
+    <button id="donBtn" class="sh-btn">Soutenir</button>
+    <p id="donMsg" class="sh-detail" style="margin-top:12px"></p>
+  </div>
+</main>
+
+<!-- ===== SUPPORT : notice d'assemblage et de prise en main ===== -->
+<main id="support" class="anim support hide">
+  <section>
+    <h2>La console Brique</h2>
+    <p>Une console à souder soi-même : un ESP32-C3, un écran TFT 2" et 3 boutons. Une fois montée, elle fait tourner Pixel Run et reçoit par câble USB les niveaux créés ici.</p>
+    <p><b>Console pré-soudée ?</b> Elle arrive montée et testée : passe directement au branchement USB et à l'envoi de ton premier jeu. Les étapes de soudure ci-dessous ne concernent que le kit.</p>
+    <p class="aide">Environ 1 h 30 de montage pour un enfant accompagné (CM1 → 4ᵉ), puis 10 minutes pour la première programmation.</p>
+  </section>
+  <section>
+    <h2>Matériel et outils</h2>
+    <div class="tab"><table>
+      <tr><th>Qté</th><th>Pièce</th><th>Détail</th></tr>
+      <tr><td>1</td><td>ESP32-C3 Super Mini</td><td>Microcontrôleur, prise USB-C</td></tr>
+      <tr><td>1</td><td>Écran TFT 2" ST7789</td><td>SPI, 320×240, 7 broches (GND, VCC, SCL, SDA, RES, DC, CS)</td></tr>
+      <tr><td>2</td><td>Bouton-poussoir 6×6 mm</td><td>Gauche, Droite</td></tr>
+      <tr><td>1</td><td>Bouton-poussoir 12×12 mm</td><td>Saut</td></tr>
+      <tr><td>1</td><td>Support</td><td>Plaque à pastilles (V1) ou PCB hexagonal (V2)</td></tr>
+      <tr><td>~15</td><td>Fils fins</td><td>Seulement pour la plaque à pastilles</td></tr>
+      <tr><td>1</td><td>Câble USB-C <b>de données</b></td><td>Pas un câble de charge seule</td></tr>
+    </table></div>
+    <p><b>Outils :</b> fer à souder (~330 °C), étain, pince coupante, multimètre (conseillé), lunettes de protection.</p>
+    <p><b>Pour programmer :</b> un ordinateur avec Chrome ou Edge.</p>
+  </section>
+  <section>
+    <h2>Assemblage pas à pas</h2>
+    <p>Câblage <b>standard</b>, celui du firmware principal : chaque fil relie une broche de l'écran ou d'un bouton à une broche de l'ESP32-C3.</p>
+    <div class="tab"><table>
+      <tr><th>Élément</th><th>Broche</th><th>ESP32-C3</th></tr>
+      <tr><td>Écran</td><td>GND</td><td>GND</td></tr>
+      <tr><td>Écran</td><td>VCC</td><td>3V3</td></tr>
+      <tr><td>Écran</td><td>SCL (horloge)</td><td>GPIO 4</td></tr>
+      <tr><td>Écran</td><td>SDA (données)</td><td>GPIO 6</td></tr>
+      <tr><td>Écran</td><td>RES</td><td>GPIO 10</td></tr>
+      <tr><td>Écran</td><td>DC</td><td>GPIO 5</td></tr>
+      <tr><td>Écran</td><td>CS</td><td>GPIO 7</td></tr>
+      <tr><td>Bouton Gauche</td><td>une patte</td><td>GPIO 2</td></tr>
+      <tr><td>Bouton Droite</td><td>une patte</td><td>GPIO 1</td></tr>
+      <tr><td>Bouton Saut</td><td>une patte</td><td>GPIO 3</td></tr>
+      <tr><td>Les 3 boutons</td><td>autre patte</td><td>GND</td></tr>
+    </table></div>
+    <p class="aide">Aucune résistance pour les boutons : le firmware active celles de l'ESP32.</p>
+    <ol>
+      <li><b>Repérer les faces.</b> Écran et boutons en façade, ESP32-C3 au dos (prise USB-C vers le bord, accessible).</li>
+      <li><b>Souder les boutons</b> en premier, ce sont les pièces les plus basses. Gauche et Droite à gauche, Saut (le gros) à droite.</li>
+      <li><b>Souder l'ESP32-C3</b> au dos. Sur le PCB, poser d'abord une seule patte, vérifier qu'il est à plat, puis souder le reste.</li>
+      <li><b>Souder l'écran</b> en façade, bien parallèle à la carte avant de souder toutes les broches.</li>
+      <li><b>Plaque à pastilles uniquement :</b> tirer les fils au dos selon le tableau, puis relier une patte de chaque bouton à GND.</li>
+      <li><b>Contrôler :</b> pas de pont d'étain entre deux broches voisines ; au multimètre, aucun contact entre 3V3 et GND.</li>
+      <li><b>Fixer</b> la carte dans le boîtier (4 trous de fixation, alignés sur l'écran).</li>
+    </ol>
+  </section>
+  <section>
+    <h2>Premier démarrage</h2>
+    <p>Une console d'atelier a déjà son firmware : on branche, l'écran titre s'affiche. Sinon, l'installer une fois depuis un ordinateur avec l'IDE Arduino 2 :</p>
+    <ol>
+      <li>Brancher la console en USB.</li>
+      <li>Lancer <code>c3-tft-meatboy/compiler-upload-c3-tft-meatboy.bat</code> : il trouve le port COM, compile et téléverse.</li>
+      <li>Au tout premier démarrage, la console prépare sa mémoire quelques secondes : normal, une seule fois.</li>
+    </ol>
+    <p><b>À vérifier :</b> l'écran titre s'affiche dans le bon sens · Gauche/Droite déplacent le sélecteur · Saut valide · « 1 Joueur » lance le niveau 1.</p>
+  </section>
+  <section>
+    <h2>Programmer sa console</h2>
+    <p class="aide" style="margin-top:0">Chrome ou Edge sur ordinateur, IDE Arduino et moniteur série fermés, console sur l'accueil ou dans un menu.</p>
+    <ol>
+      <li><b>Créer</b> : onglet 🛠 Créer, choisir le monde, le héros, le danger, compléter par une phrase, puis ✨ Créer mon jeu.</li>
+      <li><b>Regarder</b> l'aperçu du niveau. Corriger la phrase et recréer si besoin.</li>
+      <li><b>Mes icônes (facultatif)</b> : chercher une image en anglais (cat, dragon…), la coller ou la glisser.</li>
+      <li><b>Envoyer</b> : brancher la console, 📟 Envoyer sur la console, choisir le port. Le niveau démarre aussitôt.</li>
+      <li><b>Rejouer plus tard</b> : accueil de la console → <b>Mes niveaux</b> (les 8 derniers, gardés même éteinte).</li>
+    </ol>
+  </section>
+  <section>
+    <h2>Dépannage</h2>
+    <div class="tab"><table>
+      <tr><th>Symptôme</th><th>Cause probable</th><th>Solution</th></tr>
+      <tr><td>Écran noir ou blanc</td><td>Fil SCL/SDA/DC/CS inversé, ou soudure sèche</td><td>Comparer au tableau, refaire les soudures de l'écran</td></tr>
+      <tr><td>Un bouton ne répond pas</td><td>Patte non soudée ou pas reliée à GND</td><td>Ressouder, tester au multimètre</td></tr>
+      <tr><td>L'ESP32 chauffe</td><td>Pont entre 3V3 et GND</td><td>Débrancher tout de suite, chercher le pont</td></tr>
+      <tr><td>Aucun port proposé</td><td>Câble de charge seule</td><td>Changer de câble USB</td></tr>
+      <tr><td>« Port occupé »</td><td>IDE Arduino ou moniteur série ouvert</td><td>Les fermer, réessayer</td></tr>
+      <tr><td>« Console occupée »</td><td>Partie à 2, monde ou mini-jeu en cours</td><td>Revenir à l'accueil de la console</td></tr>
+      <tr><td>« Pas de réponse »</td><td>Ancien firmware sans lecture USB</td><td>Réinstaller le firmware (section 04)</td></tr>
+      <tr><td>« Niveau trop gros »</td><td>Niveau trop haut</td><td>Demander un niveau plus court</td></tr>
+      <tr><td>Téléversement échoue</td><td>Liaison USB capricieuse</td><td>Maintenir BOOT en branchant, ou <code>esptool --no-stub</code></td></tr>
+      <tr><td>Recherche d'icônes vide</td><td>Filtre réseau de l'école</td><td>Autoriser <code>api.iconify.design</code></td></tr>
+    </table></div>
+    <h3>Fiche de test au multimètre (console V1)</h3>
+    <p class="aide">Console débranchée, multimètre en mode continuité (bip). Une ligne à cocher par fil, puis les ponts d'étain à chercher entre broches voisines.</p>
+    <button id="ficheImprimer" class="sec">🖨 Imprimer la fiche</button>
+    <div id="fiche" class="fiche"><!-- FICHE-TEST : remplacee par c3-tft-meatboy/materiel/make_test_continuite.py --><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1414" width="210mm" height="297mm" font-family="Segoe UI, Arial, sans-serif">
+<rect width="1000" height="1414" fill="#fff"/>
+<text x="500.0" y="44" font-size="26" font-weight="800" fill="#12233a" text-anchor="middle">Console V1 : fiche de test (continuite + depannage)</text>
+<text x="500.0" y="68" font-size="14" font-weight="400" fill="#5a6b82" text-anchor="middle">Console DEBRANCHEE de l'USB - multimetre en mode continuite (bip) - cocher chaque ligne</text>
+<rect x="30" y="88" width="940" height="32" rx="6" fill="#12233a"/>
+<text x="44" y="110" font-size="17" font-weight="800" fill="#fff" text-anchor="start">1. Reperer les broches</text>
+<text x="956" y="110" font-size="12" font-weight="400" fill="#a8b8cc" text-anchor="end">meme disposition que montage-c3-tft.svg</text>
+<rect x="120" y="150" width="150" height="330" rx="12" fill="#1d3160" stroke="#0c1830" stroke-width="2"/>
+<rect x="165" y="480" width="60" height="18" rx="5" fill="#c9ccd1" stroke="#8a8d92"/>
+<text x="195" y="493" font-size="9" font-weight="600" fill="#333" text-anchor="middle">USB-C</text>
+<text x="195" y="310" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">ESP32-C3</text>
+<text x="195" y="327" font-size="10" font-weight="400" fill="#9aa0a6" text-anchor="middle">SuperMini</text>
+<circle cx="120" cy="175" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="179" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO0</text>
+<circle cx="270" cy="175" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="179" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO21</text>
+<circle cx="120" cy="215" r="7" fill="#6ee36e" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="219" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO1</text>
+<circle cx="270" cy="215" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="219" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO20</text>
+<circle cx="120" cy="255" r="7" fill="#ffd23c" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="259" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO2</text>
+<circle cx="270" cy="255" r="7" fill="#ff5b5b" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="259" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO10</text>
+<circle cx="120" cy="295" r="7" fill="#ff9500" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="299" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO3</text>
+<circle cx="270" cy="295" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="299" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO9</text>
+<circle cx="120" cy="335" r="7" fill="#19c3d6" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="339" font-size="13" font-weight="700" fill="#222" text-anchor="end">GPIO4</text>
+<circle cx="270" cy="335" r="7" fill="#5b6875" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="339" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO8</text>
+<circle cx="120" cy="375" r="7" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="379" font-size="13" font-weight="700" fill="#222" text-anchor="end">3V3</text>
+<circle cx="270" cy="375" r="7" fill="#22c55e" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="379" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO7</text>
+<circle cx="120" cy="415" r="7" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="106" y="419" font-size="13" font-weight="700" fill="#222" text-anchor="end">GND</text>
+<circle cx="270" cy="415" r="7" fill="#1e90ff" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="419" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO6</text>
+<circle cx="120" cy="455" r="7" fill="#9aa3ad" stroke="#000" stroke-width="1.2"/>
+<text x="106" y="459" font-size="13" font-weight="700" fill="#222" text-anchor="end">5V</text>
+<circle cx="270" cy="455" r="7" fill="#b06cff" stroke="#000" stroke-width="1.2"/>
+<text x="284" y="459" font-size="13" font-weight="700" fill="#222" text-anchor="start">GPIO5</text>
+<text x="195" y="522" font-size="11" font-weight="600" fill="#b35c00" text-anchor="middle">Verifie avec les inscriptions</text>
+<text x="195" y="536" font-size="11" font-weight="600" fill="#b35c00" text-anchor="middle">imprimees sur la carte</text>
+<rect x="470" y="150" width="230" height="200" rx="12" fill="#10131b" stroke="#000" stroke-width="2"/>
+<rect x="520" y="180" width="160" height="140" rx="4" fill="#1b2740"/>
+<text x="600" y="245" font-size="15" font-weight="700" fill="#7fd7ff" text-anchor="middle">ST7789</text>
+<text x="600" y="263" font-size="11" font-weight="400" fill="#5a8fb0" text-anchor="middle">320x240</text>
+<circle cx="470" cy="172" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="458" y="176" font-size="12" font-weight="700" fill="#222" text-anchor="end">1  GND</text>
+<text x="482" y="176" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GND</text>
+<circle cx="470" cy="194" r="6" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="198" font-size="12" font-weight="700" fill="#222" text-anchor="end">2  VCC</text>
+<text x="482" y="198" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">3V3</text>
+<circle cx="470" cy="216" r="6" fill="#19c3d6" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="220" font-size="12" font-weight="700" fill="#222" text-anchor="end">3  SCL</text>
+<text x="482" y="220" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO4</text>
+<circle cx="470" cy="238" r="6" fill="#1e90ff" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="242" font-size="12" font-weight="700" fill="#222" text-anchor="end">4  SDA</text>
+<text x="482" y="242" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO6</text>
+<circle cx="470" cy="260" r="6" fill="#ff5b5b" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="264" font-size="12" font-weight="700" fill="#222" text-anchor="end">5  RES</text>
+<text x="482" y="264" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO10</text>
+<circle cx="470" cy="282" r="6" fill="#b06cff" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="286" font-size="12" font-weight="700" fill="#222" text-anchor="end">6  DC</text>
+<text x="482" y="286" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO5</text>
+<circle cx="470" cy="304" r="6" fill="#22c55e" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="308" font-size="12" font-weight="700" fill="#222" text-anchor="end">7  CS</text>
+<text x="482" y="308" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">GPIO7</text>
+<circle cx="470" cy="326" r="6" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="458" y="330" font-size="12" font-weight="700" fill="#222" text-anchor="end">8  BLK</text>
+<text x="482" y="330" font-size="10" font-weight="600" fill="#9fb3c8" text-anchor="start">3V3</text>
+<rect x="770" y="160" width="190" height="52" rx="10" fill="#f6f8fb" stroke="#c3ccd6"/>
+<rect x="810" y="173" width="26" height="26" rx="6" fill="#ffd23c" stroke="#555"/>
+<circle cx="788" cy="186" r="6" fill="#ffd23c" stroke="#000" stroke-width="1.2"/>
+<circle cx="858" cy="186" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="788" y="208" font-size="10" font-weight="700" fill="#555" text-anchor="middle">1</text>
+<text x="858" y="208" font-size="10" font-weight="700" fill="#555" text-anchor="middle">2</text>
+<text x="874" y="184" font-size="12" font-weight="800" fill="#222" text-anchor="start">GAUCHE</text>
+<text x="874" y="200" font-size="11" font-weight="400" fill="#555" text-anchor="start">GPIO2 / GND</text>
+<rect x="770" y="224" width="190" height="52" rx="10" fill="#f6f8fb" stroke="#c3ccd6"/>
+<rect x="810" y="237" width="26" height="26" rx="6" fill="#6ee36e" stroke="#555"/>
+<circle cx="788" cy="250" r="6" fill="#6ee36e" stroke="#000" stroke-width="1.2"/>
+<circle cx="858" cy="250" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="788" y="272" font-size="10" font-weight="700" fill="#555" text-anchor="middle">1</text>
+<text x="858" y="272" font-size="10" font-weight="700" fill="#555" text-anchor="middle">2</text>
+<text x="874" y="248" font-size="12" font-weight="800" fill="#222" text-anchor="start">DROITE</text>
+<text x="874" y="264" font-size="11" font-weight="400" fill="#555" text-anchor="start">GPIO1 / GND</text>
+<rect x="770" y="288" width="190" height="52" rx="10" fill="#f6f8fb" stroke="#c3ccd6"/>
+<rect x="810" y="301" width="26" height="26" rx="6" fill="#ff9500" stroke="#555"/>
+<circle cx="788" cy="314" r="6" fill="#ff9500" stroke="#000" stroke-width="1.2"/>
+<circle cx="858" cy="314" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="788" y="336" font-size="10" font-weight="700" fill="#555" text-anchor="middle">1</text>
+<text x="858" y="336" font-size="10" font-weight="700" fill="#555" text-anchor="middle">2</text>
+<text x="874" y="312" font-size="12" font-weight="800" fill="#222" text-anchor="start">SAUT (gros)</text>
+<text x="874" y="328" font-size="11" font-weight="400" fill="#555" text-anchor="start">GPIO3 / GND</text>
+<text x="770" y="370" font-size="11" font-weight="400" fill="#555" text-anchor="start">patte 1 = fil du GPIO</text>
+<text x="770" y="385" font-size="11" font-weight="400" fill="#555" text-anchor="start">patte 2 = GND</text>
+<rect x="30" y="563" width="940" height="32" rx="6" fill="#12233a"/>
+<text x="44" y="585" font-size="17" font-weight="800" fill="#fff" text-anchor="start">2. Doit BIPER</text>
+<text x="956" y="585" font-size="12" font-weight="400" fill="#a8b8cc" text-anchor="end">pointe A sur la carte, pointe B sur l'ecran / le bouton</text>
+<rect x="40" y="611" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="619" r="6" fill="#19c3d6" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="623" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO4</tspan>  &#8596;  ecran SCL (3)</text>
+<rect x="510" y="611" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="619" r="6" fill="#1e90ff" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="623" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO6</tspan>  &#8596;  ecran SDA (4)</text>
+<rect x="40" y="638" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="646" r="6" fill="#ff5b5b" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="650" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO10</tspan>  &#8596;  ecran RES (5)</text>
+<rect x="510" y="638" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="646" r="6" fill="#b06cff" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="650" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO5</tspan>  &#8596;  ecran DC (6)</text>
+<rect x="40" y="665" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="673" r="6" fill="#22c55e" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="677" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO7</tspan>  &#8596;  ecran CS (7)</text>
+<rect x="510" y="665" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="673" r="6" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="677" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">3V3</tspan>  &#8596;  ecran VCC (2)</text>
+<rect x="40" y="692" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="700" r="6" fill="#e33" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="704" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">3V3</tspan>  &#8596;  ecran BLK (8)</text>
+<rect x="510" y="692" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="700" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="556" y="704" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GND</tspan>  &#8596;  ecran GND (1)</text>
+<rect x="40" y="719" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="727" r="6" fill="#ffd23c" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="731" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO2</tspan>  &#8596;  bouton GAUCHE, patte 1</text>
+<rect x="510" y="719" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="727" r="6" fill="#6ee36e" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="731" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO1</tspan>  &#8596;  bouton DROITE, patte 1</text>
+<rect x="40" y="746" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="754" r="6" fill="#ff9500" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="758" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO3</tspan>  &#8596;  bouton SAUT, patte 1</text>
+<rect x="510" y="746" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="754" r="6" fill="#1b1b1b" stroke="#fff" stroke-width="1.2"/>
+<text x="556" y="758" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GND</tspan>  &#8596;  les 3 boutons, patte 2</text>
+<rect x="40" y="773" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="781" r="6" fill="#ffd23c" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="785" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO2</tspan>  &#8596;  GND : SEULEMENT bouton GAUCHE appuye</text>
+<rect x="510" y="773" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="542" cy="781" r="6" fill="#6ee36e" stroke="#000" stroke-width="1.2"/>
+<text x="556" y="785" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO1</tspan>  &#8596;  GND : SEULEMENT bouton DROITE appuye</text>
+<rect x="40" y="800" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<circle cx="72" cy="808" r="6" fill="#ff9500" stroke="#000" stroke-width="1.2"/>
+<text x="86" y="812" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO3</tspan>  &#8596;  GND : SEULEMENT bouton SAUT appuye</text>
+<rect x="30" y="828" width="940" height="32" rx="6" fill="#12233a"/>
+<text x="44" y="850" font-size="17" font-weight="800" fill="#fff" text-anchor="start">3. Ne doit PAS biper (pont de soudure)</text>
+<text x="956" y="850" font-size="12" font-weight="400" fill="#a8b8cc" text-anchor="end">broches voisines : si ca bipe, refaire la soudure</text>
+<rect x="40" y="876" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="879" x2="79" y2="889" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="879" x2="65" y2="889" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="888" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">3V3</tspan>  &#8596;  <tspan font-weight="800">GND</tspan>   <tspan fill="#777" font-size="11" dx="10">carte : bip bref = condensateur (normal), bip continu = court-circuit</tspan></text>
+<rect x="510" y="876" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="879" x2="549" y2="889" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="879" x2="535" y2="889" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="888" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO1</tspan>  &#8596;  <tspan font-weight="800">GPIO2</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="40" y="903" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="906" x2="79" y2="916" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="906" x2="65" y2="916" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="915" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO2</tspan>  &#8596;  <tspan font-weight="800">GPIO3</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="510" y="903" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="906" x2="549" y2="916" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="906" x2="535" y2="916" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="915" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO3</tspan>  &#8596;  <tspan font-weight="800">GPIO4</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="40" y="930" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="933" x2="79" y2="943" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="933" x2="65" y2="943" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="942" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO4</tspan>  &#8596;  <tspan font-weight="800">3V3</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="510" y="930" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="933" x2="549" y2="943" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="933" x2="535" y2="943" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="942" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO10</tspan>  &#8596;  <tspan font-weight="800">GPIO9</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="40" y="957" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="960" x2="79" y2="970" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="960" x2="65" y2="970" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="969" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO7</tspan>  &#8596;  <tspan font-weight="800">GPIO6</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="510" y="957" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="960" x2="549" y2="970" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="960" x2="535" y2="970" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="969" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO6</tspan>  &#8596;  <tspan font-weight="800">GPIO5</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="40" y="984" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="987" x2="79" y2="997" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="987" x2="65" y2="997" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="996" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO8</tspan>  &#8596;  <tspan font-weight="800">GPIO7</tspan>   <tspan fill="#777" font-size="11" dx="10">carte</tspan></text>
+<rect x="510" y="984" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="987" x2="549" y2="997" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="987" x2="535" y2="997" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="996" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">GPIO1 / 2 / 3</tspan>  &#8596;  <tspan font-weight="800">GND</tspan>   <tspan fill="#777" font-size="11" dx="10">boutons relaches</tspan></text>
+<rect x="40" y="1011" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="1014" x2="79" y2="1024" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="1014" x2="65" y2="1024" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="1023" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">SCL</tspan>  &#8596;  <tspan font-weight="800">SDA</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="510" y="1011" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="1014" x2="549" y2="1024" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="1014" x2="535" y2="1024" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="1023" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">SDA</tspan>  &#8596;  <tspan font-weight="800">RES</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="40" y="1038" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="1041" x2="79" y2="1051" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="1041" x2="65" y2="1051" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="1050" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">RES</tspan>  &#8596;  <tspan font-weight="800">DC</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="510" y="1038" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="1041" x2="549" y2="1051" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="1041" x2="535" y2="1051" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="1050" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">DC</tspan>  &#8596;  <tspan font-weight="800">CS</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="40" y="1065" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="65" y1="1068" x2="79" y2="1078" stroke="#d22" stroke-width="2.5"/><line x1="79" y1="1068" x2="65" y2="1078" stroke="#d22" stroke-width="2.5"/>
+<text x="88" y="1077" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">CS</tspan>  &#8596;  <tspan font-weight="800">BLK</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="510" y="1065" width="15" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<line x1="535" y1="1068" x2="549" y2="1078" stroke="#d22" stroke-width="2.5"/><line x1="549" y1="1068" x2="535" y2="1078" stroke="#d22" stroke-width="2.5"/>
+<text x="558" y="1077" font-size="13" font-weight="400" fill="#222" text-anchor="start"><tspan font-weight="800">VCC</tspan>  &#8596;  <tspan font-weight="800">SCL</tspan>   <tspan fill="#777" font-size="11" dx="10">ecran</tspan></text>
+<rect x="30" y="1098" width="940" height="32" rx="6" fill="#12233a"/>
+<text x="44" y="1120" font-size="17" font-weight="800" fill="#fff" text-anchor="start">4. Symptome -> quoi tester en premier</text>
+<rect x="30" y="1136" width="940" height="38" rx="6" fill="#fff" stroke="#dde3ea"/>
+<text x="44" y="1160" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Ecran tout noir, pas de lumiere</text>
+<text x="370" y="1160" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">VCC, BLK, GND de l'ecran ; 3V3 et GND de la carte</text>
+<rect x="30" y="1178" width="940" height="38" rx="6" fill="#f3f6fa" stroke="#dde3ea"/>
+<text x="44" y="1202" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Ecran allume mais blanc ou noir uni</text>
+<text x="370" y="1202" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">SCL, SDA, CS, DC, RES ; puis le firmware : V1 = sketch principal (pas proto-0-4)</text>
+<rect x="30" y="1220" width="940" height="38" rx="6" fill="#fff" stroke="#dde3ea"/>
+<text x="44" y="1244" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Image melangee, couleurs fausses</text>
+<text x="370" y="1244" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">DC (GPIO5) et SDA (GPIO6) ; ponts SDA-RES, RES-DC, DC-CS</text>
+<rect x="30" y="1262" width="940" height="38" rx="6" fill="#f3f6fa" stroke="#dde3ea"/>
+<text x="44" y="1286" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Un bouton ne fait rien</text>
+<text x="370" y="1286" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">son fil GPIO -> patte 1, et la patte 2 -> GND ; tester bouton appuye</text>
+<rect x="30" y="1304" width="940" height="38" rx="6" fill="#fff" stroke="#dde3ea"/>
+<text x="44" y="1328" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Le perso bouge tout seul</text>
+<text x="370" y="1328" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">court-circuit GPIO -> GND (bouton relache) ou pont GPIO1-GPIO2-GPIO3</text>
+<rect x="30" y="1346" width="940" height="38" rx="6" fill="#f3f6fa" stroke="#dde3ea"/>
+<text x="44" y="1370" font-size="14" font-weight="800" fill="#12233a" text-anchor="start">Pas reconnue en USB, chauffe</text>
+<text x="370" y="1370" font-size="12.5" font-weight="400" fill="#333" text-anchor="start">court-circuit 3V3 -> GND ou 5V -> GND : debrancher tout de suite</text>
+<text x="500.0" y="1406" font-size="11" font-weight="400" fill="#999" text-anchor="middle">Brochage : materiel/pinout-format1.txt - genere par make_test_continuite.py</text>
+</svg><!-- /FICHE-TEST --></div>
+  </section>
+</main>
+
+<!-- ===== ATELIER : présentation pour les professeurs ===== -->
+<main id="profs" class="anim hide">
+  <section>
+    <h2><b>📚</b>Brique en classe : l'atelier</h2>
+    <p style="margin:0;font-size:18px">Les élèves <b>fabriquent leur console</b>, <b>créent leurs jeux en parlant à une IA</b>, et chaque jeu <b>reprend la leçon du jour</b> : vos questions de cours s'affichent quand on atteint l'arrivée.</p>
+    <p class="aide">Du CM1 à la 4ᵉ · par groupes de 8 à 30 · de 1 séance à un projet sur l'année.</p>
+  </section>
+  <div class="profs-grille">
+    <section><h2>Atelier manuel</h2>
+      <p>Chaque élève monte sa console : microcontrôleur ESP32-C3, écran couleur, trois boutons, soudure et assemblage du boîtier.</p>
+      <p><b>Pas de soudure possible</b> (âge, matériel, temps) ? La console existe en <b>version pré-soudée</b>, montée et testée : l'atelier commence directement par la création.</p>
+      <p class="aide">Comprendre ce qu'il y a dans un objet numérique, suivre un plan de montage, travailler avec soin et sécurité (lunettes, fer à souder encadré).</p></section>
+    <section><h2>Personnalisation</h2>
+      <p>Le monde, le héros, les couleurs, les ennemis, le décor : chaque élève compose son univers, cherche ses images et nomme son jeu.</p>
+      <p class="aide">Faire des choix esthétiques, chercher et sélectionner des images, présenter sa création aux autres.</p></section>
+    <section><h2>Coder avec l'IA</h2>
+      <p>L'élève décrit son jeu en français (« un volcan très haut avec des ressorts et 3 vies »). L'IA traduit en réglages, l'élève teste sur sa console, corrige sa demande, recommence.</p>
+      <p class="aide">Formuler précisément, tester et corriger (démarche d'essai-erreur), regarder « sous le capot » le code produit, comprendre ce qu'une IA sait faire… et ce qu'elle ne sait pas : les demandes impossibles deviennent des « idées des joueurs ».</p></section>
+    <section><h2>La couche pédagogique</h2>
+      <p>Dans l'<b>espace Animateur</b>, vous écrivez vos questions de cours (QCM, 2 ou 3 réponses). Elles sont <b>insérées d'office</b> dans tous les jeux du groupe : à l'arrivée, la console pose une question avant d'afficher la victoire, et montre la bonne réponse en cas d'erreur.</p>
+      <p class="aide">Français, maths, anglais, histoire, sciences… La leçon devient la clé du jeu, révisée à chaque partie, y compris en jouant au jeu d'un camarade. Vous suivez le taux de bonnes réponses par question.</p></section>
+    <section><h2>Mode atelier</h2>
+      <p>Le jour de l'atelier, activez le <b>mode atelier</b> du groupe et indiquez la matière du jour : vos élèves ne voient que les jeux de leur groupe (pas la communauté publique ni la boutique), et leurs créations restent privées au groupe.</p>
+      <p class="aide">Une prof de français fait une séance de français, un prof de maths des maths : les jeux portent la leçon que vous avez choisie.</p></section>
+    <section><h2>Déroulé type</h2>
+      <ol style="margin:0;padding-left:20px;line-height:1.6">
+        <li><b>Séance 1</b> — montage et soudure de la console <span class="aide">(à sauter avec des consoles pré-soudées)</span>.</li>
+        <li><b>Séance 2</b> — découverte : premier jeu guidé, envoi sur la console.</li>
+        <li><b>Séance 3</b> — création libre avec l'IA, personnalisation, questions de cours.</li>
+        <li><b>Séance 4</b> — publication, échange des jeux par code, courses à plusieurs.</li>
+      </ol></section>
+    <section><h2>Cadre et sécurité</h2>
+      <p>Les élèves n'ont <b>ni compte ni adresse mail</b> : un pseudo et le code du groupe suffisent. Seul l'adulte se connecte (lien reçu par mail). Vous pouvez masquer un jeu, supprimer une idée, libérer un pseudo.</p>
+      <p class="aide">Pas de nom, pas de photo, pas de messagerie entre élèves. Les textes affichés sur les consoles sont filtrés.</p></section>
+    <section><h2>Pour commencer</h2>
+      <ol style="margin:0;padding-left:20px;line-height:1.6">
+        <li>Ouvrez l'<b>espace Animateur</b> et créez un groupe : vous obtenez un code (ex. LUNE-42).</li>
+        <li>Écrivez vos questions de cours et, si besoin, activez le mode atelier.</li>
+        <li>Les élèves cliquent « Rejoindre mon groupe » avec ce code et un pseudo.</li>
+      </ol>
+      <div class="actions" style="justify-content:flex-start;margin-top:12px"><button id="profsAnim" class="big" style="width:auto;margin:0">🎓 Ouvrir l'espace Animateur</button></div></section>
+  </div>
+</main>
+
+<!-- ===== ESPACE ANIMATEUR ===== -->
+<main id="anim" class="anim hide">
+  <section id="animConnexion">
+    <h2>Espace animateur</h2>
+    <p class="aide" style="margin-top:0">Entre ton adresse mail : tu reçois un lien de connexion (pas de mot de passe). Les enfants, eux, ne donnent jamais de mail.</p>
+    <div class="icRow"><input id="animMail" class="pseudo" type="email" placeholder="ton.adresse@exemple.fr"><button id="animLienBtn" class="sec">📧 Recevoir mon lien</button></div>
+    <div id="animMsg" class="envoi"></div>
+  </section>
+  <div id="animEspace" class="hide" style="display:flex;flex-direction:column;gap:16px">
+    <section>
+      <h2>Mes groupes</h2>
+      <p class="aide" style="margin-top:0">Connecté : <b id="animQui"></b> · <a href="#" id="animSortir" style="color:var(--acc)">se déconnecter</a></p>
+      <div class="icRow"><input id="grNom" class="pseudo" maxlength="40" placeholder="Nom du groupe (ex. CM2 Jules Ferry)"><button id="grCreer" class="sec">➕ Créer un groupe</button></div>
+    </section>
+    <div id="animGroupes" style="display:flex;flex-direction:column;gap:16px"></div>
+  </div>
+</main>
+
+<!-- ===== REJOINDRE UN GROUPE (enfant) ===== -->
+<dialog id="dlgRejoindre">
+  <h2><b>👤</b>Rejoindre mon groupe</h2>
+  <p class="aide" style="margin-top:0">Ton animateur te donne le code du groupe. Choisis un pseudo : <b>pas ton vrai nom !</b></p>
+  <label class="champ">Code du groupe<input id="rjCode" class="pseudo" placeholder="ex. LUNE-42" autocapitalize="characters"></label>
+  <label class="champ">Mon pseudo<input id="rjPseudo" class="pseudo" maxlength="12" placeholder="2 à 12 lettres ou chiffres"></label>
+  <div id="rjMsg" class="envoi"></div>
+  <div class="actions" style="justify-content:flex-end"><button id="rjAnnuler" class="sec">Annuler</button><button id="rjOk" class="sec" style="border-color:var(--acc)">C'est parti !</button></div>
+</dialog>
+
+<main id="atelier" class="hide">
+  <!-- ===== DEMANDE ===== -->
+  <section>
+    <label class="champ" style="margin-top:0"><span style="font-weight:700">🎮 Nom de mon jeu</span>
+      <input id="titreIn" class="pseudo nomJeu" maxlength="30" placeholder="Ex : La tour de Zorro"></label>
+    <h2 id="titreDemande">Je décris mon jeu <span class="ref" style="margin-left:6px">l'IA le construit</span></h2>
+
+    <h3>Quel jeu ?</h3><div class="chips" id="genreChoix"></div>
+    <div id="guide">
+      <div data-jeu="plateforme">
+        <h3>Le monde</h3><div class="chips" data-k="theme"></div>
+        <h3>Mon héros</h3><div class="chips" data-k="hero"></div>
+        <h3>Le parcours</h3><div class="chips" data-k="forme"></div>
+        <h3>La hauteur</h3><div class="chips" data-k="ecrans"></div>
+        <h3>Le danger</h3><div class="chips" data-k="danger"></div>
+      </div>
+      <div data-jeu="cote">
+        <h3>La largeur</h3><div class="chips" data-k="ecransL"></div>
+        <h3>La hauteur</h3><div class="chips" data-k="ecransH"></div>
+        <h3>Un plafond</h3><div class="chips" data-k="plafond"></div>
+        <h3>Des trous cachés (ils s'ouvrent au dernier moment)</h3><div class="chips" data-k="trous"></div>
+        <h3>Des plateformes</h3><div class="chips" data-k="plateformes"></div>
+      </div>
+      <div data-jeu="briques invaders"><h3 id="motifTitre">Le dessin</h3><div class="chips" data-k="motif"></div></div>
+      <div data-jeu="briques"><h3>Briques d'acier (incassables)</h3><div class="chips" data-k="acier"></div></div>
+      <div data-jeu="invaders"><h3>Combien de vagues</h3><div class="chips" data-k="vagues"></div></div>
+      <h3>Et en plus…</h3>
+    </div>
+
+    <textarea id="demande" placeholder="Ex : un niveau très haut avec des ressorts et de la glace"></textarea>
+
+    <div id="catalogue" class="hide">
+      <div data-jeu="cote" class="cat" style="margin-bottom:10px">
+        <div>largeur : 1 à 4 écrans</div><div>hauteur : 1 ou 2 écrans</div><div>plafond (ou pas)</div><div>trous cachés</div>
+        <div>plateformes (ou pas)</div><div>pics, ennemis, étoiles</div><div>une porte au bout</div><div>difficulté</div>
+      </div>
+      <div data-jeu="briques invaders" class="cat" style="margin-bottom:10px">
+        <div>dessin : plein, pyramide, damier, cadre, au hasard</div><div>vitesse (lent / vite)</div><div>difficulté</div><div>vies</div>
+        <div data-jeu="briques">briques d'acier</div><div data-jeu="briques">sans bonus</div><div data-jeu="invaders">nombre de vagues</div>
+      </div>
+      <div data-jeu="plateforme">
+      <h3>Les briques que l'IA sait utiliser</h3>
+      <div class="cat">
+        <div><code>#</code> sol / mur</div><div><code>R</code> ressort</div>
+        <div><code>^</code> pic</div><div><code>W</code> scie</div>
+        <div><code>C</code> bloc fragile</div><div><code>I</code> glace</div>
+        <div><code>*</code> étoile</div><div><code>G</code> arrivée</div>
+      </div>
+      <h3>Réglages</h3>
+      <div class="cat">
+        <div>hauteur (court / haut)</div><div>difficulté</div>
+        <div>gravité (lune / lourd)</div><div>vitesse (lent / vite)</div>
+        <div>double saut</div><div>parcours : tour, puits, escaliers, îles, varié</div><div>hauteur : 1 à 5 écrans</div>
+      </div>
+      </div>
+    </div>
+
+    <button id="go" class="big">✨ Créer mon jeu</button>
+    <div id="compris" class="compris">Choisis, écris une phrase, puis appuie sur « Créer ».</div>
+
+    <div data-jeu="plateforme invaders">
+    <h3>🎨 Mes icônes (pas obligé) : choisis quoi remplacer</h3>
+    <div id="icSlots" class="chips"></div>
+    <div class="icRow"><input id="icRech" class="pseudo" placeholder="Cherche en anglais : cat, dragon, pizza…"><button id="icGo" class="sec">🔍</button></div>
+    <div id="icRes" class="icRes"></div>
+    <div id="icDrop" class="icDrop">…ou trouve une image sur le web : clic droit → « Copier l'image », puis <b>Ctrl+V</b> ici.<br>
+      Tu peux aussi la glisser ici ou <label>choisir un fichier<input id="icFile" type="file" accept="image/*" hidden></label>.</div>
+    </div>
+
+    <h3 data-jeu="plateforme briques invaders">🌈 Mes couleurs (pas obligé)</h3>
+    <div class="palette" data-jeu="plateforme briques invaders"><span id="palCielNom">Ciel</span><div id="palCiel" class="chips"></div></div>
+    <div class="palette" data-jeu="plateforme"><span>Plateformes</span><div id="palSol" class="chips"></div></div>
+
+    <h3>⚙️ Mes règles (pas obligé)</h3>
+    <div class="palette" data-jeu="plateforme"><span>But</span><div id="rgObjectif" class="chips"><button class="chip on" data-v="arriver">🏁 Arriver</button><button class="chip" data-v="tout">⭐ Tout ramasser d'abord</button></div></div>
+    <div class="palette" data-jeu="plateforme"><span>Chrono</span><select id="rgChrono" class="pseudo regle"><option value="0">Sans chrono</option><option>30</option><option>45</option><option>60</option><option>90</option><option>120</option></select></div>
+    <div class="palette"><span>Vies</span><select id="rgVies" class="pseudo regle"><option value="0">On recommence à chaque chute</option><option value="3">3 vies</option><option value="5">5 vies</option><option value="9">9 vies</option></select></div>
+    <div class="palette"><span>Victoire</span><input id="rgMsg" class="pseudo regle" maxlength="40" placeholder="Message quand on gagne"></div>
+  </section>
+
+  <!-- ===== CONSOLE / APERÇU ===== -->
+  <section class="console">
+    <h2>Mon niveau</h2>
+    <div class="coque">
+      <div id="apercu" class="apercu"><canvas id="ecran" width="320" height="240"></canvas></div>
+    </div>
+    <p class="aide">Pour jouer, envoie ton niveau sur la console : c'est elle qui fait tourner le jeu.</p>
+    <div class="actions">
+      <button id="nouveau" class="sec">🗑 Nouveau jeu</button>
+      <button id="envoyer" class="sec">📟 Envoyer sur la console</button>
+    </div>
+    <div class="actions" style="margin-top:10px">
+      <button id="publierBtn" class="sec">📢 Publier mon jeu</button>
+      <button id="communBtn" class="sec">➕ Ajouter au jeu commun</button>
+    </div>
+    <div id="envoi" class="envoi"></div>
+    <details id="majDetails" class="hide">
+      <summary>🔄 Mettre à jour ma console</summary>
+      <div id="majBox" class="envoi"></div>
+      <p class="aide">La nouvelle version du jeu de la console. <b>Attention : on repart du niveau 1</b> (niveaux, pièces, skins remis à zéro) ; tes jeux de « Mes niveaux » sont gardés. Chrome ou Edge sur ordinateur, câble USB branché, environ 1 minute.</p>
+      <esp-web-install-button id="majBtn" manifest="firmware/manifest.json">
+        <button slot="activate" class="sec">🔄 Mettre à jour ma console</button>
+        <span slot="unsupported" class="aide">Ce navigateur ne sait pas mettre à jour la console : ouvre la page dans Chrome ou Edge, sur un ordinateur.</span>
+        <span slot="not-allowed" class="aide">Il faut ouvrir la page en https (ou sur localhost).</span>
+      </esp-web-install-button>
+      <p class="aide">La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la, puis réessaie.</p>
+    </details>
+    <details>
+      <summary>🔧 Voir sous le capot</summary>
+      <pre id="capot"></pre>
+    </details>
+  </section>
+
+  <!-- ===== HISTORIQUE ===== -->
+  <section>
+    <h2>Ce que j'ai fait</h2>
+    <div id="hist" class="hist"><p class="vide">Tes essais apparaîtront ici : ce que tu as demandé, ce qui est arrivé, ce que tu veux corriger.</p></div>
+  </section>
+</main>
+
+<script>
+// ---------- Constantes reprises du firmware (c3-tft-meatboy.ino) ----------
+const TILE = 16, COLS = 20, SW = 320, SH = 240;
+const PW = 12, PH = 14;   // taille du heros
+
+// ---------- Choix guidés ----------
+const CHOIX = {
+  theme:  [['foret','🌲 Forêt'],['lave','🌋 Volcan'],['glace','❄️ Banquise'],['espace','🚀 Espace'],['bonbon','🍭 Bonbons']],
+  hero:   [['cube','🟥 Cube'],['ninja','🥷 Ninja'],['robot','🤖 Robot'],['chat','🐱 Chat']],
+  forme:  [['mixte','🎲 Un peu de tout'],['tour','🗼 Tour en zigzag'],['puits','🕳 Puits (sauts muraux)'],['escalier','🪜 Escaliers'],['iles','🏝 Îles à traverser']],
+  danger: [['pic','🔺 Pics'],['scie','⚙️ Scies'],['fragile','🧱 Blocs qui tombent'],['aucun','😌 Rien']],
+  motif:  [['pleine','🧱 Plein'],['pyramide','🔺 Pyramide'],['damier','🏁 Damier'],['cadre','🖼 Cadre'],['hasard','🎲 Au hasard']],
+  acier:  [['non','Non'],['oui','🔩 Oui']],
+  vagues: [['1','1 vague'],['3','3 vagues'],['5','5 vagues']],
+  ecrans: [['1','1 écran'],['2','2 écrans'],['3','3 écrans'],['5','5 écrans']],   // plateforme : hauteur
+  ecransL: [['1','1 écran'],['2','2 écrans'],['3','3 écrans'],['4','4 écrans']],  // de côté
+  ecransH: [['1','1 écran'],['2','2 écrans']],
+  plafond: [['oui','Oui'],['non','Non']],
+  trous: [['0','Aucun'],['1','1'],['2','2'],['3','3']],
+  plateformes: [['non','Non'],['oui','Oui']],
+};
+// les jeux que la console sait faire tourner avec des réglages (firmware : bqMiniParse / briqueParse)
+const GENRES = [['plateforme','🧗 Plateforme (on grimpe)'],['cote','🏃 De côté (on avance)'],['briques','🧱 Casse-briques'],['invaders','👾 Invaders']];
+const THEMES = {
+  foret:  { ciel:['#9be7ff','#e8fff0'], sol:'#3f8f3a', bord:'#2a5e27', glace:'#b8f0ff' },
+  lave:   { ciel:['#3a0b0b','#a8361a'], sol:'#4a3b3b', bord:'#ff6a00', glace:'#ffd0a0' },
+  glace:  { ciel:['#cfe9ff','#ffffff'], sol:'#7aa6c9', bord:'#4f7fa6', glace:'#e6fbff' },
+  espace: { ciel:['#05031a','#2b1d5c'], sol:'#5c5a7a', bord:'#a69cff', glace:'#9ff' },
+  bonbon: { ciel:['#ffd1ec','#fff4c2'], sol:'#ff7ab8', bord:'#c2387a', glace:'#bff' },
+};
+const HEROS = { cube:'#e8322b', ninja:'#222233', robot:'#9aa4b0', chat:'#ff9933' };
+
+let mode = 'guide', genre = 'plateforme', choix = { theme:'foret', hero:'cube', danger:'pic', forme:'mixte', motif:'pleine', acier:'non', vagues:'3', ecrans:'2', ecransL:'2', ecransH:'1', plafond:'oui', trous:'1', plateformes:'non' };
+for (const [v, lab] of GENRES) {
+  const b = document.createElement('button'); b.className = 'chip'; b.dataset.v = v; b.textContent = lab;
+  b.onclick = () => { if (genre !== v) { params = null; setGenre(v); } };
+  genreChoix.appendChild(b);
+}
+function setGenre(g) {                                  // n'affiche que ce qui sert au jeu choisi
+  genre = g;
+  genreChoix.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.v === g));
+  document.querySelectorAll('[data-jeu]').forEach(e => e.classList.toggle('hide', !e.dataset.jeu.split(' ').includes(g)));
+  palCielNom.textContent = g === 'plateforme' ? 'Ciel' : 'Fond';
+  motifTitre.textContent = g === 'briques' ? 'Le dessin des briques' : 'La formation des envahisseurs';
+  majIcones();
+}
+for (const k in CHOIX) {
+  const box = document.querySelector(`.chips[data-k="${k}"]`);
+  for (const [v, lab] of CHOIX[k]) {
+    const b = document.createElement('button');
+    b.className = 'chip' + (choix[k] === v ? ' on' : ''); b.textContent = lab;
+    b.onclick = () => { choix[k] = v; box.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); };
+    box.appendChild(b);
+  }
+}
+function setMode(m) {
+  mode = m;
+  mGuide.classList.toggle('on', m === 'guide'); mLibre.classList.toggle('on', m === 'libre');
+  guide.classList.toggle('hide', m !== 'guide'); catalogue.classList.toggle('hide', m !== 'libre');
+  demande.placeholder = m === 'guide' ? 'Une phrase en plus (pas obligé) : « très haut », « avec des ressorts »…'
+                                     : 'Décris ton niveau : thème, héros, pièges, hauteur, difficulté…';
+}
+mGuide.onclick = () => setMode('guide'); mLibre.onclick = () => setMode('libre'); setMode('libre');
+
+// ---------- "IA" simulée : texte -> paramètres ----------
+// ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
+const DEFAUT = { theme:'foret', hero:'cube', hauteur:30, difficulte:2, gravite:1, vitesse:1,
+                 briques:{ pic:true, scie:false, ressort:false, glace:false, fragile:false }, etoiles:3, doubleSaut:false, ennemis:0, couleurs:{},
+                 objectif:'arriver', chrono:0, vies:0, message:'',
+                 forme:'tour', jeu:'plateforme', motif:'pleine', acier:false, bonus:true, vagues:3,
+                 ecransL:2, ecransH:1, plafond:true, trous:1, plateformes:false };   // jeu de côté : largeur / hauteur en écrans   // jeu briques / invaders : motif, acier, bonus, vagues
+// palette (même liste que server.js ; le firmware lit le code hexa)
+const PALETTE = { rouge:'#e8322b', orange:'#ff8a1f', jaune:'#ffd400', vert:'#3f8f3a', 'vert clair':'#7ee06a', turquoise:'#22d3ee',
+  'bleu ciel':'#9be7ff', bleu:'#2f6fe0', violet:'#8b5cf6', rose:'#ff7ab8', marron:'#8a5a2b', bordeaux:'#7a1020',
+  gris:'#8a8a9a', blanc:'#f4f4f8', noir:'#1a1a22', nuit:'#0b0a2a' };
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+function comprendre(texte, base) {
+  const p = structuredClone(base), vu = [], t = norm(texte);
+  const a = re => re.test(t);
+  const non = mot => new RegExp(`(sans|pas de|pas d'|plus de|enleve|retire)\\s+(les\\s+)?${mot}`).test(t);
+  const JEU_MOTS = { briques:/casse[- ]?briques?|breakout|raquette/, invaders:/invaders?|envahisseur|vaisseau|extraterrestre|alien|soucoupe/, cote:/de cote|de profil|horizonta|couloir|tunnel|on avance/, plateforme:/jeu de plateformes?|platformer|on grimpe/ };
+  for (const k in JEU_MOTS) if (a(JEU_MOTS[k]) && p.jeu !== k) { p.jeu = k; vu.push(GENRES.find(g => g[0] === k)[1]); break; }
+  const nb = { un: 1, une: 1, seul: 1, deux: 2, trois: 3, quatre: 4, cinq: 5 }, n = m => +m || nb[m];
+  const ecr = t.match(/(\d|un|une|deux|trois|quatre|cinq)\s+(seul\s+)?ecrans?(\s+de\s+(large|long|haut))?/);
+  if (p.jeu === 'cote') {
+    if (ecr) { const k = n(ecr[1]); if (ecr[4] === 'haut') { p.ecransH = Math.min(2, k); vu.push(`${p.ecransH} écran${p.ecransH > 1 ? 's' : ''} de haut`); }
+               else { p.ecransL = Math.min(4, k); if (!ecr[4] && k === 1) p.ecransH = 1; vu.push(`${p.ecransL} écran${p.ecransL > 1 ? 's' : ''} de large`); } }
+    if (a(/tres long|immense/)) { p.ecransL = 4; vu.push('4 écrans de large'); }
+    if (non('plafond')) { p.plafond = false; vu.push('sans plafond'); } else if (a(/plafond/)) { p.plafond = true; vu.push('un plafond'); }
+    const tr = t.match(/(\d|un|une|deux|trois)\s+trous?/);
+    if (non('trous?')) { p.trous = 0; vu.push('sans trous'); } else if (tr || a(/trou/)) { p.trous = Math.min(3, tr ? n(tr[1]) : 1); vu.push(`${p.trous} trou${p.trous > 1 ? 's' : ''} caché${p.trous > 1 ? 's' : ''}`); }
+    if (non('plateformes?')) { p.plateformes = false; vu.push('sans plateformes'); } else if (a(/plateforme/)) { p.plateformes = true; vu.push('des plateformes'); }
+  } else if (ecr && p.jeu === 'plateforme') { p.hauteur = 15 * Math.min(5, n(ecr[1])); vu.push(`${p.hauteur / 15} écran${p.hauteur > 15 ? 's' : ''} de haut`); }
+  const MOTIF_MOTS = { pyramide:/pyramide|triangle/, damier:/damier|echiquier/, cadre:/cadre|contour/, hasard:/hasard|aleatoire|bazar/, pleine:/plein|rempli/ };
+  for (const k in MOTIF_MOTS) if (a(MOTIF_MOTS[k])) { p.motif = k; vu.push('dessin ' + k); break; }
+  if (non('(acier|metal|incassables?)')) { if (p.acier) vu.push('sans acier'); p.acier = false; }
+  else if (a(/acier|metal|incassable/)) { p.acier = true; vu.push('briques d\'acier'); }
+  if (non('bonus')) { p.bonus = false; vu.push('sans bonus'); }
+  const vg = t.match(/(\d) vagues?/); if (vg) { p.vagues = Math.max(1, Math.min(5, +vg[1])); vu.push(`${p.vagues} vagues`); }
+  const FORME_MOTS = { puits:/puits|cheminee|saut(s|er)? (mura|contre les murs|de mur)|wall/, escalier:/escalier|\bmarches\b/, iles:/\biles?\b|\bilots?\b|traverser|archipel/,
+                       mixte:/varie|melange|de tout|mixte|surprise/, tour:/zigzag|\btour\b/ };   // \b : « facile » n'est pas une île
+  for (const k in FORME_MOTS) if (a(FORME_MOTS[k])) { p.forme = k; vu.push('parcours ' + CHOIX.forme.find(c => c[0] === k)[1].replace(/^\S+ /, '').toLowerCase()); break; }
+  const THEME_MOTS = { foret:/foret|arbre|jungle|nature/, lave:/lave|volcan|feu|enfer/, glace:/banquise|neige|hiver|pole/,
+                       espace:/espace|planete|lune|fusee|galax/, bonbon:/bonbon|sucre|gateau|chocolat/ };
+  for (const k in THEME_MOTS) if (a(THEME_MOTS[k])) { p.theme = k; vu.push('monde ' + k); break; }
+  const HERO_MOTS = { ninja:/ninja/, robot:/robot/, chat:/chat|minou/, cube:/cube|carre|viande/ };
+  for (const k in HERO_MOTS) if (a(HERO_MOTS[k])) { p.hero = k; vu.push('héros ' + k); break; }
+  const BRIQ = { pic:'pic|piege|epine|pique', scie:'scie|lame|tronconneuse', ressort:'ressort|rebond|trampoline',
+                 glace:'glace|glisse|verglas', fragile:'fragile|casse|effondre|tombe' };
+  for (const k in estMini(p) ? {} : BRIQ) {             // « casse-briques » n'est pas un bloc fragile
+    if (non(`(${BRIQ[k]})`)) { if (p.briques[k]) vu.push('sans ' + k); p.briques[k] = false; }
+    else if (a(new RegExp(BRIQ[k]))) { p.briques[k] = true; vu.push(k); }
+  }
+  if (non('(double[ -]?saut)')) { if (p.doubleSaut) vu.push('sans double saut'); p.doubleSaut = false; }
+  else if (a(/double[ -]?saut|sauter deux fois|saut en l'air/)) { p.doubleSaut = true; vu.push('double saut'); }
+  if (a(/tout ramasser|toutes les etoiles|tous les objets|tout recuperer/)) { p.objectif = 'tout'; vu.push('tout ramasser avant l\'arrivée'); }
+  const ch = t.match(/(\d{2,3}) ?(s\b|sec)/); if (ch || a(/chrono|temps limite|contre la montre/)) { p.chrono = Math.min(180, ch ? +ch[1] : 60); vu.push(`chrono ${p.chrono} s`); }
+  const vi = t.match(/(\d) vies?/); if (vi) { p.vies = +vi[1]; vu.push(`${p.vies} vies`); }
+  if (non('(ennemis?|monstres?)')) { if (p.ennemis) vu.push('sans ennemis'); p.ennemis = 0; }
+  else if (a(/ennemi|monstre|mechant/)) { p.ennemis = Math.min(6, (p.ennemis || 0) + 3); vu.push(p.ennemis + ' ennemis'); }
+  p.couleurs = { ...(p.couleurs || {}) };                // "plateformes rouges", "ciel violet"…
+  for (const nom of Object.keys(PALETTE).sort((x, y) => y.length - x.length)) {
+    const n = norm(nom);
+    if (a(new RegExp(`(plateforme|sol|bloc)s?[^.,]{0,20}\\b${n}`)) && !p.couleurs.sol) { p.couleurs.sol = PALETTE[nom]; vu.push('plateformes ' + nom); }
+    if (a(new RegExp(`(ciel|fond)[^.,]{0,20}\\b${n}`)) && !p.couleurs.ciel) { p.couleurs.ciel = PALETTE[nom]; vu.push((estMini(p) ? 'fond ' : 'ciel ') + nom); }
+  }
+  if (p.jeu === 'cote') {                               // de côté : la taille se compte en écrans (plus haut)
+    if (!ecr && a(/\blong|grand/) && !a(/tres long|immense/)) { p.ecransL = Math.max(p.ecransL || 2, 3); vu.push(`${p.ecransL} écrans de large`); }
+    if (!ecr && a(/court|petit|mini/)) { p.ecransL = 1; vu.push('1 écran de large'); }
+  } else {
+  if (!ecr && a(/tres (haut|grand|long)|immense|gigantesque|enorme/)) { p.hauteur = 60; vu.push('très haut'); }
+  else if (!ecr && a(/haut|grand|long/)) { p.hauteur = Math.min(60, p.hauteur + 12); vu.push('plus haut'); }
+  if (!ecr && a(/court|petit|mini/)) { p.hauteur = Math.max(15, p.hauteur - 12); vu.push('plus court'); }
+  }
+  if (a(/impossible|tres dur|tres difficile/)) { p.difficulte = 3; vu.push('très dur'); }
+  else if (a(/dur|difficile|hard|complique/)) { p.difficulte = Math.min(3, p.difficulte + 1); vu.push('plus dur'); }
+  if (a(/facile|simple|bebe/)) { p.difficulte = Math.max(1, p.difficulte - 1); vu.push('plus facile'); }
+  if (a(/leger|flott|lune|apesanteur/)) { p.gravite = 0.65; vu.push('gravité faible'); }
+  if (a(/lourd/)) { p.gravite = 1.3; vu.push('gravité forte'); }
+  if (a(/lent/)) { p.vitesse = 0.8; vu.push('plus lent'); }
+  if (a(/vite|rapide|fonce/)) { p.vitesse = 1.2; vu.push('plus rapide'); }
+  if (a(/etoile|piece|tresor|diamant/)) { p.etoiles = Math.min(8, p.etoiles + 3); vu.push('plus d\'étoiles'); }
+  return { p, vu };
+}
+
+// ---------- Générateur de niveau (format firmware) ----------
+function rnd(seed) { return () => (seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296; }
+
+// casse-briques : 7 lignes de 10 ('1'-'3' = coups pour casser, 'w' = acier) ; invaders : 2 à 4 lignes de 8 ('E')
+function genererMini(p) {
+  const R = rnd(p.seed), bk = p.jeu === 'briques', W = bk ? 10 : 8, H = bk ? 7 : 1 + p.difficulte;
+  const dans = (r, c) => ({ pleine: !bk || r < 5, pyramide: Math.abs(c * 2 - (W - 1)) <= (r + 1) * 2 - 1, damier: (r + c) % 2 === 0,
+                            cadre: r === 0 || r === H - 1 || c === 0 || c === W - 1, hasard: R() < .7 })[p.motif || 'pleine'];
+  const g = Array.from({ length: H }, (_, r) => Array.from({ length: W }, (_, c) => {
+    if (!dans(r, c)) return '.';
+    if (!bk) return 'E';
+    if (p.acier && (r === 2 || (r === 4 && p.difficulte === 3)) && c % 3 === 1) return 'w';
+    return String(Math.min(3, 1 + (r < 2 ? p.difficulte - 1 : Math.floor(R() * p.difficulte))));   // plus solide en haut, comme la console
+  }));
+  if (!g.flat().some(c => c !== '.' && c !== 'w')) g[0][W >> 1] = bk ? '1' : 'E';   // jamais un jeu vide
+  return g.map(r => r.join(''));
+}
+const estMini = p => p?.jeu === 'briques' || p?.jeu === 'invaders';
+
+// jeu de côté (moteur des mondes de la console) : 20 cases par écran de large, 15 par écran de haut ; sol en bas, porte au bout.
+// 'T' = bloc qui disparaît quand le joueur arrive dessus (le trou apparaît au dernier moment)
+function genererCote(p) {
+  const R = rnd(p.seed), ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+  const W = 20 * Math.min(4, Math.max(1, p.ecransL || 2)), H = 15 * Math.min(2, Math.max(1, p.ecransH || 1)), sol = H - 1, pied = H - 2;
+  const g = Array.from({ length: H }, () => Array(W).fill('.'));
+  g[sol].fill('#');
+  const haut = p.plafond ? (H === 15 ? H - 8 : 1) : -1;          // dernière rangée du plafond (couloir de 6 cases de haut sur un écran)
+  for (let y = 0; y <= haut; y++) g[y].fill('#');
+  g[pied][2] = 'S'; g[pied][W - 3] = 'G';
+  const libre = new Set([1, 2, 3, 4, W - 5, W - 4, W - 3, W - 2]);   // départ et porte dégagés
+  const n = Math.min(3, p.trous ?? 1), lt = p.difficulte === 3 ? 3 : 2;
+  for (let k = 0; k < n; k++) {
+    const x = Math.round(W * (k + 1) / (n + 1)) - 1;
+    for (let i = 0; i < lt; i++) { g[sol][x + i] = 'T'; libre.add(x + i); }
+    libre.add(x - 1); libre.add(x - 2); libre.add(x + lt); libre.add(x + lt + 1);
+  }
+  const pose = (t, y) => { for (let e = 0; e < 30; e++) { const x = ri(5, W - 6); if (!libre.has(x) && g[y][x] === '.' && g[y + 1][x] === '#') { g[y][x] = t; libre.add(x); return x; } } };
+  const surf = [];                                                  // plateformes : marches de 3, jamais plus de 3 cases plus haut que la précédente
+  if (p.plateformes || H > 15) {
+    const top = Math.max(haut + 4, 3); let x = 5, y = pied - 2;
+    while (x < W - 7) {
+      if (y > top && y < pied - 1) { for (let i = 0; i < 3; i++) if (g[y][x + i] === '.') g[y][x + i] = '#'; surf.push({ x, y }); }
+      x += ri(4, 6); y = Math.max(top, Math.min(pied - 2, y + (H > 15 ? ri(-3, 1) : ri(-2, 2))));
+    }
+  }
+  if (p.briques?.pic) for (let i = 0; i < p.difficulte + (W / 20) - 1; i++) pose('^', pied);
+  for (let i = 0; i < (p.ennemis || 0); i++) pose('E', pied);
+  for (let i = 0, e = 0; i < p.etoiles && e < 60; e++) {
+    const s = surf.length && R() < .6 ? surf[ri(0, surf.length - 1)] : null, x = s ? s.x + ri(0, 2) : ri(5, W - 6), y = s ? s.y - 1 : pied - 2;
+    if (y > haut && g[y][x] === '.') { g[y][x] = '*'; i++; }
+  }
+  return g.map(r => r.join(''));
+}
+
+function generer(p) {
+  if (estMini(p)) return genererMini(p);
+  if (p.jeu === 'cote') return genererCote(p);
+  const R = rnd(p.seed), ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+  const H = p.hauteur, g = Array.from({ length: H }, () => Array(COLS).fill('.'));
+  g[H - 2].fill('#'); g[H - 1].fill('#'); g[H - 3][1] = 'S';
+  const larg = 6 - p.difficulte;                       // plateformes plus étroites si difficile
+  const borne = (v, a, b) => Math.max(a, Math.min(b, v));
+  const tuile = () => p.briques.fragile && R() < .3 ? 'C' : p.briques.glace && R() < .4 ? 'I' : '#';
+  // saut mesuré ~4,7 cases, ressort ~6,5 (à gravité 1) : l'écart reste sous ce plafond quelle que soit la gravité
+  // double saut : ~1,8 fois plus haut -> plateformes plus espacées. Les autres formes montent de 3 cases au plus (sautable même à gravité 1,3).
+  const ecart = ressort => Math.min((ressort ? 6 : 3) + (p.difficulte === 3 ? 1 : 0) + (p.doubleSaut ? 3 : 0),
+                                    Math.floor((ressort ? 6.2 : 4.2) * (p.doubleSaut ? 1.8 : 1) / p.gravite));
+  // cur = la surface d'où part le morceau suivant ; plats = surfaces qui peuvent recevoir pièges / ennemis ; surf = toutes (étoiles)
+  let cur = { y: H - 2, x0: 1, x1: 5 }; const plats = [], surf = [];
+  const resa = new Set(), reserver = (x0, x1, y0, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) resa.add(y * COLS + x); };
+  const poser = (y, x0, x1, t, piege = true) => {      // null si la place est prise (haut d'un puits : on ne le bouche pas)
+    if (x0 < 1 || x1 > COLS - 2 || y < 2) return null;
+    for (let x = x0; x <= x1; x++) if (resa.has(y * COLS + x) || resa.has((y + 1) * COLS + x)) return null;
+    for (let x = x0; x <= x1; x++) g[y][x] = t;
+    const pl = { y, x0, x1 }; surf.push(pl); if (piege) plats.push(pl); return pl;
+  };
+  const MORCEAUX = {
+    tour() {                                           // plateformes en zigzag (le premier générateur)
+      let prevRessort = false, fait = false;
+      for (let i = 0; i < 4; i++) {
+        const e = ecart(prevRessort), y = cur.y - e; if (y < 4) break;
+        let pl = null;
+        for (let essai = 0; essai < 6 && !pl; essai++)
+          pl = poser(y, ...(cx => [cx, cx + larg - 1])(borne(cur.x0 + (R() < .5 ? -1 : 1) * ri(3, 7), 1, COLS - larg - 1)), tuile());
+        if (!pl) break;
+        cur = pl; fait = true; const cx = pl.x0;
+        prevRessort = p.briques.ressort && R() < .45;
+        if (prevRessort) g[y][cx + (larg >> 1)] = 'R';
+      }
+      return fait;
+    },
+    puits() {                                          // conduit de 3 cases : on monte en sautant d'un mur à l'autre
+      const T = cur.y - ri(8, 10) - p.difficulte * 2; if (T - 3 < 4) return false;
+      const L = borne(((cur.x0 + cur.x1) >> 1) - 2, 2, COLS - 7);   // murs en L et L+4
+      if (L + 3 < cur.x0 || L + 1 > cur.x1) return false;            // il faut pouvoir sauter dedans depuis cur
+      const gauche = L - 4 >= 1 && (R() < .5 || L + 8 > COLS - 2);   // côté de la sortie : le mur d'en face monte 2 cases plus haut
+      const bas = cur.y, sortie = gauche ? poser(T, L - 3, L, '#', false) : poser(T, L + 4, L + 7, '#', false);   // palier de sortie, collé au haut du mur
+      if (!sortie) return false;
+      for (let y = gauche ? T : T - 2; y <= bas - 3; y++) g[y][L] = '#';   // 2 cases libres dessous : on y entre en sautant, et on sort du puits d'en dessous
+      for (let y = gauche ? T - 2 : T; y <= bas - 3; y++) g[y][L + 4] = '#';
+      for (let y = bas - 7, k = 0; y > T + 3; y -= 6, k++) g[y][k % 2 ? L + 1 : L + 3] = '#';   // petits rebords pour souffler
+      g[T + 2][L + 2] = '*';
+      cur = sortie; cur.dir = gauche ? -1 : 1;           // la suite part du côté de la sortie
+      reserver(L + 1, L + 3, T - 4, T + 1);              // personne ne pose de couvercle sur le puits…
+      reserver(gauche ? L - 3 : L + 4, gauche ? L : L + 7, T - 3, T - 1);   // …ni de plafond sur le palier de sortie
+      return true;
+    },
+    escalier() {                                       // marches de 3 qui montent de 2 ; au bord, une marche de 3 plus haut et on repart dans l'autre sens
+      let dir = cur.dir ?? (cur.x0 > COLS / 2 ? -1 : 1), pl = cur, fait = false;
+      for (let n = ri(5, 8); n > 0; n--) {
+        let x0 = dir > 0 ? pl.x1 + 1 : pl.x0 - 3, y = pl.y - 2;
+        if (x0 < 1 || x0 + 2 > COLS - 2) { x0 = pl.x0 - 2 * dir; y = pl.y - 3; dir = -dir; }   // demi-tour
+        const m = y >= 4 && poser(y, x0, x0 + 2, tuile());
+        if (!m) break;
+        pl = cur = m; fait = true;
+      }
+      return fait;
+    },
+    iles() {                                           // étages d'îlots à traverser ; les trous font retomber à l'étage du dessous
+      const w = Math.max(2, 5 - p.difficulte); let dir = cur.dir ?? (cur.x0 > COLS / 2 ? -1 : 1), fait = false;
+      let y = cur.y - 3, x = dir > 0 ? cur.x1 + 1 : cur.x0 - 1;     // le premier îlot touche presque cur
+      for (let etage = ri(2, 3); etage > 0 && y >= 4; etage--) {
+        let n = 0;
+        while (dir > 0 ? x + w - 1 + 2 <= COLS - 2 : x - w + 1 - 2 >= 1) {   // garde 2 cases au bout pour la marche du demi-tour
+          const il = dir > 0 ? poser(y, x, x + w - 1, tuile()) : poser(y, x - w + 1, x, tuile());
+          if (!il) break;                                  // îlot impossible : l'étage s'arrête là
+          cur = il; fait = true; n++;
+          x += dir * (w + ri(2, 3));
+        }
+        if (!n || y - 5 < 4) break;
+        const m = dir > 0 ? cur.x1 + 1 : cur.x0 - 2;                // marche de 2 entre deux étages (5 cases d'écart : on ne se cogne pas)
+        const marche = poser(y - 2, m, m + 1, '#', false); if (!marche) break;
+        cur = marche; dir = -dir; y -= 5; x = dir > 0 ? cur.x1 + 1 : cur.x0 - 1;
+      }
+      return fait;
+    },
+  };
+  const FORMES = Object.keys(MORCEAUX), forme = MORCEAUX[p.forme] ? p.forme : p.forme === 'mixte' ? 'mixte' : 'tour';
+  for (let n = 0; n < 40; n++) {
+    const f = forme === 'mixte' ? FORMES[ri(0, FORMES.length - 1)] : forme;
+    if (!MORCEAUX[f]() && !MORCEAUX.tour()) break;     // plus la place pour ce morceau : un bout de zigzag, sinon c'est le sommet
+  }
+  const top = cur.y < H - 2 ? cur : { y: H - 2, x0: 8, x1: 12 };
+  g[top.y - 1][(top.x0 + top.x1) >> 1] = 'G';
+  plats.filter(pl => pl !== top).forEach(pl => {
+    if (p.briques.pic && pl.x1 - pl.x0 >= 2 && R() < .3 + .2 * p.difficulte) { const x = R() < .5 ? pl.x0 : pl.x1; if (g[pl.y - 1][x] === '.') g[pl.y - 1][x] = '^'; }
+    if (p.briques.scie && R() < .15 + .1 * p.difficulte) {
+      const sx = pl.x1 + 2 < COLS ? pl.x1 + 2 : pl.x0 - 2;
+      if (g[pl.y - 1][sx] === '.') g[pl.y - 1][sx] = 'W';
+    }
+  });
+  // ennemis : un 'E' au-dessus d'une plateforme assez large (la console le fait patrouiller), jamais sur celle de l'arrivée
+  const larges = plats.filter(pl => pl !== top && pl.x1 - pl.x0 >= 2);
+  for (let i = 0; i < (p.ennemis || 0) && larges.length; i++) {
+    const pl = larges.splice(ri(0, larges.length - 1), 1)[0], x = (pl.x0 + pl.x1) >> 1;
+    if (g[pl.y - 1][x] === '.') g[pl.y - 1][x] = 'E';
+  }
+  // étoiles au-dessus de plateformes au hasard
+  for (let i = 0, essais = 0; i < p.etoiles && essais < 50; essais++) {
+    const pl = surf[ri(0, Math.max(0, surf.length - 2))]; if (!pl) break;
+    const x = ri(pl.x0, pl.x1); if (pl.y >= 2 && g[pl.y - 2][x] === '.' && g[pl.y - 1][x] === '.') { g[pl.y - 2][x] = '*'; i++; }
+  }
+  return g.map(r => r.join(''));
+}
+
+// ---------- Aperçu fixe du niveau (pas de simulation : on joue uniquement sur la console) ----------
+const cv = ecran, ctx = cv.getContext('2d');
+let jeu = null;
+
+function charger(niv) {
+  cv.width = SW; cv.style.width = cv.style.maxWidth = '';
+  if (estMini(niv.params)) { jeu = { niv, mini: true }; cv.height = SH; dessiner(); return; }
+  const rows = niv.rows.map(r => r.split(''));
+  const j = { niv, rows, saws:[], stars:[], ennemis:[] };
+  rows.forEach((r, y) => r.forEach((c, x) => {
+    if (c === 'S') { j.sx = x * TILE + 2; j.sy = y * TILE + TILE - PH; r[x] = '.'; }
+    if (c === 'G') { j.gx = x; j.gy = y; r[x] = '.'; }
+    if (c === '*') { j.stars.push({ x, y }); r[x] = '.'; }
+    if (c === 'W') { j.saws.push({ x: x * TILE + 8, y: y * TILE }); r[x] = '.'; }
+    if (c === 'E') { j.ennemis.push({ x, y }); r[x] = '.'; }
+  }));
+  jeu = j;
+  cv.width = rows[0].length * TILE; cv.style.width = cv.width + 'px'; cv.style.maxWidth = cv.width > SW ? 'none' : '';   // de côté : on fait défiler l'aperçu
+  cv.height = rows.length * TILE; dessiner();
+  requestAnimationFrame(() => { apercu.scrollTop = apercu.scrollHeight; apercu.scrollLeft = 0; });   // on voit le bas, la ou on commence
+}
+
+function dessiner() {
+  const j = jeu;
+  if (!j) {
+    ctx.fillStyle = '#111'; ctx.fillRect(0, 0, SW, SH);
+    ctx.fillStyle = '#ffcc33'; ctx.font = 'bold 18px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Décris ton jeu', SW / 2, SH / 2 - 8); ctx.fillStyle = '#888'; ctx.font = '13px system-ui';
+    ctx.fillText('puis appuie sur « Créer »', SW / 2, SH / 2 + 14); return;
+  }
+  if (j.mini) return dessinerMini(j.niv);
+  const coul = j.niv.params.couleurs || {}, base = THEMES[j.niv.params.theme] || THEMES.foret, cam = 0, H = cv.height;
+  // couleurs choisies : comme la console (ciel -> vers le blanc en bas, bord du sol = sol assombri)
+  const melange = (h, k) => '#' + [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)).map(v => Math.round(k > 0 ? v + (255 - v) * k : v * -k).toString(16).padStart(2, '0')).join('');
+  const th = { ...base, ...(coul.ciel ? { ciel: [coul.ciel, melange(coul.ciel, .55)] } : {}), ...(coul.sol ? { sol: coul.sol, bord: melange(coul.sol, -.6) } : {}) };
+  const grd = ctx.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, th.ciel[0]); grd.addColorStop(1, th.ciel[1]);
+  ctx.fillStyle = grd; ctx.fillRect(0, 0, cv.width, H);
+  const ic = j.niv.icones || {};
+  if (ic.d) { ctx.imageSmoothingEnabled = false; for (let wy = 48; wy < H; wy += 112) ctx.drawImage(icImg(ic.d), ((wy / 112) & 1) ? 214 : 74, wy, 32, 32); }   // décor dans le ciel (comme la console)
+  const y0 = 0, y1 = j.rows.length - 1;
+  for (let y = y0; y <= y1; y++) for (let x = 0; x < j.rows[y].length; x++) {
+    const c = j.rows[y][x], X = x * TILE, Y = y * TILE - cam;
+    if (c === 'T') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y, TILE, TILE); ctx.strokeStyle = '#ffd400'; ctx.setLineDash([3, 3]); ctx.strokeRect(X + 1, Y + 1, TILE - 2, TILE - 2); ctx.setLineDash([]); }   // trou caché : visible ici seulement
+    else if (c === '#') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y, TILE, TILE); ctx.fillStyle = th.bord; ctx.fillRect(X, Y, TILE, 3); }
+    else if (c === 'I') { ctx.fillStyle = th.glace; ctx.fillRect(X, Y, TILE, TILE); ctx.fillStyle = '#fff'; ctx.fillRect(X + 2, Y + 3, 6, 2); }
+    else if (c === 'R') { ctx.fillStyle = th.sol; ctx.fillRect(X, Y + 8, TILE, 8); ctx.fillStyle = '#ffd400'; ctx.fillRect(X + 1, Y + 2, 14, 5); ctx.fillStyle = '#888'; ctx.fillRect(X + 4, Y + 7, 8, 2); }
+    else if (c === 'C') {
+      const sh = 0;
+      ctx.fillStyle = '#a0703c'; ctx.fillRect(X + sh, Y, TILE, TILE); ctx.strokeStyle = '#5a3a18'; ctx.beginPath(); ctx.moveTo(X + 3 + sh, Y + 3); ctx.lineTo(X + 8 + sh, Y + 9); ctx.lineTo(X + 13 + sh, Y + 5); ctx.stroke();
+    }
+    else if (c === '^') { ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.moveTo(X, Y + 16); ctx.lineTo(X + 4, Y + 6); ctx.lineTo(X + 8, Y + 16); ctx.lineTo(X + 12, Y + 6); ctx.lineTo(X + 16, Y + 16); ctx.fill(); }
+  }
+  for (const e of j.ennemis) {                          // ennemi : icône choisie, ou le petit monstre rouge de la console
+    const X = e.x * TILE, Y = e.y * TILE - cam;
+    if (ic.n) ctx.drawImage(icImg(ic.n), X, Y);
+    else { ctx.fillStyle = '#d23c3c'; ctx.beginPath(); ctx.roundRect(X + 2, Y + 6, 12, 9, 4); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(X + 4, Y + 8, 3, 3); ctx.fillRect(X + 9, Y + 8, 3, 3); }
+  }
+  for (const s of j.stars) ic.e ? ctx.drawImage(icImg(ic.e), s.x * TILE, s.y * TILE - cam) : etoile(s.x * TILE + 8, s.y * TILE + 8 - cam);
+  // arrivée
+  const gx = j.gx * TILE, gy = j.gy * TILE - cam;
+  if (j.niv.params.jeu === 'cote') { ctx.fillStyle = '#a8693c'; ctx.fillRect(gx, gy - 14, 16, 30); ctx.fillStyle = '#6e4422'; ctx.fillRect(gx + 7, gy - 12, 2, 27); ctx.fillStyle = '#ffd400'; ctx.fillRect(gx + 11, gy + 1, 2, 2); }   // la porte
+  else {
+  ctx.fillStyle = '#eee'; ctx.fillRect(gx + 3, gy - 16, 2, 32);
+  if (ic.g) ctx.drawImage(icImg(ic.g), gx + 5, gy - 20); else { ctx.fillStyle = '#4ade80'; ctx.fillRect(gx + 5, gy - 16, 10, 8); }
+  }
+  for (const s of j.saws) {
+    const a = 0, Y = s.y - cam; ctx.fillStyle = '#bbb'; ctx.beginPath();
+    for (let i = 0; i < 16; i++) { const r = i % 2 ? 6 : 9, an = a + i * Math.PI / 8; ctx.lineTo(s.x + Math.cos(an) * r, Y + Math.sin(an) * r); }
+    ctx.fill(); ctx.fillStyle = '#555'; ctx.fillRect(s.x - 2, Y - 2, 4, 4);
+  }
+  // héros
+  const hx = j.sx, hy = j.sy - cam, hero = j.niv.params.hero, vx = 1;   // héros posé au départ
+  if (ic.h) {                                           // héros choisi : 16x16 ancré aux pieds, retourné vers la gauche (comme la console)
+    if (vx < 0) { ctx.save(); ctx.translate(2 * hx + PW, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(icImg(ic.h), hx + PW / 2 - 8, hy + PH - 16);
+    if (vx < 0) ctx.restore();
+  } else {
+  ctx.fillStyle = HEROS[hero]; ctx.fillRect(hx, hy, PW, PH);
+  if (hero === 'chat') { ctx.fillRect(hx, hy - 3, 3, 3); ctx.fillRect(hx + 9, hy - 3, 3, 3); }
+  if (hero === 'ninja') { ctx.fillStyle = '#e8322b'; ctx.fillRect(hx, hy + 3, PW, 2); ctx.fillRect(hx - 4 * 1, hy + 3, 4, 2); }
+  if (hero === 'robot') { ctx.fillStyle = '#ffcc33'; ctx.fillRect(hx + 5, hy - 4, 2, 4); }
+  ctx.fillStyle = '#fff'; const ox = vx < 0 ? 1 : 5; ctx.fillRect(hx + ox, hy + 4, 3, 3); ctx.fillRect(hx + ox + 4, hy + 4, 3, 3);
+  }
+}
+// casse-briques / invaders : mêmes positions et couleurs que breakoutStep / invadersStep du firmware
+function dessinerMini(niv) {
+  const p = niv.params, ic = niv.icones || {};
+  ctx.fillStyle = p.couleurs?.ciel || '#181a28'; ctx.fillRect(0, 0, SW, SH);
+  ctx.fillStyle = '#ebebf5'; ctx.font = '8px monospace'; ctx.textAlign = 'left'; ctx.fillText('SCORE 0', 4, 12);
+  if (p.jeu === 'briques') {
+    const RC = ['#ff5a5a', '#ffa03c', '#ffdc46', '#78dc5a', '#50c8c8', '#c878ff', '#ff78c8'];
+    niv.rows.forEach((r, y) => [...r].forEach((c, x) => {
+      if (c === '.') return;
+      const X = 1 + x * 32, Y = 26 + y * 12;
+      ctx.fillStyle = c === 'w' ? '#4e5468' : c === '3' ? '#a0a0af' : c === '2' ? '#5ac8ff' : RC[y]; ctx.fillRect(X, Y, 30, 10);
+      if (c === 'w') { ctx.strokeStyle = '#969eb6'; ctx.strokeRect(X + .5, Y + .5, 29, 9); }
+      else if (c !== '1') { ctx.strokeStyle = '#181a28'; ctx.strokeRect(X + 2.5, Y + 2.5, 25, 5); }
+    }));
+    ctx.fillStyle = '#ff4678'; ctx.beginPath(); ctx.roundRect(SW / 2 - 24, SH - 14, 48, 6, 3); ctx.fill();
+    ctx.fillStyle = '#ebebf5'; ctx.beginPath(); ctx.arc(SW / 2, SH - 18, 3, 0, 7); ctx.fill();
+  } else {
+    const COL = ['#5adcff', '#ff6ec8', '#ff6ec8', '#78e65a'];
+    niv.rows.forEach((r, y) => [...r].forEach((c, x) => {
+      if (c !== 'E') return;
+      const X = 45 + x * 30, Y = 24 + y * 22;
+      if (ic.n) { ctx.drawImage(icImg(ic.n), X + 2, Y - 2); return; }
+      ctx.fillStyle = COL[y]; ctx.beginPath(); ctx.roundRect(X + 2, Y, 16, 8, 3); ctx.fill();
+      for (let k = 0; k < 4; k++) ctx.fillRect(X + 2 + k * 5, Y + 8, 3, 4);
+      ctx.fillStyle = '#12101a'; ctx.fillRect(X + 6, Y + 3, 2, 2); ctx.fillRect(X + 12, Y + 3, 2, 2);
+    }));
+    if (ic.h) ctx.drawImage(icImg(ic.h), SW / 2 - 8, SH - 26);
+    else { ctx.fillStyle = '#78e65a'; ctx.beginPath(); ctx.roundRect(SW / 2 - 8, SH - 20, 16, 8, 2); ctx.fill(); ctx.fillRect(SW / 2 - 2, SH - 24, 4, 4); }
+    ctx.fillStyle = '#ebebf5'; ctx.fillText(`${p.vagues || 1} VAGUE${(p.vagues || 1) > 1 ? 'S' : ''}`, 130, 12);
+  }
+}
+function etoile(x, y) {
+  ctx.fillStyle = '#ffd400'; ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const r = i % 2 ? 2.5 : 6, a = -Math.PI / 2 + i * Math.PI / 5; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }
+  ctx.fill();
+}
+
+dessiner();
+
+// ---------- Création + historique ----------
+let historique = [], params = null;
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c]);
+
+go.onclick = async () => {
+  let texte = demande.value.trim(), base = params ?? structuredClone(DEFAUT), avant = [];
+  base.jeu = genre;
+  const lab = k => CHOIX[k].find(c => c[0] === choix[k])[1];
+  if (mode === 'guide' && genre === 'plateforme') {
+    base.theme = choix.theme; base.hero = choix.hero; base.forme = choix.forme;
+    for (const k of ['pic', 'scie', 'fragile']) base.briques[k] = choix.danger === k;
+    base.hauteur = 15 * +choix.ecrans;
+    avant = [lab('theme'), lab('hero'), lab('forme'), lab('danger'), lab('ecrans') + ' de haut'];
+  } else if (mode === 'guide' && genre === 'cote') {
+    base.ecransL = +choix.ecransL; base.ecransH = +choix.ecransH; base.plafond = choix.plafond === 'oui'; base.trous = +choix.trous; base.plateformes = choix.plateformes === 'oui';
+    avant = [lab('ecransL') + ' de large', lab('ecransH') + ' de haut', 'plafond : ' + lab('plafond'), 'trous cachés : ' + lab('trous'), 'plateformes : ' + lab('plateformes')];
+  } else if (mode === 'guide') {
+    base.motif = choix.motif; base.acier = choix.acier === 'oui'; base.vagues = +choix.vagues;
+    avant = [GENRES.find(g => g[0] === genre)[1], lab('motif'), genre === 'briques' ? 'acier : ' + lab('acier') : lab('vagues')];
+  }
+  base.couleurs = { ...couleurs }; Object.assign(base, regles());   // couleurs et règles choisies à la main (l'IA peut les changer si l'enfant en parle)
+  go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
+  const t0 = performance.now();
+  // vraie IA (Mistral, via server.js) si le serveur la propose ; sinon les mots-clés locaux
+  let ia = null;
+  if (texte && EN_LIGNE) try { ia = await api('api/ia', { texte, base, ...ident() }); } catch {}
+  if (!ia) await new Promise(r => setTimeout(r, 600 + Math.random() * 900));   // latence simulée (mots-clés)
+  const { p, vu } = ia ?? comprendre(texte, base);
+  p.seed = (Math.random() * 1e9) | 0; params = p; couleurs = { ...(p.couleurs || {}) }; majPalette(); afficherRegles(p);
+  if (p.jeu !== genre) setGenre(p.jeu || 'plateforme');   // « fais-moi un casse-briques » : l'IA a changé de jeu
+  if (ia?.icones) { await Promise.all(Object.entries(ia.icones).map(([k, mot]) => iconeAuto(k, mot))); majIcones(); }   // « un dragon en fond » -> icône décor trouvée sur Iconify
+  const niv = { format: 'brique-v1', params: p, rows: generer(p), icones: { ...icones } };
+  const duree = (performance.now() - t0) / 1000;
+  charger(niv);
+  compris.innerHTML = !texte ? 'Jeu créé avec tes choix. Ajoute une phrase pour aller plus loin.'
+    : ia ? `🤖 L'IA a compris : <b>${vu.map(esc).join(', ') || 'rien à changer'}</b>${ia.remarque ? '<br>' + esc(ia.remarque) : ''}${ia.souhaits?.length ? `<br>💡 Noté dans les <a href="#" onclick="afficher('commu');document.querySelector('.c-idees').scrollIntoView();return false" style="color:var(--acc)">idées des joueurs</a> : ${ia.souhaits.map(esc).join(', ')}` : ''}`
+    : vu.length ? `J'ai compris : <b>${vu.map(esc).join(', ')}</b>` : `Je n'ai reconnu aucun mot-clé, j'ai gardé les réglages d'avant. Essaie d'être plus précis !`;
+  historique.push({ demande: [...avant, texte].filter(Boolean).join(' · ') || '(sans phrase)', vu, niv, duree, corr: '' });
+  rendreHist(); capot.textContent = JSON.stringify(niv, null, 1).replace(/\n\s+"(\.|#|S|G)/g, '\n  "$1');
+  go.disabled = false; go.textContent = '✨ Recréer avec ma correction'; demande.value = '';
+  envoi.textContent = '';
+};
+
+function rendreHist() {
+  if (!historique.length) return;
+  hist.innerHTML = historique.map((e, i) => `
+    <div class="it ${i === historique.length - 1 ? 'cur' : ''}">
+      <span class="n">Essai ${i + 1}</span>
+      <div class="q">« ${esc(e.demande)} »</div>
+      <div class="r">${e.vu.length ? 'Compris : ' + e.vu.map(esc).join(', ') + '<br>' : ''}
+        ${e.duree ? `Créé en ${e.duree.toFixed(1)} s · ` : ''}${e.niv.rows.length} lignes${e.niv.id ? ' · 🌐 en ligne' : ''}<br>
+        ${e.console ? `📟 fini sur la console en ${e.console.t.toFixed(1)} s, ${e.console.morts} ☠, ${e.console.etoiles} ★` : ''}
+        ${!e.console ? '📟 pas encore joué sur la console' : ''}</div>
+      <input data-i="${i}" placeholder="Ce qui ne va pas / ce que je change…" value="${esc(e.corr)}">
+    </div>`).reverse().join('');
+  hist.querySelectorAll('input').forEach(inp => inp.oninput = () => {
+    historique[inp.dataset.i].corr = inp.value;
+    if (+inp.dataset.i === historique.length - 1) demande.value = inp.value;   // la correction devient la prochaine demande
+  });
+}
+
+nouveau.onclick = () => {
+  if (historique.length && !confirm('Tout recommencer ? L\'historique sera effacé.')) return;
+  params = null; jeu = null; historique = []; cv.height = 240; dessiner(); capot.textContent = ''; go.textContent = '✨ Créer mon jeu';
+  hist.innerHTML = '<p class="vide">Tes essais apparaîtront ici.</p>'; compris.textContent = 'Choisis, écris une phrase, puis appuie sur « Créer ».';
+};
+// ---------- Icônes perso (héros, étoile, arrivée), trouvées sur le web ----------
+// 16x16 ; chaque pixel = 3 chiffres hexa "rgb" (4 bits), "---" = transparent. Même rendu ici et sur la console.
+const IC = [['h', '🦸 Héros'], ['e', '⭐ Objets'], ['g', '🏁 Arrivée'], ['n', '👾 Ennemi'], ['d', '🖼 Décor']];
+let icones = {}, icSlot = 'h';
+const icCache = new Map();
+function icImg(s) {                                     // chaîne -> petit canvas 16x16 (mis en cache)
+  if (!icCache.has(s)) {
+    const c = document.createElement('canvas'); c.width = c.height = 16;
+    const x = c.getContext('2d'), d = x.createImageData(16, 16);
+    for (let i = 0; i < 256; i++) {
+      const t = s.substr(i * 3, 3); if (t === '---') continue;
+      for (let k = 0; k < 3; k++) d.data[i * 4 + k] = parseInt(t[k], 16) * 17;
+      d.data[i * 4 + 3] = 255;
+    }
+    x.putImageData(d, 0, 0); icCache.set(s, c);
+  }
+  return icCache.get(s);
+}
+function versIcone(img) {                               // n'importe quelle image -> chaîne 16x16
+  const c = document.createElement('canvas'); c.width = c.height = 16;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  const k = 16 / Math.max(img.naturalWidth, img.naturalHeight), w = img.naturalWidth * k, h = img.naturalHeight * k;
+  x.imageSmoothingQuality = 'high'; x.drawImage(img, (16 - w) / 2, (16 - h) / 2, w, h);
+  const d = x.getImageData(0, 0, 16, 16).data, px = i => [d[i * 4], d[i * 4 + 1], d[i * 4 + 2], d[i * 4 + 3]];
+  const proche = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < 60;
+  const coins = [0, 15, 240, 255].map(px);              // photo sans transparence : le fond = couleur des 4 coins, on l'enlève
+  const fond = coins.every(c => c[3] > 200 && proche(c, coins[0])) ? coins[0] : null;
+  let s = '';
+  for (let i = 0; i < 256; i++) {
+    const p = px(i);
+    s += p[3] < 128 || (fond && proche(p, fond)) ? '---' : p.slice(0, 3).map(v => Math.round(v / 17).toString(16)).join('');
+  }
+  return s;
+}
+const icDire = t => icRes.innerHTML = `<p class="aide" style="margin:0">${esc(t)}</p>`;
+function poser(img) {
+  let s; try { s = versIcone(img); } catch { return icDire('Ce site interdit de copier son image : fais clic droit → « Copier l\'image », puis Ctrl+V ici.'); }
+  if (!/[0-9a-f]/.test(s)) return icDire('Image vide ou toute du même fond : essaies-en une autre.');
+  icones[icSlot] = s; majIcones();
+}
+function majIcones() {
+  if (jeu && !jeu.niv.pseudo) jeu.niv.icones = { ...icones };   // ton propre jeu change tout de suite (pas celui d'un autre)
+  icSlots.innerHTML = '';
+  for (const [k, lab] of IC) {
+    if (genre === 'invaders' && !'hn'.includes(k)) continue;   // invaders : vaisseau et ennemis seulement
+    const b = document.createElement('button'); b.className = 'chip' + (k === icSlot ? ' on' : ''); b.textContent = lab;
+    b.onclick = () => { icSlot = k; majIcones(); };
+    if (icones[k]) {
+      const v = document.createElement('canvas'); v.width = v.height = 16; v.className = 'icv'; v.getContext('2d').drawImage(icImg(icones[k]), 0, 0);
+      const x = document.createElement('span'); x.textContent = ' ✕'; x.title = 'Remettre le dessin d\'origine';
+      x.onclick = e => { e.stopPropagation(); delete icones[k]; majIcones(); };
+      b.append(v, x);
+    }
+    icSlots.append(b);
+  }
+}
+function depuisUrl(url) {
+  const img = new Image(); img.crossOrigin = 'anonymous';
+  img.onload = () => poser(img);
+  img.onerror = () => icDire('Impossible de lire cette image ici : clic droit dessus → « Copier l\'image », puis Ctrl+V.');
+  img.src = url;
+}
+// recherche : Iconify (200 000 icônes libres, sans clé), limitée aux emojis en couleur -> lisibles en 16x16
+icGo.onclick = async () => {
+  const q = icRech.value.trim(); if (!q) return;
+  icDire('🔍 …');
+  try {
+    const r = await (await fetch('https://api.iconify.design/search?limit=48&prefixes=noto,twemoji,fluent-emoji-flat,openmoji&query=' + encodeURIComponent(q))).json();
+    if (!r.icons.length) return icDire('Rien trouvé. Essaie en anglais : cat, fire, pizza, robot…');
+    icRes.innerHTML = r.icons.map(n => `<img crossorigin="anonymous" title="${esc(n)}" src="https://api.iconify.design/${esc(n.replace(':', '/'))}.svg?width=64&height=64">`).join('');
+  } catch { icDire('Pas d\'internet ? La recherche a besoin du web.'); }
+};
+icRech.onkeydown = e => { if (e.key === 'Enter') icGo.click(); };
+icRes.onclick = e => { if (e.target.tagName === 'IMG') poser(e.target); };
+addEventListener('paste', e => {
+  const f = [...e.clipboardData.files].find(f => f.type.startsWith('image/'));
+  if (f) { e.preventDefault(); depuisUrl(URL.createObjectURL(f)); }
+});
+icDrop.ondragover = e => { e.preventDefault(); icDrop.classList.add('sur'); };
+icDrop.ondragleave = () => icDrop.classList.remove('sur');
+icDrop.ondrop = e => {
+  e.preventDefault(); icDrop.classList.remove('sur');
+  const f = [...e.dataTransfer.files].find(f => f.type.startsWith('image/'));
+  const u = (e.dataTransfer.getData('text/uri-list') || '').split('\n')[0].trim();
+  if (f) depuisUrl(URL.createObjectURL(f)); else if (/^https?:/.test(u)) depuisUrl(u);
+};
+icFile.onchange = () => icFile.files[0] && depuisUrl(URL.createObjectURL(icFile.files[0]));
+setGenre('plateforme');
+// icône demandée à l'IA (mot anglais) : première image en couleur trouvée sur Iconify, posée dans sa case
+async function iconeAuto(slot, mot) {
+  try {
+    const r = await (await fetch('https://api.iconify.design/search?limit=4&prefixes=noto,twemoji,fluent-emoji-flat,openmoji&query=' + encodeURIComponent(mot))).json();
+    if (!r.icons?.length) return;
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.src = `https://api.iconify.design/${r.icons[0].replace(':', '/')}.svg?width=64&height=64`; await img.decode();
+    icones[slot] = versIcone(img);
+  } catch {}
+}
+
+// ---------- Couleurs : palette ciel / plateformes ----------
+let couleurs = {};
+function majPalette() {
+  for (const [k, boite] of [['ciel', palCiel], ['sol', palSol]]) {
+    boite.innerHTML = `<button class="pastille auto ${couleurs[k] ? '' : 'on'}" data-k="${k}" data-c="" title="Couleur du monde"></button>`
+      + Object.entries(PALETTE).map(([nom, h]) => `<button class="pastille ${couleurs[k] === h ? 'on' : ''}" style="background:${h}" data-k="${k}" data-c="${h}" title="${nom}"></button>`).join('');
+  }
+}
+palCiel.onclick = palSol.onclick = e => {
+  const b = e.target.closest('.pastille'); if (!b) return;
+  if (b.dataset.c) couleurs[b.dataset.k] = b.dataset.c; else delete couleurs[b.dataset.k];
+  if (params) params.couleurs = { ...couleurs };
+  if (jeu && !jeu.niv.pseudo) { jeu.niv.params = { ...jeu.niv.params, couleurs: { ...couleurs } }; dessiner(); }   // ton jeu change tout de suite
+  majPalette();
+};
+majPalette();
+
+// ---------- Règles : but, chrono, vies, message de victoire ----------
+const regles = () => ({ objectif: rgObjectif.querySelector('.on').dataset.v, chrono: +rgChrono.value, vies: +rgVies.value, message: rgMsg.value.trim().slice(0, 40) });
+function afficherRegles(p) {
+  rgObjectif.querySelectorAll('.chip').forEach(b => b.classList.toggle('on', b.dataset.v === (p.objectif || 'arriver')));
+  if (![...rgChrono.options].some(o => +o.value === (p.chrono || 0))) rgChrono.add(new Option(p.chrono, p.chrono));   // chrono donné par l'IA (ex. 75 s)
+  rgChrono.value = p.chrono || 0; rgVies.value = [0, 3, 5, 9].includes(p.vies) ? p.vies : 0; rgMsg.value = p.message || '';
+}
+function appliquerRegles() {
+  if (params) Object.assign(params, regles());
+  if (jeu && !jeu.niv.pseudo) jeu.niv.params = { ...jeu.niv.params, ...regles() };   // ton jeu change tout de suite
+}
+rgObjectif.onclick = e => { const b = e.target.closest('.chip'); if (!b) return; rgObjectif.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); appliquerRegles(); };
+rgChrono.onchange = rgVies.onchange = rgMsg.oninput = appliquerRegles;
+
+// ---------- Console par Web Serial (Chrome / Edge) ----------
+// Envoi : une ligne JSON. La console répond "BRIQUE OK <lignes>" / "BRIQUE ERR <raison>",
+// puis "BRIQUE FIN <ms> <morts> <étoiles>" quand le niveau est fini. Le port reste ouvert et écouté en continu.
+let port = null, attente = null, nivConsole = null;
+const dire = (txt, ok) => envoi.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(txt)}</span>`;
+envoyer.onclick = async () => {
+  if (!jeu) return dire('Crée un jeu d\'abord !');
+  if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.');
+  try {
+    if (!port) { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter(); await syncCourses(); await verifierVersion(); }
+    envoi.textContent = '📟 Envoi…';
+    // une ligne par icône d'abord (la console les garde avec le niveau qui suit), puis le niveau
+    let qs = jeu.niv.questions;                          // jeu publié : ses questions ; sinon celles du groupe de l'enfant
+    if (!qs && moi && EN_LIGNE) try { qs = (await api('api/questions', ident())).questions; } catch {}
+    for (const q of qs || []) {
+      const sa = t => norm(t || '').replace(/[^ -~]/g, '').replace(/["\\]/g, '');   // sans accents : police de la console
+      const l = await ligneSerie({ question: sa(q.q).slice(0, 80), r: q.r.map(x => sa(x).slice(0, 30)), b: q.b, id: q.id });
+      if (!l.startsWith('BRIQUE OK')) return dire(l ? 'La console dit : ' + l.replace('BRIQUE ERR ', '') : 'Pas de réponse : la console a-t-elle le bon firmware ?');
+    }
+    for (const [k, px] of Object.entries(jeu.niv.icones || {})) {
+      const l = await ligneSerie({ icone: k, px });
+      if (!l.startsWith('BRIQUE OK')) return dire(l ? 'La console dit : ' + l.replace('BRIQUE ERR ', '') : 'Pas de réponse : la console a-t-elle le bon firmware ?');
+    }
+    // rows en premier (le firmware cherche "rows" avant tout) ; titre/pseudo sans accents (police de la console) -> liste "Mes niveaux"
+    const ascii = t => norm(t || '').replace(/[^ -~]/g, '').replace(/"/g, '').slice(0, 30);
+    // code de partage (jeu publié) : la console s'en sert pour retrouver la même version en course à plusieurs
+    const l = await ligneSerie({ rows: jeu.niv.rows, titre: ascii(jeu.niv.titre || titreIn.value), pseudo: jeu.niv.pseudo || pseudo(),
+                                 ...(jeu.niv.code ? { code: jeu.niv.code } : {}), format: jeu.niv.format,
+                                 params: { ...jeu.niv.params, message: ascii(jeu.niv.params.message).slice(0, 40) } });   // message sans accents : police de la console
+    if (l.startsWith('BRIQUE OK')) {
+      nivConsole = jeu.niv;
+      dire(jeu.niv.code ? `✓ « ${jeu.niv.titre || 'Ton jeu'} » est sur la console (code ${jeu.niv.code}) : jouable à plusieurs dans « Mes jeux » !` : '✓ Ton jeu est sur la console. À toi de jouer ! (Publie-le pour y jouer à plusieurs.)', true);
+    }
+    else dire(l ? 'La console dit : ' + l.replace('BRIQUE ERR ', '') : 'Pas de réponse : la console a-t-elle le bon firmware ?');
+  } catch (e) {
+    fermer();
+    dire(e.name === 'NotFoundError' ? 'Aucune console choisie.' : 'Câble débranché ou port occupé (ferme l\'IDE Arduino). ' + e.message);
+  }
+};
+async function ligneSerie(obj) {                         // écrit une ligne JSON, attend "BRIQUE OK/ERR" (2 s max)
+  const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 2000); });
+  const w = port.writable.getWriter();
+  await w.write(new TextEncoder().encode(JSON.stringify(obj) + '\n')); w.releaseLock();
+  const l = await rep; attente = null; return l;
+}
+let lecteur = null;                                     // lecture en cours : à annuler avant de fermer le port (sinon il reste verrouillé)
+async function fermer() { const p = port; port = null; if (!p) return; try { await lecteur?.cancel(); } catch {} try { await p.close(); } catch {} }
+async function ecouter() {
+  const dec = new TextDecoder(); let txt = '';
+  try {
+    const r = lecteur = port.readable.getReader();
+    while (true) {
+      const { value, done } = await r.read(); if (done) break;
+      txt += dec.decode(value, { stream: true });
+      let i; while ((i = txt.indexOf('\n')) >= 0) { ligneConsole(txt.slice(0, i).trim()); txt = txt.slice(i + 1); }
+    }
+  } catch { if (port) { dire('Console débranchée.'); fermer(); } }   // port déjà nul : on l'a fermé exprès (mise à jour)
+}
+// ---------- Mise à jour de la console (esp-web-tools) : fichiers publiés par c3-tft-meatboy/publier-firmware-brique.bat ----------
+let manifeste = null, attenteVersion = null;
+fetch('firmware/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null)
+  .then(m => { manifeste = m; majDetails.classList.toggle('hide', !m); }).catch(() => {});
+majBtn.addEventListener('click', () => fermer(), true);   // esp-web-tools ouvre le port lui-même : on lui laisse
+async function verifierVersion() {                       // la console dit sa version ; plus ancienne que celle publiée -> on propose la mise à jour
+  if (!manifeste || !port) return;
+  const v = await new Promise(async ok => {
+    attenteVersion = ok; setTimeout(() => ok(''), 1500);
+    const w = port.writable.getWriter(); await w.write(new TextEncoder().encode('VERSION\n')); w.releaseLock();
+  });
+  attenteVersion = null;
+  const num = s => (s.match(/\d+/g) || []).map(Number);   // "v54.10" -> [54, 10] : comparé nombre par nombre
+  const plusVieille = (a, b) => { const x = num(a), y = num(b); for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
+  if (v && !plusVieille(v, manifeste.version)) return;   // à jour (ou version de développement plus récente)
+  majDetails.open = true;
+  majBox.innerHTML = `<span style="color:var(--acc)">✨ Une nouvelle version de la console est disponible${v ? '' : ' (les casse-briques et Invaders en ont besoin)'} : clique sur « Mettre à jour ma console ».</span>`;
+}
+// courses à plusieurs jouées depuis la dernière connexion : la console les garde, on les envoie au classement au nom de l'enfant connecté
+let resBuf = [], resAttente = null;
+async function syncCourses() {
+  if (!moi || !EN_LIGNE || !port) return;                // sans pseudo : la console les garde pour plus tard
+  resBuf = []; const fin = new Promise(ok => { resAttente = ok; setTimeout(ok, 2000); });
+  const ecrireLigne = async t => { const w = port.writable.getWriter(); await w.write(new TextEncoder().encode(t + '\n')); w.releaseLock(); };
+  await ecrireLigne('RESULTATS'); await fin; resAttente = null;
+  if (!resBuf.length) return;
+  const reponses = resBuf.filter(l => l.startsWith('Q ')).map(l => { const [, id, ok] = l.split(' '); return { id, ok: ok === '1' }; });   // questions de cours
+  const resultats = resBuf.filter(l => !l.startsWith('Q ')).map(l => { const [code, t, g, n] = l.split(' '); return { code, t: +t, gagne: g === '1', joueurs: +n }; });
+  try {
+    if (reponses.length) await api('api/reponses', { ...ident(), reponses });
+    const r = await api('api/courses', { ...ident(), resultats });
+    await ecrireLigne('RESULTATS OK');                     // la console peut les oublier
+    if (r.enregistrees) { dire(`🏁 ${r.enregistrees} course${r.enregistrees > 1 ? 's' : ''} à plusieurs ajoutée${r.enregistrees > 1 ? 's' : ''} au classement !`, true); rafraichir(); }
+  } catch {}
+}
+function ligneConsole(l) {
+  if ((l.startsWith('BRIQUE OK') || l.startsWith('BRIQUE ERR')) && attente) return attente(l);
+  if (l.startsWith('BRIQUE RES ')) return resBuf.push(l.slice(11));
+  const vm = l.match(/^BRIQUE VERSION (\S+)/); if (vm && attenteVersion) return attenteVersion(vm[1]);
+  const qz = l.match(/^BRIQUE QUIZ (\S+) ([01])/);                  // question de cours répondue sur la console
+  if (qz) { if (moi && EN_LIGNE) api('api/reponses', { ...ident(), reponses: [{ id: qz[1], ok: qz[2] === '1' }] }).catch(() => {});
+    return dire(qz[2] === '1' ? '✅ Bonne réponse à la question !' : '❌ Pas tout à fait… la bonne réponse est affichée sur la console.', qz[2] === '1'); }
+  if (l.startsWith('BRIQUE RESFIN') && resAttente) return resAttente();
+  const m = l.match(/^BRIQUE FIN (\d+) (\d+) (\d+)/);
+  if (m && nivConsole) resultat(nivConsole, 'console', +m[1] / 1000, +m[2], +m[3]);
+}
+
+// ---------- Résultat d'une partie (console) ----------
+function resultat(niv, source, t, morts, etoiles) {
+  const e = historique.findLast(e => e.niv === niv);
+  if (e) { e[source] = { t, morts, etoiles }; rendreHist(); }
+  if (source === 'console') {
+    niv.fini = true;                                     // fini au moins une fois : il peut être partagé
+    dire(`🏁 Console : fini en ${t.toFixed(1)} s, ${morts} ☠, ${etoiles} ★${niv.id ? '' : ' — tu peux maintenant le publier !'}`, true);
+  }
+  if (niv.id && EN_LIGNE && pseudo())
+    api('api/parties', { niveau: niv.id, ...ident(), t: Math.round(t * 1000), morts, etoiles, source }).then(rafraichir).catch(() => {});
+}
+
+// ---------- En ligne : pseudo, publication, classement, jeu commun ----------
+let EN_LIGNE = false;   // vrai seulement si server.js répond (GitHub Pages ou fichier ouvert : création + console, sans classement)
+// identité de l'enfant : pseudo + secret reçus en rejoignant son groupe, gardés dans ce navigateur
+const lire = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+// thème clair / sombre : bouton 🌙 de l'en-tête, gardé dans ce navigateur (lu avant l'affichage dans <head>)
+const majTheme = () => themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
+themeBtn.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; ecrire('brique-theme', t); majTheme(); };
+majTheme();
+let moi = lire('brique-moi');                          // { pseudo, secret, groupe }
+const pseudo = () => moi?.pseudo || '';
+const ident = () => ({ pseudo: moi?.pseudo, secret: moi?.secret });
+function majMoi() {
+  moiTxt.innerHTML = moi ? `${avatar(moi.pseudo)} <b>${esc(moi.pseudo)}</b> <small style="color:var(--mute)">${esc(moi.groupe)}</small>` : '';
+  rejoindreBtn.textContent = moi ? '↩ Changer' : '👤 Rejoindre mon groupe';
+}
+rejoindreBtn.onclick = () => {
+  if (moi && !confirm('Quitter « ' + moi.pseudo + ' » sur cet ordinateur ? Pour le reprendre ailleurs, ton animateur devra le libérer.')) return;
+  moi = null; ecrire('brique-moi', null); majMoi(); rjMsg.textContent = ''; dlgRejoindre.showModal();
+};
+rjAnnuler.onclick = () => dlgRejoindre.close();
+rjOk.onclick = async () => {
+  try { moi = await api('api/joueur', { pseudo: rjPseudo.value.trim(), code: rjCode.value.trim() }); ecrire('brique-moi', moi); majMoi(); dlgRejoindre.close(); }
+  catch (e) { rjMsg.innerHTML = `<span style="color:var(--ko)">${esc(e.message)}</span>`; }
+};
+async function api(url, corps, session) {
+  const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;
+  const r = await fetch(url, corps ? { method: 'POST', headers, body: JSON.stringify(corps) } : { headers });
+  const j = await r.json(); if (!r.ok) throw Object.assign(new Error(j.erreur), { code: r.status }); return j;
+}
+async function publier(commun) {
+  if (!jeu) return dire('Crée un jeu d\'abord !');
+  if (!EN_LIGNE) return dire('Hors ligne : lance le serveur (node server.js) et ouvre http://localhost:8080');
+  if (!moi) { dlgRejoindre.showModal(); return dire('Rejoins d\'abord ton groupe avec le code de ton animateur.'); }
+  // ponytail: vérifié dans la page seulement (la console n'est pas authentifiée) ; suffit pour l'atelier
+  if (!jeu.niv.fini) return dire('Termine ton jeu au moins une fois sur la console avant de le partager : on ne publie que des jeux faisables !');
+  try {
+    const { id, code } = await api('api/niveaux', { ...ident(), titre: titreIn.value, commun, niv: jeu.niv });
+    Object.assign(jeu.niv, { id, code, titre: jeu.niv.titre || titreIn.value });
+    envoi.innerHTML = `<span style="color:var(--ok)">✓ ${commun ? 'Ton niveau est ajouté au jeu commun' : 'Ton jeu est publié, signé ' + esc(pseudo())} !</span>
+      <div class="partage">Code de ton jeu : <span class="code">${code}</span><br>
+      <small>Donne-le à tes copains : ils le récupèrent sur Brique et vous jouez ensemble dans « Mes jeux ». <b>Renvoie-le sur ta console</b> pour qu'elle connaisse ce code.</small></div>`;
+    rafraichir();
+  } catch (e) { dire(e.message); }
+}
+publierBtn.onclick = () => publier(false);
+communBtn.onclick = () => publier(true);
+
+let enLigne = [];
+// ---------- Accueil "Communauté" ----------
+const vide = t => `<p class="vide">${t}</p>`;
+const depuis = d => { const m = Math.floor((Date.now() - d) / 60000);
+  return m < 1 ? 'à l\'instant' : m < 60 ? `il y a ${m} min` : m < 1440 ? `il y a ${Math.floor(m / 60)} h` : `il y a ${Math.floor(m / 1440)} j`; };
+const teinte = s => [...s].reduce((h, c) => h * 31 + c.charCodeAt(0) | 0, 7) & 359;   // une couleur fixe par pseudo
+const avatar = p => `<span class="avatar" style="background:hsl(${teinte(p)} 80% 70%)">${esc(p[0].toUpperCase())}</span>`;
+const bouton = n => `<button class="jouer" data-id="${n.id}">📥 Prendre</button>`;
+const COUL = { T: '#a08060', '#': '#6d5bd0', R: '#ffd400', '^': '#eee', W: '#bbb', C: '#a0703c', I: '#9ef', '*': '#ffd400', G: '#4ade80', S: '#f472b6',
+               E: '#ff6ec8', 1: '#ff5a5a', 2: '#5ac8ff', 3: '#a0a0af', w: '#4e5468' };   // E ennemi ; 1-3 / w : casse-briques
+function vignette(rows) {                                // le niveau entier en petit (3 px par case), vu du bas comme au départ
+  const c = document.createElement('canvas'); c.width = Math.max(COLS, ...rows.map(r => r.length)); c.height = rows.length; c.className = 'mini';
+  const x = c.getContext('2d');
+  rows.forEach((r, y) => [...r].forEach((t, i) => { if (COUL[t]) { x.fillStyle = COUL[t]; x.fillRect(i, y, 1, 1); } }));
+  return c.toDataURL();
+}
+// accueil, étape 2 : un vrai niveau sorti du générateur, comme si l'IA venait de lire « un volcan très haut avec des scies »
+iaDemo.src = vignette(generer({ ...structuredClone(DEFAUT), theme: 'lave', hauteur: 48, seed: 7, forme: 'mixte', briques: { ...DEFAUT.briques, scie: true } }));
+const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="pos">${pos}</span>
+  <div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div><small>${detail}</small>
+  ${max ? `<div class="barre"><i style="width:${Math.round(100 * val / max)}%"></i></div>` : ''}</div>${bouton(n)}</div>`;
+
+async function rafraichir() {
+  let c;
+  try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); EN_LIGNE = true; }
+  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('boutique'); return; }   // GitHub Pages / fichier : pas de communauté
+  enLigne = c.niveaux; modeAtelier(c.atelier);
+  if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant : la tranche d'âge choisie par son animateur
+  nJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = c.chiffres.aujourdhui;
+  const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
+  const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
+  classement.innerHTML = top.map((n, i) => ligneRang(n, MEDAILLE[i] || i + 1,
+      (n.stats.parties ? `${n.stats.parties} fois fini · record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'personne ne l\'a encore fini')
+      + (n.stats.multi?.courses ? `<br>🏁 ${n.stats.multi.courses} course${n.stats.multi.courses > 1 ? 's' : ''} à plusieurs${n.stats.multi.roi ? ` · 👑 ${esc(n.stats.multi.roi.pseudo)} (${n.stats.multi.roi.victoires} victoire${n.stats.multi.roi.victoires > 1 ? 's' : ''})` : ''}` : ''),
+      top[0].stats.parties, n.stats.parties)).join('') || vide('Aucun jeu publié pour l\'instant : sois le premier !');
+  nouveaux.innerHTML = [...enLigne].sort((a, b) => b.cree - a.cree).slice(0, 8).map(n => `<div class="carte">
+      <div class="vig"><img class="mini" src="${vignette(n.niv.rows)}" alt=""></div>
+      <div class="t">${esc(n.titre)}${Date.now() - n.cree < 864e5 ? '<span class="neuf">NEUF</span>' : ''}</div>
+      <small class="r" style="color:var(--mute)">par ${esc(n.pseudo)} · ${depuis(n.cree)}${n.commun ? ' · 🧱 commun' : ''}<br>code <b style="color:var(--acc2)">${esc(n.code || '')}</b></small>${bouton(n)}</div>`).join('')
+    || vide('Aucun niveau pour l\'instant.');
+  actifs.innerHTML = c.actifs.map(a => `<div class="rang">${avatar(a.pseudo)}<div class="qui"><div><b>${esc(a.pseudo)}</b></div>
+      <small>${a.quoi === 'cree' ? '✨ a créé' : '🏁 a fini'} « ${esc(a.titre)} » · ${depuis(a.date)}</small></div></div>`).join('')
+    || vide('Personne n\'a encore joué.');
+  const chauds = enLigne.filter(n => n.stats.semaine).sort((a, b) => b.stats.semaine - a.stats.semaine).slice(0, 6);
+  tendance.innerHTML = chauds.map((n, i) => ligneRang(n, '🔥', `${n.stats.semaine} partie${n.stats.semaine > 1 ? 's' : ''} cette semaine`, chauds[0].stats.semaine, n.stats.semaine)).join('')
+    || vide('Rien cette semaine : joue un niveau pour le faire monter !');
+  const niv = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree);
+  commun.innerHTML = niv.map((n, i) => ligneRang(n, i + 1, n.stats.parties ? `record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'jamais fini')).join('')
+    || vide('Le jeu commun est vide : ajoute le premier niveau !');
+  rendreIdees(c.idees);
+}
+// ---------- Mode atelier : l'animateur confine son groupe (matière du jour, jeux du groupe seulement) ----------
+function modeAtelier(a) {
+  document.body.classList.toggle('en-atelier', !!a);
+  atelierBan.classList.toggle('hide', !a);
+  if (a) atelierBan.innerHTML = `📚 Atelier ${a.matiere ? '<b>' + esc(a.matiere) + '</b> · ' : ''}${esc(a.nom)} <small>— tu ne vois que les jeux de ton groupe</small>`;
+  if (a && (vue === 'boutique' || vue === 'support')) afficher('commu');
+}
+// ---------- Idées des joueurs (ce que le firmware ne sait pas encore faire) ----------
+const STATUT = { idee: '💡 idée', prevu: '🛠 prévue', fait: '✅ faite' };
+function rendreIdees(liste) {
+  const max = Math.max(1, ...liste.map(s => s.votes));
+  idees.innerHTML = liste.map(s => `<div class="rang ${s.statut === 'fait' ? 'masque' : ''}"><span class="pos">${s.votes}</span>
+    <div class="qui"><div><b>${esc(s.texte)}</b> <small>${STATUT[s.statut]}</small></div><div class="barre"><i style="width:${Math.round(100 * s.votes / max)}%"></i></div></div>
+    ${s.statut === 'fait' ? '' : `<button class="jouer" data-voter="${s.id}">👍 Moi aussi</button>`}
+    ${session ? `<select data-statut="${s.id}" class="jouer">${Object.entries(STATUT).map(([k, v]) => `<option value="${k}" ${k === s.statut ? 'selected' : ''}>${v}</option>`).join('')}<option value="x">🗑 supprimer</option></select>` : ''}</div>`).join('')
+    || vide('Aucune idée pour l\'instant : propose la première !');
+}
+async function idee(corps) {
+  if (!moi) { dlgRejoindre.showModal(); return; }
+  try { rendreIdees((await api('api/idee', { ...ident(), ...corps })).idees); ideeIn.value = ''; } catch (e) { alert(e.message); }
+}
+ideeBtn.onclick = () => idee({ texte: ideeIn.value });
+ideeIn.onkeydown = e => { if (e.key === 'Enter') ideeBtn.click(); };
+idees.onclick = e => { if (e.target.dataset.voter) idee({ id: e.target.dataset.voter }); };
+idees.onchange = async e => {                            // animateur connecté : statut de l'idée
+  const id = e.target.dataset.statut; if (!id) return;
+  const v = e.target.value;
+  if (v === 'x' && !confirm('Supprimer cette idée ?')) return rafraichir();
+  try { rendreIdees((await api('api/animateur/idee', v === 'x' ? { id, supprimer: true } : { id, statut: v }, session)).idees); } catch (err) { alert(err.message); }
+};
+function jouerNiveau(n) {
+  charger({ ...n.niv, id: n.id, code: n.code, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params); setGenre(params.jeu || 'plateforme');
+  envoi.innerHTML = `<div class="partage">« ${esc(n.titre)} » de ${esc(n.pseudo)} · code <span class="code">${esc(n.code)}</span><br><small>Envoie-le sur ta console pour y jouer, seul ou à plusieurs (« Mes jeux »).</small></div>`;
+  historique.push({ demande: `Jouer « ${n.titre} » de ${n.pseudo}`, vu: [], niv: jeu.niv, duree: 0, corr: '' }); rendreHist();
+  afficher('creer'); ecran.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+// récupérer le jeu d'un copain par son code -> l'atelier, prêt à envoyer sur sa console
+codeBtn.onclick = async () => {
+  try { jouerNiveau(await api('api/jeu/' + encodeURIComponent(codeIn.value.trim().toUpperCase()))); codeIn.value = ''; codeMsg.textContent = ''; }
+  catch (e) { codeMsg.innerHTML = `<span style="color:var(--ko)">${esc(e.message)}</span>`; }
+};
+codeIn.onkeydown = e => { if (e.key === 'Enter') codeBtn.click(); };
+document.addEventListener('click', e => {
+  const id = e.target.dataset?.id; if (!id) return;
+  const n = enLigne.find(n => n.id === id); if (n) jouerNiveau(n);
+});
+
+// ---------- Espace animateur : connexion par lien mail, groupes, modération ----------
+let session = lire('brique-session');                  // jeton de session animateur (30 jours)
+const animDire = (t, ok) => animMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
+animLienBtn.onclick = async () => {
+  try { await api('api/animateur/lien', { email: animMail.value }); animDire('📧 Lien envoyé ! Ouvre-le depuis ta boîte mail (pense aux indésirables).', true); }
+  catch (e) { animDire(e.message); }
+};
+async function rendreAnim(donnees) {
+  let d = donnees;
+  if (!d && session) try { d = await api('api/animateur', null, session); } catch (e) { if (e.code === 401) { session = null; ecrire('brique-session', null); } }
+  animConnexion.classList.toggle('hide', !!d); animEspace.classList.toggle('hide', !d);
+  if (!d) return;
+  animQui.textContent = d.email; animDonnees = d;
+  animGroupes.innerHTML = d.groupes.map(g => `<section>
+    <h2><b>${esc(g.nom)}</b></h2>
+    <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span></p>
+    <h3>👤 Joueurs (${g.joueurs.length})</h3>
+    <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
+    <h3>🎂 Tranche d'âge — c'est toi qui la choisis, les enfants ne peuvent pas la changer</h3>
+    <div class="chips" data-age="${esc(g.code)}"><button class="chip ${g.age === 'guide' ? 'on' : ''}" data-agev="guide">CM1 · CM2 — guidé</button><button class="chip ${g.age === 'guide' ? '' : 'on'}" data-agev="libre">6ᵉ · 4ᵉ — libre</button></div>
+    <p class="aide" style="margin:4px 0 0">Guidé : on choisit avec des boutons, plus une phrase. Libre : on décrit tout son jeu avec ses mots.</p>
+    <h3>📚 Mode atelier</h3>
+    <div class="icRow"><input class="pseudo" data-matiere="${esc(g.code)}" maxlength="40" placeholder="Matière du jour (ex. Maths : fractions)" value="${esc(g.matiere)}">
+      <label class="chip" style="white-space:nowrap"><input type="checkbox" data-prive="${esc(g.code)}" ${g.prive ? 'checked' : ''}> Interface confinée au groupe</label></div>
+    <p class="aide" style="margin:4px 0 0">Confinée : les enfants ne voient que les jeux de leur groupe (pas la communauté publique, pas la boutique), et leurs jeux restent privés au groupe.</p>
+    <h3>❓ Questions de cours (${g.questions.length}/10) — posées sur la console à l'arrivée de chaque jeu du groupe</h3>
+    <div class="liste">${g.questions.map((q, i) => `<div class="rang"><span class="pos">${i + 1}</span><div class="qui"><div><b>${esc(q.q)}</b></div>
+      <small>${q.r.map((r, k) => k === q.b ? `✅ ${esc(r)}` : esc(r)).join(' · ')}${q.stats.reponses ? ` — ${q.stats.reponses} réponse${q.stats.reponses > 1 ? 's' : ''}, ${Math.round(100 * q.stats.justes / q.stats.reponses)} % justes` : ''}</small></div>
+      <button class="jouer" data-qsuppr="${esc(g.code)}" data-i="${i}">🗑</button></div>`).join('') || '<span class="vide">Aucune question : les jeux de ce groupe n’en poseront pas.</span>'}</div>
+    ${g.questions.length < 10 ? `<div class="qform" data-qform="${esc(g.code)}">
+      <input class="pseudo" maxlength="80" placeholder="Question (ex. Combien font 7 × 8 ?)" data-q>
+      ${[0, 1, 2].map(k => `<div class="rep"><input type="radio" name="b-${esc(g.code)}" value="${k}" ${k ? '' : 'checked'} title="Bonne réponse"><input type="text" class="pseudo" maxlength="30" placeholder="Réponse ${k + 1}${k === 2 ? ' (pas obligé)' : ''}" data-r></div>`).join('')}
+      <button class="sec" data-qajout="${esc(g.code)}">➕ Ajouter la question</button></div>` : ''}
+    <h3>🎮 Niveaux publiés (${g.niveaux.length})</h3>
+    <div class="liste">${g.niveaux.sort((a, b) => b.cree - a.cree).map(n => `<div class="rang ${n.masque ? 'masque' : ''}"><div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div>
+      <small>${depuis(n.cree)} · ${n.parties} partie${n.parties > 1 ? 's' : ''}${n.masque ? ' · masqué' : ''}</small></div>
+      <button class="jouer" data-masquer="${n.id}" data-etat="${n.masque ? 0 : 1}">${n.masque ? '👁 Remontrer' : '🚫 Masquer'}</button></div>`).join('') || '<span class="vide">Aucun niveau pour l\'instant.</span>'}</div>
+  </section>`).join('') || '';
+}
+grCreer.onclick = async () => { try { rendreAnim(await api('api/animateur/groupe', { nom: grNom.value }, session)); grNom.value = ''; } catch (e) { alert(e.message); } };
+let animDonnees = null;
+async function questionsDe(code, f) {                    // modifie la liste des questions d'un groupe, puis la renvoie au serveur
+  const g = animDonnees.groupes.find(g => g.code === code), qs = g.questions.map(({ id, q, r, b }) => ({ id, q, r, b }));
+  f(qs); rendreAnim(await api('api/animateur/questions', { code, questions: qs }, session));
+}
+animGroupes.onchange = async e => {
+  const t = e.target, code = t.dataset.matiere || t.dataset.prive; if (!code) return;
+  const sec = t.closest('section');
+  try { rendreAnim(await api('api/animateur/atelier', { code, matiere: sec.querySelector('[data-matiere]').value, prive: sec.querySelector('[data-prive]').checked }, session)); }
+  catch (err) { alert(err.message); }
+};
+animGroupes.onclick = async e => {
+  const t = e.target;
+  try {
+    if (t.dataset.qsuppr) return questionsDe(t.dataset.qsuppr, qs => qs.splice(+t.dataset.i, 1));
+    if (t.dataset.qajout) {
+      const f = t.closest('[data-qform]'), q = f.querySelector('[data-q]').value.trim();
+      const champs = [...f.querySelectorAll('[data-r]')], bonne = +f.querySelector('input[type=radio]:checked').value;
+      if (!q || !champs[bonne].value.trim()) return alert('Écris la question et sa bonne réponse.');
+      const r = [], b = champs.reduce((acc, c, k) => { if (c.value.trim()) { if (k === bonne) acc = r.length; r.push(c.value.trim()); } return acc; }, 0);
+      if (r.length < 2) return alert('Il faut au moins 2 réponses.');
+      return questionsDe(t.dataset.qajout, qs => qs.push({ q, r, b }));
+    }
+    if (t.dataset.agev) rendreAnim(await api('api/animateur/age', { code: t.closest('[data-age]').dataset.age, age: t.dataset.agev }, session));
+    if (t.dataset.masquer) rendreAnim(await api('api/animateur/masquer', { id: t.dataset.masquer, masque: t.dataset.etat === '1' }, session));
+    if (t.dataset.liberer) { e.preventDefault(); if (confirm(`Libérer le pseudo « ${t.dataset.liberer} » ?`)) rendreAnim(await api('api/animateur/liberer', { pseudo: t.dataset.liberer }, session)); }
+    rafraichir();
+  } catch (err) { alert(err.message); }
+};
+animSortir.onclick = async e => { e.preventDefault(); try { await api('api/animateur/deconnexion', {}, session); } catch {} session = null; ecrire('brique-session', null); rendreAnim(); };
+async function connexionParLien() {                     // arrivée depuis le lien du mail : ?connexion=…
+  const jeton = new URLSearchParams(location.search).get('connexion'); if (!jeton) return false;
+  history.replaceState(null, '', location.pathname);
+  try { const r = await api('api/animateur/connexion', { jeton }); session = r.session; ecrire('brique-session', session); }
+  catch (e) { animDire(e.message); }
+  afficher('anim'); return true;
+}
+
+// ---------- Boutique : prix unitaire dégressif selon la quantité ----------
+const PALIERS = [[30, 28], [10, 31], [3, 34], [2, 36], [1, 39]]; // [à partir de n consoles, prix unitaire €]
+const BOUTIQUE_MAIL = 'commande@exemple.fr'; // ponytail: commande par mail, brancher un paiement (Stripe…) si besoin
+// version pre-soudee : meme degressivite, + un supplement par console (montage + test)
+const PRESOUDE_SUPPLEMENT = 12;   // ponytail: prix a confirmer, a changer ici
+let version = 'kit';
+const sup = () => version === 'presoude' ? PRESOUDE_SUPPLEMENT : 0;
+const prixUnitaire = n => PALIERS.find(([min]) => n >= min)[1] + sup();
+function majBoutique() {
+  const n = Math.max(1, Math.min(999, parseInt(btQte.value) || 1)), pu = prixUnitaire(n);
+  const max = PALIERS.at(-1)[1] + sup(); btDepuis.textContent = `À partir de ${PALIERS[0][1] + sup()} €${version === 'presoude' ? ' · pré-soudée' : ''}`;
+  paliers.innerHTML = [...PALIERS].map(([min, p]) => [min, p + sup()]).reverse().map(([min, p], i, a) => `<div class="${p === pu ? 'on' : ''}"><b>${p} €</b><span>${a[i + 1] ? (a[i + 1][0] - 1 > min ? `${min} à ${a[i + 1][0] - 1}` : min) : `${min} et +`} console${min > 1 ? 's' : ''}</span><i>${p < max ? `−${Math.round((1 - p / max) * 100)} %` : ''}</i></div>`).join('');
+  btTotal.textContent = (n * pu) + ' €';
+  btDetail.textContent = `${n} × ${pu} € (${version === 'presoude' ? 'pré-soudée' : 'kit à souder'})` + (pu < max ? ` · ${n * (max - pu)} € d'économie` : '');
+  return { n, pu };
+}
+btQte.oninput = majBoutique; majBoutique();
+btVersions.onclick = e => { const b = e.target.closest('[data-v]'); if (!b) return; version = b.dataset.v; btVersions.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); majBoutique(); };
+document.querySelectorAll('.sh-pm').forEach(b => b.onclick = () => { btQte.value = Math.max(1, (parseInt(btQte.value) || 1) + +b.dataset.d); majBoutique(); });
+btCommander.onclick = () => {
+  const { n, pu } = majBoutique();
+  location.href = `mailto:${BOUTIQUE_MAIL}?subject=${encodeURIComponent(`Commande Brique : ${n} console(s) ${version === 'presoude' ? 'pré-soudée(s)' : 'en kit'}`)}&body=${encodeURIComponent(`Bonjour,
+
+Je souhaite commander ${n} console(s) Brique, version ${version === 'presoude' ? 'pré-soudée' : 'kit à souder'}, à ${pu} € l'unité, soit ${n * pu} € au total.
+
+Nom :
+Adresse de livraison :
+`)}`;
+};
+
+// Soutien libre : plateforme à choisir (Liberapay, Ko-fi, HelloAsso…) -> mettre son lien ici, le montant est ajouté en ?montant=
+const SOUTIEN_URL = '';
+let don = 10;
+document.querySelectorAll('.sh-don').forEach(b => b.onclick = () => { don = +b.dataset.m; donLibre.value = ''; document.querySelectorAll('.sh-don').forEach(x => x.classList.toggle('on', x === b)); });
+donLibre.oninput = () => { don = Math.max(1, parseInt(donLibre.value) || 0); document.querySelectorAll('.sh-don').forEach(x => x.classList.remove('on')); };
+donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes('?') ? '&' : '?'}montant=${don}`, '_blank', 'noopener')
+                                   : donMsg.textContent = `Merci ! Le soutien en ligne arrive très bientôt (${don} € noté dans ton cœur 💜).`;
+
+// ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
+let vue = 'commu';
+function afficher(v) {
+  vue = v;
+  profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
+  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); support.classList.toggle('hide', v !== 'support');
+  vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
+  if (v === 'anim') rendreAnim();
+  scrollTo(0, 0);
+}
+vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique'); vSupport.onclick = () => afficher('support');
+ficheImprimer.onclick = () => {                         // la fiche seule, en A4, dans un nouvel onglet
+  const w = open(URL.createObjectURL(new Blob([fiche.innerHTML], { type: 'image/svg+xml' })));
+  if (w) w.onload = () => w.print();
+};
+vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
+ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
+majMoi();
+connexionParLien().then(fait => fait || afficher(vue));   // vue d'accueil : la communauté (la boutique sans serveur)
+rafraichir(); setInterval(rafraichir, 15000);
+</script>
+</body>
+</html>

@@ -1339,7 +1339,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
   </div>
-  <div class="pied-bas"><span>© 2026 Brique · <span id="siteVersion" title="Version du site">__VERSION__</span></span><a id="piedSite" href="/">brique.studioeya.com</a></div>
+  <div class="pied-bas"><span>© 2026 Brique · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="consoleVersions"></span></span><a id="piedSite" href="/">brique.studioeya.com</a></div>
 </footer>
 
 <script src="fiche.js"></script>   <!-- la fiche de jeu (FICHE-JEU.md) : même code que server.js -->
@@ -2187,6 +2187,8 @@ let manifeste = null, attenteVersion = null;
 fetch('firmware/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null)
   .then(m => { manifeste = m; majDetails.classList.toggle('hide', !m); if (m) majEnLigne.textContent = 'version en ligne : ' + m.version; }).catch(() => {});
 majBtn.addEventListener('click', () => fermer(), true);   // esp-web-tools ouvre le port lui-même : on lui laisse
+Promise.all(['firmware', 'firmware-berry'].map(d => fetch(d + '/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null)))   // pied de page : versions publiées des deux firmwares
+  .then(([a, b]) => consoleVersions.textContent = [a && ' · console ' + a.version, b && ' · moteur script ' + b.version].filter(Boolean).join(''));
 async function verifierVersion() {                       // la console dit sa version ; plus ancienne que celle publiée -> on propose la mise à jour
   if (!manifeste || !port) return;
   const v = await new Promise(async ok => {

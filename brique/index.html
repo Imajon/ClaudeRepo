@@ -3000,8 +3000,8 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
     const octets = new TextEncoder().encode(prog + `
 # --- ajoute par la page : numero de version ---
 import global
-def _brique_v(d, t0) return def () d() if temps() - t0 < 5 texte(4, 230, "v${ver}", rgb(255, 255, 255), 1) end end end
-if global.contains("dessine") global.dessine = _brique_v(global.dessine, temps()) end
+def _brique_v(d) var n = 0 return def () d() n += 1 if n < 300 texte(4, 230, "v${ver}", rgb(255, 255, 255), 1) end end end
+if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
 `);
     const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 6000); });
     await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length}\n`));

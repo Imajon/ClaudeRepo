@@ -3,7 +3,7 @@
   "private": true,
   "description": "Serveur de l'atelier Brique (page, classement, comptes animateurs)",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
+  "scripts": { "start": "node server.js", "postinstall": "git fetch --unshallow --quiet || exit 0" },
   "engines": { "node": ">=18" },
   "dependencies": { "mysql2": "^3.24.6" }
 }

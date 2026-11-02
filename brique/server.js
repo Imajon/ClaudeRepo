@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 8080, FICHIER = process.env.DATA || path.join(_
 // adresse publique pour les liens envoyes par mail (jamais l'en-tete Host : il pourrait envoyer un lien piege)
 const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 // version du site : v1.<nombre de commits qui ont touche brique/> -> monte toute seule a chaque changement publie
-// ponytail: si le depot est clone sans historique (count = 1), on se rabat sur l'identifiant du commit
+// Render clone sans historique : le "postinstall" de package.json le recupere (git fetch --unshallow) ; s'il echoue (count = 1), on se rabat sur l'identifiant du commit
 const VERSION = (() => {
   try { const n = +require('child_process').execSync('git rev-list --count HEAD -- .', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] }); if (n > 1) return 'v1.' + n; } catch {}
   return process.env.RENDER_GIT_COMMIT ? 'v-' + process.env.RENDER_GIT_COMMIT.slice(0, 7) : 'dev';

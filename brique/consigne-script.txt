@@ -58,6 +58,16 @@ FLUIDITÉ (très important : un jeu qui saccade est raté)
 - Limiter les particules, traces et ennemis (quelques dizaines au plus).
 - string.format seulement pour l'affichage du score ou du temps.
 
+GÉOMÉTRIE QUI MARCHE (à adapter, seulement si la demande en a besoin)
+Piste, route, circuit, couloir, rivière (une bande avec deux bords à ne pas toucher) : ne JAMAIS dessiner les bords à la main ni avec des rectangles.
+  1. Le centre de la piste = une liste de points P = [[x, y], ...] (une boucle fermée : le point après le dernier est P[0]). La piste peut être plus grande que l'écran (camera).
+  2. Dans debut(), pour chaque segment a -> b, calculer la normale (nx, ny) = (-dy / l * LARG, dx / l * LARG) avec l = longueur du segment, LARG = demi-largeur.
+     Bord gauche = a + n -> b + n ; bord droit = a - n -> b - n. Garder ces nombres dans des listes (précalculés une fois).
+  3. dessine() : une ligne() par bord et par segment (avec camera(x - 160, y - 120) pour suivre le joueur), et un disque de rayon LARG à chaque point P pour boucher les coins des virages.
+  4. Toucher un bord = la distance du joueur au segment le plus proche dépasse LARG - rayon du joueur.
+     Distance au segment a -> b : u = ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy + 0.0), u ramené entre 0 et 1, point proche q = a + u * (dx, dy), distance = |p - q|.
+     Ne tester que le segment actuel et ses 2 voisins de chaque côté (mémoriser l'indice du segment actuel), pas toute la piste.
+
 TA RÉPONSE
 Réponds UNIQUEMENT avec un objet JSON :
 {"script": "le programme Berry COMPLET (jamais un morceau)",

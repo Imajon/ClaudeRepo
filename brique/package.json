@@ -3,7 +3,14 @@
   "private": true,
   "description": "Serveur de l'atelier Brique (page, classement, comptes animateurs)",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=18" },
-  "dependencies": { "mysql2": "^3.24.6" }
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "cc -O2 -I../c3-berry/src/berry/src -o verif/verif verif/verif.c ../c3-berry/src/berry/src/*.c -lm || echo verificateur Berry non compile"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "mysql2": "^3.24.6"
+  }
 }

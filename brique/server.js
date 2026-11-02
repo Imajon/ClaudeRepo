@@ -414,7 +414,7 @@ async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 
 // ---------- mode script (c3-berry) : l'IA ecrit tout le jeu en Berry ; la consigne est dans consigne-script.txt ----------
 const CONSIGNE_SCRIPT = fs.readFileSync(path.join(__dirname, 'consigne-script.txt'), 'utf8');
 async function iaScript(texte, script, erreur, avant, auto, surMorceau) {   // auto = correction d'une erreur de la console : le modele rapide suffit
-  const r = await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur || 'rien de special',
+  const r = await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special',
     demandes_precedentes: avant, demande: texte }, auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest', 60000, surMorceau);
   const t = v => typeof v === 'string' ? v.trim() : '';
   let nouveau = t(r.script);
@@ -424,6 +424,43 @@ async function iaScript(texte, script, erreur, avant, auto, surMorceau) {   // a
       nouveau = nouveau.startsWith('#') ? nouveau.replace(/^(.*\n?)/, `$1import ${m}\n`) : `import ${m}\n` + nouveau;
   if (GROS_MOTS.test(nouveau) || GROS_MOTS.test(t(r.explication))) return { refus: 'Je ne peux pas mettre ça dans un jeu.' };
   return { script: nouveau, explication: t(r.explication).slice(0, 400), limite: t(r.limite).slice(0, 300), question: t(r.question).slice(0, 200), astuce: t(r.astuce).slice(0, 300) };
+}
+function avecLignes(erreur, script) {                    // "jeu:12: ..." -> on joint les lignes 11 a 13 : l'IA voit ce qu'elle doit corriger
+  const n = +(/jeu:(\d+)/.exec(erreur) || [])[1]; if (!n || !script) return erreur;
+  const s = Math.max(0, n - 2);
+  return erreur + '\nLignes concernees :\n' + script.split('\n').slice(s, n + 1).map((l, i) => `${s + i + 1}: ${l}`).join('\n');
+}
+// ---------- verification avant la console : verif/verif.c (meme Berry que la console) joue 10 s du jeu ; compile par "postinstall" ----------
+const VERIF = path.join(__dirname, 'verif', process.platform === 'win32' ? 'verif.exe' : 'verif');
+function verifier(script) {                              // null = pas de verificateur sur ce serveur
+  if (!fs.existsSync(VERIF)) return Promise.resolve(null);
+  return new Promise(ok => {
+    const p = require('child_process').execFile(VERIF, { timeout: 5000 }, (e, sortie) => { try { ok(JSON.parse(sortie)); } catch { ok(null); } });
+    p.stdin.end(script);
+  });
+}
+function probleme(v) {                                   // ce qui irait de travers sur la console, '' si rien
+  if (!v) return '';
+  if (!v.ok) return (v.erreur || 'erreur').replace(/\s+/g, ' ').trim();
+  if (v.ops > 1200 || v.texte > 3000) return `trop de dessins par image (${v.ops} appels, la console en accepte 1200 au plus) : le bas de l'image ne s'affiche pas`;
+  if (v.memoire > 70000) return `le jeu utilise ${Math.round(v.memoire / 1000)} Ko de memoire, la console n'en a qu'environ 80 : elle risque de planter`;   // ponytail: seuil estime (drift2 = 45 Ko tourne), a ajuster avec les mesures
+  return '';
+}
+const CORRIGE_SRV = 'Corrige seulement l\'erreur signalee, sans rien changer d\'autre au jeu.';
+async function scriptVerifie(args, surMorceau) {         // l'IA ecrit, le verificateur joue, codestral corrige (2 fois au plus) ; chaque demande est mesuree
+  const t0 = Date.now(), m = { date: t0, auto: args[4], modif: !!args[1] };
+  let r = await iaScript(...args, surMorceau), v = null, pb = '', n = 0;
+  m.ia = Date.now() - t0;
+  while (r.script && (pb = probleme(v = await verifier(r.script))) && n < 2) {
+    if (!n) m.premier = pb.slice(0, 120);
+    n++; surMorceau?.('\x01');                           // la page repart de zero pour afficher la correction
+    try { r = { ...await iaScript(CORRIGE_SRV, r.script, pb, args[3], true, surMorceau), explication: r.explication, astuce: r.astuce, question: r.question, limite: r.limite }; }
+    catch (e) { console.error(e.message); break; }
+  }
+  if (r.script && n === 2) pb = probleme(v = await verifier(r.script));
+  Object.assign(m, { corrections: n, ok: v ? !pb : null, duree: Date.now() - t0, lignes: r.script ? r.script.split('\n').length : 0, ops: v?.ops, memoire: v?.memoire, instructions: v?.instructions });
+  (db.mesures ||= []).push(m); if (db.mesures.length > 500) db.mesures.shift(); sauver();
+  return { ...r, corrections: n, verif: pb };
 }
 const iaMistral = async (texte, base) => iaReglages(await mistral(CONSIGNE, { reglages_actuels: base, demande: texte }), base);
 // ---------- IA de la fiche : phrase de l'enfant -> changements de la fiche (FICHE-JEU.md), verifies ici ----------
@@ -510,6 +547,11 @@ const serveur = http.createServer(async (req, res) => {
     const code = url.slice(9).toUpperCase(), n = db.niveaux.find(n => n.code === code && !n.masque);
     return n ? repondre(res, 200, { ...n, stats: { ...stats(n.id), multi: statsCourses(n.id) } }) : repondre(res, 404, { erreur: 'Aucun jeu avec ce code : vérifie les 6 caractères.' });
   }
+  if (req.method === 'GET' && url === '/api/mesures') {   // efficacite du mode script (aucune donnee d'enfant : durees, corrections, reussite)
+    const M = (db.mesures || []).filter(m => !m.auto), med = a => a.sort((x, y) => x - y)[a.length >> 1] || 0;
+    return repondre(res, 200, { demandes: M.length, ok_du_premier_coup: M.filter(m => m.ok && !m.corrections).length, ok_apres_correction: M.filter(m => m.ok && m.corrections).length,
+      encore_en_erreur: M.filter(m => m.ok === false).length, duree_mediane_s: med(M.map(m => m.duree)) / 1000, ia_mediane_s: med(M.map(m => m.ia)) / 1000, dernieres: M.slice(-30).reverse() });
+  }
   if (req.method === 'GET' && url === '/api/animateur') {
     const email = animateurDe(req); if (!email) return repondre(res, 401, { erreur: 'non connecté' });
     // ponytail: paiements en attente reverifies a l'ouverture de l'admin (client parti avant le retour) ; webhook Stripe si le volume grossit
@@ -529,10 +571,10 @@ const serveur = http.createServer(async (req, res) => {
     const args = [b.texte.slice(0, 500), typeof b.script === 'string' ? b.script.slice(0, 20000) : '', typeof b.erreur === 'string' ? b.erreur.slice(0, 600) : '', avant, b.auto === true];
     if (b.flux) {                                     // flux : le texte de l'IA au fur et a mesure, puis "\0" + la reponse verifiee
       res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' });
-      let fin; try { fin = await iaScript(...args, d => res.write(d)); } catch (e) { console.error(e.message); fin = { erreur: 'L\'IA ne répond pas' }; }
+      let fin; try { fin = await scriptVerifie(args, d => res.write(d)); } catch (e) { console.error(e.message); fin = { erreur: 'L\'IA ne répond pas' }; }
       return res.end('\0' + JSON.stringify(fin));
     }
-    try { return repondre(res, 200, await iaScript(...args)); }
+    try { return repondre(res, 200, await scriptVerifie(args)); }
     catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
   }
   if (url === '/api/ia') {                            // compte (groupe ou animateur) ; sans compte : quelques essais par jour

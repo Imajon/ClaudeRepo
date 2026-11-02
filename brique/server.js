@@ -405,7 +405,7 @@ async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 
 const CONSIGNE_SCRIPT = fs.readFileSync(path.join(__dirname, 'consigne-script.txt'), 'utf8');
 async function iaScript(texte, script, erreur, avant) {
   const r = await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur || 'rien de special',
-    demandes_precedentes: avant, demande: texte }, process.env.MISTRAL_MODEL_SCRIPT || 'codestral-latest', 40000);
+    demandes_precedentes: avant, demande: texte }, process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest', 60000);
   const t = v => typeof v === 'string' ? v.trim() : '';
   let nouveau = t(r.script);
   if (nouveau.length < 20 || nouveau.length > 20000) throw new Error('programme vide ou trop long');

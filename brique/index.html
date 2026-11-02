@@ -2941,11 +2941,12 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
       ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`).reverse().join('');
   }
   rendre();
-  let port = null, lecteur = null, attente = null, versionVue = null, errEnCours = null;
+  let port = null, lecteur = null, attente = null, versionVue = null, errEnCours = null, statVue = null;
+  const pause = ms => new Promise(r => setTimeout(r, ms));
   const dire = (t, ok) => scEtat.innerHTML = ok === undefined ? esc(t) : `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
   const journal = l => { journal.l = [...(journal.l || []), l].slice(-8); scJournal.textContent = journal.l.join('\n'); scJournal.classList.remove('hide'); };
   function ligne(l) {
-    if (l.startsWith('STAT')) return;
+    if (l.startsWith('STAT')) { statVue?.(l); return; }
     if (l.startsWith('BERRY VERSION') || l.startsWith('BRIQUE VERSION')) { versionVue?.(l); return; }
     if (errEnCours && (l.startsWith('stack traceback') || l.startsWith('\t'))) { errEnCours.push(l.trim()); return; }
     if (l.startsWith('OK') || l.startsWith('ERR')) {
@@ -3007,22 +3008,41 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length}\n`));
     for (let i = 0; i < octets.length; i += 256) { await ecrire(octets.slice(i, i + 256)); await new Promise(r => setTimeout(r, 10)); }
     const l = await rep;
-    if (l.startsWith('OK')) { etat.erreur = ''; etat.surConsole = ver; const e = etat.essais.at(-1); if (e) { e.console = 'Ton jeu tourne sur la console.'; e.consoleOk = true; } sauver(); rendre(); return ''; }
-    return l ? '' : 'La console ne répond pas : rebranche-la.';   // ERR : l'erreur arrive par finErreur()
+    if (l.startsWith('OK')) { etat.erreur = ''; etat.lent = ''; etat.surConsole = ver; const e = etat.essais.at(-1); if (e) { e.console = 'Ton jeu tourne sur la console.'; e.consoleOk = true; } sauver(); rendre(); await mesurer(); return ''; }
+    if (l) await pause(400);                             // ERR : l'erreur arrive par finErreur() (300 ms)
+    return l ? '' : 'La console ne répond pas : rebranche-la.';
+  }
+  async function mesurer() {                             // 4,5 s de mesures "STAT" : la fluidité est donnée à l'IA à la prochaine demande (une erreur pendant ce temps arrive par finErreur)
+    const vus = []; statVue = l => vus.push(l); dire('⏱ Je mesure la fluidité du jeu…');
+    try { await ecrire(new TextEncoder().encode('STAT 1\n')); await pause(4500); await ecrire(new TextEncoder().encode('STAT 0\n')); } catch {}
+    statVue = null; dire('✓ Console connectée.', true);
+    const m = vus.slice(1).map(l => l.match(/STAT (\d+) img\/s\s+script (\d+) us.*?pire (\d+) ms.*?appels (\d+)/)).filter(Boolean);   // la 1re seconde compte le chargement
+    if (etat.erreur || !m.length) return;
+    const pire = m.reduce((a, b) => +b[1] < +a[1] ? b : a), ips = +pire[1], e = etat.essais.at(-1);
+    etat.lent = ips < 50 ? `Le jeu tourne a ${ips} images/s seulement (script ${(pire[2] / 1000).toFixed(1)} ms par image, pire image ${pire[3]} ms, ${pire[4]} appels de dessin) : il saccade, allege-le (voir FLUIDITE) en plus de la demande.` : '';
+    if (e?.consoleOk) e.console = `Ton jeu tourne sur la console (${ips} images/s${ips < 50 ? ' : il saccade, l\'IA l\'allègera à ta prochaine demande' : ''}).`;
+    sauver(); rendre();
+  }
+  const CORRIGE = '🔧 Correction automatique de l\'erreur signalée par la console';
+  async function ecrireJeu(texte, auto) {                // une demande à l'IA puis l'envoi à la console ; false = rien écrit
+    scGo.disabled = true; scGo.textContent = auto ? '🔧 L\'IA corrige l\'erreur…' : '⏳ L\'IA écrit ton programme…'; const t0 = performance.now(); let r;
+    try { r = await api('api/script', { ...ident(), texte: auto ? 'Corrige seulement l\'erreur que la console a signalee, sans rien changer d\'autre au jeu.' : texte, script: etat.script, erreur: etat.erreur || etat.lent || '',
+      avant: etat.essais.filter(e => !e.auto).map(e => e.demande).slice(-6) }, session); }
+    catch (e) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : e.message || 'L\'IA ne répond pas : réessaie.')}</span>`; }
+    scGo.disabled = false; scGo.textContent = '✨ Envoyer à l\'IA';
+    if (!r) return false;
+    if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return false; }
+    scCompris.innerHTML = `Programme écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s. ${esc(r.explication || '')}${r.astuce ? `<br>💡 ${esc(r.astuce)}` : ''}${r.question ? `<br>❓ ${esc(r.question)}` : ''}`;
+    etat.script = r.script; mettreCode(r.script); if (!auto) scDemande.value = '';
+    etat.essais.push({ demande: auto ? CORRIGE : texte, auto, explication: r.explication, astuce: r.astuce, limite: r.limite, question: r.question, console: '', date: Date.now() });
+    sauver(); rendre();
+    const pb = await envoyer(r.script); if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); return false; }
+    return true;
   }
   scGo.onclick = async () => {
     const texte = scDemande.value.trim(); if (!texte) return scDemande.focus();
-    scGo.disabled = true; scGo.textContent = '⏳ L\'IA écrit ton programme…'; const t0 = performance.now(); let r;
-    try { r = await api('api/script', { ...ident(), texte, script: etat.script, erreur: etat.erreur, avant: etat.essais.map(e => e.demande).slice(-6) }, session); }
-    catch (e) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : e.message || 'L\'IA ne répond pas : réessaie.')}</span>`; }
-    scGo.disabled = false; scGo.textContent = '✨ Envoyer à l\'IA';
-    if (!r) return;
-    if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return; }
-    scCompris.innerHTML = `Programme écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s. ${esc(r.explication || '')}${r.astuce ? `<br>💡 ${esc(r.astuce)}` : ''}${r.question ? `<br>❓ ${esc(r.question)}` : ''}`;
-    etat.script = r.script; mettreCode(r.script); scDemande.value = '';
-    etat.essais.push({ demande: texte, explication: r.explication, astuce: r.astuce, limite: r.limite, question: r.question, console: '', date: Date.now() });
-    sauver(); rendre();
-    const pb = await envoyer(r.script); if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
+    if (!(await ecrireJeu(texte))) return;
+    for (let n = 0; n < 2 && etat.erreur; n++) if (!(await ecrireJeu('', true))) return;   // erreur au chargement ou dans les premières secondes : l'IA la corrige seule (2 essais au plus)
   };
   scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
   scEnvoyerCode.onclick = async () => {                  // le programme modifié à la main

@@ -8,11 +8,14 @@ const PORT = process.env.PORT || 8080, FICHIER = process.env.DATA || path.join(_
 // adresse publique pour les liens envoyes par mail (jamais l'en-tete Host : il pourrait envoyer un lien piege)
 const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 // version du site : v1.<nombre de commits qui ont touche brique/> -> monte toute seule a chaque changement publie
-// Render clone sans historique : le "postinstall" de package.json le recupere (git fetch --unshallow) ; s'il echoue (count = 1), on se rabat sur l'identifiant du commit
-const VERSION = (() => {
+// Render clone sans historique (count = 1) : on demande le compte a GitHub (depot public, 1 requete au demarrage) ; en attendant ou sans reseau, l'identifiant du commit
+let VERSION = (() => {
   try { const n = +require('child_process').execSync('git rev-list --count HEAD -- .', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] }); if (n > 1) return 'v1.' + n; } catch {}
   return process.env.RENDER_GIT_COMMIT ? 'v-' + process.env.RENDER_GIT_COMMIT.slice(0, 7) : 'dev';
 })();
+if (VERSION.startsWith('v-'))                           // la page de commits a 1 commit par page : le numero de la derniere page = le nombre de commits de brique/
+  fetch(`https://api.github.com/repos/Imajon/ClaudeRepo/commits?path=brique&per_page=1&sha=${process.env.RENDER_GIT_COMMIT}`, { headers: { 'User-Agent': 'brique' }, signal: AbortSignal.timeout(10000) })
+    .then(r => { const n = +((r.headers.get('link') || '').match(/[?&]page=(\d+)>; rel="last"/) || [])[1]; if (n > 1) VERSION = 'v1.' + n; }).catch(() => {});
 const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [], courses: [], reponses: [], clients: [], commandes: [] };
 let db;
 

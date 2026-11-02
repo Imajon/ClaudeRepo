@@ -31,6 +31,7 @@ Plusieurs consoles : envoie(chaine) envoie un message court (moins de 200 caract
   recois() renvoie la liste des messages reçus depuis le dernier appel : [[id, chaine], ...] ; moi() = l'id de cette console.
   Envoyer au plus 25 fois par seconde. Chaque console fait tourner le même programme : décider qui fait quoi avec moi() et les id reçus.
 Modules : import math (math.sin, math.cos, math.sqrt, math.abs, math.floor, math.pi, math.atan2) ; import string (string.format, string.split).
+  OBLIGATOIRE : dès que le programme utilise math.quelquechose, la ligne "import math" doit être en haut (juste après le nom du jeu) ; pareil pour "import string". Sans elle, la console refuse le programme.
 
 LE LANGAGE BERRY (attention, ce n'est ni Python ni Lua)
   var x = 0                     # déclaration ; commentaires avec #

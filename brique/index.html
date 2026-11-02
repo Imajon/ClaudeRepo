@@ -824,7 +824,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <h2>Programmer sa console</h2>
     <p class="aide" style="margin-top:0">Chrome ou Edge sur ordinateur, IDE Arduino et moniteur série fermés, console sur l'accueil ou dans un menu.</p>
     <ol>
-      <li><b>Brancher</b> : onglet 🛠 Créer, 📟 Brancher ma console, choisir le port. La première fois, installer le moteur de jeu (bouton « Installer », environ 1 minute).</li>
+      <li><b>Connecter</b> : brancher le câble USB, onglet 🛠 Créer, 🔌 Connecter ma console, choisir le port. La première fois, installer le moteur de jeu (bouton « Installer », environ 1 minute).</li>
       <li><b>Décrire</b> son jeu avec ses mots, puis Envoyer : l'IA écrit le programme, la console le lance aussitôt.</li>
       <li><b>Faire grandir</b> le jeu demande après demande. Si la console signale une erreur, l'IA la reçoit avec la demande suivante.</li>
       <li><b>Rejouer plus tard</b> : menu de la console → <b>Jouer</b> (le dernier jeu reçu, gardé même éteinte). G + D tenus 1 s pour revenir au menu.</li>
@@ -1343,8 +1343,8 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section class="console">
     <h2>Ma console</h2>
     <img src="images/console-face.png" alt="La console Brique" width="1105" height="763" style="width:100%;max-width:560px;height:auto;display:block;margin:0 auto">
-    <div class="actions"><button id="scBrancher" class="sec">📟 Brancher ma console</button></div>
-    <div id="scEtat" class="envoi">Console pas branchée. C'est elle qui fait tourner ton jeu.</div>
+    <div class="actions"><button id="scBrancher" class="sec">🔌 Connecter ma console</button></div>
+    <div id="scEtat" class="envoi">Console pas connectée. C'est elle qui fait tourner ton jeu.</div>
     <details id="scInstaller">
       <summary>⬇ Installer le moteur de jeu sur ma console</summary>
       <p class="aide">Une fois suffit, environ 1 minute (Chrome ou Edge sur ordinateur, câble USB branché). La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la.</p>
@@ -2907,11 +2907,11 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
     }
   }
   async function ecrire(octets) { const w = port.writable.getWriter(); try { await w.write(octets); } finally { w.releaseLock(); } }
-  async function fermer() { const p = port; port = null; try { await lecteur?.cancel(); } catch {} try { await p?.close(); } catch {} dire('Console pas branchée.'); }
+  async function fermer() { const p = port; port = null; try { await lecteur?.cancel(); } catch {} try { await p?.close(); } catch {} dire('Console pas connectée.'); }
   async function relier(p) {                             // ouvre le port, demande la version ; true = console avec le moteur de jeu
     port = p; await port.open({ baudRate: 115200 }); ecouter();
     const v = await new Promise(ok => { versionVue = ok; setTimeout(() => ok(''), 1500); ecrire(new TextEncoder().encode('VERSION\n')); }); versionVue = null;
-    if (v.startsWith('BERRY')) { dire('✓ Console branchée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); return true; }
+    if (v.startsWith('BERRY')) { dire('✓ Console connectée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); return true; }
     dire('Ta console n\'a pas encore le moteur de jeu : installe-le ci-dessous.', false); scInstaller.open = true; return false;
   }
   async function auto() {                                // une console déjà autorisée sur ce site (choisie avant, ou mise à jour ici) : reliée sans clic
@@ -2929,8 +2929,8 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   scInstallBtn.addEventListener('click', () => { if (port) fermer(); }, true);   // l'installation a besoin du port
   async function envoyer(prog) {                         // "SCRIPT <octets>" puis le programme ; la console répond OK ou ERR
     if (!port && !(await auto())) {
-      dire('👉 Clique sur « 📟 Brancher ma console » et choisis ta console : ton jeu partira aussitôt.', false); scBrancher.scrollIntoView({ behavior: 'smooth', block: 'center' }); scBrancher.focus();
-      return 'Pas encore envoyé : clique sur « 📟 Brancher ma console ».';
+      dire('👉 Clique sur « 🔌 Connecter ma console » et choisis ta console : ton jeu partira aussitôt.', false); scBrancher.scrollIntoView({ behavior: 'smooth', block: 'center' }); scBrancher.focus();
+      return 'Pas encore envoyé : clique sur « 🔌 Connecter ma console ».';
     }
     const octets = new TextEncoder().encode(prog);
     const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 6000); });

@@ -405,8 +405,11 @@ async function iaScript(texte, script, erreur, avant) {
   const r = await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur || 'rien de special',
     demandes_precedentes: avant, demande: texte }, process.env.MISTRAL_MODEL_SCRIPT || 'codestral-latest', 40000);
   const t = v => typeof v === 'string' ? v.trim() : '';
-  const nouveau = t(r.script);
+  let nouveau = t(r.script);
   if (nouveau.length < 20 || nouveau.length > 20000) throw new Error('programme vide ou trop long');
+  for (const m of ['math', 'string'])                   // oubli frequent de l'IA : "math.sin" sans "import math" -> erreur sur la console ; on ajoute l'import (apres la ligne du nom du jeu)
+    if (new RegExp(`\\b${m}\\.`).test(nouveau) && !new RegExp(`^\\s*import\\s+${m}\\b`, 'm').test(nouveau))
+      nouveau = nouveau.startsWith('#') ? nouveau.replace(/^(.*\n?)/, `$1import ${m}\n`) : `import ${m}\n` + nouveau;
   if (GROS_MOTS.test(nouveau) || GROS_MOTS.test(t(r.explication))) return { refus: 'Je ne peux pas mettre ça dans un jeu.' };
   return { script: nouveau, explication: t(r.explication).slice(0, 400), limite: t(r.limite).slice(0, 300), question: t(r.question).slice(0, 200) };
 }

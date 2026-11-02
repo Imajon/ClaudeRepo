@@ -21,7 +21,7 @@
 #include "esp_heap_caps.h"
 #include "op.h"                                  // struct Op (avant les prototypes automatiques d'Arduino)
 
-#define BERRY_VERSION "b2"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
+#define BERRY_VERSION "b3"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
 #define TFT_SCLK 4
 #define TFT_MOSI 6
 #define TFT_CS   7
@@ -157,6 +157,7 @@ void dessineEcran() {                            // remplit la liste de dessin p
     }
     if (note[0]) txtOp(8, 206, note, 0xFE60, 1);
     txtOp(8, 226, "G / D : choisir    P3 : ouvrir", GRIS, 1);
+    txtOp(312 - 6 * strlen("moteur " BERRY_VERSION), 226, "moteur " BERRY_VERSION, 0x4A69, 1);   // la version installee (comparer avec celle du site)
   } else if (ecran == E_CLASSEMENT) {
     txtOp(120, 18, "Classement", 0xFFFF, 2);
     if (!nRecs) txtOp(16, 70, "Pas encore de score sur cette console.", GRIS, 1);

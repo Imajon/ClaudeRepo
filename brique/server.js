@@ -7,6 +7,12 @@ const Fiche = require('./fiche.js');                   // la fiche de jeu : meme
 const PORT = process.env.PORT || 8080, FICHIER = process.env.DATA || path.join(__dirname, 'data.json');
 // adresse publique pour les liens envoyes par mail (jamais l'en-tete Host : il pourrait envoyer un lien piege)
 const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+// version du site : v1.<nombre de commits qui ont touche brique/> -> monte toute seule a chaque changement publie
+// ponytail: si le depot est clone sans historique (count = 1), on se rabat sur l'identifiant du commit
+const VERSION = (() => {
+  try { const n = +require('child_process').execSync('git rev-list --count HEAD -- .', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] }); if (n > 1) return 'v1.' + n; } catch {}
+  return process.env.RENDER_GIT_COMMIT ? 'v-' + process.env.RENDER_GIT_COMMIT.slice(0, 7) : 'dev';
+})();
 const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [], courses: [], reponses: [], clients: [], commandes: [] };
 let db;
 
@@ -452,7 +458,7 @@ function lireJSON(req) {
 const serveur = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8').replace('__VERSION__', VERSION));
   }
   const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.(jpg|png|mp4)$/);   // photos et videos du site (nom simple : pas de chemin) ; png = image avec transparence
   if (img && fs.existsSync(path.join(__dirname, 'images', img[1] + '.' + img[2]))) {

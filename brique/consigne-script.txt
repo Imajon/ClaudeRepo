@@ -38,7 +38,7 @@ LE LANGAGE BERRY (attention, ce n'est ni Python ni Lua)
   def f(a, b) return a + b end
   if x > 3 ... elif x < 0 ... else ... end
   while x < 10 x += 1 end
-  for i: 0 .. 9 ... end         # de 0 à 9 compris
+  for i: 0 .. 9 ... end         # de 0 à 9 compris, de 1 en 1 ; "step" N'EXISTE PAS (for i: 0 .. 360 step 10 donne l'erreur 'step' undeclared) : pour un autre pas, for k: 0 .. 35 var a = k * 10 ... end
   for e: liste ... end
   var l = [] l.push(3) l.remove(0) size(l) l[0]     # liste
   var m = {} m["a"] = 1 m.keys() m.contains("a")    # dictionnaire

@@ -2988,7 +2988,7 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
     if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.', false);
     try {
       if (port) await fermer();
-      if (await relier(await navigator.serial.requestPort()) && etat.script) envoyer(etat.script);
+      if (await relier(await navigator.serial.requestPort()) && etat.script && !(await envoyer(etat.script))) await corriger();
     } catch (e) { await fermer(); dire(e.name === 'NotFoundError' ? 'Aucune console choisie.' : 'Câble débranché ou port occupé (ferme l\'IDE Arduino, l\'autre onglet ou la fenêtre d\'installation).', false); }
   };
   scInstallBtn.addEventListener('click', () => { if (port) fermer(); }, true);   // l'installation a besoin du port
@@ -3041,9 +3041,11 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   }
   scGo.onclick = async () => {
     const texte = scDemande.value.trim(); if (!texte) return scDemande.focus();
-    if (!(await ecrireJeu(texte))) return;
-    for (let n = 0; n < 2 && etat.erreur; n++) if (!(await ecrireJeu('', true))) return;   // erreur au chargement ou dans les premières secondes : l'IA la corrige seule (2 essais au plus)
+    if (await ecrireJeu(texte)) await corriger();
   };
+  async function corriger() {                            // erreur au chargement ou dans les premières secondes d'un programme de l'IA : elle la corrige seule (2 essais au plus)
+    for (let n = 0; n < 2 && etat.erreur && etat.essais.at(-1)?.demande !== '(programme modifié à la main)'; n++) if (!(await ecrireJeu('', true))) return;
+  }
   scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
   scEnvoyerCode.onclick = async () => {                  // le programme modifié à la main
     etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '', date: Date.now() }); sauver(); rendre();
@@ -3058,6 +3060,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     }
     scMettre.disabled = true; const pb = await envoyer(etat.script); majMettre();
     if (pb) { const e = etat.essais.at(-1); if (e) { e.console = pb; e.consoleOk = false; } sauver(); rendre(); }
+    else await corriger();
   };
 })();
 

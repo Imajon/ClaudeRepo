@@ -408,7 +408,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
-    <h2 class="sh-titre glitch" data-text="La console que tu assembles,&#10;les jeux que tu inventes.">La console que tu assembles,<br>les jeux que tu inventes.</h2>
+    <h2 class="sh-titre glitch" data-text="La console que tu assembles,&#10;des jeux que tu inventes">La console que tu assembles,<br>des jeux que tu inventes</h2>
   </div>
   <figure class="sh-photo">
     <div id="demoConsole" class="sh-console demo-console">   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->
@@ -424,8 +424,6 @@ body{overflow-x:clip}                                           /* la bande 100v
   <div class="sh-apres">
     <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA (Mistral, française) le construit : tu le transfères dans ta console par USB depuis ton PC.</p>
     <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">39 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">28 €</b> par console pour une classe</span></p>
-    <p class="aide" style="text-align:center;margin:10px auto 0">Chaque console aide à faire grandir <b>Le Cercle</b>, un lieu ouvert à tous pour apprendre et créer.</p>
-    <div class="cta" style="justify-content:center;margin-top:20px"><button id="accCreer" class="big">✨ Créer mon jeu</button><button id="accBoutique" class="big alt">🛒 Voir la boutique</button></div>
   </div>
   <aside class="acc-blague">                    <!-- la console se moque d'elle-même : renvoie vers le défi -->
     <p><b>Ça ne vaut pas une Switch, ni même la calculette de ta sœur.<br>Mais sauras-tu en explorer les limites pour autant ?</b></p>
@@ -1968,7 +1966,7 @@ function rendreHist() {
   if (!historique.length) return;
   hist.innerHTML = historique.map((e, i) => `
     <div class="it ${i === historique.length - 1 ? 'cur' : ''}">
-      <span class="n">Essai ${i + 1}</span>
+      <span class="n">Version v${i + 1}${e.niv === nivConsole ? ' · 📟 sur la console' : ''}</span>
       <div class="q">« ${esc(e.demande)} »</div>
       <div class="r">${e.vu.length ? 'Compris : ' + e.vu.map(esc).join(', ') + '<br>' : ''}
         ${e.duree ? `Créé en ${e.duree.toFixed(1)} s · ` : ''}${e.niv.rows.length} lignes${e.niv.id ? ' · 🌐 en ligne' : ''}<br>
@@ -2196,14 +2194,16 @@ envoyer.onclick = async () => {
     }
     // rows en premier (le firmware cherche "rows" avant tout) ; titre/pseudo sans accents (police de la console) -> liste "Mes niveaux"
     const ascii = t => norm(t || '').replace(/[^ -~]/g, '').replace(/"/g, '').slice(0, 30);
+    const ver = historique.findLastIndex(e => e.niv === jeu.niv) + 1;   // numéro de version (= essai) ajouté au titre : visible dans « Mes niveaux » sur la console
+    const vTxt = ver ? ' v' + ver : '';
     // code de partage (jeu publié) : la console s'en sert pour retrouver la même version en course à plusieurs
-    const l = await ligneSerie({ rows: jeu.niv.rows, titre: ascii(jeu.niv.titre || titreIn.value), pseudo: jeu.niv.pseudo || pseudo(),
+    const l = await ligneSerie({ rows: jeu.niv.rows, titre: ascii(jeu.niv.titre || titreIn.value).slice(0, 30 - vTxt.length) + vTxt, pseudo: jeu.niv.pseudo || pseudo(),
                                  ...(jeu.niv.code ? { code: jeu.niv.code } : {}), format: jeu.niv.format,
                                  params: { ...jeu.niv.params, message: ascii(jeu.niv.params.message).slice(0, 40) },   // message sans accents : police de la console
                                  ...(jeu.niv.fiche ? Fiche.ligne(jeu.niv.fiche) : {}) });
     if (l.startsWith('BRIQUE OK')) {
-      nivConsole = jeu.niv;
-      dire(jeu.niv.code ? `✓ « ${jeu.niv.titre || 'Ton jeu'} » est sur la console (code ${jeu.niv.code}) : jouable à plusieurs dans « Mes jeux » !` : '✓ Ton jeu est sur la console. À toi de jouer ! (Publie-le pour y jouer à plusieurs.)', true);
+      nivConsole = jeu.niv; rendreHist();
+      dire(jeu.niv.code ? `✓ « ${jeu.niv.titre || 'Ton jeu'} »${vTxt} est sur la console (code ${jeu.niv.code}) : jouable à plusieurs dans « Mes jeux » !` : `✓ Ton jeu${vTxt} est sur la console. À toi de jouer ! (Publie-le pour y jouer à plusieurs.)`, true);
     }
     else dire(l ? 'La console dit : ' + l.replace('BRIQUE ERR ', '') : 'Pas de réponse : la console a-t-elle le bon firmware ?');
   } catch (e) {
@@ -2874,7 +2874,7 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   function rendre() {
     if (!etat.essais.length) { scHist.innerHTML = '<p class="vide">Ce que tu demandes, ce que l\'IA a fait et ce que la console en dit apparaîtront ici.</p>'; return; }
     scHist.innerHTML = etat.essais.map((e, i) => `<div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
-      <span class="n">Essai ${i + 1}</span><div class="q">« ${esc(e.demande)} »</div>
+      <span class="n">Version v${i + 1}${i + 1 === etat.surConsole ? ' · 📟 sur la console' : ''}</span><div class="q">« ${esc(e.demande)} »</div>
       ${e.explication ? `<div class="r">🤖 ${esc(e.explication)}</div>` : ''}${e.astuce ? `<div class="r">💡 ${esc(e.astuce)}</div>` : ''}${e.limite ? `<div class="r">⚠️ ${esc(e.limite)}</div>` : ''}${e.question ? `<div class="r">❓ ${esc(e.question)}</div>` : ''}
       ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`).reverse().join('');
   }
@@ -2935,12 +2935,18 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
       dire('👉 Appuie sur « 📟 Mettre mon jeu sur la console » et choisis ta console.', false); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' }); scMettre.focus();
       return 'Pas encore sur la console : appuie sur « 📟 Mettre mon jeu sur la console ».';
     }
-    const octets = new TextEncoder().encode(prog);
+    const ver = etat.essais.length;                      // numéro de version : affiché 5 s en bas de l'écran de la console, pour comparer avec l'historique
+    const octets = new TextEncoder().encode(prog + `
+# --- ajoute par la page : numero de version ---
+import global
+def _brique_v(d, t0) return def () d() if temps() - t0 < 5 texte(4, 230, "v${ver}", rgb(255, 255, 255), 1) end end end
+if global.contains("dessine") global.dessine = _brique_v(global.dessine, temps()) end
+`);
     const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 6000); });
     await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length}\n`));
     for (let i = 0; i < octets.length; i += 256) { await ecrire(octets.slice(i, i + 256)); await new Promise(r => setTimeout(r, 10)); }
     const l = await rep;
-    if (l.startsWith('OK')) { etat.erreur = ''; const e = etat.essais.at(-1); if (e) { e.console = 'Ton jeu tourne sur la console.'; e.consoleOk = true; } sauver(); rendre(); return ''; }
+    if (l.startsWith('OK')) { etat.erreur = ''; etat.surConsole = ver; const e = etat.essais.at(-1); if (e) { e.console = 'Ton jeu tourne sur la console.'; e.consoleOk = true; } sauver(); rendre(); return ''; }
     return l ? '' : 'La console ne répond pas : rebranche-la.';   // ERR : l'erreur arrive par finErreur()
   }
   scGo.onclick = async () => {
@@ -2984,9 +2990,10 @@ function afficher(v) {
   atelier.classList.add('hide'); vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché, à retirer quand le mode script aura sa communauté
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
+  history.replaceState(null, '', location.pathname + location.search + (v === 'accueil' ? '' : '#' + v));   // la vue reste après actualisation
   scrollTo(0, 0);
 }
-vAccueil.onclick = () => afficher('accueil'); accCreer.onclick = () => afficher('creer'); accBoutique.onclick = () => afficher('boutique');
+vAccueil.onclick = () => afficher('accueil');
 vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique'); vSupport.onclick = () => afficher('support');
 vApropos.onclick = () => { afficher('accueil'); apropos.scrollIntoView(); };
 ficheImprimer.onclick = () => {                         // la fiche seule, en A4, dans un nouvel onglet
@@ -3006,7 +3013,7 @@ document.querySelector('.pied').onclick = e => {      // pied de page : mêmes v
 piedSite.textContent = location.host;
 if (siteVersion.textContent === '__VERSION__') siteVersion.textContent = 'hors ligne';   // page ouverte sans le serveur (fichier, GitHub Pages)
 majMoi();
-if (location.hash === '#creer') vue = 'creer';         // ancienne adresse /script (redirigée ici)
+if (['commu', 'creer', 'anim', 'boutique', 'support', 'profs'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 </script>

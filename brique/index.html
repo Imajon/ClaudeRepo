@@ -823,11 +823,10 @@ body{overflow-x:clip}                                           /* la bande 100v
     <h2>Programmer sa console</h2>
     <p class="aide" style="margin-top:0">Chrome ou Edge sur ordinateur, IDE Arduino et moniteur série fermés, console sur l'accueil ou dans un menu.</p>
     <ol>
-      <li><b>Créer</b> : onglet 🛠 Créer, choisir le monde, le héros, le danger, compléter par une phrase, puis ✨ Créer mon jeu.</li>
-      <li><b>Regarder</b> l'aperçu du niveau. Corriger la phrase et recréer si besoin.</li>
-      <li><b>Mes icônes (facultatif)</b> : chercher une image en anglais (cat, dragon…), la coller ou la glisser.</li>
-      <li><b>Envoyer</b> : brancher la console, 📟 Envoyer sur la console, choisir le port. Le niveau démarre aussitôt.</li>
-      <li><b>Rejouer plus tard</b> : accueil de la console → <b>Mes niveaux</b> (les 8 derniers, gardés même éteinte).</li>
+      <li><b>Brancher</b> : onglet 🛠 Créer, 📟 Brancher ma console, choisir le port. La première fois, installer le moteur de jeu (bouton « Installer », environ 1 minute).</li>
+      <li><b>Décrire</b> son jeu avec ses mots, puis Envoyer : l'IA écrit le programme, la console le lance aussitôt.</li>
+      <li><b>Faire grandir</b> le jeu demande après demande. Si la console signale une erreur, l'IA la reçoit avec la demande suivante.</li>
+      <li><b>Rejouer plus tard</b> : menu de la console → <b>Jouer</b> (le dernier jeu reçu, gardé même éteinte). G + D tenus 1 s pour revenir au menu.</li>
     </ol>
   </section>
   <section>
@@ -2827,6 +2826,7 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
 // ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
 let vue = 'accueil';
 function afficher(v) {
+  if (v === 'creer') { location.href = 'script'; return; }   // créer = le mode script (un prompt, aucun type de jeu) ; ponytail: l'ancien générateur reste dans la page, inaccessible, à retirer quand le mode script aura sa communauté
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   accueil.classList.toggle('hide', v !== 'accueil'); vAccueil.classList.toggle('on', v === 'accueil');

@@ -472,7 +472,7 @@ const serveur = http.createServer(async (req, res) => {
     }
     res.writeHead(200, { 'Content-Type': type, 'Content-Length': taille, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' }); return fs.createReadStream(f).pipe(res);
   }
-  if (req.method === 'GET' && (url === '/script' || url === '/script.html')) { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(path.join(__dirname, 'script.html')).pipe(res); }
+  if (req.method === 'GET' && (url === '/script' || url === '/script.html')) { res.writeHead(302, { Location: '/#creer' }); return res.end(); }   // ancienne page du mode script : c'est maintenant la vue Créer
   const fwb = req.method === 'GET' && url.match(/^\/firmware-berry\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);
   if (fwb) {                                            // firmware c3-berry (mode script) : depose par c3-berry/publier.py
     res.writeHead(200, { 'Content-Type': fwb[1].endsWith('.json') ? 'application/json' : 'application/octet-stream', 'Cache-Control': 'no-cache' });

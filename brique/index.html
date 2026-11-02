@@ -237,7 +237,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .actions.col{flex-direction:column;align-items:stretch}
 .coque .apercu{position:absolute;left:265px;top:112px;width:320px;height:240px;max-width:none;max-height:none;border-radius:0;scrollbar-width:none}   /* niveau haut ou large : il défile dans l écran, sans barre (elle rognerait le 320 px) */
 .coque canvas{border:0;border-radius:0}
-@media (min-width:1101px) and (max-width:1650px){#atelier{grid-template-columns:340px minmax(0,1fr)}#atelier>section:last-of-type{grid-column:1/-1}}   /* la console d'abord : l'historique passe dessous */
+@media (min-width:1101px) and (max-width:1650px){#atelier,#vueScript{grid-template-columns:340px minmax(0,1fr)}#atelier>section:last-of-type,#vueScript>section:last-of-type{grid-column:1/-1}}   /* la console d'abord : l'historique passe dessous */
+.it .c{margin-top:4px;font:12px/1.4 var(--mono);white-space:pre-wrap}.it .c.ok{color:var(--ok)}.it .c.ko{color:var(--ko)}   /* créer : ce que la console a dit */
 canvas{display:block;width:320px;max-width:100%;image-rendering:pixelated;background:#000;border-radius:6px;border:6px solid #222}
 .apercu{width:332px;max-width:100%;max-height:360px;overflow:auto;border-radius:6px}
 .aide{color:var(--mute);font-size:13px;margin:10px 0}
@@ -1324,6 +1325,45 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section>
     <h2>Ce que j'ai fait</h2>
     <div id="hist" class="hist"><p class="vide">Tes essais apparaîtront ici : ce que tu as demandé, ce qui est arrivé, ce que tu veux corriger.</p></div>
+  </section>
+</main>
+
+<!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
+<main id="vueScript" class="hide">
+  <div class="sh-hero page-hero">
+    <p class="sh-sur">Créer · ton jeu avec tes mots</p>
+    <h2 class="sh-titre">Tu décris ton jeu.<br>L'IA écrit le programme.</h2>
+  </div>
+  <section>
+    <h2>Je décris mon jeu <span class="ref" style="margin-left:6px">l'IA écrit le programme</span></h2>
+    <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:140px;font-size:17px"></textarea>
+    <button id="scGo" class="big" style="margin-top:10px">✨ Envoyer</button>
+    <div id="scCompris" class="compris">Écris ce que tu veux créer, puis appuie sur « Envoyer ».</div>
+  </section>
+  <section class="console">
+    <h2>Ma console</h2>
+    <img src="images/console-face.png" alt="La console Brique" width="1105" height="763" style="width:100%;max-width:560px;height:auto;display:block;margin:0 auto">
+    <div class="actions"><button id="scBrancher" class="sec">📟 Brancher ma console</button></div>
+    <div id="scEtat" class="envoi">Console pas branchée. C'est elle qui fait tourner ton jeu.</div>
+    <details id="scInstaller">
+      <summary>⬇ Installer le moteur de jeu sur ma console</summary>
+      <p class="aide">Une fois suffit, environ 1 minute (Chrome ou Edge sur ordinateur, câble USB branché). La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la.</p>
+      <esp-web-install-button id="scInstallBtn" manifest="firmware-berry/manifest.json">
+        <button slot="activate" class="sec">⬇ Installer</button>
+        <span slot="unsupported" class="aide">Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge, sur un ordinateur.</span>
+        <span slot="not-allowed" class="aide">Il faut ouvrir la page en https (ou sur localhost).</span>
+      </esp-web-install-button>
+    </details>
+    <details>
+      <summary>🔧 Voir sous le capot : le programme de ton jeu</summary>
+      <textarea id="scCode" spellcheck="false" placeholder="Pas encore de programme." style="min-height:260px;font:12px/1.45 var(--mono)"></textarea>
+      <div class="actions"><button id="scEnvoyerCode" class="sec">📟 Envoyer ce programme</button><button id="scZero" class="sec">🗑 Repartir de zéro</button></div>
+    </details>
+    <pre id="scJournal" class="hide"></pre>
+  </section>
+  <section>
+    <h2>Ce que j'ai fait</h2>
+    <div id="scHist" class="hist"><p class="vide">Ce que tu demandes, ce que l'IA a fait et ce que la console en dit apparaîtront ici.</p></div>
   </section>
 </main>
 
@@ -2823,17 +2863,103 @@ donLibre.oninput = () => { don = Math.max(1, parseInt(donLibre.value) || 0); doc
 donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes('?') ? '&' : '?'}montant=${don}`, '_blank', 'noopener')
                                    : donMsg.textContent = `Merci ! Le soutien en ligne arrive très bientôt (${don} € noté dans ton cœur 💜).`;
 
+// ---------- Créer (mode script) : la demande, le programme actuel et ce que la console a dit partent à l'IA ; le programme part sur la console ----------
+// Protocole de la console c3-berry : "VERSION" -> "BERRY VERSION bN" ; "SCRIPT <octets>" + le programme -> "OK" ou "ERR <erreur>" (+ pile d'appels).
+(() => {
+  const lireEtat = () => { try { return JSON.parse(localStorage.getItem('brique-script')) } catch { return null } };
+  let etat = lireEtat() || { script: '', essais: [], erreur: '' };   // erreur = dernière chose que la console a dite de travers (l'IA la reçoit)
+  const sauver = () => { try { localStorage.setItem('brique-script', JSON.stringify(etat)) } catch {} };
+  scCode.value = etat.script;
+  function rendre() {
+    if (!etat.essais.length) { scHist.innerHTML = '<p class="vide">Ce que tu demandes, ce que l\'IA a fait et ce que la console en dit apparaîtront ici.</p>'; return; }
+    scHist.innerHTML = etat.essais.map((e, i) => `<div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
+      <span class="n">Essai ${i + 1}</span><div class="q">« ${esc(e.demande)} »</div>
+      ${e.explication ? `<div class="r">🤖 ${esc(e.explication)}</div>` : ''}${e.limite ? `<div class="r">⚠️ ${esc(e.limite)}</div>` : ''}${e.question ? `<div class="r">❓ ${esc(e.question)}</div>` : ''}
+      ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`).reverse().join('');
+  }
+  rendre();
+  let port = null, lecteur = null, attente = null, versionVue = null, errEnCours = null;
+  const dire = (t, ok) => scEtat.innerHTML = ok === undefined ? esc(t) : `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
+  const journal = l => { journal.l = [...(journal.l || []), l].slice(-8); scJournal.textContent = journal.l.join('\n'); scJournal.classList.remove('hide'); };
+  function ligne(l) {
+    if (l.startsWith('STAT')) return;
+    if (l.startsWith('BERRY VERSION') || l.startsWith('BRIQUE VERSION')) { versionVue?.(l); return; }
+    if (errEnCours && (l.startsWith('stack traceback') || l.startsWith('\t'))) { errEnCours.push(l.trim()); return; }
+    if (l.startsWith('OK') || l.startsWith('ERR')) {
+      if (l.startsWith('ERR')) { errEnCours = [l.slice(4)]; setTimeout(finErreur, 300); }
+      if (attente) { attente(l); attente = null; }
+      return;
+    }
+    journal(l);                                          // print() du programme
+  }
+  function finErreur() {                                 // une erreur (au chargement ou pendant le jeu) : montrée, et donnée à l'IA à la prochaine demande
+    if (!errEnCours) return;
+    const t = errEnCours.filter((l, i, a) => a.indexOf(l) === i).join('\n'); errEnCours = null;
+    etat.erreur = t; const e = etat.essais.at(-1); if (e) { e.console = 'Erreur : ' + t; e.consoleOk = false; }
+    sauver(); rendre();
+  }
+  async function ecouter() {
+    const dec = new TextDecoder(); let reste = '';
+    while (port?.readable) {
+      lecteur = port.readable.getReader();
+      try { for (;;) { const { value, done } = await lecteur.read(); if (done) break; reste += dec.decode(value); const ls = reste.split('\n'); reste = ls.pop(); ls.forEach(l => ligne(l.replace(/\r$/, ''))); } }
+      catch { break; } finally { lecteur.releaseLock(); }
+    }
+  }
+  async function ecrire(octets) { const w = port.writable.getWriter(); try { await w.write(octets); } finally { w.releaseLock(); } }
+  async function fermer() { const p = port; port = null; try { await lecteur?.cancel(); } catch {} try { await p?.close(); } catch {} dire('Console pas branchée.'); }
+  scBrancher.onclick = async () => {
+    if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.', false);
+    try {
+      if (port) await fermer();
+      port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter();
+      const v = await new Promise(ok => { versionVue = ok; setTimeout(() => ok(''), 1500); ecrire(new TextEncoder().encode('VERSION\n')); }); versionVue = null;
+      if (v.startsWith('BERRY')) { dire('✓ Console branchée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); if (etat.script) envoyer(etat.script); }
+      else { dire('Ta console n\'a pas encore le moteur de jeu : installe-le ci-dessous.', false); scInstaller.open = true; }
+    } catch (e) { await fermer(); dire(e.name === 'NotFoundError' ? 'Aucune console choisie.' : 'Câble débranché ou port occupé (ferme l\'IDE Arduino ou l\'autre onglet).', false); }
+  };
+  scInstallBtn.addEventListener('click', () => { if (port) fermer(); }, true);   // l'installation a besoin du port
+  async function envoyer(prog) {                         // "SCRIPT <octets>" puis le programme ; la console répond OK ou ERR
+    if (!port) return 'Branche ta console pour essayer ton jeu.';
+    const octets = new TextEncoder().encode(prog);
+    const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 6000); });
+    await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length}\n`));
+    for (let i = 0; i < octets.length; i += 256) { await ecrire(octets.slice(i, i + 256)); await new Promise(r => setTimeout(r, 10)); }
+    const l = await rep;
+    if (l.startsWith('OK')) { etat.erreur = ''; const e = etat.essais.at(-1); if (e) { e.console = 'Ton jeu tourne sur la console.'; e.consoleOk = true; } sauver(); rendre(); return ''; }
+    return l ? '' : 'La console ne répond pas : rebranche-la.';   // ERR : l'erreur arrive par finErreur()
+  }
+  scGo.onclick = async () => {
+    const texte = scDemande.value.trim(); if (!texte) return scDemande.focus();
+    scGo.disabled = true; scGo.textContent = '⏳ L\'IA écrit ton programme…'; const t0 = performance.now(); let r;
+    try { r = await api('api/script', { ...ident(), texte, script: etat.script, erreur: etat.erreur, avant: etat.essais.map(e => e.demande).slice(-6) }, session); }
+    catch (e) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : e.message || 'L\'IA ne répond pas : réessaie.')}</span>`; }
+    scGo.disabled = false; scGo.textContent = '✨ Envoyer';
+    if (!r) return;
+    if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return; }
+    scCompris.textContent = `Programme écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s. ${r.explication || ''}`;
+    etat.script = r.script; scCode.value = r.script; scDemande.value = '';
+    etat.essais.push({ demande: texte, explication: r.explication, limite: r.limite, question: r.question, console: '' });
+    sauver(); rendre();
+    const pb = await envoyer(r.script); if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
+  };
+  scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
+  scEnvoyerCode.onclick = async () => {                  // le programme modifié à la main
+    etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '' }); sauver(); rendre();
+    const pb = await envoyer(scCode.value); if (pb) { etat.essais.at(-1).console = pb; sauver(); rendre(); }
+  };
+  scZero.onclick = () => { if (!confirm('Repartir de zéro ? Le programme et tes essais seront effacés.')) return; etat = { script: '', essais: [], erreur: '' }; scCode.value = ''; sauver(); rendre(); };
+})();
+
 // ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
 let vue = 'accueil';
 function afficher(v) {
-  if (v === 'creer') { location.href = 'script'; return; }   // créer = le mode script (un prompt, aucun type de jeu) ; ponytail: l'ancien générateur reste dans la page, inaccessible, à retirer quand le mode script aura sa communauté
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   accueil.classList.toggle('hide', v !== 'accueil'); vAccueil.classList.toggle('on', v === 'accueil');
-  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.toggle('hide', v !== 'creer'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); support.classList.toggle('hide', v !== 'support');
+  commu.classList.toggle('hide', v !== 'commu'); atelier.classList.add('hide'); vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché, à retirer quand le mode script aura sa communauté anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); support.classList.toggle('hide', v !== 'support');
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
-  if (v === 'creer') ajusterConsole();
   scrollTo(0, 0);
 }
 vAccueil.onclick = () => afficher('accueil'); accCreer.onclick = () => afficher('creer'); accBoutique.onclick = () => afficher('boutique');
@@ -2856,6 +2982,7 @@ document.querySelector('.pied').onclick = e => {      // pied de page : mêmes v
 piedSite.textContent = location.host;
 if (siteVersion.textContent === '__VERSION__') siteVersion.textContent = 'hors ligne';   // page ouverte sans le serveur (fichier, GitHub Pages)
 majMoi();
+if (location.hash === '#creer') vue = 'creer';         // ancienne adresse /script (redirigée ici)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 </script>

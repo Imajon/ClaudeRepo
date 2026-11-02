@@ -169,10 +169,6 @@ header nav.mode button{padding:5px 12px;border-radius:3px}   /* téléphone : le
 #vPanier{margin-left:auto}
 .sc-console{display:flex;align-items:center;gap:16px}
 .sc-console img{flex:1;min-width:0;max-width:560px;height:auto}
-.sc-cote{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
-.sc-cote .moi{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
-.sc-cote .moi b{color:var(--acc2)}
-@media (max-width:600px){.sc-console{flex-direction:column}.sc-cote{flex-direction:row;flex-wrap:wrap}}
 #vPanier b{margin-left:6px;padding:0 7px;border-radius:999px;background:var(--acc);color:#fff;font-size:12px}#vPanier b:empty{display:none}
 .sh-ajout{text-align:center;margin-top:18px}
 #vPanier.on,#vAnim.on{border-color:var(--acc);background:var(--chipon)}
@@ -250,7 +246,15 @@ textarea:focus{outline:none;border-color:var(--acc)}
 @media (min-width:1101px) and (max-width:1650px){#atelier{grid-template-columns:340px minmax(0,1fr)}#atelier>section:last-of-type{grid-column:1/-1}}   /* la console d'abord : l'historique passe dessous */
 #vueScript{grid-template-columns:minmax(0,1fr) 440px}   /* créer : l'agent IA prend la place, la console reste à droite */
 @media (max-width:1100px){#vueScript{grid-template-columns:minmax(0,1fr)}}
-.agent-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.agent-btns .big{flex:1 1 220px;width:auto;margin:0}
+.sc-barre{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sc-barre .moi{display:flex;align-items:center;gap:8px}.sc-barre .moi b{color:var(--acc2)}
+.sc-barre .sec{padding:5px 10px;font-size:14px}
+#vueScript .agent>.theme{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;font-size:16px}
+#vueScript .agent>h2{padding-right:40px}
+.agent-ligne{display:flex;gap:10px;align-items:stretch}.agent-ligne textarea{flex:1;min-width:0;margin:0}
+.agent-btns{display:flex;flex-direction:column;gap:8px;width:190px;flex:none}
+.agent-btns .big{width:100%;margin:0;padding:9px 10px;font-size:14px;border-radius:10px;background:linear-gradient(90deg,#4fbf83,#38a56b);box-shadow:0 2px 8px rgba(11,122,65,.2)}
+@media (max-width:600px){.agent-ligne{flex-direction:column}.agent-btns{width:auto}}
 #scMettre:disabled{opacity:.45;cursor:default;filter:grayscale(1)}   /* déjà sur la console : grisé jusqu'au prochain programme */
 #scHist{margin-top:14px}
 #scHist .q{font-style:normal;background:var(--acc);color:var(--onacc);border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:85%;margin:6px 0 6px auto;width:fit-content}   /* ma demande : bulle à droite, comme un agent IA */
@@ -1364,23 +1368,23 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
 <main id="vueScript" class="hide">
+  <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mon groupe, animateur -->
+    <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
+    <button id="vAnim" class="sec">🎓 Animateur</button>
+  </div>
   <section class="agent">                        <!-- l'agent IA : la demande en haut, l'historique (demandes et réponses) dessous -->
+    <button class="sec theme" title="Mode sombre / mode clair">🌙</button>
     <h2>Agent IA <span class="ref" style="margin-left:6px">tu décris, l'IA écrit le programme</span></h2>
-    <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:110px;font-size:17px"></textarea>
-    <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button><button id="scMettre" class="big hide">📟 Mettre mon jeu sur la console</button></div>
+    <div class="agent-ligne">                    <!-- le prompt, ses deux boutons empilés à droite -->
+      <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:110px;font-size:17px"></textarea>
+      <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button><button id="scMettre" class="big hide">📟 Mettre mon jeu sur la console</button></div>
+    </div>
     <div id="scCompris" class="compris">Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».</div>
     <div id="scHist" class="hist"><p class="vide">Ce que tu demandes, ce que l'IA a fait et ce que la console en dit apparaîtront ici.</p></div>
   </section>
   <section class="console">
     <h2>Ma console</h2>
-    <div class="sc-console">                     <!-- à droite de la console : mon groupe, animateur, mode sombre -->
-      <img src="images/console-face.png" alt="La console Brique" width="1105" height="763">
-      <div class="sc-cote">
-        <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
-        <button id="vAnim" class="sec">🎓 Animateur</button>
-        <button class="sec theme" title="Mode sombre / mode clair">🌙</button>
-      </div>
-    </div>
+    <div class="sc-console"><img src="images/console-face.png" alt="La console Brique" width="1105" height="763"></div>
     <div class="actions"><button id="scBrancher" class="sec">🔌 Connecter ma console</button></div>
     <div id="scEtat" class="envoi">Console pas connectée. C'est elle qui fait tourner ton jeu.</div>
     <details id="scInstaller">

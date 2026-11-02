@@ -168,11 +168,13 @@ header nav.mode button{padding:5px 12px;border-radius:3px}   /* téléphone : le
 .avatar{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#160c33}
 header .moi{margin-left:auto;display:flex;align-items:center;gap:8px}
 header .moi b{color:var(--acc2)}
-#vAnim.on{border-color:var(--acc);background:var(--chipon)}
+#vPanier b{margin-left:6px;padding:0 7px;border-radius:999px;background:var(--acc);color:#fff;font-size:12px}#vPanier b:empty{display:none}
+.sh-ajout{text-align:center;margin-top:18px}
+#vPanier.on,#vAnim.on{border-color:var(--acc);background:var(--chipon)}
 @media (max-width:600px){                                          /* téléphone : Rejoindre, Animateur et le thème sur une seule ligne, plus compacts */
   header{gap:8px;padding:8px 12px}
   header .moi{margin-left:0;gap:6px;min-width:0}
-  header .moi .sec,#vAnim{padding:6px 10px;font-size:13px;white-space:nowrap}
+  header .moi .sec,#vAnim,#vPanier{padding:6px 10px;font-size:13px;white-space:nowrap}
   header .theme{width:34px;height:34px;font-size:15px}
 }
 dialog{background:var(--panel);color:var(--txt);border:0;border-radius:14px;padding:20px;box-shadow:var(--glow),0 20px 60px rgba(0,0,0,.6);max-width:min(420px,92vw)}
@@ -396,6 +398,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   </nav>
   <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
   <button id="vAnim" class="sec">🎓 Animateur</button>
+  <button id="vPanier" class="sec">🧺 Panier<b id="panierNb"></b></button>
   <button id="themeBtn" class="sec theme" title="Mode sombre / mode clair">🌙</button>
   <div id="niveauScolaire" class="mode hide">
     <button id="mGuide" class="on">CM1 · CM2 — guidé</button>
@@ -629,6 +632,16 @@ body{overflow-x:clip}                                           /* la bande 100v
       <button class="on" data-v="kit"><b>🔧 Kit à souder</b><span>L'atelier complet : on monte sa console, puis on crée ses jeux.</span></button>
       <button data-v="presoude"><b>✅ Pré-soudée</b><span>Montée et testée : on commence directement par la création.</span></button>
     </div>
+    <div class="sh-ajout">
+      <div class="sh-qte">
+        <button class="sh-pm" data-d="-1" aria-label="Une console de moins">−</button>
+        <input id="btQte" type="number" min="1" max="999" value="1" aria-label="Nombre de consoles">
+        <button class="sh-pm" data-d="1" aria-label="Une console de plus">+</button>
+      </div>
+      <p id="btTotal" class="sh-total"></p>
+      <p id="btDetail" class="sh-detail"></p>
+      <button id="btCommander" class="sh-btn">Ajouter au panier</button>
+    </div>
   </div>
 
   <div class="sh-bloc">
@@ -641,40 +654,6 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p class="sh-sous">Acheter une Brique, ce n'est pas acheter un objet de plus. C'est aider à faire grandir <b>Le Cercle</b>, un tiers-lieu ouvert à tous dans le Cher, où l'on vient apprendre, fabriquer et créer ensemble : souder, programmer, inventer.</p>
     <p class="sh-sous">Chaque console vendue fait vivre ce lieu, ses ateliers et les prochaines idées qui en sortiront.</p>
     <button class="sec" onclick="afficher('accueil');apropos.scrollIntoView()" style="width:auto;margin:16px auto 0">👋 Découvrir Le Cercle</button>
-  </div>
-
-  <div class="sh-bloc">
-    <div class="sh-qte">
-      <button class="sh-pm" data-d="-1" aria-label="Une console de moins">−</button>
-      <input id="btQte" type="number" min="1" max="999" value="1" aria-label="Nombre de consoles">
-      <button class="sh-pm" data-d="1" aria-label="Une console de plus">+</button>
-    </div>
-    <p id="btTotal" class="sh-total"></p>
-    <p id="btDetail" class="sh-detail"></p>
-    <button id="btCommander" class="sh-btn">Ajouter au panier</button>
-  </div>
-
-  <div id="panierBloc" class="sh-bloc sh-panier">
-    <h3 class="sh-h">Mon panier.</h3>
-    <div id="panierLignes"></div>
-    <div class="sh-etape"><b>1. Mon compte</b>
-      <div id="cliConnexion">
-        <p class="aide">Pas de mot de passe : vous recevez un lien de connexion par mail. Nous ne gardons pas votre adresse.</p>
-        <div class="icRow"><input id="cliMail" class="pseudo" type="email" autocomplete="email" placeholder="votre.adresse@exemple.fr"><button id="cliLienBtn" class="sec">📧 Recevoir mon lien</button></div>
-      </div>
-      <p id="cliConnecte" class="aide hide">✅ Connecté · <a href="#" id="cliSortir">se déconnecter</a> · <a href="#" id="cliSupprimer">supprimer mon compte</a></p>
-    </div>
-    <div class="sh-etape"><b>2. Mon point relais</b>
-      <p id="relaisChoisi" class="aide">Livraison uniquement en point relais Mondial Relay (4,90 €).</p>
-      <button id="relaisBtn" class="sec">📍 Choisir mon point relais</button>
-      <div id="mrZone"></div><input id="mrRetour" type="hidden">
-    </div>
-    <div class="sh-etape"><b>3. Paiement</b>
-      <p class="aide">Sur la page sécurisée de Stripe : vous y donnez votre carte, le nom pour retirer le colis et un téléphone pour l'avis d'arrivée. Rien de tout cela ne passe par notre serveur.</p>
-      <button id="cmdPayer" class="sh-btn" disabled>Payer</button>
-    </div>
-    <p id="cmdMsg" class="envoi"></p>
-    <div id="mesCommandes"></div>
   </div>
 
   <div id="donnees" class="sh-bloc sh-donnees">
@@ -751,6 +730,33 @@ body{overflow-x:clip}                                           /* la bande 100v
     <button id="donBtn" class="sh-btn">Soutenir</button>
     <p id="donMsg" class="sh-detail" style="margin-top:12px"></p>
   </div>
+</main>
+
+<!-- ===== PANIER : compte, point relais, paiement ===== -->
+<main id="vuePanier" class="shop hide">
+  <div id="panierBloc" class="sh-bloc sh-panier">
+    <h3 class="sh-h">Mon panier.</h3>
+    <div id="panierLignes"></div>
+    <div class="sh-etape"><b>1. Mon compte</b>
+      <div id="cliConnexion">
+        <p class="aide">Pas de mot de passe : vous recevez un lien de connexion par mail. Nous ne gardons pas votre adresse.</p>
+        <div class="icRow"><input id="cliMail" class="pseudo" type="email" autocomplete="email" placeholder="votre.adresse@exemple.fr"><button id="cliLienBtn" class="sec">📧 Recevoir mon lien</button></div>
+      </div>
+      <p id="cliConnecte" class="aide hide">✅ Connecté · <a href="#" id="cliSortir">se déconnecter</a> · <a href="#" id="cliSupprimer">supprimer mon compte</a></p>
+    </div>
+    <div class="sh-etape"><b>2. Mon point relais</b>
+      <p id="relaisChoisi" class="aide">Livraison uniquement en point relais Mondial Relay (4,90 €).</p>
+      <button id="relaisBtn" class="sec">📍 Choisir mon point relais</button>
+      <div id="mrZone"></div><input id="mrRetour" type="hidden">
+    </div>
+    <div class="sh-etape"><b>3. Paiement</b>
+      <p class="aide">Sur la page sécurisée de Stripe : vous y donnez votre carte, le nom pour retirer le colis et un téléphone pour l'avis d'arrivée. Rien de tout cela ne passe par notre serveur.</p>
+      <button id="cmdPayer" class="sh-btn" disabled>Payer</button>
+    </div>
+    <p id="cmdMsg" class="envoi"></p>
+    <div id="mesCommandes"></div>
+  </div>
+
 </main>
 
 <!-- ===== SUPPORT : notice d'assemblage et de prise en main ===== -->
@@ -2781,6 +2787,7 @@ let panier = { kit: +lire('brique-panier')?.kit || 0, presoude: +lire('brique-pa
 const prix = e => (Math.round(e * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: e % 1 ? 2 : 0 }) + ' €';
 function majPanier() {
   ecrire('brique-panier', panier);
+  panierNb.textContent = (panier.kit + panier.presoude) || '';
   const n = panier.kit + panier.presoude, pu = n && PALIERS.find(([m]) => n >= m)[1];
   const lignes = [['kit', 'kit à souder', pu], ['presoude', 'pré-soudée', pu + PRESOUDE_SUPPLEMENT]].filter(([k]) => panier[k]);
   panierLignes.innerHTML = n ? lignes.map(([k, nom, p]) => `<div class="rang"><div class="qui"><b>${panier[k]} × console ${nom}</b> <small>${p} € pièce</small></div>
@@ -2795,7 +2802,7 @@ function majPanier() {
 const cmdDire = (t, ok) => cmdMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
 btCommander.onclick = () => {
   const { n } = majBoutique(); panier[version] = Math.min(999, panier[version] + n); majPanier();
-  panierBloc.scrollIntoView({ behavior: 'smooth' });
+  afficher('panier');
 };
 panierLignes.onclick = e => { const k = e.target.dataset.retirer; if (k) { panier[k] = 0; majPanier(); } };
 cliLienBtn.onclick = async () => {
@@ -2837,7 +2844,7 @@ async function retourBoutique() {                       // arrivée depuis le li
   const p = new URLSearchParams(location.search), jeton = p.get('client'), paye = p.get('paye');
   if (!jeton && !paye && !p.has('boutique')) return false;
   history.replaceState(null, '', location.pathname);
-  afficher('boutique');
+  afficher('panier');
   try {
     if (jeton) { client = (await api('api/client/connexion', { jeton })).session; ecrire('brique-client', client); cmdDire('✅ Connecté : choisissez votre point relais.', true); }
     if (paye && client) {
@@ -2847,7 +2854,7 @@ async function retourBoutique() {                       // arrivée depuis le li
     }
     if (p.get('boutique') === 'annule') cmdDire('Paiement annulé : votre panier vous attend.');
   } catch (e) { cmdDire(e.message); }
-  majPanier(); await chargerCommandes(); panierBloc.scrollIntoView();
+  majPanier(); await chargerCommandes();
   return true;
 }
 majPanier(); chargerCommandes();
@@ -2982,7 +2989,7 @@ function afficher(v) {
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   accueil.classList.toggle('hide', v !== 'accueil'); vAccueil.classList.toggle('on', v === 'accueil');
-  commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); support.classList.toggle('hide', v !== 'support');
+  commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');
   atelier.classList.add('hide'); vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché, à retirer quand le mode script aura sa communauté
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
@@ -2990,7 +2997,7 @@ function afficher(v) {
   scrollTo(0, 0);
 }
 vAccueil.onclick = () => afficher('accueil');
-vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique'); vSupport.onclick = () => afficher('support');
+vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique'); vSupport.onclick = () => afficher('support'); vPanier.onclick = () => afficher('panier');
 vApropos.onclick = () => { afficher('accueil'); apropos.scrollIntoView(); };
 ficheImprimer.onclick = () => {                         // la fiche seule, en A4, dans un nouvel onglet
   const w = open(URL.createObjectURL(new Blob([fiche.innerHTML], { type: 'image/svg+xml' })));
@@ -3009,7 +3016,7 @@ document.querySelector('.pied').onclick = e => {      // pied de page : mêmes v
 piedSite.textContent = location.host;
 if (siteVersion.textContent === '__VERSION__') siteVersion.textContent = 'hors ligne';   // page ouverte sans le serveur (fichier, GitHub Pages)
 majMoi();
-if (['commu', 'creer', 'anim', 'boutique', 'support', 'profs'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
+if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 </script>

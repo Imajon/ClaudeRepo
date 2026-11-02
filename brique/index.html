@@ -206,6 +206,11 @@ dialog::backdrop{background:rgba(5,2,15,.7)}
 .profs-grille section p{margin:0 0 8px}
 .profs-grille section>img{display:block;width:100%;height:200px;object-fit:cover;border-radius:10px;margin:0 0 10px}
 .profs-photos{margin:16px 0}
+.profs-bande{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.profs-bande section{margin:0}
+.profs-bande h3{margin:0 0 8px;color:var(--acc2)}
+.profs-bande p{margin:0 0 6px}
+@media (max-width:800px){.profs-bande{grid-template-columns:1fr}}
 .galerie{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
 .galerie figure{margin:0;border-radius:12px;overflow:hidden;background:var(--panel2)}
 .galerie img{display:block;width:100%;aspect-ratio:1;height:auto;object-fit:cover}
@@ -1082,9 +1087,18 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p class="sh-sur">Atelier · Brique en classe</p>
     <h2 class="sh-titre">Ils fabriquent.<br>Ils créent. Ils apprennent.</h2>
   </div>
+  <div class="profs-bande">
+    <section><h3>🔧 Kit à souder · 📦 Kit prémonté</h3>
+      <p>Les élèves soudent leur console, ou commencent directement avec une console montée et testée.</p></section>
+    <section><h3>🤖 Atelier développement avec l'IA</h3>
+      <p>Chacun décrit son jeu à l'IA, le teste sur sa console, corrige et recommence.</p></section>
+    <section><h3>📚 Plusieurs niveaux de pédagogie</h3>
+      <p><b>1. La langue</b> : prompter en français, en anglais ou en espagnol.</p>
+      <p><b>2. Les questions de cours</b> : l'enseignant les ajoute, elles sont insérées automatiquement dans les jeux des enfants. Elles apparaissent entre les niveaux, réussis ou non, et sont indispensables pour progresser.</p></section>
+  </div>
   <section>
     <h2><b>📚</b>Brique en classe : l'atelier</h2>
-    <p style="margin:0;font-size:18px">Les élèves <b>fabriquent leur console</b>, <b>créent leurs jeux en parlant à une IA</b>, et chaque jeu <b>reprend la leçon du jour</b> : vos questions de cours s'affichent quand on atteint l'arrivée.</p>
+    <p style="margin:0;font-size:18px">Les élèves <b>fabriquent leur console</b>, <b>créent leurs jeux en parlant à une IA</b>, et chaque jeu <b>reprend la leçon du jour</b> : vos questions de cours s'affichent entre les niveaux.</p>
     <p class="aide">Du CM1 à la 4ᵉ · par groupes de 8 à 30 · de 1 séance à un projet sur l'année.</p>
   </section>
   <section class="profs-photos">
@@ -1115,7 +1129,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p>L'élève décrit son jeu en français (« un volcan très haut avec des ressorts et 3 vies »). L'IA traduit en réglages, l'élève teste sur sa console, corrige sa demande, recommence.</p>
       <p class="aide">Formuler précisément, tester et corriger (démarche d'essai-erreur), regarder « sous le capot » le code produit, comprendre ce qu'une IA sait faire… et ce qu'elle ne sait pas : les demandes impossibles deviennent des « idées des joueurs ».</p></section>
     <section><h2>La couche pédagogique</h2>
-      <p>Dans l'<b>espace Animateur</b>, vous écrivez vos questions de cours (QCM, 2 ou 3 réponses). Elles sont <b>insérées d'office</b> dans tous les jeux du groupe : à l'arrivée, la console pose une question avant d'afficher la victoire, et montre la bonne réponse en cas d'erreur.</p>
+      <p>Dans l'<b>espace Animateur</b>, vous écrivez vos questions de cours (QCM, 2 ou 3 réponses). Elles sont <b>insérées d'office</b> dans tous les jeux du groupe : entre deux niveaux, réussi ou non, la console pose une question à laquelle il faut répondre pour continuer, et montre la bonne réponse en cas d'erreur.</p>
       <p class="aide">Français, maths, anglais, histoire, sciences… La leçon devient la clé du jeu, révisée à chaque partie, y compris en jouant au jeu d'un camarade. Vous suivez le taux de bonnes réponses par question.</p></section>
     <section><h2>Mode atelier</h2>
       <p>Le jour de l'atelier, activez le <b>mode atelier</b> du groupe et indiquez la matière du jour : vos élèves ne voient que les jeux de leur groupe (pas la communauté publique ni la boutique), et leurs créations restent privées au groupe.</p>

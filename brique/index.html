@@ -266,6 +266,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .code{position:relative;height:420px;border-radius:12px;background:#0d1117;overflow:hidden}   /* éditeur : fond sombre dans les deux thèmes */
 .code pre,.code textarea{position:absolute;inset:0;margin:0;padding:12px;border:0;border-radius:0;font:12px/1.5 var(--mono);white-space:pre;overflow:auto;tab-size:4;box-sizing:border-box;width:100%;height:100%;min-height:0;max-width:none;background:none}
 .code pre{color:#c9d1d9;pointer-events:none;overflow:hidden;scrollbar-gutter:stable}
+.code pre,.code textarea{padding-left:50px}
+.code #scNum{inset:0 auto 0 0;width:38px;padding:12px 6px 12px 0;text-align:right;color:#6e7681;background:#0d1117;border-right:1px solid #30363d;z-index:1;scrollbar-gutter:auto}
 .code textarea{color:transparent;caret-color:#fff;resize:none;outline:none}
 .code textarea::placeholder{color:#8b949e}
 .code .k{color:#ff7b72;font-weight:700}.code .s{color:#a5d6ff}.code .m{color:#8b949e;font-style:italic}.code .n{color:#79c0ff}.code .f{color:#d2a8ff}
@@ -1401,6 +1403,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <h3 class="code-titre">🔧 Le programme de ton jeu</h3>
     <div class="code">                           <!-- toujours visible et colorisé : on tape dans le textarea transparent, la couleur vient du pre dessous -->
       <pre id="scCouleur" aria-hidden="true"></pre>
+      <pre id="scNum" aria-hidden="true"></pre>
       <textarea id="scCode" spellcheck="false" placeholder="Pas encore de programme : demande quelque chose à l'IA."></textarea>
     </div>
     <div class="actions"><button id="scEnvoyerCode" class="sec">📟 Envoyer ce programme</button><button id="scZero" class="sec">🗑 Repartir de zéro</button></div>
@@ -2915,10 +2918,11 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   const sauver = () => { try { localStorage.setItem('brique-script', JSON.stringify(etat)) } catch {} };
   const MOTS = 'def|end|if|elif|else|while|for|in|return|import|var|class|break|continue|true|false|nil|and|or|not|do|static|try|except|raise';
   const JETONS = new RegExp(`(#.*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|\\b(${MOTS})\\b|\\b(\\d+(?:\\.\\d+)?)\\b|\\b([a-zA-Z_]\\w*)(?=\\()`, 'g');
-  const suivre = () => { scCouleur.scrollTop = scCode.scrollTop; scCouleur.scrollLeft = scCode.scrollLeft; };
+  const suivre = () => { scCouleur.scrollTop = scCode.scrollTop; scCouleur.scrollLeft = scCode.scrollLeft; scNum.scrollTop = scCode.scrollTop; };
   function colorer() {                                   // colorisation du programme Berry : commentaires, chaînes, mots-clés, nombres, appels
     scCouleur.innerHTML = scCode.value.replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(JETONS, (t, m, c, k, n) => `<span class="${m ? 'm' : c ? 's' : k ? 'k' : n ? 'n' : 'f'}">${t}</span>`) + '\n';
+    scNum.textContent = Array.from({ length: scCode.value.split('\n').length }, (_, i) => i + 1).join('\n') + '\n';
     suivre();
   }
   scCode.oninput = colorer; scCode.onscroll = suivre;

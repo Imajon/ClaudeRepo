@@ -5,11 +5,13 @@
 //   maj(dt)      la logique, dt en secondes
 //   dessine()    les appels de dessin ; enregistres une fois, rejoues pour chaque bande de l'ecran
 // Envoi : ligne "SCRIPT <octets>" puis le script ; reponse "OK ..." ou "ERR ...". Garde dans /jeu.be, relance au demarrage (sauf apres un plantage).
-// Mesures chaque seconde sur le port serie : "STAT img/s script(us) rendu(us) tas".
+// Au demarrage : logo, puis le menu (Jouer, Classement, Mes stats, A propos). G + D tenus 1 s pendant un jeu = retour au menu.
+// Mesures sur le port serie si on les demande ("STAT 1").
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
 #include <SPI.h>
 #include <LittleFS.h>
+#include <Preferences.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <esp_event.h>
@@ -19,7 +21,7 @@
 #include "esp_heap_caps.h"
 #include "op.h"                                  // struct Op (avant les prototypes automatiques d'Arduino)
 
-#define BERRY_VERSION "b1"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
+#define BERRY_VERSION "b2"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
 #define TFT_SCLK 4
 #define TFT_MOSI 6
 #define TFT_CS   7
@@ -106,6 +108,85 @@ void rejoue(int sTop) {                          // rejoue la liste dans la band
 
 // ---- boutons, son, reseau ----
 bool bt[3], btAv[3];
+
+// ---- ecrans de la console (hors jeu) : logo, menu, classement, stats, a propos ----
+enum { E_LOGO, E_MENU, E_JEU, E_CLASSEMENT, E_STATS, E_INFO };
+int ecran = E_LOGO, choix = 0; uint32_t ecranT = 0;
+const char *MENU[4] = { "Jouer", "Classement", "Mes stats", "A propos" };
+Preferences prefs;
+struct Record { char nom[22]; int32_t best; };   // classement : meilleur score de chaque jeu (par nom)
+Record recs[8]; int nRecs = 0, recCourant = -1; bool recSale = false;
+uint32_t stRecus = 0, stParties = 0, stSecondes = 0, stErreurs = 0; float stAcc = 0;   // stats gardees dans la console
+char nomJeu[22] = "Mon jeu", note[80] = "";
+void statsSauve() { prefs.putUInt("recus", stRecus); prefs.putUInt("parties", stParties); prefs.putUInt("secondes", stSecondes); prefs.putUInt("erreurs", stErreurs); }
+void recsSauve() { prefs.putBytes("recs", recs, nRecs * sizeof(Record)); prefs.putUChar("nrecs", nRecs); recSale = false; }
+void nomDuJeu(const char *src) {                 // 1re ligne "# Nom du jeu" (sinon "Mon jeu")
+  snprintf(nomJeu, sizeof nomJeu, "Mon jeu");
+  if (src[0] != '#') return;
+  const char *a = src + 1; while (*a == ' ') a++;
+  int n = 0; while (a[n] && a[n] != '\n' && a[n] != '\r' && n < (int)sizeof nomJeu - 1) n++;
+  if (n) { memcpy(nomJeu, a, n); nomJeu[n] = 0; }
+}
+void txtOp(int x, int y, const char *t, uint16_t c, int taille) {   // texte des ecrans de la console (meme liste de dessin que les jeux)
+  int n = strlen(t); if (nTxt + n + 1 > NTXT) return;
+  if (Op *o = ajoute(O_TEXTE, y, y + 8 * taille, c)) { o->a = x; o->b = y; o->t = taille; o->c = nTxt; memcpy(txt + nTxt, t, n + 1); nTxt += n + 1; }
+}
+void rectOp(int x, int y, int w, int h, uint16_t c, bool plein = true) { if (Op *o = ajoute(plein ? O_RECT : O_CADRE, y, y + h, c)) { o->a = x; o->b = y; o->c = w; o->d = h; } }
+#define VERT 0x3F10                               // le vert de Brique
+#define GRIS 0x9CD3
+void puce(int x, int y, int w, int h, int k) {   // le logo : un cadre de puce avec ses pattes (k = pattes deja sorties, animation)
+  rectOp(x, y, w, h, VERT, false); rectOp(x + 1, y + 1, w - 2, h - 2, VERT, false);
+  for (int i = 0; i < 6 && i < k; i++) { const int px = x + 14 + i * (w - 28) / 5; rectOp(px, y - 8, 3, 7, VERT); rectOp(px, y + h + 1, 3, 7, VERT); }
+}
+void dessineEcran() {                            // remplit la liste de dessin pour l'ecran courant (hors jeu)
+  nOps = nTxt = 0; camX = camY = 0; fondCol = 0x0841; char b[64];
+  const uint32_t t = millis() - ecranT;
+  if (ecran == E_LOGO) {
+    const int k = t / 180;
+    puce(76, 70, 168, 64, k); txtOp(88, 86, "BRIQUE", VERT, 4);
+    if (t > 900) txtOp(46, 160, "tu decris, l'IA ecrit, la console joue", GRIS, 1);
+    txtOp(132, 224, "moteur " BERRY_VERSION, 0x4A69, 1);
+    return;
+  }
+  puce(8, 10, 98, 26, 6); txtOp(16, 16, "BRIQUE", VERT, 2);
+  if (ecran == E_MENU) {
+    for (int i = 0; i < 4; i++) {
+      const int y = 62 + i * 36;
+      if (i == choix) rectOp(40, y - 6, 240, 30, VERT);
+      txtOp(56, y, MENU[i], i == choix ? 0x0841 : 0xFFFF, 2);
+    }
+    if (note[0]) txtOp(8, 206, note, 0xFE60, 1);
+    txtOp(8, 226, "G / D : choisir    P3 : ouvrir", GRIS, 1);
+  } else if (ecran == E_CLASSEMENT) {
+    txtOp(120, 18, "Classement", 0xFFFF, 2);
+    if (!nRecs) txtOp(16, 70, "Pas encore de score sur cette console.", GRIS, 1);
+    int ordre[8]; for (int i = 0; i < nRecs; i++) ordre[i] = i;
+    for (int i = 0; i < nRecs; i++) for (int j = i + 1; j < nRecs; j++) if (recs[ordre[j]].best > recs[ordre[i]].best) { int x = ordre[i]; ordre[i] = ordre[j]; ordre[j] = x; }
+    for (int i = 0; i < nRecs; i++) {
+      const Record &r = recs[ordre[i]];
+      snprintf(b, sizeof b, "%d. %s", i + 1, r.nom); txtOp(16, 60 + i * 20, b, i ? 0xFFFF : 0xFE60, 1);
+      snprintf(b, sizeof b, "%ld", (long)r.best); txtOp(300 - 6 * strlen(b), 60 + i * 20, b, i ? 0xFFFF : 0xFE60, 1);
+    }
+    txtOp(8, 226, "P3 : retour", GRIS, 1);
+  } else if (ecran == E_STATS) {
+    txtOp(120, 18, "Mes stats", 0xFFFF, 2);
+    snprintf(b, sizeof b, "Jeux recus de l'IA      %lu", (unsigned long)stRecus); txtOp(16, 64, b, 0xFFFF, 1);
+    snprintf(b, sizeof b, "Parties jouees          %lu", (unsigned long)stParties); txtOp(16, 88, b, 0xFFFF, 1);
+    snprintf(b, sizeof b, "Temps de jeu            %lu min %02lu s", (unsigned long)(stSecondes / 60), (unsigned long)(stSecondes % 60)); txtOp(16, 112, b, 0xFFFF, 1);
+    snprintf(b, sizeof b, "Bugs rencontres         %lu", (unsigned long)stErreurs); txtOp(16, 136, b, 0xFFFF, 1);
+    if (stErreurs) txtOp(16, 160, "Chaque bug corrige, c'est un pas de plus.", GRIS, 1);
+    txtOp(8, 226, "P3 : retour", GRIS, 1);
+  } else if (ecran == E_INFO) {
+    const char *L[] = { "Brique : une console a fabriquer et a programmer.", "",
+      "Tes jeux sont ecrits par une IA : Mistral", "(modele Codestral), une IA francaise.", "",
+      "Tu decris ton jeu avec tes mots, l'IA ecrit le", "programme, ta console le fait tourner.", "",
+      "L'IA peut se tromper : teste, repere ce qui ne", "va pas, et demande mieux. C'est toi qui decides.", "",
+      "La console ne garde que tes jeux et tes scores." };
+    for (int i = 0; i < 12; i++) txtOp(10, 48 + i * 13, L[i], i < 1 ? 0xFE60 : 0xFFFF, 1);
+    txtOp(8, 226, "P3 : retour", GRIS, 1);
+  }
+}
+void allerMenu() { ecran = E_MENU; ecranT = millis(); }
 uint32_t sonFin = 0;
 bool netOn = false; uint8_t myMac[6]; const uint8_t BCAST[6] = { 255, 255, 255, 255, 255, 255 };
 struct Msg { uint16_t de; uint8_t n; char d[200]; };
@@ -183,26 +264,37 @@ static int f_recois(bvm *v) {                    // liste des messages recus dep
   }
   be_pop(v, 1); be_return(v);
 }
+static int f_score(bvm *v) {                     // score(n) : le classement garde le meilleur score de ce jeu
+  const int32_t n = I(v, 1);
+  if (recCourant < 0) {
+    for (int i = 0; i < nRecs; i++) if (!strcmp(recs[i].nom, nomJeu)) recCourant = i;
+    if (recCourant < 0) { if (nRecs < 8) recCourant = nRecs++; else { recCourant = 0; for (int i = 1; i < 8; i++) if (recs[i].best < recs[recCourant].best) recCourant = i; }
+      strcpy(recs[recCourant].nom, nomJeu); recs[recCourant].best = n; recSale = true; }
+  }
+  if (n > recs[recCourant].best) { recs[recCourant].best = n; recSale = true; }
+  be_return_nil(v);
+}
 static int f_moi(bvm *v) { reseau(); be_pushint(v, ((uint16_t)myMac[4] << 8) | myMac[5]); be_return(v); }
 
 bool appelle(const char *nom, int argc = 0, float a = 0) {   // false = erreur (le jeu s'arrete, le message s'affiche)
   if (!be_getglobal(vm, nom) || !be_isfunction(vm, -1)) { be_pop(vm, 1); return true; }
   if (argc) be_pushreal(vm, a);
   appelDebut = millis();
-  if (be_pcall(vm, argc)) { errN = 0; be_dumpexcept(vm); jeuOk = false; Serial.printf("ERR %s\n", erreur); return false; }
+  if (be_pcall(vm, argc)) { errN = 0; be_dumpexcept(vm); jeuOk = false; stErreurs++; statsSauve(); Serial.printf("ERR %s\n", erreur); return false; }
   be_pop(vm, argc + 1); return true;
 }
 const char *lance(const char *src, size_t n) {   // nouvelle machine, le script, debut() ; nullptr si tout va bien
   if (vm) be_vm_delete(vm);
   vm = be_vm_new(); be_set_obs_hook(vm, heartbeat); jeuOk = false; errN = 0; erreur[0] = 0;
+  nomDuJeu(src); recCourant = -1; ecran = E_JEU; ecranT = millis(); stParties++;
   be_regfunc(vm, "fond", f_fond); be_regfunc(vm, "rect", f_rect); be_regfunc(vm, "cadre", f_cadre); be_regfunc(vm, "disque", f_disque);
   be_regfunc(vm, "cercle", f_cercle); be_regfunc(vm, "ligne", f_ligne); be_regfunc(vm, "tri", f_tri); be_regfunc(vm, "texte", f_texte);
   be_regfunc(vm, "rgb", f_rgb); be_regfunc(vm, "camera", f_camera); be_regfunc(vm, "bouton", f_bouton); be_regfunc(vm, "appui", f_appui);
   be_regfunc(vm, "lache", f_lache); be_regfunc(vm, "temps", f_temps); be_regfunc(vm, "hasard", f_hasard); be_regfunc(vm, "son", f_son);
-  be_regfunc(vm, "envoie", f_envoie); be_regfunc(vm, "recois", f_recois); be_regfunc(vm, "moi", f_moi);
+  be_regfunc(vm, "envoie", f_envoie); be_regfunc(vm, "recois", f_recois); be_regfunc(vm, "moi", f_moi); be_regfunc(vm, "score", f_score);
   const char *K[3] = { "G", "D", "P3" }; for (int k = 0; k < 3; k++) { be_pushint(vm, k); be_setglobal(vm, K[k]); be_pop(vm, 1); }
   appelDebut = millis();
-  if (be_loadbuffer(vm, "jeu", src, n) || be_pcall(vm, 0)) { errN = 0; be_dumpexcept(vm); return erreur; }
+  if (be_loadbuffer(vm, "jeu", src, n) || be_pcall(vm, 0)) { errN = 0; be_dumpexcept(vm); stErreurs++; statsSauve(); return erreur; }
   be_pop(vm, 1);
   jeuOk = true;
   if (!appelle("debut")) return erreur;
@@ -221,6 +313,7 @@ void ecoute() {
       if (nRecu == attendu) {
         recu[nRecu] = 0;
         File f = LittleFS.open("/jeu.be", "w"); if (f) { f.write((const uint8_t *)recu, nRecu); f.close(); }
+        stRecus++;
         const char *e = lance(recu, nRecu);
         if (e) { Serial.printf("ERR %s\n", e); } else Serial.printf("OK %d octets, tas %u\n", nRecu, (unsigned)ESP.getFreeHeap());
         free(recu); recu = nullptr;
@@ -254,12 +347,11 @@ void setup() {
   LittleFS.begin(true);
   const esp_reset_reason_t rr = esp_reset_reason();
   const bool plante = rr == ESP_RST_PANIC || rr == ESP_RST_INT_WDT || rr == ESP_RST_TASK_WDT || rr == ESP_RST_WDT;
-  if (plante) snprintf(erreur, sizeof erreur, "La console a redemarre pendant le jeu (plantage). Renvoie un script.");
-  else if (File f = LittleFS.open("/jeu.be", "r")) {
-    size_t n = f.size(); char *s = (char *)malloc(n + 1);
-    if (s) { f.read((uint8_t *)s, n); s[n] = 0; lance(s, n); free(s); }
-    f.close();
-  } else snprintf(erreur, sizeof erreur, "Aucun jeu. Envoie un script.");
+  if (plante) snprintf(note, sizeof note, "Ton jeu a plante la console. Demande a l'IA de corriger.");
+  prefs.begin("berry", false);
+  stRecus = prefs.getUInt("recus"); stParties = prefs.getUInt("parties"); stSecondes = prefs.getUInt("secondes"); stErreurs = prefs.getUInt("erreurs");
+  nRecs = min((int)prefs.getUChar("nrecs"), 8); if (nRecs) prefs.getBytes("recs", recs, nRecs * sizeof(Record));
+  ecran = E_LOGO; ecranT = millis(); tone(SND_PIN, 523); sonFin = millis() + 90;
 }
 
 uint32_t tPrecImg = 0, pire = 0, lentes = 0;     // pire image (ms), images de plus de 25 ms
@@ -271,17 +363,50 @@ void loop() {
   for (int k = 0; k < 3; k++) { btAv[k] = bt[k]; bt[k] = !digitalRead(BTN[k]) || (btSim >> k & 1); }
   const uint32_t now = millis(); float dt = (now - tPrec) / 1000.0f; tPrec = now; if (dt > 0.1f) dt = 0.1f;
   uint32_t t0 = micros();
-  if (jeuOk) {
-    appelle("maj", 1, dt);
-    nOps = 0; nTxt = 0; camX = camY = 0; tropOps = false;
-    if (jeuOk) appelle("dessine");
+  const bool appuiP3 = bt[2] && !btAv[2], appuiG = bt[0] && !btAv[0], appuiD = bt[1] && !btAv[1];
+  static uint32_t gdT = 0;                       // G + D tenus 1 s : quitter le jeu
+  if (bt[0] && bt[1]) { if (!gdT) gdT = now; } else gdT = 0;
+  if (ecran == E_JEU && gdT && now - gdT > 1000) {
+    gdT = 0; if (vm) { be_vm_delete(vm); vm = nullptr; } jeuOk = false; noTone(SND_PIN);
+    if (recSale) recsSauve(); statsSauve(); allerMenu();
   }
-  if (!jeuOk) {                                  // pas de jeu ou erreur : on l'affiche
-    nOps = nTxt = 0; camX = camY = 0; fondCol = 0x2000;
-    Op *o = ajoute(O_TEXTE, 0, 240, 0xFFE0); o->a = 6; o->b = 8; o->t = 1; o->c = 0;
-    snprintf(txt, NTXT, "%s", erreur[0] ? erreur : "..."); nTxt = strlen(txt) + 1;
-    g.setTextWrap(true);
-  } else g.setTextWrap(false);
+  g.setTextWrap(false);
+  if (ecran == E_LOGO) {
+    const uint32_t t = now - ecranT;
+    if (t > 180 && t < 200) { tone(SND_PIN, 659); sonFin = now + 90; } else if (t > 360 && t < 380) { tone(SND_PIN, 784); sonFin = now + 90; } else if (t > 540 && t < 560) { tone(SND_PIN, 1047); sonFin = now + 160; }
+    if (t > 2200 || (t > 300 && (appuiP3 || appuiG || appuiD))) allerMenu();
+    dessineEcran();
+  } else if (ecran == E_MENU) {
+    if (appuiG) choix = (choix + 3) % 4; if (appuiD) choix = (choix + 1) % 4;
+    if (appuiP3) {
+      note[0] = 0;
+      if (choix == 0) {                          // Jouer : le dernier jeu recu
+        File f = LittleFS.open("/jeu.be", "r");
+        if (!f) snprintf(note, sizeof note, "Pas encore de jeu : cree-le sur Brique (mode script).");
+        else { size_t n = f.size(); char *s = (char *)malloc(n + 1); if (s) { f.read((uint8_t *)s, n); s[n] = 0; lance(s, n); free(s); } f.close(); }
+      } else { ecran = choix == 1 ? E_CLASSEMENT : choix == 2 ? E_STATS : E_INFO; ecranT = now; }
+    }
+    if (ecran != E_JEU) dessineEcran();
+  } else if (ecran != E_JEU) {
+    if (appuiP3) allerMenu();
+    dessineEcran();
+  }
+  if (ecran == E_JEU) {
+    if (jeuOk) {
+      appelle("maj", 1, dt);
+      nOps = 0; nTxt = 0; camX = camY = 0; tropOps = false;
+      if (jeuOk) appelle("dessine");
+      stAcc += dt; if (stAcc >= 1) { stAcc -= 1; stSecondes++; if (stSecondes % 60 == 0) { statsSauve(); if (recSale) recsSauve(); } }
+    }
+    if (!jeuOk) {                                // erreur : on l'affiche (P3 = menu)
+      nOps = nTxt = 0; camX = camY = 0; fondCol = 0x2000;
+      Op *o = ajoute(O_TEXTE, 0, 240, 0xFFE0); o->a = 6; o->b = 8; o->t = 1; o->c = 0;
+      snprintf(txt, NTXT, "%s", erreur[0] ? erreur : "..."); nTxt = strlen(txt) + 1;
+      txtOp(8, 226, "P3 : menu", GRIS, 1);
+      g.setTextWrap(true);
+      if (appuiP3) { if (vm) { be_vm_delete(vm); vm = nullptr; } allerMenu(); }
+    }
+  }
   uint32_t t1 = micros();
   imageDebut();
   for (int k = 0; k < H / BH; k++) { dmaAttend(2); g.b = buf[k & 1]; rejoue(k * BH); bandeEnvoie(k); }   // la bande k-2 (meme tampon) doit etre partie

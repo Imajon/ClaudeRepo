@@ -391,21 +391,31 @@ function ajouterIdee(texte, pseudo, source) {          // meme idee (aux accents
 }
 const ideesPubliques = () => db.souhaits.map(s => ({ id: s.id, texte: s.texte, statut: s.statut, votes: s.votes.length, cree: s.cree }))
   .sort((a, b) => (a.statut === 'fait') - (b.statut === 'fait') || b.votes - a.votes).slice(0, 30);
-async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 'mistral-small-latest', delai = 15000) {
+async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 'mistral-small-latest', delai = 15000, surMorceau) {
   const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
     method: 'POST', signal: AbortSignal.timeout(delai),
     headers: { Authorization: 'Bearer ' + process.env.MISTRAL_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: modele, temperature: 0.2, safe_prompt: true, response_format: { type: 'json_object' },   // safe_prompt : garde-fou officiel de Mistral
+    body: JSON.stringify({ model: modele, temperature: 0.2, safe_prompt: true, response_format: { type: 'json_object' }, stream: !!surMorceau,   // safe_prompt : garde-fou officiel de Mistral
       messages: [{ role: 'system', content: consigne }, { role: 'user', content: JSON.stringify(contenu) }] }),
   });
   if (!r.ok) throw new Error('Mistral ' + r.status + ' ' + (await r.text()).slice(0, 200));
-  return JSON.parse((await r.json()).choices[0].message.content);
+  if (!surMorceau) return JSON.parse((await r.json()).choices[0].message.content);
+  let tout = '', reste = '';                             // flux : lignes "data: {...}" jusqu'a "data: [DONE]"
+  for await (const bout of r.body) {
+    const ls = (reste + Buffer.from(bout).toString()).split('\n'); reste = ls.pop();
+    for (const l of ls) {
+      if (!l.startsWith('data: ') || l === 'data: [DONE]') continue;
+      const d = JSON.parse(l.slice(6)).choices?.[0]?.delta?.content || '';
+      if (d) { tout += d; surMorceau(d); }
+    }
+  }
+  return JSON.parse(tout);
 }
 // ---------- mode script (c3-berry) : l'IA ecrit tout le jeu en Berry ; la consigne est dans consigne-script.txt ----------
 const CONSIGNE_SCRIPT = fs.readFileSync(path.join(__dirname, 'consigne-script.txt'), 'utf8');
-async function iaScript(texte, script, erreur, avant) {
+async function iaScript(texte, script, erreur, avant, auto, surMorceau) {   // auto = correction d'une erreur de la console : le modele rapide suffit
   const r = await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur || 'rien de special',
-    demandes_precedentes: avant, demande: texte }, process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest', 60000);
+    demandes_precedentes: avant, demande: texte }, auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest', 60000, surMorceau);
   const t = v => typeof v === 'string' ? v.trim() : '';
   let nouveau = t(r.script);
   if (nouveau.length < 20 || nouveau.length > 20000) throw new Error('programme vide ou trop long');
@@ -516,10 +526,14 @@ const serveur = http.createServer(async (req, res) => {
     if (typeof b.texte !== 'string' || !b.texte.trim()) return repondre(res, 400, { erreur: 'demande vide' });
     const pas = quotaIA(req, b); if (pas) return repondre(res, 429, { erreur: pas });
     const avant = (Array.isArray(b.avant) ? b.avant : []).filter(x => typeof x === 'string').slice(-6).map(x => x.slice(0, 300));
-    try {
-      const r = await iaScript(b.texte.slice(0, 500), typeof b.script === 'string' ? b.script.slice(0, 20000) : '', typeof b.erreur === 'string' ? b.erreur.slice(0, 600) : '', avant);
-      return repondre(res, 200, r);
-    } catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
+    const args = [b.texte.slice(0, 500), typeof b.script === 'string' ? b.script.slice(0, 20000) : '', typeof b.erreur === 'string' ? b.erreur.slice(0, 600) : '', avant, b.auto === true];
+    if (b.flux) {                                     // flux : le texte de l'IA au fur et a mesure, puis "\0" + la reponse verifiee
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' });
+      let fin; try { fin = await iaScript(...args, d => res.write(d)); } catch (e) { console.error(e.message); fin = { erreur: 'L\'IA ne répond pas' }; }
+      return res.end('\0' + JSON.stringify(fin));
+    }
+    try { return repondre(res, 200, await iaScript(...args)); }
+    catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
   }
   if (url === '/api/ia') {                            // compte (groupe ou animateur) ; sans compte : quelques essais par jour
     if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });

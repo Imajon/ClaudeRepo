@@ -166,16 +166,19 @@ header nav.mode button{padding:5px 12px;border-radius:3px}   /* téléphone : le
 .vig{height:84px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;border-radius:8px;background:#0a0618}
 .mini{width:60px;image-rendering:pixelated}
 .avatar{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#160c33}
-header .moi{margin-left:auto;display:flex;align-items:center;gap:8px}
-header .moi b{color:var(--acc2)}
+#vPanier{margin-left:auto}
+.sc-console{display:flex;align-items:center;gap:16px}
+.sc-console img{flex:1;min-width:0;max-width:560px;height:auto}
+.sc-cote{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.sc-cote .moi{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.sc-cote .moi b{color:var(--acc2)}
+@media (max-width:600px){.sc-console{flex-direction:column}.sc-cote{flex-direction:row;flex-wrap:wrap}}
 #vPanier b{margin-left:6px;padding:0 7px;border-radius:999px;background:var(--acc);color:#fff;font-size:12px}#vPanier b:empty{display:none}
 .sh-ajout{text-align:center;margin-top:18px}
 #vPanier.on,#vAnim.on{border-color:var(--acc);background:var(--chipon)}
 @media (max-width:600px){                                          /* téléphone : Rejoindre, Animateur et le thème sur une seule ligne, plus compacts */
   header{gap:8px;padding:8px 12px}
-  header .moi{margin-left:0;gap:6px;min-width:0}
-  header .moi .sec,#vAnim,#vPanier{padding:6px 10px;font-size:13px;white-space:nowrap}
-  header .theme{width:34px;height:34px;font-size:15px}
+  #vPanier{padding:6px 10px;font-size:13px;white-space:nowrap}
 }
 dialog{background:var(--panel);color:var(--txt);border:0;border-radius:14px;padding:20px;box-shadow:var(--glow),0 20px 60px rgba(0,0,0,.6);max-width:min(420px,92vw)}
 dialog::backdrop{background:rgba(5,2,15,.7)}
@@ -396,10 +399,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <button id="vSupport">🧰 Support</button>
     <button id="vApropos">👋 À propos</button>
   </nav>
-  <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
-  <button id="vAnim" class="sec">🎓 Animateur</button>
   <button id="vPanier" class="sec">🧺 Panier<b id="panierNb"></b></button>
-  <button id="themeBtn" class="sec theme" title="Mode sombre / mode clair">🌙</button>
   <div id="niveauScolaire" class="mode hide">
     <button id="mGuide" class="on">CM1 · CM2 — guidé</button>
     <button id="mLibre">6ᵉ · 4ᵉ — libre</button>
@@ -426,7 +426,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   </figure>
   <div class="sh-apres">
     <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA (Mistral, française) le construit : tu le transfères dans ta console par USB depuis ton PC.</p>
-    <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">39 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">28 €</b> par console pour une classe</span></p>
+    <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">29 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">19,90 €</b> par console pour une classe</span></p>
   </div>
   <aside class="acc-blague">                    <!-- la console se moque d'elle-même : renvoie vers le défi -->
     <p><b>Ça ne vaut pas une Switch, ni même la calculette de ta sœur.<br>Mais sauras-tu en explorer les limites pour autant ?</b></p>
@@ -1343,7 +1343,14 @@ body{overflow-x:clip}                                           /* la bande 100v
   </section>
   <section class="console">
     <h2>Ma console</h2>
-    <img src="images/console-face.png" alt="La console Brique" width="1105" height="763" style="width:100%;max-width:560px;height:auto;display:block;margin:0 auto">
+    <div class="sc-console">                     <!-- à droite de la console : mon groupe, animateur, mode sombre -->
+      <img src="images/console-face.png" alt="La console Brique" width="1105" height="763">
+      <div class="sc-cote">
+        <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
+        <button id="vAnim" class="sec">🎓 Animateur</button>
+        <button class="sec theme" title="Mode sombre / mode clair">🌙</button>
+      </div>
+    </div>
     <div class="actions"><button id="scBrancher" class="sec">🔌 Connecter ma console</button></div>
     <div id="scEtat" class="envoi">Console pas connectée. C'est elle qui fait tourner ton jeu.</div>
     <details id="scInstaller">
@@ -1388,7 +1395,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
   </div>
-  <div class="pied-bas"><span>© 2026 Brique · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="consoleVersions"></span></span><a id="piedSite" href="/">brique.studioeya.com</a></div>
+  <div class="pied-bas"><span>© 2026 Brique · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="consoleVersions"></span></span><span><button class="sec theme" title="Mode sombre / mode clair">🌙</button> <a id="piedSite" href="/">brique.studioeya.com</a></span></div>
 </footer>
 
 <script src="fiche.js"></script>   <!-- la fiche de jeu (FICHE-JEU.md) : même code que server.js -->
@@ -2301,8 +2308,8 @@ let EN_LIGNE = false;   // vrai seulement si server.js répond (GitHub Pages ou 
 const lire = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
 const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 // thème clair / sombre : bouton 🌙 de l'en-tête, gardé dans ce navigateur (lu avant l'affichage dans <head>)
-const majTheme = () => themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
-themeBtn.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; ecrire('brique-theme', t); majTheme(); };
+const majTheme = () => document.querySelectorAll('.theme').forEach(b => b.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙');
+document.querySelectorAll('.theme').forEach(b => b.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; ecrire('brique-theme', t); majTheme(); });
 majTheme();
 let moi = lire('brique-moi');                          // { pseudo, secret, groupe }
 const pseudo = () => moi?.pseudo || '';
@@ -2762,7 +2769,8 @@ async function connexionParLien() {                     // arrivée depuis le li
 
 // ---------- Boutique : prix unitaire dégressif selon la quantité ----------
 // même grille que server.js (c'est le serveur qui calcule le prix payé)
-const PALIERS = [[30, 28], [10, 31], [3, 34], [2, 36], [1, 39]]; // [à partir de n consoles, prix unitaire €]
+const PALIERS = [[10, 19.9], [2, 24.5], [1, 29]]; // [à partir de n consoles, prix unitaire €] : 29 € la console, 49 € les deux, 199 € les dix
+const prix = e => (Math.round(e * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: Math.round(e * 100) % 100 ? 2 : 0 }) + ' €';
 // version pre-soudee : meme degressivite, + un supplement par console (montage + test)
 const PRESOUDE_SUPPLEMENT = 12;   // ponytail: prix a confirmer, a changer ici (et dans server.js)
 const PORT_RELAIS = 4.9;
@@ -2770,13 +2778,13 @@ const MR_ENSEIGNE = 'BDTEST  ';   // ponytail: code enseigne Mondial Relay de te
 let version = 'kit';
 const sup = () => version === 'presoude' ? PRESOUDE_SUPPLEMENT : 0;
 const prixUnitaire = n => PALIERS.find(([min]) => n >= min)[1] + sup();
-accPrix1.textContent = PALIERS.at(-1)[1] + ' €'; accPrixMin.textContent = PALIERS[0][1] + ' €';   // accueil : même grille que la boutique (kit)
+accPrix1.textContent = prix(PALIERS.at(-1)[1]); accPrixMin.textContent = prix(PALIERS[0][1]);   // accueil : même grille que la boutique (kit)
 function majBoutique() {
   const n = Math.max(1, Math.min(999, parseInt(btQte.value) || 1)), pu = prixUnitaire(n);
   const max = PALIERS.at(-1)[1] + sup();
-  paliers.innerHTML = [...PALIERS].map(([min, p]) => [min, p + sup()]).reverse().map(([min, p], i, a) => `<div class="${p === pu ? 'on' : ''}"><b>${p} €</b><span>${a[i + 1] ? (a[i + 1][0] - 1 > min ? `${min} à ${a[i + 1][0] - 1}` : min) : `${min} et +`} console${min > 1 ? 's' : ''}</span><i>${p < max ? `−${Math.round((1 - p / max) * 100)} %` : ''}</i></div>`).join('');
-  btTotal.textContent = (n * pu) + ' €';
-  btDetail.textContent = `${n} × ${pu} € (${version === 'presoude' ? 'pré-soudée' : 'kit à souder'})` + (pu < max ? ` · ${n * (max - pu)} € d'économie` : '');
+  paliers.innerHTML = [...PALIERS].map(([min, p]) => [min, p + sup()]).reverse().map(([min, p], i, a) => `<div class="${p === pu ? 'on' : ''}"><b>${prix(min * p)}</b><span>${min} console${min > 1 ? 's' : ''}${a[i + 1] ? '' : ' et +'}</span><i>${p < max ? `−${Math.round((1 - p / max) * 100)} %` : ''}</i></div>`).join('');
+  btTotal.textContent = prix(n * pu);
+  btDetail.textContent = `${n} × ${prix(pu)} (${version === 'presoude' ? 'pré-soudée' : 'kit à souder'})` + (pu < max ? ` · ${prix(n * (max - pu))} d'économie` : '');
   return { n, pu };
 }
 btQte.oninput = majBoutique; majBoutique();
@@ -2784,13 +2792,12 @@ btVersions.onclick = e => { const b = e.target.closest('[data-v]'); if (!b) retu
 document.querySelectorAll('.sh-pm').forEach(b => b.onclick = () => { btQte.value = Math.max(1, (parseInt(btQte.value) || 1) + +b.dataset.d); majBoutique(); });
 // ---------- Panier -> compte (lien mail) -> point relais -> paiement Stripe ----------
 let panier = { kit: +lire('brique-panier')?.kit || 0, presoude: +lire('brique-panier')?.presoude || 0 }, relais = null, client = lire('brique-client');
-const prix = e => (Math.round(e * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: e % 1 ? 2 : 0 }) + ' €';
 function majPanier() {
   ecrire('brique-panier', panier);
   panierNb.textContent = (panier.kit + panier.presoude) || '';
   const n = panier.kit + panier.presoude, pu = n && PALIERS.find(([m]) => n >= m)[1];
   const lignes = [['kit', 'kit à souder', pu], ['presoude', 'pré-soudée', pu + PRESOUDE_SUPPLEMENT]].filter(([k]) => panier[k]);
-  panierLignes.innerHTML = n ? lignes.map(([k, nom, p]) => `<div class="rang"><div class="qui"><b>${panier[k]} × console ${nom}</b> <small>${p} € pièce</small></div>
+  panierLignes.innerHTML = n ? lignes.map(([k, nom, p]) => `<div class="rang"><div class="qui"><b>${panier[k]} × console ${nom}</b> <small>${prix(p)} pièce</small></div>
     <span>${prix(panier[k] * p)}</span><button class="jouer" data-retirer="${k}" aria-label="Retirer">🗑</button></div>`).join('')
     + `<div class="rang"><div class="qui">Livraison en point relais</div><span>${prix(PORT_RELAIS)}</span></div>` : '<p class="vide">Votre panier est vide.</p>';
   const total = n ? lignes.reduce((s, [k, , p]) => s + panier[k] * p, 0) + PORT_RELAIS : 0;

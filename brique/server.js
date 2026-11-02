@@ -114,7 +114,7 @@ async function envoyerMail(email, sujet, html) {
 // ---------- boutique : panier -> point relais -> paiement Stripe Checkout. Aucune donnee perso chez nous ----------
 // Le compte acheteur = HMAC(e-mail, BOUTIQUE_SECRET) : ni e-mail, ni mot de passe, ni nom, ni adresse stockes.
 // Nom, telephone et carte sont saisis chez Stripe ; on ne garde que le numero du point relais (lieu public).
-const PALIERS = [[30, 28], [10, 31], [3, 34], [2, 36], [1, 39]], PRESOUDE = 12, PORT_RELAIS = 490;   // € ; port en centimes ; meme grille que index.html
+const PALIERS = [[10, 19.9], [2, 24.5], [1, 29]], PRESOUDE = 12, PORT_RELAIS = 490;   // € ; port en centimes ; meme grille que index.html
 const LOCAL = PUBLIC_URL.startsWith('http://localhost');
 const SECRET = process.env.BOUTIQUE_SECRET || (LOCAL ? 'dev-local' : null);   // en ligne : obligatoire (sinon les comptes seraient devinables)
 const ADMINS = (process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
@@ -123,7 +123,7 @@ function devis(p) {                                      // { kit, presoude } ->
   const kit = entier(p?.kit, 999) ? p.kit : 0, pre = entier(p?.presoude, 999) ? p.presoude : 0, n = kit + pre;
   if (!n || n > 999) return null;
   const pu = PALIERS.find(([m]) => n >= m)[1];
-  const lignes = [kit && ['Console Brique, kit à souder', kit, pu * 100], pre && ['Console Brique, pré-soudée', pre, (pu + PRESOUDE) * 100],
+  const lignes = [kit && ['Console Brique, kit à souder', kit, Math.round(pu * 100)], pre && ['Console Brique, pré-soudée', pre, Math.round((pu + PRESOUDE) * 100)],
                   ['Livraison en point relais', 1, PORT_RELAIS]].filter(Boolean);
   return { kit, presoude: pre, lignes, total: lignes.reduce((s, [, q, c]) => s + q * c, 0) };
 }

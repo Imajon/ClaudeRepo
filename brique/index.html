@@ -419,7 +419,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
   </figure>
   <div class="sh-apres">
-    <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA (Mistral, française) le construit : il part dans la console par le câble USB.</p>
+    <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA (Mistral, française) le construit : tu le transfères dans ta console par USB depuis ton PC.</p>
     <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">39 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">28 €</b> par console pour une classe</span></p>
     <div class="cta" style="justify-content:center;margin-top:20px"><button id="accCreer" class="big">✨ Créer mon jeu</button><button id="accBoutique" class="big alt">🛒 Voir la boutique</button></div>
   </div>
@@ -477,7 +477,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   </section>
   <section id="accCommu" class="acc-commu">      <!-- la communauté et le jeu commun, en bref (chiffres en direct) -->
     <article>
-      <span class="ref">Communauté</span><h3>🏆 Les jeux des autres</h3>
+      <span class="ref">Communauté</span><h3>🏆 Les jeux de la communauté</h3>
       <p>Chaque jeu publié reçoit un code. On récupère les jeux des copains, on bat leurs records, on grimpe au classement.</p>
       <div class="acc-chiffres"><div><b id="accJeux">–</b><span>jeux créés</span></div><div><b id="accAujourdhui">–</b><span>joueurs aujourd'hui</span></div></div>
       <button id="accVoirCommu" class="sec">🏆 Voir la communauté</button>
@@ -1337,7 +1337,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
   </div>
-  <div class="pied-bas"><span>© 2026 Brique · Jonathan Moriot et Anti · <span id="siteVersion" title="Version du site">__VERSION__</span></span><a id="piedSite" href="/">brique.studioeya.com</a></div>
+  <div class="pied-bas"><span>© 2026 Brique · <span id="siteVersion" title="Version du site">__VERSION__</span></span><a id="piedSite" href="/">brique.studioeya.com</a></div>
 </footer>
 
 <script src="fiche.js"></script>   <!-- la fiche de jeu (FICHE-JEU.md) : même code que server.js -->
@@ -2362,13 +2362,31 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
       }
     }));
   }
+  function course(nl, t) {                              // 2e demande : une course vue du dessus, la voiture dérape dans les virages (allumée ligne à ligne comme le niveau)
+    c.fillStyle = '#2f8f3a'; c.fillRect(0, 0, 320, 240);
+    const pos = a => [160 + 118 * Math.cos(a), 122 + 78 * Math.sin(a)];
+    c.strokeStyle = '#4a4f5c'; c.lineWidth = 46; c.beginPath(); c.ellipse(160, 122, 118, 78, 0, 0, 2 * Math.PI); c.stroke();
+    c.strokeStyle = '#f2f2f2'; c.lineWidth = 2; c.setLineDash([8, 8]); c.beginPath(); c.ellipse(160, 122, 118, 78, 0, 0, 2 * Math.PI); c.stroke(); c.setLineDash([]);
+    for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? '#111' : '#fff'; c.fillRect(272 + (i % 2) * 6, 100 + i * 7.6, 6, 7.6); c.fillStyle = i % 2 ? '#fff' : '#111'; c.fillRect(272 + (1 - i % 2) * 6, 100 + i * 7.6, 6, 7.6); }   // ligne d'arrivée en damier
+    const a = t / 700, voiture = (b, col, derape) => {
+      const [x, y] = pos(b), [x2, y2] = pos(b + .01), cap = Math.atan2(y2 - y, x2 - x) + derape;
+      c.save(); c.translate(x, y); c.rotate(cap); c.fillStyle = col; c.fillRect(-9, -5, 18, 10); c.fillStyle = '#9fd8ff'; c.fillRect(1, -4, 4, 8); c.fillStyle = '#111'; c.fillRect(-7, -6, 4, 2); c.fillRect(-7, 4, 4, 2); c.fillRect(4, -6, 4, 2); c.fillRect(4, 4, 4, 2); c.restore();
+    };
+    c.fillStyle = 'rgba(20,20,24,.55)'; for (let k = 1; k < 40; k++) { const [x, y] = pos(a - k * .02); c.fillRect(x - 1 + Math.sin(a - k * .02) * 3, y - 1, 2, 2); }   // traces de dérapage
+    voiture(a - .9, '#ff8a1f', 0); voiture(a, '#e8322b', .25 + .2 * Math.abs(Math.sin(a * 2)));
+    c.fillStyle = '#fff'; c.font = 'bold 14px monospace'; c.fillText('TOUR ' + (1 + Math.floor(a / (2 * Math.PI)) % 3) + '/3', 8, 18);
+    if (nl < 15) { c.fillStyle = '#0b0d14'; c.fillRect(0, nl * 16, 320, 240 - nl * 16); }
+  }
   function etoileDemo(x, y) { c.fillStyle = '#ffd400'; c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 2.5 : 6, a = -Math.PI / 2 + i * Math.PI / 5; c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } c.fill(); }
   function eteint(t, pense) {                           // écran noir ; pendant que « l'IA réfléchit », trois points
     c.fillStyle = '#0b0d14'; c.fillRect(0, 0, 320, 240);
     if (pense) { c.fillStyle = '#3ddc84'; for (let i = 0; i < 3; i++) if ((t / 250 | 0) % 4 > i) c.fillRect(140 + i * 16, 116, 8, 8); }
   }
-  // déroulé (ms) : on tape (45 ms par lettre), l'IA réfléchit, le niveau s'allume ligne à ligne, on joue un moment, on recommence
-  const TAPE = TEXTE.length * 45, PENSE = TAPE + 500, ALLUME = PENSE + 1100, JOUE = ALLUME + 700, FIN = JOUE + 5000;
+  // déroulé (ms) de chaque demande : on tape (45 ms par lettre), l'IA réfléchit, le jeu s'allume ligne à ligne, on joue un moment, puis la demande suivante
+  const DEMOS = [[TEXTE, niveau], ['Une course de voitures vue du dessus, qui dérape dans les virages', course]].map(([txt, dessin]) => {
+    const tape = txt.length * 45; return { txt, dessin, tape, pense: tape + 500, allume: tape + 1600, joue: tape + 2300, fin: tape + 7300 };
+  });
+  const FIN = DEMOS.reduce((s, d) => s + d.fin, 0);
   const KIT = 0, ETAPES = [[0, '1', '1 · le circuit'], [1300, '2', '2 · l’écran'], [2600, '3', '3 · les boutons'], [3200, '4', '3 · les boutons'], [3800, '5', '3 · les boutons'], [5600, '6', '']];   // le montage, puis la console finie
   const calme = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let t0 = performance.now(), dernier = -1;
@@ -2381,10 +2399,11 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
     if (demoConsole.dataset.kit !== k) { k ? demoConsole.dataset.kit = k : delete demoConsole.dataset.kit; if (e && e[2]) kitTxt.textContent = e[2]; }
     if (t < KIT) return;
     t -= KIT;
-    const n = Math.min(TEXTE.length, Math.floor(t / 45));
-    if (n !== dernier) { demoTxt.textContent = TEXTE.slice(0, n); dernier = n; }
-    if (t < PENSE) eteint(t, false); else if (t < ALLUME) eteint(t, true);
-    else niveau(t < JOUE ? Math.ceil(15 * (t - ALLUME) / 700) : 15, now);
+    let d = DEMOS[0], i = 0; while (t >= d.fin) { t -= d.fin; d = DEMOS[++i]; }   // la demande en cours et le temps depuis son début
+    const n = Math.min(d.txt.length, Math.floor(t / 45));
+    if (n !== dernier || demoTxt.dataset.i != i) { demoTxt.textContent = d.txt.slice(0, n); dernier = n; demoTxt.dataset.i = i; demoTxt.parentElement.setAttribute('aria-label', d.txt); }
+    if (t < d.pense) eteint(t, false); else if (t < d.allume) eteint(t, true);
+    else d.dessin(t < d.joue ? Math.ceil(15 * (t - d.allume) / 700) : 15, now);
   }
   requestAnimationFrame(image);
 })();

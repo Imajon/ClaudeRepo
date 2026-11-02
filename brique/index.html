@@ -2908,19 +2908,30 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   }
   async function ecrire(octets) { const w = port.writable.getWriter(); try { await w.write(octets); } finally { w.releaseLock(); } }
   async function fermer() { const p = port; port = null; try { await lecteur?.cancel(); } catch {} try { await p?.close(); } catch {} dire('Console pas branchée.'); }
+  async function relier(p) {                             // ouvre le port, demande la version ; true = console avec le moteur de jeu
+    port = p; await port.open({ baudRate: 115200 }); ecouter();
+    const v = await new Promise(ok => { versionVue = ok; setTimeout(() => ok(''), 1500); ecrire(new TextEncoder().encode('VERSION\n')); }); versionVue = null;
+    if (v.startsWith('BERRY')) { dire('✓ Console branchée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); return true; }
+    dire('Ta console n\'a pas encore le moteur de jeu : installe-le ci-dessous.', false); scInstaller.open = true; return false;
+  }
+  async function auto() {                                // une console déjà autorisée sur ce site (choisie avant, ou mise à jour ici) : reliée sans clic
+    if (port || !('serial' in navigator)) return !!port;
+    for (const p of await navigator.serial.getPorts()) { try { if (await relier(p)) return true; await fermer(); } catch { port = null; } }
+    return false;
+  }
   scBrancher.onclick = async () => {
     if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.', false);
     try {
       if (port) await fermer();
-      port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter();
-      const v = await new Promise(ok => { versionVue = ok; setTimeout(() => ok(''), 1500); ecrire(new TextEncoder().encode('VERSION\n')); }); versionVue = null;
-      if (v.startsWith('BERRY')) { dire('✓ Console branchée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); if (etat.script) envoyer(etat.script); }
-      else { dire('Ta console n\'a pas encore le moteur de jeu : installe-le ci-dessous.', false); scInstaller.open = true; }
-    } catch (e) { await fermer(); dire(e.name === 'NotFoundError' ? 'Aucune console choisie.' : 'Câble débranché ou port occupé (ferme l\'IDE Arduino ou l\'autre onglet).', false); }
+      if (await relier(await navigator.serial.requestPort()) && etat.script) envoyer(etat.script);
+    } catch (e) { await fermer(); dire(e.name === 'NotFoundError' ? 'Aucune console choisie.' : 'Câble débranché ou port occupé (ferme l\'IDE Arduino, l\'autre onglet ou la fenêtre d\'installation).', false); }
   };
   scInstallBtn.addEventListener('click', () => { if (port) fermer(); }, true);   // l'installation a besoin du port
   async function envoyer(prog) {                         // "SCRIPT <octets>" puis le programme ; la console répond OK ou ERR
-    if (!port) return 'Branche ta console pour essayer ton jeu.';
+    if (!port && !(await auto())) {
+      dire('👉 Clique sur « 📟 Brancher ma console » et choisis ta console : ton jeu partira aussitôt.', false); scBrancher.scrollIntoView({ behavior: 'smooth', block: 'center' }); scBrancher.focus();
+      return 'Pas encore envoyé : clique sur « 📟 Brancher ma console ».';
+    }
     const octets = new TextEncoder().encode(prog);
     const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 6000); });
     await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length}\n`));

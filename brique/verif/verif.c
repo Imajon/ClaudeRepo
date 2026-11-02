@@ -43,10 +43,32 @@ static int appelle(bvm *vm, const char *nom, int argc, float a) {   /* 0 = erreu
 }
 static void json(const char *s) {                   /* chaine JSON echappee */
   putchar('"');
-  for (; *s; s++) { if (*s == '"' || *s == '\\') printf("\\%c", *s); else if ((unsigned char)*s < 32) putchar(' '); else putchar(*s); }
+  for (; *s; s++) { if (*s == '"' || *s == '\\') printf("\\%c", *s); else if (*s == '\n') printf("\\n"); else if ((unsigned char)*s < 32) putchar(' '); else putchar(*s); }
   putchar('"');
 }
-int main(void) {
+static const char *phase(int i) {                  /* scenario des boutons : ce que fait un enfant qui decouvre le jeu (jamais G+D) */
+  memcpy(btAv, bt, sizeof bt);
+  bt[0] = bt[1] = bt[2] = 0;
+  if (i < 180) { bt[2] = 1; return "P3 tenu"; }
+  if (i < 300) { bt[2] = bt[0] = 1; return "P3 + G tenus"; }
+  if (i < 420) { bt[2] = bt[1] = 1; return "P3 + D tenus"; }
+  if (i < 480) { bt[2] = i % 10 < 3; return "P3 tape plusieurs fois"; }
+  if (i < 540) { bt[0] = 1; return "G seul"; }
+  bt[1] = 1; return "D seul";
+}
+static char suivi[4000]; static int suiviN = 0;
+static void note(bvm *vm, int argc, char **argv, const char *boutons) {   /* les variables du jeu (nombres) a cet instant */
+  suiviN += snprintf(suivi + suiviN, sizeof suivi - suiviN, "%.0f s (%s) :", image / 60.0, boutons);
+  for (int i = 1; i < argc && suiviN < (int)sizeof suivi - 40; i++) {
+    if (!be_getglobal(vm, argv[i])) { be_pop(vm, 1); continue; }
+    if (be_isint(vm, -1)) suiviN += snprintf(suivi + suiviN, sizeof suivi - suiviN, " %s=%d", argv[i], (int)be_toint(vm, -1));
+    else if (be_isreal(vm, -1)) suiviN += snprintf(suivi + suiviN, sizeof suivi - suiviN, " %s=%.1f", argv[i], be_toreal(vm, -1));
+    else if (be_isbool(vm, -1)) suiviN += snprintf(suivi + suiviN, sizeof suivi - suiviN, " %s=%s", argv[i], be_tobool(vm, -1) ? "true" : "false");
+    be_pop(vm, 1);
+  }
+  if (suiviN < (int)sizeof suivi - 2) suivi[suiviN++] = '\n', suivi[suiviN] = 0;
+}
+int main(int argc, char **argv) {                  /* argv : les noms des variables du jeu a suivre */
   static char src[65536]; size_t n = fread(src, 1, sizeof src - 1, stdin); src[n] = 0;
   srand(1);
   bvm *vm = be_vm_new(); be_set_obs_hook(vm, heartbeat);
@@ -63,8 +85,8 @@ int main(void) {
   else { be_pop(vm, 1); ok = appelle(vm, "debut", 0, 0); }
   int opsMax = 0, txtMax = 0; size_t memMax = 0; uint32_t ins0 = vm->counter_ins;
   for (image = 0; ok && image < 600; image++) {
-    memcpy(btAv, bt, sizeof bt);
-    if (image % 20 == 0) { int r = rand() % 6; bt[0] = r == 1 || r == 4; bt[1] = r == 2 || r == 5; bt[2] = r >= 3; }   /* jamais G+D ensemble */
+    const char *b = phase(image);
+    if (image % 60 == 0) note(vm, argc, argv, b);
     ops = txt = 0;
     ok = appelle(vm, "maj", 1, 1 / 60.0f) && appelle(vm, "dessine", 0, 0);
     if (ops > opsMax) opsMax = ops;
@@ -73,6 +95,8 @@ int main(void) {
   }
   printf("{\"ok\":%s,\"images\":%d,\"ops\":%d,\"texte\":%d,\"memoire\":%u,\"instructions\":%u",
          ok ? "true" : "false", image, opsMax, txtMax, (unsigned)memMax, image ? (unsigned)((vm->counter_ins - ins0) / image) : 0);
+  if (ok) note(vm, argc, argv, "fin");
+  printf(",\"suivi\":"); json(suivi);
   if (!ok) { printf(",\"erreur\":"); json(erreur); }
   printf("}\n");
   return 0;

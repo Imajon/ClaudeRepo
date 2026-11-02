@@ -413,8 +413,8 @@ async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 
 }
 // ---------- mode script (c3-berry) : l'IA ecrit tout le jeu en Berry ; la consigne est dans consigne-script.txt ----------
 const CONSIGNE_SCRIPT = fs.readFileSync(path.join(__dirname, 'consigne-script.txt'), 'utf8');
-async function iaScript(texte, script, erreur, avant, auto, surMorceau) {   // auto = correction d'une erreur de la console : le modele rapide suffit
-  const r = await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special',
+async function iaScript(texte, script, erreur, avant, auto, test, surMorceau) {   // test = ce que le verificateur a vu en jouant le programme ; auto = correction d'une erreur de la console : le modele rapide suffit
+  const r = await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special', test_automatique: test || '(pas de programme)',
     demandes_precedentes: avant, demande: texte }, auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest', 60000, surMorceau);
   const t = v => typeof v === 'string' ? v.trim() : '';
   let nouveau = t(r.script);
@@ -434,8 +434,9 @@ function avecLignes(erreur, script) {                    // "jeu:12: ..." -> on 
 const VERIF = path.join(__dirname, 'verif', process.platform === 'win32' ? 'verif.exe' : 'verif');
 function verifier(script) {                              // null = pas de verificateur sur ce serveur
   if (!fs.existsSync(VERIF)) return Promise.resolve(null);
+  const noms = [...new Set([...script.matchAll(/^var\s.*$/gm)].flatMap(l => [...l[0].matchAll(/\bvar\s+(\w+)/g)].map(m => m[1])))].slice(0, 20);   // variables du jeu a suivre
   return new Promise(ok => {
-    const p = require('child_process').execFile(VERIF, { timeout: 5000 }, (e, sortie) => { try { ok(JSON.parse(sortie)); } catch { ok(null); } });
+    const p = require('child_process').execFile(VERIF, noms, { timeout: 5000 }, (e, sortie) => { try { ok(JSON.parse(sortie)); } catch { ok(null); } });
     p.stdin.end(script);
   });
 }
@@ -449,12 +450,13 @@ function probleme(v) {                                   // ce qui irait de trav
 const CORRIGE_SRV = 'Corrige seulement l\'erreur signalee, sans rien changer d\'autre au jeu.';
 async function scriptVerifie(args, surMorceau) {         // l'IA ecrit, le verificateur joue, codestral corrige (2 fois au plus) ; chaque demande est mesuree
   const t0 = Date.now(), m = { date: t0, auto: args[4], modif: !!args[1] };
-  let r = await iaScript(...args, surMorceau), v = null, pb = '', n = 0;
+  const test = args[1] ? await verifier(args[1]) : null;   // le programme actuel joue 10 s : l'IA voit ce qui bouge (ou pas)
+  let r = await iaScript(...args, test?.suivi, surMorceau), v = null, pb = '', n = 0;
   m.ia = Date.now() - t0;
   while (r.script && (pb = probleme(v = await verifier(r.script))) && n < 2) {
     if (!n) m.premier = pb.slice(0, 120);
     n++; surMorceau?.('\x01');                           // la page repart de zero pour afficher la correction
-    try { r = { ...await iaScript(CORRIGE_SRV, r.script, pb, args[3], true, surMorceau), explication: r.explication, astuce: r.astuce, question: r.question, limite: r.limite }; }
+    try { r = { ...await iaScript(CORRIGE_SRV, r.script, pb, args[3], true, v?.suivi, surMorceau), explication: r.explication, astuce: r.astuce, question: r.question, limite: r.limite }; }
     catch (e) { console.error(e.message); break; }
   }
   if (r.script && n === 2) pb = probleme(v = await verifier(r.script));

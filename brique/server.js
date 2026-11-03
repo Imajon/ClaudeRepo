@@ -422,6 +422,7 @@ async function iaScript(texte, script, erreur, avant, auto, test, surMorceau) { 
   for (const m of ['math', 'string'])                   // oubli frequent de l'IA : "math.sin" sans "import math" -> erreur sur la console ; on ajoute l'import (apres la ligne du nom du jeu)
     if (new RegExp(`\\b${m}\\.`).test(nouveau) && !new RegExp(`^\\s*import\\s+${m}\\b`, 'm').test(nouveau))
       nouveau = nouveau.startsWith('#') ? nouveau.replace(/^(.*\n?)/, `$1import ${m}\n`) : `import ${m}\n` + nouveau;
+  nouveau = nouveau.replace(/(\bfor\s+\w+\s*:\s*)(.+?)\s*\.\.\s*(.+?)\s+step\s+(\S+)/g, '$1range($2, $3, $4)');   // "for i: 0 .. 360 step 10" n'existe pas en Berry (malgre la consigne) -> range(debut, fin, pas)
   if (GROS_MOTS.test(nouveau) || GROS_MOTS.test(t(r.explication))) return { refus: 'Je ne peux pas mettre ça dans un jeu.' };
   return { script: nouveau, explication: t(r.explication).slice(0, 400), limite: t(r.limite).slice(0, 300), question: t(r.question).slice(0, 200), astuce: t(r.astuce).slice(0, 300) };
 }

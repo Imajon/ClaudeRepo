@@ -366,6 +366,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 @media (prefers-reduced-motion:reduce){.glitch,.glitch::before,.glitch::after{animation:none}}
 .sh-titre{margin:8px 0 16px;font-size:clamp(36px,7vw,64px);line-height:1.05;letter-spacing:-.02em;text-transform:none;font-weight:700}
 .sh-sous{margin:0 auto;max-width:560px;color:var(--mute);font-size:clamp(17px,2.4vw,21px)}
+.sh-but{margin-top:12px;font-size:clamp(15px,2vw,18px)}
 .sh-prix{margin:20px 0 0;font-size:17px}
 .acc-prix{margin:10px 0 0;display:flex;justify-content:center;align-items:center;gap:10px 16px;flex-wrap:wrap}   /* accueil : le prix en avant */
 .acc-etiquette{padding:8px 18px;border-radius:999px;background:var(--acc);color:#fff;font-size:clamp(17px,2vw,21px)}
@@ -456,7 +457,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : le projet (la console, les étapes, les photos) et le prix en avant ===== -->
-<main id="accueil" data-version="1.0">
+<main id="accueil" data-version="1.1">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -475,6 +476,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   </figure>
   <div class="sh-apres">
     <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA (Mistral, française) le construit : tu le transfères dans ta console par USB depuis ton PC.</p>
+    <p class="sh-sous sh-but">Le but : découvrir l'électronique, apprendre à te servir d'une IA de façon sûre et amusante, inventer tes propres mécaniques de jeu vidéo, puis partager tes créations, à jouer seul ou à plusieurs en même temps.</p>
     <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">29 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">19,90 €</b> par console pour une classe</span></p>
   </div>
   <aside class="acc-blague">                    <!-- la console se moque d'elle-même : renvoie vers le défi -->

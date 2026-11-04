@@ -867,6 +867,8 @@ const serveur = http.createServer(async (req, res) => {
 charger().then(d => {
   db = { ...VIDE, ...d };
   for (const n of db.niveaux) if (!n.code) n.code = codeJeu();   // jeux publies avant les codes de partage
+  // ponytail: retrait ponctuel du jeu A2MU5A (fait pour un autre moteur) ; ligne a enlever une fois deploye
+  db.niveaux = db.niveaux.filter(n => n.code !== 'A2MU5A'); db.parties = db.parties.filter(p => p.niveau !== 'mvw638rm5ev'); sauver();
   purgerBoutique(); setInterval(purgerBoutique, JOUR);
   serveur.listen(PORT, () => console.log(`Brique sur ${PUBLIC_URL} (données : ${pool ? 'MySQL ' + process.env.DB_HOST : FICHIER})`));
 }).catch(e => { console.error('Impossible de charger les données :', e.message); process.exit(1); });

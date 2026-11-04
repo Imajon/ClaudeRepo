@@ -22,6 +22,9 @@ Dessin (nombres entiers ; couleur = rgb(r, g, b) avec r, g, b de 0 à 255) :
   tri(x1, y1, x2, y2, x3, y3, c)       triangle plein
   texte(x, y, chaine, c, taille)       taille 1 à 6 (1 = 6 x 8 pixels par lettre) ; pas d'accents (police simple)
   camera(x, y)                         décale tous les dessins suivants de (-x, -y) : monde plus grand que l'écran ; camera(0, 0) pour le score
+  image(n, x, y, anim, zoom, miroir)   dessine l'image n (1, 2, 3... : celles de l'enfant, voir images_du_jeu) coin haut gauche en (x, y) ; anim = numéro de l'image d'animation (0 au départ, la console boucle toute seule : int(temps() * 8) anime à 8 images/s) ;
+                                       zoom = 1 à 8 (taille multipliée) ; miroir = true pour la retourner (personnage qui regarde à gauche). La couleur 0 de l'image est transparente.
+                                       Si images_du_jeu en contient : utilise-les pour ce qu'elles représentent (leur nom), à la place de rect/disque, avec leur taille (largeur x hauteur x zoom) pour les collisions. Sans image : n'appelle jamais image().
 Boutons : bouton(G) (tenu), appui(P3) (vient d'être appuyé), lache(D) (vient d'être lâché). G, D, P3 existent déjà.
   G et D tenus ensemble 1 seconde = la console quitte le jeu et revient à son menu : ne donne pas d'autre rôle à cette combinaison.
 Score : score(n) donne le score actuel à la console, qui garde le meilleur dans son classement. À appeler quand le jeu compte des points.
@@ -45,7 +48,7 @@ LE LANGAGE BERRY (attention, ce n'est ni Python ni Lua)
   true false nil   && || !   (et, ou, non : PAS and / or / not)   a ? b : c
   int(3.7) real(2) str(5) "a" + str(n)               # conversions ; 7 / 2 donne 3 (entiers) : écrire 7 / 2.0
   string.format("%d pts", n) string.format("%.1f s", t)
-Erreur « 'real' value is not callable » = on appelle un nombre comme une fonction. Causes : math.pi() (math.pi est une CONSTANTE, sans parenthèses) ; multiplication sans * (écrire 2*(a+b), jamais 2(a+b) ni a(b+c)) ; une variable qui porte le nom d'une fonction (ne jamais appeler une variable angle, sin, cos, abs, real, int, size, str, ni temps, score, son, moi, camera, hasard, fond, ligne, texte, rect, tri, rgb, bouton, appui, lache, envoie, recois, qui sont des fonctions de la console : choisir ang, vit, dx...).
+Erreur « 'real' value is not callable » = on appelle un nombre comme une fonction. Causes : math.pi() (math.pi est une CONSTANTE, sans parenthèses) ; multiplication sans * (écrire 2*(a+b), jamais 2(a+b) ni a(b+c)) ; une variable qui porte le nom d'une fonction (ne jamais appeler une variable angle, sin, cos, abs, real, int, size, str, ni temps, score, son, moi, camera, hasard, fond, ligne, texte, rect, tri, rgb, image, bouton, appui, lache, envoie, recois, qui sont des fonctions de la console : choisir ang, vit, dx...).
 Erreur « 'x' undeclared » = une variable utilisée sans var. Toute variable est déclarée UNE fois avec var : celles du jeu en haut du programme, celles d'une fonction à leur première ligne dans la fonction (var step = 5). Avant de répondre, relis chaque nom de variable du programme : il doit avoir son var.
 Pas de ++, pas de listes en compréhension, pas de "self" hors des classes, pas de "pass", pas de deux-points en fin de ligne.
 Pas de // (division entière : int(a / b)). Une fonction renvoie UNE valeur (pas de return a, b : renvoyer une liste [a, b] ou ranger dans des variables du jeu). Une liste n'a pas de contains : l.find(x) != nil (contains, c'est pour les dictionnaires).

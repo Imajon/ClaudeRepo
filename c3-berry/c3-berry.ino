@@ -4,7 +4,7 @@
 //   debut()      une fois au lancement (facultatif)
 //   maj(dt)      la logique, dt en secondes
 //   dessine()    les appels de dessin ; enregistres une fois, rejoues pour chaque bande de l'ecran
-// Envoi : ligne "SCRIPT <octets> [nom]" puis le script ; reponse "OK ..." ou "ERR ...". Chaque jeu est garde dans /j/<ordre>_<nom code>.be (1re ligne = son nom), MAXJ au plus.
+// Envoi : ligne "SCRIPT <octets> [nom]" puis le script (suivi, s'il a des images, d'un octet 0 et des images : voir chargeImages) ; reponse "OK ..." ou "ERR ...". Chaque jeu est garde dans /j/<ordre>_<nom code>.be (1re ligne = son nom), MAXJ au plus.
 // Jouer = la liste des jeux gardes (P3 tenu sur un jeu = le supprimer).
 // Au demarrage : logo, puis le menu (Jouer, Classement, Mes stats, A propos). G + D tenus 1 s pendant un jeu = retour au menu.
 // Mesures sur le port serie si on les demande ("STAT 1").
@@ -22,7 +22,7 @@
 #include "esp_heap_caps.h"
 #include "op.h"                                  // struct Op (avant les prototypes automatiques d'Arduino)
 
-#define BERRY_VERSION "b4"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
+#define BERRY_VERSION "b5"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
 #define TFT_SCLK 4
 #define TFT_MOSI 6
 #define TFT_CS   7
@@ -83,12 +83,49 @@ class Bande : public Adafruit_GFX {
 Bande g;
 
 // ---- liste des appels de dessin de l'image ----
-enum { O_RECT, O_CADRE, O_DISQUE, O_CERCLE, O_LIGNE, O_TRI, O_TEXTE };
+enum { O_RECT, O_CADRE, O_DISQUE, O_CERCLE, O_LIGNE, O_TRI, O_TEXTE, O_IMAGE };
 Op ops[NOPS]; int nOps = 0; char txt[NTXT]; int nTxt = 0;
 uint16_t fondCol = 0; int camX = 0, camY = 0; bool tropOps = false;
 Op *ajoute(uint8_t op, int y0, int y1, int col) {
   if (nOps >= NOPS) { tropOps = true; return nullptr; }
   Op &o = ops[nOps++]; o.op = op; o.y0 = y0; o.y1 = y1; o.col = sw((uint16_t)col); return &o;
+}
+// ---- images du jeu (faites sur Brique a partir de n'importe quelle image ou GIF) : elles suivent le script dans le meme fichier ----
+// apres l'octet 0 : nombre d'images, puis pour chacune : largeur, hauteur, nombre d'images d'animation (1 octet chacun),
+// 16 couleurs RGB565 (2 octets, poids faible d'abord ; la couleur 0 = transparent), puis les pixels : 2 par octet (poids fort = a gauche), ligne par ligne, animation par animation
+struct Img { uint8_t w, h, n; uint16_t pal[16]; const uint8_t *px; };
+#define MAXIMG 16
+Img imgs[MAXIMG]; int nImgs = 0;
+char *jeuMem = nullptr;                          // le fichier du jeu en cours (script + images) : les pixels sont lus dedans, sans copie
+const char *chargeImages(const uint8_t *p, size_t n) {   // nullptr si tout va bien
+  nImgs = 0; if (!n) return nullptr;
+  const uint8_t *fin = p + n; const int k = *p++;
+  if (k > MAXIMG) return "trop d'images (16 au plus)";
+  for (int i = 0; i < k; i++) {
+    if (fin - p < 35) return "images abimees";
+    Img &m = imgs[i]; m.w = p[0]; m.h = p[1]; m.n = p[2]; p += 3;
+    for (int j = 0; j < 16; j++, p += 2) m.pal[j] = sw((uint16_t)(p[0] | p[1] << 8));
+    const size_t t = (size_t)m.n * m.h * ((m.w + 1) / 2);
+    if (!m.w || !m.h || !m.n || (size_t)(fin - p) < t) return "images abimees";
+    m.px = p; p += t; nImgs = i + 1;
+  }
+  return nullptr;
+}
+void blit(const Op &o, int sTop) {               // image o.c, animation o.d, zoom o.e, miroir o.f, coin haut gauche (o.a, o.b) ; seulement les lignes de la bande
+  const Img &m = imgs[o.c]; const int z = o.e, bpl = (m.w + 1) / 2;
+  const int x0 = max<int>(o.a, 0), x1 = min<int>(o.a + m.w * z, W), y0 = max<int>(o.b, sTop), y1 = min<int>(o.b + m.h * z, sTop + BH);
+  const uint8_t *f = m.px + (size_t)o.d * m.h * bpl;
+  if (x0 >= x1) return;
+  const int sx0 = (x0 - o.a) / z, rep0 = z - (x0 - o.a) % z, pas = o.f ? -1 : 1;   // une division par ligne, pas par pixel
+  for (int y = y0; y < y1; y++) {
+    const uint8_t *l = f + ((y - o.b) / z) * bpl; uint16_t *d = g.b + (y - sTop) * W + x0, *fin = g.b + (y - sTop) * W + x1;
+    int sx = o.f ? m.w - 1 - sx0 : sx0, rep = rep0;
+    while (d < fin) {                            // chaque pixel de l'image une fois, recopie zoom fois
+      const int c = (l[sx >> 1] >> (sx & 1 ? 0 : 4)) & 15, n = min<int>(rep, fin - d);
+      if (c) { const uint16_t col = m.pal[c]; for (int k = 0; k < n; k++) d[k] = col; }
+      d += n; rep = z; sx += pas;
+    }
+  }
 }
 void rejoue(int sTop) {                          // rejoue la liste dans la bande [sTop, sTop + BH)
   g.fillScreen(sw(fondCol));
@@ -103,6 +140,7 @@ void rejoue(int sTop) {                          // rejoue la liste dans la band
       case O_LIGNE: g.drawLine(o.a, o.b - s, o.c, o.d - s, o.col); break;
       case O_TRI: g.fillTriangle(o.a, o.b - s, o.c, o.d - s, o.e, o.f - s, o.col); break;
       case O_TEXTE: g.setTextSize(o.t); g.setTextColor(o.col); g.setCursor(o.a, o.b - s); g.print(txt + o.c); break;
+      case O_IMAGE: if (o.c < nImgs) blit(o, s); break;
     }
   }
 }
@@ -149,7 +187,9 @@ bool garde(const char *nom, const char *src, int n) {   // remplace le jeu du me
   const uint32_t seq = prefs.getUInt("seq") + 1; prefs.putUInt("seq", seq);
   char ch[24]; snprintf(ch, sizeof ch, "/j/%06lu%s", (unsigned long)seq, suf);
   File f = LittleFS.open(ch, "w", true); if (!f) return false;
-  f.print(nom); f.print('\n'); f.write((const uint8_t *)src, n); f.close(); return true;
+  f.print(nom); f.print('\n'); const bool ok = f.write((const uint8_t *)src, n) == (size_t)n; f.close();
+  if (!ok) LittleFS.remove(ch);                  // memoire de la console pleine (images) : pas de fichier a moitie ecrit
+  return ok;
 }
 void txtOp(int x, int y, const char *t, uint16_t c, int taille) {   // texte des ecrans de la console (meme liste de dessin que les jeux)
   int n = strlen(t); if (nTxt + n + 1 > NTXT) return;
@@ -281,6 +321,12 @@ static int f_texte(bvm *v) {                     // texte(x, y, chaine, couleur,
   if (Op *o = ajoute(O_TEXTE, y, y + 8 * t, I(v, 4, 0xFFFF))) { o->a = I(v, 1) - camX; o->b = y; o->c = nTxt; o->t = t; memcpy(txt + nTxt, s, n + 1); nTxt += n + 1; }
   be_return_nil(v);
 }
+static int f_image(bvm *v) {                     // image(n, x, y, animation, zoom, miroir) : n = 1, 2, 3... dans l'ordre de la page
+  const int k = I(v, 1) - 1; if (k < 0 || k >= nImgs) be_return_nil(v);
+  const Img &m = imgs[k]; const int z = constrain(I(v, 5, 1), 1, 8), y = I(v, 3) - camY;
+  if (Op *o = ajoute(O_IMAGE, y, y + m.h * z, 0)) { o->a = I(v, 2) - camX; o->b = y; o->c = k; o->d = ((I(v, 4) % m.n) + m.n) % m.n; o->e = z; o->f = be_top(v) >= 6 && be_tobool(v, 6); }
+  be_return_nil(v);
+}
 static int f_rgb(bvm *v) { int r = I(v, 1), gg = I(v, 2), b = I(v, 3); be_pushint(v, ((r & 0xF8) << 8) | ((gg & 0xFC) << 3) | (b >> 3)); be_return(v); }
 static int f_camera(bvm *v) { camX = I(v, 1); camY = I(v, 2); be_return_nil(v); }
 static int f_bouton(bvm *v) { int k = I(v, 1); be_pushbool(v, k >= 0 && k < 3 && bt[k]); be_return(v); }
@@ -321,19 +367,22 @@ bool appelle(const char *nom, int argc = 0, float a = 0) {   // false = erreur (
   if (be_pcall(vm, argc)) { errN = 0; be_dumpexcept(vm); jeuOk = false; stErreurs++; statsSauve(); Serial.printf("ERR %s\n", erreur); return false; }
   be_pop(vm, argc + 1); return true;
 }
-const char *lance(const char *src, size_t n, const char *nom = nullptr) {   // nouvelle machine, le script, debut() ; nullptr si tout va bien
-  if (vm) be_vm_delete(vm);
+void finJeu() { if (vm) { be_vm_delete(vm); vm = nullptr; } jeuOk = false; nImgs = 0; free(jeuMem); jeuMem = nullptr; }
+const char *lance(char *mem, size_t o, size_t n, const char *nom = nullptr) {   // mem = le fichier (malloc, garde jusqu'au jeu suivant), le jeu a partir de o ; nullptr si tout va bien
+  finJeu(); jeuMem = mem; const char *src = mem + o;
+  const size_t ns = strnlen(src, n);             // le script s'arrete a l'octet 0, les images suivent
   vm = be_vm_new(); be_set_obs_hook(vm, heartbeat); jeuOk = false; errN = 0; erreur[0] = 0;
   if (nom && nom[0]) snprintf(nomJeu, sizeof nomJeu, "%s", nom); else nomDuJeu(src);
   recCourant = -1; ecran = E_JEU; ecranT = millis(); stParties++;
   be_regfunc(vm, "fond", f_fond); be_regfunc(vm, "rect", f_rect); be_regfunc(vm, "cadre", f_cadre); be_regfunc(vm, "disque", f_disque);
-  be_regfunc(vm, "cercle", f_cercle); be_regfunc(vm, "ligne", f_ligne); be_regfunc(vm, "tri", f_tri); be_regfunc(vm, "texte", f_texte);
+  be_regfunc(vm, "cercle", f_cercle); be_regfunc(vm, "ligne", f_ligne); be_regfunc(vm, "tri", f_tri); be_regfunc(vm, "texte", f_texte); be_regfunc(vm, "image", f_image);
   be_regfunc(vm, "rgb", f_rgb); be_regfunc(vm, "camera", f_camera); be_regfunc(vm, "bouton", f_bouton); be_regfunc(vm, "appui", f_appui);
   be_regfunc(vm, "lache", f_lache); be_regfunc(vm, "temps", f_temps); be_regfunc(vm, "hasard", f_hasard); be_regfunc(vm, "son", f_son);
   be_regfunc(vm, "envoie", f_envoie); be_regfunc(vm, "recois", f_recois); be_regfunc(vm, "moi", f_moi); be_regfunc(vm, "score", f_score);
   const char *K[3] = { "G", "D", "P3" }; for (int k = 0; k < 3; k++) { be_pushint(vm, k); be_setglobal(vm, K[k]); be_pop(vm, 1); }
   appelDebut = millis();
-  if (be_loadbuffer(vm, "jeu", src, n) || be_pcall(vm, 0)) { errN = 0; be_dumpexcept(vm); stErreurs++; statsSauve(); return erreur; }
+  if (const char *e = ns < n ? chargeImages((const uint8_t *)src + ns + 1, n - ns - 1) : nullptr) { snprintf(erreur, sizeof erreur, "%s", e); return erreur; }
+  if (be_loadbuffer(vm, "jeu", src, ns) || be_pcall(vm, 0)) { errN = 0; be_dumpexcept(vm); stErreurs++; statsSauve(); return erreur; }
   be_pop(vm, 1);
   jeuOk = true;
   if (!appelle("debut")) return erreur;
@@ -354,9 +403,9 @@ void ecoute() {
         if (!nomRecu[0]) { nomDuJeu(recu); strcpy(nomRecu, nomJeu); }
         const bool ok = garde(nomRecu, recu, nRecu);
         stRecus++;
-        const char *e = lance(recu, nRecu, nomRecu);
-        if (e) { Serial.printf("ERR %s\n", e); } else Serial.printf("OK %d octets, tas %u%s\n", nRecu, (unsigned)ESP.getFreeHeap(), ok ? "" : " (pas garde : console pleine)");
-        free(recu); recu = nullptr;
+        const int nr = nRecu; char *m = recu; recu = nullptr;
+        const char *e = lance(m, 0, nr, nomRecu);    // le jeu garde le tampon (ses images y sont lues)
+        if (e) { Serial.printf("ERR %s\n", e); } else Serial.printf("OK %d octets, %d images, tas %u%s\n", nr, nImgs, (unsigned)ESP.getFreeHeap(), ok ? "" : " (pas garde : console pleine)");
       }
       continue;
     }
@@ -368,8 +417,9 @@ void ecoute() {
       if (!strncmp(ligne, "SCRIPT ", 7)) {
         attendu = atoi(ligne + 7); nRecu = 0;
         const char *p = strchr(ligne + 7, ' '); snprintf(nomRecu, sizeof nomRecu, "%s", p ? p + 1 : ""); recuT = millis();
+        finJeu();                                // le jeu en cours libere sa memoire : le nouveau (images comprises) peut la prendre
         recu = attendu > 0 && attendu < 60000 ? (char *)malloc(attendu + 1) : nullptr;
-        if (!recu) Serial.println("ERR taille ou memoire");
+        if (!recu) { snprintf(erreur, sizeof erreur, "pas assez de memoire pour ce jeu"); Serial.println("ERR taille ou memoire"); }
       }
     } else if (nLigne < (int)sizeof ligne - 1) ligne[nLigne++] = c;
   }
@@ -416,7 +466,7 @@ void loop() {
   static uint32_t gdT = 0;                       // G + D tenus 1 s : quitter le jeu
   if (bt[0] && bt[1]) { if (!gdT) gdT = now; } else gdT = 0;
   if (ecran == E_JEU && gdT && now - gdT > 1000) {
-    gdT = 0; if (vm) { be_vm_delete(vm); vm = nullptr; } jeuOk = false; noTone(SND_PIN);
+    gdT = 0; finJeu(); noTone(SND_PIN);
     if (recSale) recsSauve(); statsSauve(); allerMenu();
   }
   g.setTextWrap(false);
@@ -440,7 +490,7 @@ void loop() {
       if (choixJ == nJeux) allerMenu();
       else if (File f = LittleFS.open(jeux[choixJ].chemin, "r")) {
         size_t n = f.size(); char *s = (char *)malloc(n + 1);
-        if (s) { f.read((uint8_t *)s, n); s[n] = 0; const char *nl = strchr(s, '\n'); const size_t o = nl ? nl - s + 1 : 0; lance(s + o, n - o, jeux[choixJ].nom); free(s); }
+        if (s) { f.read((uint8_t *)s, n); s[n] = 0; const char *nl = strchr(s, '\n'); const size_t o = nl ? nl - s + 1 : 0; lance(s, o, n - o, jeux[choixJ].nom); }
         f.close();
       }
     }
@@ -466,7 +516,7 @@ void loop() {
       snprintf(txt, NTXT, "%s", erreur[0] ? erreur : "..."); nTxt = strlen(txt) + 1;
       txtOp(8, 226, "P3 : menu", GRIS, 1);
       g.setTextWrap(true);
-      if (appuiP3) { if (vm) { be_vm_delete(vm); vm = nullptr; } allerMenu(); }
+      if (appuiP3) { finJeu(); allerMenu(); }
     }
   }
   uint32_t t1 = micros();

@@ -21,6 +21,7 @@ Compiler et flasher : comme `c3-tft-meatboy` (même carte, `PartitionScheme=huge
 ## Ce que la console offre
 
 - **Dessin** : `fond(c)`, `rect`/`cadre(x,y,l,h,c)`, `disque`/`cercle(x,y,r,c)`, `ligne(x1,y1,x2,y2,c)`, `tri(...,c)`, `texte(x,y,s,c,taille)`, `rgb(r,g,b)`, `camera(x,y)`.
+- **Images** (b5) : `image(n, x, y, anim, zoom, miroir)` dessine l'image n (1, 2, 3...) faite sur Brique à partir de n'importe quelle image ou GIF : 16 couleurs (0 = transparent), plusieurs images d'animation (la console boucle sur `anim`), zoom 1 à 8, miroir horizontal. Elles voyagent avec le script : `SCRIPT <octets>` couvre le script, un octet 0, puis les images (format dans `chargeImages`). Budget : 32 Ko de pixels par jeu, lus sans copie dans le fichier du jeu. Test : `python envoyer-images.py COM24` (un fond 160×120 en zoom 2 et un personnage 48×48 animé).
 - **Boutons** : `bouton(k)` (tenu), `appui(k)`, `lache(k)`, avec `k` = `G`, `D` ou `P3`.
 - **Autres** : `temps()`, `hasard(a,b)`, `son(freq,ms)`.
 - **Réseau** (ESP-NOW, toutes les consoles autour) : `envoie(chaine)`, `recois()` qui renvoie `[[id, chaine], ...]`, `moi()`.

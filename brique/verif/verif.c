@@ -72,8 +72,8 @@ int main(int argc, char **argv) {                  /* argv : les noms des variab
   static char src[65536]; size_t n = fread(src, 1, sizeof src - 1, stdin); src[n] = 0;
   srand(1);
   bvm *vm = be_vm_new(); be_set_obs_hook(vm, heartbeat);
-  const char *D[] = { "rect", "cadre", "disque", "cercle", "ligne", "tri" };
-  for (int i = 0; i < 6; i++) be_regfunc(vm, D[i], f_dessin);
+  const char *D[] = { "rect", "cadre", "disque", "cercle", "ligne", "tri", "image" };
+  for (int i = 0; i < 7; i++) be_regfunc(vm, D[i], f_dessin);
   be_regfunc(vm, "fond", f_rien); be_regfunc(vm, "camera", f_rien); be_regfunc(vm, "son", f_rien); be_regfunc(vm, "score", f_rien);
   be_regfunc(vm, "texte", f_texte); be_regfunc(vm, "rgb", f_rgb); be_regfunc(vm, "bouton", f_bouton); be_regfunc(vm, "appui", f_appui);
   be_regfunc(vm, "lache", f_lache); be_regfunc(vm, "temps", f_temps); be_regfunc(vm, "hasard", f_hasard);

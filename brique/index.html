@@ -314,6 +314,16 @@ canvas.icv{display:inline-block;width:24px;height:24px;aspect-ratio:auto;border:
 .icRes img:hover{outline:2px solid var(--acc)}
 .icDrop{margin-top:8px;padding:10px;border:2px dashed var(--line);border-radius:12px;font-size:13px;color:var(--mute);text-align:center}
 .icDrop.sur{border-color:var(--acc);color:var(--txt)}
+canvas.pix,img.pix{image-rendering:pixelated;background:repeating-conic-gradient(#8884 0 25%,transparent 0 50%) 0 0/8px 8px;border-radius:4px;vertical-align:middle}
+.sc-imgs{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.sc-img{display:flex;gap:10px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px}
+.sc-img canvas{max-width:160px;max-height:120px}
+.sc-img .qui{flex:1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sc-img input{width:9em}
+.sc-jauge{margin-top:6px;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.sc-jauge span{display:block;height:100%;background:var(--ok)}
+.sc-jauge.plein span{background:var(--ko)}
+.apercus{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 /* ----- boutique : présentation épurée ----- */
 .shop{display:block;max-width:860px;margin:0 auto;padding:0 16px 80px;text-align:center}
 .sh-hero{padding:28px 0 0;position:relative;z-index:1}
@@ -1654,7 +1664,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.1">
+<main id="vueScript" class="hide" data-version="1.2">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
@@ -1690,7 +1700,12 @@ body{overflow-x:clip}                                           /* la bande 100v
       <button id="scZero" class="sec" title="Efface ce jeu, son programme et tes essais (pas celui gardé dans la console)">🗑 Supprimer ce jeu</button>
     </div>
     <div id="scPartage"></div>
-    <h3 class="code-titre">🔧 Le programme de ton jeu</h3>
+    <h3 class="code-titre">🖼 Les images de ton jeu <span class="ref" id="scJaugeTxt"></span></h3>
+    <div id="scImgDrop" class="icDrop">Glisse ici une image ou un <b>GIF animé</b> (du web ou de ton ordinateur), colle-la avec <b>Ctrl+V</b>,
+      ou <label>choisis un fichier<input id="scImgFichier" type="file" accept="image/*" hidden></label>.<br>
+      Elle devient du pixel art 16 couleurs pour la console. Dis ensuite à l'IA à quoi elle sert : « l'image 1 est mon héros ».</div>
+    <div id="scImgs" class="sc-imgs"></div>
+    <div id="scJauge" class="sc-jauge" title="La place des images dans la console"><span></span></div>
     <div class="code">                           <!-- toujours visible et colorisé : on tape dans le textarea transparent, la couleur vient du pre dessous -->
       <pre id="scCouleur" aria-hidden="true"></pre>
       <pre id="scNum" aria-hidden="true"></pre>
@@ -2535,6 +2550,7 @@ icGo.onclick = async () => {
 icRech.onkeydown = e => { if (e.key === 'Enter') icGo.click(); };
 icRes.onclick = e => { if (e.target.tagName === 'IMG') poser(e.target); };
 addEventListener('paste', e => {
+  if (!vueScript.classList.contains('hide')) return;    // mode script : ses propres images (plus bas)
   const f = [...e.clipboardData.files].find(f => f.type.startsWith('image/'));
   if (f) { e.preventDefault(); depuisUrl(URL.createObjectURL(f)); }
 });
@@ -2960,9 +2976,9 @@ async function rafraichir() {
       + (n.stats.multi?.courses ? `<br>🏁 ${n.stats.multi.courses} course${n.stats.multi.courses > 1 ? 's' : ''} à plusieurs${n.stats.multi.roi ? ` · 👑 ${esc(n.stats.multi.roi.pseudo)} (${n.stats.multi.roi.victoires} victoire${n.stats.multi.roi.victoires > 1 ? 's' : ''})` : ''}` : ''),
       top[0].stats.parties, n.stats.parties)).join('') || vide('Aucun jeu publié pour l\'instant : sois le premier !');
   nouveaux.innerHTML = [...enLigne].sort((a, b) => b.cree - a.cree).slice(0, 8).map(n => `<div class="carte">
-      <div class="vig">${n.niv.script ? '<span style="font-size:40px">📜</span>' : `<img class="mini" src="${vignette(n.niv.fiche ? Fiche.apercu(n.niv).rows : n.niv.rows)}" alt="">`}</div>
+      <div class="vig">${n.niv.images?.length ? `<img class="mini pix" src="${imgUrl(n.niv.images[0])}" alt="">` : n.niv.script ? '<span style="font-size:40px">📜</span>' : `<img class="mini" src="${vignette(n.niv.fiche ? Fiche.apercu(n.niv).rows : n.niv.rows)}" alt="">`}</div>
       <div class="t">${esc(n.titre)}${Date.now() - n.cree < 864e5 ? '<span class="neuf">NEUF</span>' : ''}</div>
-      <small class="r" style="color:var(--mute)">par ${esc(n.pseudo)} · ${depuis(n.cree)}${n.commun ? ' · 🧱 commun' : ''}<br>code <b style="color:var(--acc2)">${esc(n.code || '')}</b></small>${bouton(n)}</div>`).join('')
+      <small class="r" style="color:var(--mute)">par ${esc(n.pseudo)} · ${depuis(n.cree)}${n.commun ? ' · 🧱 commun' : ''}<br>code <b style="color:var(--acc2)">${esc(n.code || '')}</b> · <a href="#" data-signaler="${n.id}" title="Une image ou un texte choquant ? Un adulte va regarder." style="color:var(--mute)">⚑ signaler</a></small>${bouton(n)}</div>`).join('')
     || vide('Aucun niveau pour l\'instant.');
   actifs.innerHTML = c.actifs.map(a => `<div class="rang">${avatar(a.pseudo)}<div class="qui"><div><b>${esc(a.pseudo)}</b></div>
       <small>${a.quoi === 'cree' ? '✨ a créé' : '🏁 a fini'} « ${esc(a.titre)} » · ${depuis(a.date)}</small></div></div>`).join('')
@@ -3105,6 +3121,12 @@ codeBtn.onclick = async () => {
   catch (e) { codeMsg.innerHTML = `<span style="color:var(--ko)">${esc(e.message)}</span>`; }
 };
 codeIn.onkeydown = e => { if (e.key === 'Enter') codeBtn.click(); };
+document.addEventListener('click', async e => {         // signaler un jeu : 2 joueurs différents -> masqué jusqu'à ce qu'un adulte le regarde
+  const id = e.target.dataset?.signaler; if (!id) return; e.preventDefault();
+  if (!moi) return alert('Crée d\'abord ton compte (un pseudo suffit) pour signaler un jeu.');
+  if (!confirm('Signaler ce jeu ? Un adulte va le regarder. Ne signale que ce qui est choquant ou méchant.')) return;
+  try { await api('api/signaler', { ...ident(), id }); e.target.outerHTML = '✓ signalé, merci'; } catch (err) { alert(err.message); }
+});
 document.addEventListener('click', e => {
   const id = e.target.dataset?.id; if (!id) return;
   const n = enLigne.find(n => n.id === id); if (n) jouerNiveau(n);
@@ -3127,7 +3149,13 @@ async function rendreAnim(donnees) {
   if (d.commandes) animCmdListe.innerHTML = d.commandes.map(c => `<div class="rang"><div class="qui"><div><b>${c.kit ? c.kit + ' kit' : ''}${c.kit && c.presoude ? ' + ' : ''}${c.presoude ? c.presoude + ' pré-soudée' : ''}</b> · ${(c.total / 100).toFixed(2)} € · ${STATUT_CMD[c.statut]}</div>
     <small>${new Date(c.cree).toLocaleString('fr-FR')}${c.relais ? ` · relais n° ${esc(c.relais.id)} : ${esc(c.relais.nom)}, ${esc(c.relais.cp)} ${esc(c.relais.ville)}` : ''}${c.stripe ? ` · <a href="${esc(c.stripe)}" target="_blank" rel="noopener">nom et téléphone sur Stripe ›</a>` : ''}</small></div>
     ${c.statut === 'payee' ? `<button class="jouer" data-expedier="${esc(c.id)}">📦 Expédiée</button>` : ''}</div>`).join('') || '<span class="vide">Aucune commande payée pour le moment.</span>';
-  animGroupes.innerHTML = d.groupes.map(g => `<section>
+  const attenteTxt = n => n.attente ? `<br><b style="color:var(--ko)">⏳ en attente : ${esc(n.raison || 'à vérifier')}${n.signale ? ` · signalé par ${n.signale} joueur${n.signale > 1 ? 's' : ''}` : ''}</b>${n.images?.length ? `<span class="apercus" data-apercu="${n.id}"></span>` : ''}` : '';
+  const validerBtn = n => n.attente ? `<button class="jouer" data-valider="${n.id}" title="J'ai regardé : le jeu part dans la communauté">✓ Valider</button>` : '';
+  const aModerer = d.aModerer ? `<section><h2>🛡 À vérifier — créateurs hors groupe (${d.aModerer.length})</h2>
+    <p class="aide">L'IA a eu un doute sur leurs images, ou des joueurs les ont signalés. Valider = le jeu part dans la communauté ; masquer = il n'y va pas.</p>
+    <div class="liste">${d.aModerer.map(n => `<div class="rang"><div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)} · ${depuis(n.cree)}</small></div><small>${attenteTxt(n)}</small></div>
+      ${validerBtn(n)}<button class="jouer" data-masquer="${n.id}" data-etat="1">🚫 Masquer</button></div>`).join('') || '<span class="vide">Rien à vérifier.</span>'}</div></section>` : '';
+  animGroupes.innerHTML = aModerer + d.groupes.map(g => `<section>
     <h2><b>${esc(g.nom)}</b></h2>
     <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span> <a href="#" data-nouveaucode="${esc(g.code)}" title="Le code a circulé hors du groupe ? Les enfants déjà inscrits restent, l'ancien code ne marche plus" style="color:var(--mute)">↻ changer le code</a></p>
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
@@ -3149,9 +3177,11 @@ async function rendreAnim(donnees) {
       <button class="sec" data-qajout="${esc(g.code)}">➕ Ajouter la question</button></div>` : ''}
     <h3>🎮 Niveaux publiés (${g.niveaux.length})</h3>
     <div class="liste">${g.niveaux.sort((a, b) => b.cree - a.cree).map(n => `<div class="rang ${n.masque ? 'masque' : ''}"><div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div>
-      <small>${depuis(n.cree)} · ${n.parties} partie${n.parties > 1 ? 's' : ''}${n.masque ? ' · masqué' : ''}</small></div>
-      <button class="jouer" data-masquer="${n.id}" data-etat="${n.masque ? 0 : 1}">${n.masque ? '👁 Remontrer' : '🚫 Masquer'}</button></div>`).join('') || '<span class="vide">Aucun niveau pour l\'instant.</span>'}</div>
-  </section>`).join('') || '';
+      <small>${depuis(n.cree)} · ${n.parties} partie${n.parties > 1 ? 's' : ''}${n.masque ? ' · masqué' : ''}${attenteTxt(n)}</small></div>
+      ${validerBtn(n)}<button class="jouer" data-masquer="${n.id}" data-etat="${n.masque ? 0 : 1}">${n.masque ? '👁 Remontrer' : '🚫 Masquer'}</button></div>`).join('') || '<span class="vide">Aucun niveau pour l\'instant.</span>'}</div>
+  </section>`).join('') || aModerer;
+  const enAttente = [...(d.aModerer || []), ...d.groupes.flatMap(g => g.niveaux)].filter(n => n.attente);
+  for (const el of animGroupes.querySelectorAll('[data-apercu]')) imgApercus(el, enAttente.find(n => n.id === el.dataset.apercu)?.images, true);
 }
 grCreer.onclick = async () => { try { rendreAnim(await api('api/animateur/groupe', { nom: grNom.value }, session)); grNom.value = ''; } catch (e) { alert(e.message); } };
 let animDonnees = null;
@@ -3180,6 +3210,7 @@ animGroupes.onclick = async e => {
     if (t.dataset.nouveaucode) { e.preventDefault(); if (confirm('Changer le code du groupe ? L’ancien ne marchera plus.')) rendreAnim(await api('api/animateur/code', { code: t.dataset.nouveaucode }, session)); }
     if (t.dataset.agev) rendreAnim(await api('api/animateur/age', { code: t.closest('[data-age]').dataset.age, age: t.dataset.agev }, session));
     if (t.dataset.masquer) rendreAnim(await api('api/animateur/masquer', { id: t.dataset.masquer, masque: t.dataset.etat === '1' }, session));
+    if (t.dataset.valider) rendreAnim(await api('api/animateur/valider', { id: t.dataset.valider }, session));
     if (t.dataset.liberer) { e.preventDefault(); if (confirm(`Libérer le pseudo « ${t.dataset.liberer} » ?`)) rendreAnim(await api('api/animateur/liberer', { pseudo: t.dataset.liberer }, session)); }
     rafraichir();
   } catch (err) { alert(err.message); }
@@ -3301,6 +3332,105 @@ donLibre.oninput = () => { don = Math.max(1, parseInt(donLibre.value) || 0); doc
 donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes('?') ? '&' : '?'}montant=${don}`, '_blank', 'noopener')
                                    : donMsg.textContent = `Merci ! Le soutien en ligne arrive très bientôt (${don} € noté dans ton cœur 💜).`;
 
+// ---------- Images du mode script : n'importe quelle image ou GIF -> pixel art 16 couleurs (même format que la console c3-berry b5) ----------
+// une image = { nom, taille, l, h, n (images d'animation), pal: 16 couleurs RGB565 (0 = transparent), px: base64, 2 pixels par octet (poids fort = à gauche) }
+const IMG_BUDGET = 32768;                                // octets de pixels pour tout le jeu (même valeur dans server.js)
+const IMG_TAILLES = [16, 24, 32, 48, 64, 96, 128, 'fond'];
+const imgOctets = m => m.n * m.h * Math.ceil(m.l / 2);
+const rgb565 = ([r, g, b]) => (r >> 3) << 11 | (g >> 2) << 5 | b >> 3;
+const de565 = c => [(c >> 11) * 255 / 31, (c >> 5 & 63) * 255 / 63, (c & 31) * 255 / 31];
+function imgDessine(cv, m, f) {                          // l'image d'animation f sur le canvas, comme la console la dessine
+  const px = imgDessine.cache.get(m.px) || (imgDessine.cache.set(m.px, Uint8Array.from(atob(m.px), c => c.charCodeAt(0))), imgDessine.cache.get(m.px));
+  const x = cv.getContext('2d'), d = x.createImageData(m.l, m.h), bpl = Math.ceil(m.l / 2), pal = m.pal.map(de565);
+  for (let y = 0; y < m.h; y++) for (let i = 0; i < m.l; i++) {
+    const b = px[(f * m.h + y) * bpl + (i >> 1)], k = i & 1 ? b & 15 : b >> 4; if (!k) continue;
+    const o = (y * m.l + i) * 4; [d.data[o], d.data[o + 1], d.data[o + 2]] = pal[k]; d.data[o + 3] = 255;
+  }
+  x.putImageData(d, 0, 0);
+}
+imgDessine.cache = new Map();
+function imgCanvas(m, z = 2, f = -1) {                   // f = -1 : animé (toutes les 125 ms, comme int(temps() * 8))
+  const cv = document.createElement('canvas'); cv.width = m.l; cv.height = m.h; cv.className = 'pix';
+  cv.style.width = m.l * z + 'px'; cv.style.height = m.h * z + 'px';
+  imgDessine(cv, m, Math.max(f, 0)); if (f < 0 && m.n > 1) { cv.anim = m; cv.classList.add('imganim'); }
+  return cv;
+}
+setInterval(() => { const t = Math.floor(performance.now() / 125); for (const cv of document.querySelectorAll('canvas.imganim')) imgDessine(cv, cv.anim, t % cv.anim.n); }, 125);
+function imgApercus(el, images, tout) {                  // tout = chaque image d'animation à plat (modération : rien ne se cache dans un GIF)
+  el.innerHTML = '';
+  for (const m of images || []) for (let f = 0; f < (tout ? m.n : 1); f++) el.append(imgCanvas(m, Math.max(1, Math.min(4, Math.floor(64 / Math.max(m.l, m.h)))), tout ? f : -1));
+}
+const imgUrl = m => { const cv = imgCanvas(m, 1, 0); return cv.toDataURL(); };
+async function imgCadres(blob) {                         // les images d'un fichier (toutes celles d'un GIF animé, 16 au plus, réparties)
+  const versCanvas = (src, w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(src, 0, 0); return c; };
+  if ('ImageDecoder' in window && blob.type && await ImageDecoder.isTypeSupported(blob.type).catch(() => false)) {
+    const d = new ImageDecoder({ data: await blob.arrayBuffer(), type: blob.type });
+    await d.tracks.ready; await d.completed.catch(() => {});
+    const n = d.tracks.selectedTrack?.frameCount || 1, k = Math.min(n, 16), out = [];
+    for (let i = 0; i < k; i++) { const { image } = await d.decode({ frameIndex: Math.floor(i * n / k) }); out.push(versCanvas(image, image.displayWidth, image.displayHeight)); image.close(); }
+    d.close(); return out;
+  }
+  const b = await createImageBitmap(blob); return [versCanvas(b, b.width, b.height)];
+}
+function imgBoite(cadres) {                              // le rectangle où il se passe quelque chose (toutes les images du GIF) : le vide autour ne gaspille pas de pixels
+  const w = cadres[0].width, h = cadres[0].height, d0 = cadres[0].getContext('2d').getImageData(0, 0, w, h).data;
+  const px = (d, i) => [d[i], d[i + 1], d[i + 2], d[i + 3]], coins = [0, w - 1, (h - 1) * w, h * w - 1].map(i => px(d0, i * 4));
+  const proche = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < 60;
+  const fond = coins.every(c => c[3] > 200 && proche(c, coins[0])) ? coins[0] : null;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (const c of cadres) {
+    const d = c.getContext('2d').getImageData(0, 0, w, h).data;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; if (d[i + 3] < 128 || (fond && proche(px(d, i), fond))) continue; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  return x1 < 0 ? [0, 0, w, h] : [x0, y0, x1 - x0 + 1, y1 - y0 + 1];
+}
+function imgConvertir(cadres, taille, place) {           // -> une image au format console, ou un message si elle ne rentre pas
+  const fond = taille === 'fond', [bx, by, W0, H0] = fond ? [0, 0, cadres[0].width, cadres[0].height] : (cadres.boite ||= imgBoite(cadres));
+  const k = fond ? 0 : taille / Math.max(W0, H0), l = fond ? 160 : Math.max(1, Math.round(W0 * k)), h = fond ? 120 : Math.max(1, Math.round(H0 * k));
+  const bpl = Math.ceil(l / 2), n = Math.min(cadres.length, Math.floor(place / (h * bpl)));
+  if (n < 1) return 'Plus assez de place dans la console pour cette taille : choisis plus petit ou enlève une image.';
+  const c = document.createElement('canvas'); c.width = l; c.height = h;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.imageSmoothingQuality = 'high';
+  const datas = Array.from({ length: n }, (_, i) => {
+    const f = cadres[Math.floor(i * cadres.length / n)]; x.clearRect(0, 0, l, h);
+    if (fond) { const z = Math.max(l / W0, h / H0); x.drawImage(f, (l - W0 * z) / 2, (h - H0 * z) / 2, W0 * z, H0 * z); }   // fond : remplit l'écran (moitié de la résolution, zoom 2)
+    else x.drawImage(f, bx, by, W0, H0, 0, 0, l, h);
+    return x.getImageData(0, 0, l, h).data;
+  });
+  const d0 = datas[0], coin = i => [d0[i * 4], d0[i * 4 + 1], d0[i * 4 + 2], d0[i * 4 + 3]];
+  const proche = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < 60;
+  const coins = [0, l - 1, (h - 1) * l, h * l - 1].map(coin);   // photo sans transparence : le fond = la couleur des 4 coins, enlevée (comme les icônes)
+  const sansFond = !fond && coins.every(p => p[3] > 200 && proche(p, coins[0])) ? coins[0] : null;
+  const opaque = (d, i) => fond || (d[i + 3] >= 128 && !(sansFond && proche([d[i], d[i + 1], d[i + 2]], sansFond)));
+  const tous = []; for (const d of datas) for (let i = 0; i < d.length; i += 4) if (opaque(d, i)) tous.push([d[i], d[i + 1], d[i + 2]]);
+  if (!tous.length) return 'Image vide ou toute de la couleur du fond : essaies-en une autre.';
+  const echantillon = tous.length > 60000 ? tous.filter((_, i) => i % Math.ceil(tous.length / 60000) === 0) : tous;
+  let boites = [echantillon];                            // 15 couleurs (la 16e = transparent) : coupe médiane
+  while (boites.length < 15) {
+    let large = 0, bi = -1, bc = 0;
+    boites.forEach((b, i) => { if (b.length < 2) return; for (let c = 0; c < 3; c++) { let mn = 255, mx = 0; for (const p of b) { if (p[c] < mn) mn = p[c]; if (p[c] > mx) mx = p[c]; } if (mx - mn > large) { large = mx - mn; bi = i; bc = c; } } });
+    if (bi < 0) break;
+    const b = boites[bi].sort((p, q) => p[bc] - q[bc]), m = b.length >> 1; boites.splice(bi, 1, b.slice(0, m), b.slice(m));
+  }
+  const cols = boites.map(b => [0, 1, 2].map(c => Math.round(b.reduce((s, p) => s + p[c], 0) / b.length))).map(rgb565);
+  const pal = [0, ...cols, ...Array(15 - cols.length).fill(0)], vrais = pal.map(de565), memo = new Map();
+  const plusProche = (r, g, b) => { const cle = r << 16 | g << 8 | b; let k = memo.get(cle); if (k !== undefined) return k;
+    let best = 1e9; for (let j = 1; j <= cols.length; j++) { const [R, G, B] = vrais[j], e = (r - R) ** 2 + (g - G) ** 2 + (b - B) ** 2; if (e < best) { best = e; k = j; } } memo.set(cle, k); return k; };
+  const px = new Uint8Array(n * h * bpl);
+  datas.forEach((d, f) => { for (let y = 0; y < h; y++) for (let i = 0; i < l; i++) { const o = (y * l + i) * 4; if (!opaque(d, o)) continue;
+    px[(f * h + y) * bpl + (i >> 1)] |= plusProche(d[o], d[o + 1], d[o + 2]) << (i & 1 ? 0 : 4); } });
+  let bin = ''; for (const b of px) bin += String.fromCharCode(b);
+  return { taille, l, h, n, pal, px: btoa(bin) };
+}
+function imgPaquet(images) {                             // ce qui suit l'octet 0 après le script (voir chargeImages dans c3-berry.ino)
+  const parts = [Uint8Array.of(images.length)];
+  for (const m of images) {
+    const t = new Uint8Array(35); t[0] = m.l; t[1] = m.h; t[2] = m.n; m.pal.forEach((c, j) => { t[3 + j * 2] = c & 255; t[4 + j * 2] = c >> 8; });
+    parts.push(t, Uint8Array.from(atob(m.px), c => c.charCodeAt(0)));
+  }
+  const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0)); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out;
+}
+
 // ---------- Créer (mode script) : la demande, le programme actuel et ce que la console a dit partent à l'IA ; le programme part sur la console ----------
 // Protocole de la console c3-berry : "VERSION" -> "BERRY VERSION bN" ; "SCRIPT <octets> <nom>" + le programme -> "OK" ou "ERR <erreur>" (+ pile d'appels).
 // Plusieurs jeux en chantier : chacun a son nom, son programme et ses essais ; la console (b4) garde chaque jeu sous son nom.
@@ -3319,7 +3449,7 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   const majJeux = () => scJeux.innerHTML = chantiers.liste.map((c, i) => `<option value="${i}"${i === chantiers.cur ? ' selected' : ''}>${esc(c.nom)}</option>`).join('');
   function choisir(i) {                                  // change de chantier ; un programme modifié à la main n'est pas perdu
     if (scCode.value !== etat.script) { etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '', date: Date.now() }); }
-    chantiers.cur = i; etat = chantiers.liste[i]; mettreCode(etat.script); scPartage.innerHTML = ''; scCompris.textContent = 'Écris ce que tu veux créer, puis appuie sur « Envoyer à l\'IA ».';
+    chantiers.cur = i; etat = chantiers.liste[i]; mettreCode(etat.script); scPartage.innerHTML = ''; rendreImages(); scCompris.textContent = 'Écris ce que tu veux créer, puis appuie sur « Envoyer à l\'IA ».';
     sauver(); majJeux(); rendre();
   }
   const nouveau = (nom, e = vide()) => { chantiers.liste.push({ ...e, nom: unique(nom) }); choisir(chantiers.liste.length - 1); };
@@ -3340,6 +3470,64 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   let iaEnCours = false;
   const occupe = (t, detail = '') => { scOccupe.classList.toggle('hide', !t); scOccupe.querySelector('b').textContent = t || ''; scOccupe.querySelector('small').textContent = detail; };   // le message au centre : ce que fait la page
   mettreCode(etat.script); majJeux();
+  const sources = new Map();                             // les images d'origine (cette page ouverte seulement) : pour changer la taille sans tout refaire
+  const ko = n => (n / 1024).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+  function rendreImages() {
+    const ims = etat.images || [], tot = ims.reduce((s, m) => s + imgOctets(m), 0);
+    scImgs.innerHTML = '';
+    ims.forEach((m, i) => {
+      const d = document.createElement('div'); d.className = 'sc-img';
+      d.innerHTML = `<div class="qui"><b>image ${i + 1}</b><input class="pseudo" maxlength="20" value="${esc(m.nom)}" title="Ce que c'est (l'IA le lit)" data-nom="${i}">
+        <select data-taille="${i}" ${sources.has(m) ? '' : 'disabled title="Remets l\'image pour changer sa taille"'}>${IMG_TAILLES.map(t => `<option value="${t}" ${t == m.taille ? 'selected' : ''}>${t === 'fond' ? 'fond d\'écran' : t + ' px'}</option>`).join('')}</select>
+        <small>${m.l} × ${m.h}${m.taille === 'fond' ? ' (zoom 2 = tout l\'écran)' : ''} · ${m.n} image${m.n > 1 ? 's' : ''} d'animation · ${ko(imgOctets(m))} Ko</small></div>
+        <button class="sec" data-suppr="${i}" title="Enlever cette image">✕</button>`;
+      d.prepend(imgCanvas(m, m.taille === 'fond' ? 1 : Math.max(2, Math.min(4, Math.floor(96 / Math.max(m.l, m.h))))));
+      scImgs.append(d);
+    });
+    scJauge.firstElementChild.style.width = Math.min(100, 100 * tot / IMG_BUDGET) + '%'; scJauge.classList.toggle('plein', tot > IMG_BUDGET * 0.9);
+    scJaugeTxt.textContent = ims.length ? `${ko(tot)} / ${ko(IMG_BUDGET)} Ko utilisés` : '';
+  }
+  const imagesChangees = () => { etat.surConsole = -1; sauver(); rendreImages(); majMettre(); };   // à renvoyer sur la console (et à retester avant de publier)
+  const imgDire = (t, ok) => { scImgDrop.querySelector('.msg')?.remove(); if (t) scImgDrop.insertAdjacentHTML('beforeend', `<div class="msg" style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</div>`); };
+  const place = sauf => IMG_BUDGET - (etat.images || []).filter(m => m !== sauf).reduce((s, m) => s + imgOctets(m), 0);
+  async function ajouterImage(blob, nom) {
+    if ((etat.images || []).length >= 16) return imgDire('16 images au plus par jeu.');
+    imgDire('🎨 Je la transforme en pixel art…', true);
+    let cadres; try { cadres = await imgCadres(blob); } catch { return imgDire('Je n\'arrive pas à lire cette image : essaie un PNG, un JPG ou un GIF.'); }
+    const taille = cadres[0].width > cadres[0].height * 1.2 && Math.max(cadres[0].width, cadres[0].height) >= 300 ? 'fond' : 48;   // grande image en largeur : sans doute un décor
+    let m; for (const t of [taille, 48, 32, 24, 16]) if (typeof (m = imgConvertir(cadres, t, place())) !== 'string') break;   // la plus grande taille qui rentre encore
+    if (typeof m === 'string') return imgDire(m);
+    m.nom = (nom || '').replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim().slice(0, 20) || 'image ' + ((etat.images || []).length + 1);
+    (etat.images ||= []).push(m); sources.set(m, cadres);
+    imgDire(cadres.length > m.n ? `Pas assez de place pour les ${cadres.length} images du GIF : j'en garde ${m.n}.` : '', true); imagesChangees();
+  }
+  async function depuisLien(url) {
+    try { const r = await fetch(url); if (!r.ok) throw 0; await ajouterImage(await r.blob(), decodeURIComponent(url.split('/').pop().split('?')[0])); }
+    catch { imgDire('Ce site ne laisse pas copier son image : fais clic droit dessus → « Copier l\'image », puis Ctrl+V ici. Pour un GIF animé : enregistre-le, puis glisse le fichier ici.'); }
+  }
+  scImgFichier.onchange = () => { const f = scImgFichier.files[0]; if (f) ajouterImage(f, f.name); scImgFichier.value = ''; };
+  scImgDrop.ondragover = e => { e.preventDefault(); scImgDrop.classList.add('sur'); };
+  scImgDrop.ondragleave = () => scImgDrop.classList.remove('sur');
+  scImgDrop.ondrop = e => {
+    e.preventDefault(); scImgDrop.classList.remove('sur');
+    const f = [...e.dataTransfer.files].find(f => f.type.startsWith('image/')), u = (e.dataTransfer.getData('text/uri-list') || '').split('\n')[0].trim();
+    if (f) ajouterImage(f, f.name); else if (/^https?:/.test(u)) depuisLien(u);
+  };
+  addEventListener('paste', e => {
+    if (vueScript.classList.contains('hide') || e.target === scCode || e.target === scDemande) return;
+    const f = [...e.clipboardData.files].find(f => f.type.startsWith('image/'));
+    if (f) { e.preventDefault(); ajouterImage(f, ''); }
+  });
+  scImgs.oninput = e => { const i = e.target.dataset.nom; if (i !== undefined) { etat.images[i].nom = e.target.value.replace(/[<>"]/g, '').slice(0, 20); sauver(); } };
+  scImgs.onchange = e => {
+    const i = e.target.dataset.taille; if (i === undefined) return;
+    const ancien = etat.images[i], cadres = sources.get(ancien), t = e.target.value === 'fond' ? 'fond' : +e.target.value;
+    const m = imgConvertir(cadres, t, place(ancien)); if (typeof m === 'string') { imgDire(m); return rendreImages(); }
+    m.nom = ancien.nom; etat.images[i] = m; sources.delete(ancien); sources.set(m, cadres);
+    imgDire(cadres.length > m.n ? `À cette taille, la place ne permet que ${m.n} des ${cadres.length} images du GIF.` : '', true); imagesChangees();
+  };
+  scImgs.onclick = e => { const i = e.target.dataset.suppr; if (i !== undefined) { sources.delete(etat.images[i]); etat.images.splice(i, 1); imagesChangees(); } };
+  rendreImages();
   function majMettre() {                                 // grisé : pas de programme, l'IA écrit, ou ce programme est déjà sur la console
     scJeux.disabled = scNouveau.disabled = scRenommer.disabled = scZero.disabled = iaEnCours;   // l'IA écrit dans ce jeu : on n'en change pas
     scMettre.disabled = iaEnCours || !scCode.value.trim() || (scCode.value === etat.script && etat.surConsole === etat.essais.length);
@@ -3353,7 +3541,7 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
       ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`).reverse().join('');
   }
   rendre();
-  let port = null, lecteur = null, attente = null, versionVue = null, errEnCours = null, statVue = null;
+  let port = null, lecteur = null, attente = null, versionVue = null, errEnCours = null, statVue = null, versionNum = 0;
   const pause = ms => new Promise(r => setTimeout(r, ms));
   const dire = (t, ok) => scEtat.innerHTML = ok === undefined ? esc(t) : `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
   const journal = l => { journal.l = [...(journal.l || []), l].slice(-8); scJournal.textContent = journal.l.join('\n'); scJournal.classList.remove('hide'); };
@@ -3392,7 +3580,7 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   async function relier0(p) {
     port = p; await port.open({ baudRate: 115200 }); ecouter();
     const v = await new Promise(ok => { versionVue = ok; setTimeout(() => ok(''), 1500); ecrire(new TextEncoder().encode('VERSION\n')); }); versionVue = null;
-    if (v.startsWith('BERRY')) { brancheTxt(true); dire('✓ Console connectée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); return true; }
+    if (v.startsWith('BERRY')) { versionNum = +(v.match(/b(\d+)/) || [])[1] || 0; brancheTxt(true); dire('✓ Console connectée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); return true; }
     dire('Ta console n\'a pas encore le moteur de jeu : installe-le avec le bouton « Installer ».', false); return false;
   }
   async function auto() {                                // une console déjà autorisée sur ce site (choisie avant, ou mise à jour ici) : reliée sans clic
@@ -3418,13 +3606,16 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   }
   async function envoyer0(prog) {
     const ver = etat.essais.length;                      // numéro de version : affiché 5 s en bas de l'écran de la console, pour comparer avec l'historique
-    const octets = new TextEncoder().encode(prog + `
+    let octets = new TextEncoder().encode(prog + `
 # --- ajoute par la page : numero de version ---
 import global
 def _brique_v(d) var n = 0 return def () d() n += 1 if n < 300 texte(4, 230, "v${ver}", rgb(255, 255, 255), 1) end end end
 if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
 `);
-    const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 6000); });
+    const ims = etat.images || [];
+    if (ims.length && versionNum < 5) return 'Ta console doit être mise à jour pour afficher tes images : appuie sur « ⬇ Installer la dernière version du firmware ».';
+    if (ims.length) { const p = imgPaquet(ims), t = new Uint8Array(octets.length + 1 + p.length); t.set(octets); t.set(p, octets.length + 1); octets = t; }   // le script, l'octet 0, puis les images
+    const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 8000); });
     await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length} ${nomConsole(etat.nom)}\n`));
     for (let i = 0; i < octets.length; i += 256) { await ecrire(octets.slice(i, i + 256)); await new Promise(r => setTimeout(r, 10)); }
     const l = await rep;
@@ -3467,7 +3658,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   async function ecrireJeu(texte, auto) {                // une demande à l'IA puis l'envoi à la console ; false = rien écrit
     const attenteTxt = auto ? '🔧 L\'IA corrige l\'erreur…' : '⏳ L\'IA écrit ton programme…';
     scGo.disabled = true; scGo.textContent = attenteTxt; iaEnCours = true; majMettre(); occupe(attenteTxt, 'ça peut prendre une minute'); const t0 = performance.now(); let r;
-    try { r = await apiFlux({ ...ident(), auto, texte: auto ? 'Corrige seulement l\'erreur que la console a signalee, sans rien changer d\'autre au jeu.' : texte, script: etat.script, erreur: etat.erreur || etat.lent || '',
+    try { r = await apiFlux({ ...ident(), auto, images: (etat.images || []).map(({ nom, l, h, n }) => ({ nom, l, h, n })), texte: auto ? 'Corrige seulement l\'erreur que la console a signalee, sans rien changer d\'autre au jeu.' : texte, script: etat.script, erreur: etat.erreur || etat.lent || '',
       avant: etat.essais.filter(e => !e.auto).map(e => e.demande).slice(-6) }, (t, corrige) => {
         if (corrige) { scGo.textContent = '🔧 Erreur trouvée en testant : l\'IA corrige…'; occupe('🔧 L\'IA a trouvé une erreur en testant, elle corrige…'); }
         const s = scriptPartiel(t); if (s === null) return;
@@ -3506,12 +3697,12 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     if (!etat.script || etat.erreur || etat.surConsole !== etat.essais.length) return dire('Mets ton jeu sur la console et vérifie qu\'il tourne sans erreur avant de le publier.', false);
     const titre = prompt('Le nom de ton jeu ?', etat.titre || etat.nom || ''); if (titre === null) return;
     try {
-      const { code } = await api('api/niveaux', { ...ident(), titre, script: etat.script });
-      etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » est publié, signé ${esc(pseudo())}`, code); rafraichir();
+      const { code, attente } = await api('api/niveaux', { ...ident(), titre, script: etat.script, images: (etat.images || []).map(({ nom, l, h, n, pal, px }) => ({ nom, l, h, n, pal, px })) });
+      etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » est publié, signé ${esc(pseudo())}${attente ? `<br>⏳ ${esc(attente)}` : ''}`, code); rafraichir();
     } catch (e) { dire(e.message, false); }
   };
   ouvrirScript = n => {                                  // le jeu d'un copain : un nouveau chantier à côté des tiens, puis part sur la console
-    nouveau(n.titre || 'Jeu de ' + n.pseudo, { script: n.niv.script, essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo} (code ${n.code})`, console: '', date: Date.now() }], erreur: '' });
+    nouveau(n.titre || 'Jeu de ' + n.pseudo, { script: n.niv.script, images: structuredClone(n.niv.images || []).map(m => ({ ...m, taille: m.l === 160 && m.h === 120 ? 'fond' : Math.max(m.l, m.h) })), essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo} (code ${n.code})`, console: '', date: Date.now() }], erreur: '' });
     partage(`« ${esc(n.titre)} » de ${esc(n.pseudo)}`, n.code);
     afficher('creer'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };

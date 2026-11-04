@@ -294,6 +294,9 @@ canvas{display:block;width:320px;max-width:100%;image-rendering:pixelated;backgr
 .hist{display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:auto}
 .it{background:var(--panel2);border-radius:12px;padding:10px;font-size:14px;border-left:4px solid var(--line)}
 .it.cur{border-left-color:var(--acc)}
+.it:not(.cur){cursor:pointer}.it:not(.cur):not(.ouvert)>:not(.n):not(.q){display:none}   /* anciennes versions condensées : un clic les ouvre / referme */
+.it:not(.cur):not(.ouvert) .q{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0}
+.it:not(.cur) .n::before{content:'▸ '}.it.ouvert .n::before{content:'▾ '}
 .it .n{font-weight:800;color:var(--acc)}
 .it .q{margin:4px 0;font-style:italic}
 .it .r{color:var(--mute)}
@@ -2376,6 +2379,10 @@ go.onclick = async () => {
   envoi.textContent = '';
 };
 
+document.addEventListener('click', e => {               // historiques de Créer : clic sur une ancienne version = l'ouvrir / la refermer
+  const it = e.target.closest('.it:not(.cur)');
+  if (it && !e.target.closest('input,button,a')) it.classList.toggle('ouvert');
+});
 function rendreHist() {
   if (!historique.length) return;
   hist.innerHTML = historique.map((e, i) => `

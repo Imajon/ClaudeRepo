@@ -251,6 +251,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .sc-barre{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .sc-barre .moi{display:flex;align-items:center;gap:8px}.sc-barre .moi b{color:var(--acc2)}
 .sc-barre .sec{padding:5px 10px;font-size:14px}
+.sc-jeux{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-right:auto}.sc-jeux select{margin:0;width:auto;max-width:260px;padding:5px 8px;font-size:15px}
 #vueScript .agent>.theme{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;font-size:16px}
 #vueScript .agent>h2{padding-right:40px}
 .agent-ligne{display:flex;gap:10px;align-items:stretch}.agent-ligne textarea{flex:1;min-width:0;margin:0}
@@ -1643,8 +1644,9 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.0">
-  <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mon groupe, animateur -->
+<main id="vueScript" class="hide" data-version="1.1">
+  <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
+    <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
@@ -1675,7 +1677,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div class="sc-actions">                     <!-- par ordre d'importance : envoyer, publier, puis effacer (discret) -->
       <button id="scMettre" class="big" disabled>📟 Envoyer sur la console</button>
       <button id="scPublier" class="sec">📢 Publier</button>
-      <button id="scZero" class="sec" title="Efface le programme et tes essais">🗑 Repartir de zéro</button>
+      <button id="scZero" class="sec" title="Efface ce jeu, son programme et tes essais (pas celui gardé dans la console)">🗑 Supprimer ce jeu</button>
     </div>
     <div id="scPartage"></div>
     <h3 class="code-titre">🔧 Le programme de ton jeu</h3>
@@ -3278,11 +3280,30 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
                                    : donMsg.textContent = `Merci ! Le soutien en ligne arrive très bientôt (${don} € noté dans ton cœur 💜).`;
 
 // ---------- Créer (mode script) : la demande, le programme actuel et ce que la console a dit partent à l'IA ; le programme part sur la console ----------
-// Protocole de la console c3-berry : "VERSION" -> "BERRY VERSION bN" ; "SCRIPT <octets>" + le programme -> "OK" ou "ERR <erreur>" (+ pile d'appels).
+// Protocole de la console c3-berry : "VERSION" -> "BERRY VERSION bN" ; "SCRIPT <octets> <nom>" + le programme -> "OK" ou "ERR <erreur>" (+ pile d'appels).
+// Plusieurs jeux en chantier : chacun a son nom, son programme et ses essais ; la console (b4) garde chaque jeu sous son nom.
 (() => {
-  const lireEtat = () => { try { return JSON.parse(localStorage.getItem('brique-script')) } catch { return null } };
-  let etat = lireEtat() || { script: '', essais: [], erreur: '' };   // erreur = dernière chose que la console a dite de travers (l'IA la reçoit)
-  const sauver = () => { try { localStorage.setItem('brique-script', JSON.stringify(etat)) } catch {} };
+  const vide = () => ({ script: '', essais: [], erreur: '' });   // erreur = dernière chose que la console a dite de travers (l'IA la reçoit)
+  const ancien = lire('brique-script');                 // avant les chantiers : un seul jeu
+  const chantiers = lire('brique-chantiers') || { cur: 0, liste: [{ nom: 'Mon jeu', ...(ancien || vide()) }] };
+  let etat = chantiers.liste[chantiers.cur] || chantiers.liste[chantiers.cur = 0];
+  const sauver = () => { try { localStorage.setItem('brique-chantiers', JSON.stringify(chantiers)); localStorage.removeItem('brique-script'); } catch {} };   // (ecrire() est pris ici : le port série)
+  const nomConsole = t => (t.normalize('NFD').replace(/[^\x20-\x7e]/g, '').trim() || 'Mon jeu').slice(0, 21);   // l'écran de la console : ASCII, 21 lettres
+  function unique(nom, sauf) {                           // deux jeux du même nom s'écraseraient dans la console
+    nom = nom.trim().slice(0, 18) || 'Mon jeu'; let n = nom, k = 2;
+    while (chantiers.liste.some(c => c !== sauf && nomConsole(c.nom) === nomConsole(n))) n = `${nom} ${k++}`;
+    return n;
+  }
+  const majJeux = () => scJeux.innerHTML = chantiers.liste.map((c, i) => `<option value="${i}"${i === chantiers.cur ? ' selected' : ''}>${esc(c.nom)}</option>`).join('');
+  function choisir(i) {                                  // change de chantier ; un programme modifié à la main n'est pas perdu
+    if (scCode.value !== etat.script) { etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '', date: Date.now() }); }
+    chantiers.cur = i; etat = chantiers.liste[i]; mettreCode(etat.script); scPartage.innerHTML = ''; scCompris.textContent = 'Écris ce que tu veux créer, puis appuie sur « Envoyer à l\'IA ».';
+    sauver(); majJeux(); rendre();
+  }
+  const nouveau = (nom, e = vide()) => { chantiers.liste.push({ ...e, nom: unique(nom) }); choisir(chantiers.liste.length - 1); };
+  scJeux.onchange = () => choisir(+scJeux.value);
+  scNouveau.onclick = () => { const t = prompt('Le nom de ton nouveau jeu ?', ''); if (t !== null) nouveau(t); };
+  scRenommer.onclick = () => { const t = prompt('Le nouveau nom de ce jeu ?', etat.nom); if (t !== null) { etat.nom = unique(t, etat); sauver(); majJeux(); } };
   const MOTS = 'def|end|if|elif|else|while|for|in|return|import|var|class|break|continue|true|false|nil|and|or|not|do|static|try|except|raise';
   const JETONS = new RegExp(`(#.*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|\\b(${MOTS})\\b|\\b(\\d+(?:\\.\\d+)?)\\b|\\b([a-zA-Z_]\\w*)(?=\\()`, 'g');
   const suivre = () => { scCouleur.scrollTop = scCode.scrollTop; scCouleur.scrollLeft = scCode.scrollLeft; scNum.scrollTop = scCode.scrollTop; };
@@ -3296,8 +3317,9 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   const mettreCode = t => { scCode.value = t; colorer(); majMettre(); };
   let iaEnCours = false;
   const occupe = (t, detail = '') => { scOccupe.classList.toggle('hide', !t); scOccupe.querySelector('b').textContent = t || ''; scOccupe.querySelector('small').textContent = detail; };   // le message au centre : ce que fait la page
-  mettreCode(etat.script);
+  mettreCode(etat.script); majJeux();
   function majMettre() {                                 // grisé : pas de programme, l'IA écrit, ou ce programme est déjà sur la console
+    scJeux.disabled = scNouveau.disabled = scRenommer.disabled = scZero.disabled = iaEnCours;   // l'IA écrit dans ce jeu : on n'en change pas
     scMettre.disabled = iaEnCours || !scCode.value.trim() || (scCode.value === etat.script && etat.surConsole === etat.essais.length);
   }
   function rendre() {
@@ -3381,10 +3403,12 @@ def _brique_v(d) var n = 0 return def () d() n += 1 if n < 300 texte(4, 230, "v$
 if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
 `);
     const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 6000); });
-    await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length}\n`));
+    await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length} ${nomConsole(etat.nom)}\n`));
     for (let i = 0; i < octets.length; i += 256) { await ecrire(octets.slice(i, i + 256)); await new Promise(r => setTimeout(r, 10)); }
     const l = await rep;
-    if (l.startsWith('OK')) { etat.erreur = ''; etat.lent = ''; etat.surConsole = ver; const e = etat.essais.at(-1); if (e) { e.console = 'Ton jeu tourne sur la console.'; e.consoleOk = true; } sauver(); rendre(); await mesurer(); return ''; }
+    if (l.startsWith('OK')) { etat.erreur = ''; etat.lent = ''; etat.surConsole = ver; const e = etat.essais.at(-1); if (e) { e.console = 'Ton jeu tourne sur la console.'; e.consoleOk = true; } sauver(); rendre(); await mesurer();
+      if (l.includes('pas garde') && e) { e.console += ' ⚠️ La console est pleine (12 jeux) : elle ne le garde pas. Supprimes-en un sur la console (Jouer, puis P3 tenu sur un jeu).'; sauver(); rendre(); }
+      return ''; }
     if (l) await pause(400);                             // ERR : l'erreur arrive par finErreur() (300 ms)
     return l ? '' : 'La console ne répond pas : rebranche-la.';
   }
@@ -3448,22 +3472,25 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     for (let n = 0; n < 2 && etat.erreur && etat.essais.at(-1)?.demande !== '(programme modifié à la main)'; n++) if (!(await ecrireJeu('', true))) return;
   }
   scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
-  scZero.onclick = () => { if (!confirm('Repartir de zéro ? Le programme et tes essais seront effacés.')) return; etat = { script: '', essais: [], erreur: '' }; mettreCode(''); scPartage.innerHTML = ''; sauver(); rendre(); };
+  scZero.onclick = () => {                               // efface ce chantier (le jeu gardé dans la console se supprime sur la console)
+    if (!confirm(`Supprimer « ${etat.nom} » ? Le programme et tes essais seront effacés.`)) return;
+    chantiers.liste.splice(chantiers.cur, 1); if (!chantiers.liste.length) chantiers.liste.push({ nom: 'Mon jeu', ...vide() });
+    etat = chantiers.liste[chantiers.cur = Math.min(chantiers.cur, chantiers.liste.length - 1)]; scCode.value = etat.script; choisir(chantiers.cur);
+  };
   const partage = (t, code) => scPartage.innerHTML = `<div class="partage">${t} · code <span class="code">${esc(code)}</span><br><small>Tes copains le récupèrent sur Brique avec ce code (Communauté), puis le mettent sur leur console.</small></div>`;
   scPublier.onclick = async () => {                      // publier : seulement un programme qui tourne sur la console sans erreur
     if (!EN_LIGNE) return dire('Hors ligne : la publication a besoin du serveur Brique.', false);
     if (!moi) { dlgRejoindre.showModal(); return dire('Crée d\'abord ton compte (un pseudo suffit).', false); }
     if (!etat.script || etat.erreur || etat.surConsole !== etat.essais.length) return dire('Mets ton jeu sur la console et vérifie qu\'il tourne sans erreur avant de le publier.', false);
-    const titre = prompt('Le nom de ton jeu ?', etat.titre || ''); if (titre === null) return;
+    const titre = prompt('Le nom de ton jeu ?', etat.titre || etat.nom || ''); if (titre === null) return;
     try {
       const { code } = await api('api/niveaux', { ...ident(), titre, script: etat.script });
       etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » est publié, signé ${esc(pseudo())}`, code); rafraichir();
     } catch (e) { dire(e.message, false); }
   };
-  ouvrirScript = n => {                                  // le jeu d'un copain : remplace le programme en cours (après accord), puis part sur la console
-    if (etat.script && etat.script !== n.niv.script && !confirm(`Remplacer ton programme par « ${n.titre} » de ${n.pseudo} ?`)) return;
-    etat = { script: n.niv.script, essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo} (code ${n.code})`, console: '', date: Date.now() }], erreur: '' };
-    mettreCode(etat.script); sauver(); rendre(); partage(`« ${esc(n.titre)} » de ${esc(n.pseudo)}`, n.code);
+  ouvrirScript = n => {                                  // le jeu d'un copain : un nouveau chantier à côté des tiens, puis part sur la console
+    nouveau(n.titre || 'Jeu de ' + n.pseudo, { script: n.niv.script, essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo} (code ${n.code})`, console: '', date: Date.now() }], erreur: '' });
+    partage(`« ${esc(n.titre)} » de ${esc(n.pseudo)}`, n.code);
     afficher('creer'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
   scMettre.onclick = async () => {                       // envoie le programme affiché (de l'IA ou modifié à la main) ; pas encore de console : ce clic ouvre le choix du port

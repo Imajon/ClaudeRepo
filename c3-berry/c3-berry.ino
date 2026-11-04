@@ -4,7 +4,8 @@
 //   debut()      une fois au lancement (facultatif)
 //   maj(dt)      la logique, dt en secondes
 //   dessine()    les appels de dessin ; enregistres une fois, rejoues pour chaque bande de l'ecran
-// Envoi : ligne "SCRIPT <octets>" puis le script ; reponse "OK ..." ou "ERR ...". Garde dans /jeu.be, relance au demarrage (sauf apres un plantage).
+// Envoi : ligne "SCRIPT <octets> [nom]" puis le script ; reponse "OK ..." ou "ERR ...". Chaque jeu est garde dans /j/<ordre>_<nom code>.be (1re ligne = son nom), MAXJ au plus.
+// Jouer = la liste des jeux gardes (P3 tenu sur un jeu = le supprimer).
 // Au demarrage : logo, puis le menu (Jouer, Classement, Mes stats, A propos). G + D tenus 1 s pendant un jeu = retour au menu.
 // Mesures sur le port serie si on les demande ("STAT 1").
 #include <Adafruit_GFX.h>
@@ -21,7 +22,7 @@
 #include "esp_heap_caps.h"
 #include "op.h"                                  // struct Op (avant les prototypes automatiques d'Arduino)
 
-#define BERRY_VERSION "b3"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
+#define BERRY_VERSION "b4"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
 #define TFT_SCLK 4
 #define TFT_MOSI 6
 #define TFT_CS   7
@@ -110,7 +111,7 @@ void rejoue(int sTop) {                          // rejoue la liste dans la band
 bool bt[3], btAv[3];
 
 // ---- ecrans de la console (hors jeu) : logo, menu, classement, stats, a propos ----
-enum { E_LOGO, E_MENU, E_JEU, E_CLASSEMENT, E_STATS, E_INFO };
+enum { E_LOGO, E_MENU, E_JEU, E_CLASSEMENT, E_STATS, E_INFO, E_LISTE, E_SUPPR };
 int ecran = E_LOGO, choix = 0; uint32_t ecranT = 0;
 const char *MENU[4] = { "Jouer", "Classement", "Mes stats", "A propos" };
 Preferences prefs;
@@ -126,6 +127,29 @@ void nomDuJeu(const char *src) {                 // 1re ligne "# Nom du jeu" (si
   const char *a = src + 1; while (*a == ' ') a++;
   int n = 0; while (a[n] && a[n] != '\n' && a[n] != '\r' && n < (int)sizeof nomJeu - 1) n++;
   if (n) { memcpy(nomJeu, a, n); nomJeu[n] = 0; }
+}
+// ---- les jeux gardes dans la console ----
+#define MAXJ 12
+struct Jeu { uint32_t seq; char nom[22]; char chemin[24]; };
+Jeu jeux[MAXJ]; int nJeux = 0, choixJ = 0;
+uint32_t fnv(const char *s) { uint32_t h = 2166136261u; while (*s) { h ^= (uint8_t)*s++; h *= 16777619u; } return h; }
+void listeJeux() {                               // les plus recents d'abord
+  nJeux = 0; File d = LittleFS.open("/j"); if (!d) return;
+  for (File f = d.openNextFile(); f && nJeux < MAXJ; f = d.openNextFile()) {
+    Jeu &j = jeux[nJeux++]; snprintf(j.chemin, sizeof j.chemin, "/j/%s", f.name()); j.seq = atol(f.name());
+    String n = f.readStringUntil('\n'); snprintf(j.nom, sizeof j.nom, "%s", n.c_str()); f.close();
+  }
+  for (int i = 0; i < nJeux; i++) for (int k = i + 1; k < nJeux; k++) if (jeux[k].seq > jeux[i].seq) { Jeu x = jeux[i]; jeux[i] = jeux[k]; jeux[k] = x; }
+}
+bool garde(const char *nom, const char *src, int n) {   // remplace le jeu du meme nom ; false = console pleine
+  listeJeux(); char suf[16]; snprintf(suf, sizeof suf, "_%08lx.be", (unsigned long)fnv(nom));
+  int ici = -1; for (int i = 0; i < nJeux; i++) if (strstr(jeux[i].chemin, suf)) ici = i;
+  if (ici < 0 && nJeux >= MAXJ) return false;
+  if (ici >= 0) LittleFS.remove(jeux[ici].chemin);
+  const uint32_t seq = prefs.getUInt("seq") + 1; prefs.putUInt("seq", seq);
+  char ch[24]; snprintf(ch, sizeof ch, "/j/%06lu%s", (unsigned long)seq, suf);
+  File f = LittleFS.open(ch, "w", true); if (!f) return false;
+  f.print(nom); f.print('\n'); f.write((const uint8_t *)src, n); f.close(); return true;
 }
 void txtOp(int x, int y, const char *t, uint16_t c, int taille) {   // texte des ecrans de la console (meme liste de dessin que les jeux)
   int n = strlen(t); if (nTxt + n + 1 > NTXT) return;
@@ -177,6 +201,19 @@ void dessineEcran() {                            // remplit la liste de dessin p
     snprintf(b, sizeof b, "Bugs rencontres         %lu", (unsigned long)stErreurs); txtOp(16, 136, b, 0xFFFF, 1);
     if (stErreurs) txtOp(16, 160, "Chaque bug corrige, c'est un pas de plus.", GRIS, 1);
     txtOp(8, 226, "P3 : retour", GRIS, 1);
+  } else if (ecran == E_LISTE) {
+    txtOp(120, 18, "Mes jeux", 0xFFFF, 2);
+    if (!nJeux) txtOp(16, 190, "Pas encore de jeu : cree-le sur Brique.", GRIS, 1);
+    for (int i = 0; i <= nJeux; i++) {
+      const int y = 48 + i * 13;
+      if (i == choixJ) rectOp(12, y - 3, 296, 13, VERT);
+      txtOp(20, y, i < nJeux ? jeux[i].nom : "< Menu", i == choixJ ? 0x0841 : 0xFFFF, 1);
+    }
+    txtOp(8, 226, "P3 : jouer    P3 tenu : supprimer", GRIS, 1);
+  } else if (ecran == E_SUPPR) {
+    txtOp(52, 70, "Supprimer ce jeu ?", 0xFFFF, 2);
+    txtOp(max(0, 160 - 6 * (int)strlen(jeux[choixJ].nom)), 110, jeux[choixJ].nom, 0xFE60, 2);
+    txtOp(16, 170, "P3 : oui, supprimer      G / D : non", GRIS, 1);
   } else if (ecran == E_INFO) {
     const char *L[] = { "Brique : une console a fabriquer et a programmer.", "",
       "Tes jeux sont ecrits par une IA : Mistral", "(modele Codestral), une IA francaise.", "",
@@ -284,10 +321,11 @@ bool appelle(const char *nom, int argc = 0, float a = 0) {   // false = erreur (
   if (be_pcall(vm, argc)) { errN = 0; be_dumpexcept(vm); jeuOk = false; stErreurs++; statsSauve(); Serial.printf("ERR %s\n", erreur); return false; }
   be_pop(vm, argc + 1); return true;
 }
-const char *lance(const char *src, size_t n) {   // nouvelle machine, le script, debut() ; nullptr si tout va bien
+const char *lance(const char *src, size_t n, const char *nom = nullptr) {   // nouvelle machine, le script, debut() ; nullptr si tout va bien
   if (vm) be_vm_delete(vm);
   vm = be_vm_new(); be_set_obs_hook(vm, heartbeat); jeuOk = false; errN = 0; erreur[0] = 0;
-  nomDuJeu(src); recCourant = -1; ecran = E_JEU; ecranT = millis(); stParties++;
+  if (nom && nom[0]) snprintf(nomJeu, sizeof nomJeu, "%s", nom); else nomDuJeu(src);
+  recCourant = -1; ecran = E_JEU; ecranT = millis(); stParties++;
   be_regfunc(vm, "fond", f_fond); be_regfunc(vm, "rect", f_rect); be_regfunc(vm, "cadre", f_cadre); be_regfunc(vm, "disque", f_disque);
   be_regfunc(vm, "cercle", f_cercle); be_regfunc(vm, "ligne", f_ligne); be_regfunc(vm, "tri", f_tri); be_regfunc(vm, "texte", f_texte);
   be_regfunc(vm, "rgb", f_rgb); be_regfunc(vm, "camera", f_camera); be_regfunc(vm, "bouton", f_bouton); be_regfunc(vm, "appui", f_appui);
@@ -305,7 +343,7 @@ const char *lance(const char *src, size_t n) {   // nouvelle machine, le script,
 // ---- reception d'un script par le cable ----
 bool stats = false;                              // mesures sur le port serie : seulement si on les demande ("STAT 1")
 uint8_t btSim = 0;                               // boutons simules par le cable (mesures en jeu)
-char ligne[48]; int nLigne = 0; char *recu = nullptr; int attendu = 0, nRecu = 0; uint32_t recuT = 0;
+char nomRecu[22] = ""; char ligne[64]; int nLigne = 0; char *recu = nullptr; int attendu = 0, nRecu = 0; uint32_t recuT = 0;
 void ecoute() {
   while (Serial.available()) {
     int c = Serial.read();
@@ -313,10 +351,11 @@ void ecoute() {
       recu[nRecu++] = c; recuT = millis();
       if (nRecu == attendu) {
         recu[nRecu] = 0;
-        File f = LittleFS.open("/jeu.be", "w"); if (f) { f.write((const uint8_t *)recu, nRecu); f.close(); }
+        if (!nomRecu[0]) { nomDuJeu(recu); strcpy(nomRecu, nomJeu); }
+        const bool ok = garde(nomRecu, recu, nRecu);
         stRecus++;
-        const char *e = lance(recu, nRecu);
-        if (e) { Serial.printf("ERR %s\n", e); } else Serial.printf("OK %d octets, tas %u\n", nRecu, (unsigned)ESP.getFreeHeap());
+        const char *e = lance(recu, nRecu, nomRecu);
+        if (e) { Serial.printf("ERR %s\n", e); } else Serial.printf("OK %d octets, tas %u%s\n", nRecu, (unsigned)ESP.getFreeHeap(), ok ? "" : " (pas garde : console pleine)");
         free(recu); recu = nullptr;
       }
       continue;
@@ -327,7 +366,8 @@ void ecoute() {
       if (!strncmp(ligne, "STAT ", 5)) stats = ligne[5] == '1';
       if (!strncmp(ligne, "BTN ", 4)) { btSim = 0; for (int k = 0; k < 3 && ligne[4 + k]; k++) btSim |= (ligne[4 + k] == '1') << k; }   // test : boutons tenus G D P3, ex. "BTN 011"
       if (!strncmp(ligne, "SCRIPT ", 7)) {
-        attendu = atoi(ligne + 7); nRecu = 0; recuT = millis();
+        attendu = atoi(ligne + 7); nRecu = 0;
+        const char *p = strchr(ligne + 7, ' '); snprintf(nomRecu, sizeof nomRecu, "%s", p ? p + 1 : ""); recuT = millis();
         recu = attendu > 0 && attendu < 60000 ? (char *)malloc(attendu + 1) : nullptr;
         if (!recu) Serial.println("ERR taille ou memoire");
       }
@@ -352,6 +392,12 @@ void setup() {
   prefs.begin("berry", false);
   stRecus = prefs.getUInt("recus"); stParties = prefs.getUInt("parties"); stSecondes = prefs.getUInt("secondes"); stErreurs = prefs.getUInt("erreurs");
   nRecs = min((int)prefs.getUChar("nrecs"), 8); if (nRecs) prefs.getBytes("recs", recs, nRecs * sizeof(Record));
+  LittleFS.mkdir("/j");
+  if (File f = LittleFS.open("/jeu.be", "r")) {  // ancien firmware (un seul jeu) : il rejoint la liste
+    size_t n = f.size(); char *s = (char *)malloc(n + 1);
+    if (s) { f.read((uint8_t *)s, n); s[n] = 0; nomDuJeu(s); garde(nomJeu, s, n); free(s); }
+    f.close(); LittleFS.remove("/jeu.be");
+  }
   ecran = E_LOGO; ecranT = millis(); tone(SND_PIN, 523); sonFin = millis() + 90;
 }
 
@@ -364,7 +410,9 @@ void loop() {
   for (int k = 0; k < 3; k++) { btAv[k] = bt[k]; bt[k] = !digitalRead(BTN[k]) || (btSim >> k & 1); }
   const uint32_t now = millis(); float dt = (now - tPrec) / 1000.0f; tPrec = now; if (dt > 0.1f) dt = 0.1f;
   uint32_t t0 = micros();
-  const bool appuiP3 = bt[2] && !btAv[2], appuiG = bt[0] && !btAv[0], appuiD = bt[1] && !btAv[1];
+  const bool appuiP3 = bt[2] && !btAv[2], appuiG = bt[0] && !btAv[0], appuiD = bt[1] && !btAv[1], lacheP3 = !bt[2] && btAv[2];
+  static uint32_t p3T = 0; static bool p3Pris = false;   // P3 tenu (liste des jeux) ; pris = cet appui a deja servi
+  if (appuiP3) { p3T = now; p3Pris = false; }
   static uint32_t gdT = 0;                       // G + D tenus 1 s : quitter le jeu
   if (bt[0] && bt[1]) { if (!gdT) gdT = now; } else gdT = 0;
   if (ecran == E_JEU && gdT && now - gdT > 1000) {
@@ -381,13 +429,26 @@ void loop() {
     if (appuiG) choix = (choix + 3) % 4; if (appuiD) choix = (choix + 1) % 4;
     if (appuiP3) {
       note[0] = 0;
-      if (choix == 0) {                          // Jouer : le dernier jeu recu
-        File f = LittleFS.open("/jeu.be", "r");
-        if (!f) snprintf(note, sizeof note, "Pas encore de jeu : cree-le sur Brique (mode script).");
-        else { size_t n = f.size(); char *s = (char *)malloc(n + 1); if (s) { f.read((uint8_t *)s, n); s[n] = 0; lance(s, n); free(s); } f.close(); }
-      } else { ecran = choix == 1 ? E_CLASSEMENT : choix == 2 ? E_STATS : E_INFO; ecranT = now; }
+      if (choix == 0) { listeJeux(); choixJ = 0; ecran = E_LISTE; ecranT = now; p3Pris = true; }   // Jouer : la liste des jeux gardes
+      else { ecran = choix == 1 ? E_CLASSEMENT : choix == 2 ? E_STATS : E_INFO; ecranT = now; }
     }
     if (ecran != E_JEU) dessineEcran();
+  } else if (ecran == E_LISTE) {
+    if (appuiG) choixJ = (choixJ + nJeux) % (nJeux + 1); if (appuiD) choixJ = (choixJ + 1) % (nJeux + 1);
+    if (bt[2] && !p3Pris && now - p3T > 800 && choixJ < nJeux) { p3Pris = true; ecran = E_SUPPR; tone(SND_PIN, 330); sonFin = now + 80; }
+    else if (lacheP3 && !p3Pris) {
+      if (choixJ == nJeux) allerMenu();
+      else if (File f = LittleFS.open(jeux[choixJ].chemin, "r")) {
+        size_t n = f.size(); char *s = (char *)malloc(n + 1);
+        if (s) { f.read((uint8_t *)s, n); s[n] = 0; const char *nl = strchr(s, '\n'); const size_t o = nl ? nl - s + 1 : 0; lance(s + o, n - o, jeux[choixJ].nom); free(s); }
+        f.close();
+      }
+    }
+    if (ecran != E_JEU) dessineEcran();
+  } else if (ecran == E_SUPPR) {
+    if (appuiP3) { LittleFS.remove(jeux[choixJ].chemin); listeJeux(); if (choixJ > nJeux) choixJ = nJeux; ecran = E_LISTE; p3Pris = true; }
+    else if (appuiG || appuiD) ecran = E_LISTE;
+    dessineEcran();
   } else if (ecran != E_JEU) {
     if (appuiP3) allerMenu();
     dessineEcran();

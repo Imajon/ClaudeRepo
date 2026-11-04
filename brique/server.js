@@ -83,12 +83,16 @@ const empreinte = s => crypto.createHash('sha256').update(String(s)).digest('hex
 const JOUR = 864e5;
 function joueurDe(b) {                                   // l'enfant prouve son pseudo avec le secret recu en rejoignant son groupe
   const j = db.joueurs.find(j => j.pseudo.toLowerCase() === String(b.pseudo || '').toLowerCase());
-  return j && b.secret && j.secret === empreinte(b.secret) ? j : null;
+  const s = String(b.secret || '').trim();                 // code tapé à la main : majuscules ou minuscules
+  return j && s && [s, s.toUpperCase(), s.toLowerCase()].some(x => j.secret === empreinte(x)) ? j : null;
 }
 function animateurDe(req) {
   const s = db.sessions[empreinte(req.headers['x-session'] || '')];
   return s && s.exp > Date.now() ? s.email : null;
 }
+// code secret d'un enfant, facile à noter (ex. TIGRE-4821) ; 10 essais ratés par pseudo et par heure au plus (route reconnexion)
+const codeSecret = () => ['LUNE', 'ROBOT', 'PIXEL', 'FUSEE', 'DRAGON', 'COMETE', 'NINJA', 'VOLCAN', 'GLACE', 'TIGRE', 'ORAGE', 'CASTOR', 'HIBOU', 'PANDA', 'REQUIN', 'ZEBRE'][crypto.randomInt(16)] + '-' + crypto.randomInt(1000, 10000);
+const ratesReco = { h: 0, n: new Map() };
 function codeGroupe() {                                  // ex. LUNE-42 : facile a dicter en classe
   const MOTS = ['LUNE', 'ROBOT', 'PIXEL', 'FUSEE', 'DRAGON', 'BRIQUE', 'COMETE', 'NINJA', 'VOLCAN', 'GLACE', 'TIGRE', 'ORAGE'];
   let c; do c = MOTS[crypto.randomInt(MOTS.length)] + '-' + crypto.randomInt(10, 100); while (db.groupes.some(g => g.code === c));
@@ -804,9 +808,17 @@ const serveur = http.createServer(async (req, res) => {
     const g = code ? db.groupes.find(g => g.code === code) : { code: '', nom: 'Créateur' };
     if (!g) return repondre(res, 400, { erreur: 'Code de groupe inconnu : vérifie-le, ou laisse la case vide.' });
     if (db.joueurs.some(j => j.pseudo.toLowerCase() === b.pseudo.toLowerCase())) return repondre(res, 409, { erreur: 'Ce pseudo est déjà pris : choisis-en un autre.' });
-    const secret = aleatoire(16);
+    const secret = codeSecret();
     db.joueurs.push({ pseudo: b.pseudo, groupe: g.code, secret: empreinte(secret), cree: Date.now() }); sauver();
     return repondre(res, 200, { pseudo: b.pseudo, secret, groupe: g.nom });
+  }
+  if (url === '/api/reconnexion') {                   // pseudo + code secret -> le même compte, sur n'importe quel ordinateur
+    const k = String(b.pseudo || '').toLowerCase(), h = Math.floor(Date.now() / 36e5);
+    if (ratesReco.h !== h) { ratesReco.h = h; ratesReco.n = new Map(); }
+    if ((ratesReco.n.get(k) || 0) >= 10) return repondre(res, 429, { erreur: 'Trop d\'essais pour ce pseudo : réessaie dans une heure.' });
+    const j = joueurDe(b);
+    if (!j) { ratesReco.n.set(k, (ratesReco.n.get(k) || 0) + 1); return repondre(res, 401, { erreur: 'Pseudo ou code secret incorrect.' }); }
+    return repondre(res, 200, { pseudo: j.pseudo, secret: [b.secret.trim(), b.secret.trim().toUpperCase(), b.secret.trim().toLowerCase()].find(x => j.secret === empreinte(x)), groupe: db.groupes.find(g => g.code === j.groupe)?.nom || 'Créateur' });
   }
 
   // ----- ecritures des enfants : pseudo + secret obligatoires -----

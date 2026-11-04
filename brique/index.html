@@ -1485,6 +1485,11 @@ body{overflow-x:clip}                                           /* la bande 100v
   <label class="champ">Code du groupe (si tu en as un)<input id="rjCode" class="pseudo" placeholder="ex. LUNE-42" autocapitalize="characters"></label>
   <div id="rjMsg" class="envoi"></div>
   <div class="actions" style="justify-content:flex-end"><button id="rjAnnuler" class="sec">Annuler</button><button id="rjOk" class="sec" style="border-color:var(--acc)">C'est parti !</button></div>
+  <details id="rjDeja"><summary>🔑 J'ai déjà un compte</summary>
+    <p class="aide">Ton pseudo en haut, et le code secret que tu as noté en créant ton compte.</p>
+    <label class="champ">Mon code secret<input id="rjSecret" class="pseudo" placeholder="ex. TIGRE-4821" autocapitalize="characters"></label>
+    <div class="actions" style="justify-content:flex-end"><button id="rjReco" class="sec" style="border-color:var(--acc)">🔑 Me reconnecter</button></div>
+  </details>
 </dialog>
 
 <main id="atelier" class="hide">
@@ -2715,17 +2720,25 @@ let moi = lire('brique-moi');                          // { pseudo, secret, grou
 const pseudo = () => moi?.pseudo || '';
 const ident = () => ({ pseudo: moi?.pseudo, secret: moi?.secret });
 function majMoi() {
-  moiTxt.innerHTML = moi ? `${avatar(moi.pseudo)} <b>${esc(moi.pseudo)}</b> <small style="color:var(--mute)">${esc(moi.groupe)}</small>` : '';
+  moiTxt.innerHTML = moi ? `${avatar(moi.pseudo)} <b>${esc(moi.pseudo)}</b> <small style="color:var(--mute)">${esc(moi.groupe)}</small> <button class="sec" data-moncode title="Mon code secret">🔑</button>` : '';
   rejoindreBtn.textContent = moi ? '↩ Changer' : '👤 Créer mon compte';
 }
+const rappelCode = () => `Pseudo : ${moi.pseudo}\nCode secret : ${moi.secret}\n\nNote-les bien : ils servent à te reconnecter, sur cet ordinateur ou un autre.`;
+moiTxt.onclick = e => { if (e.target.closest('[data-moncode]')) alert(rappelCode()); };
 rejoindreBtn.onclick = () => {
-  if (moi && !confirm('Quitter « ' + moi.pseudo + ' » sur cet ordinateur ? Sans groupe, ce pseudo sera perdu ; dans un groupe, ton animateur pourra le libérer.')) return;
+  if (moi && !confirm(`Te déconnecter ?\n\n${rappelCode()}`)) return;
   moi = null; ecrire('brique-moi', null); majMoi(); rjMsg.textContent = ''; dlgRejoindre.showModal();
 };
 rjAnnuler.onclick = () => dlgRejoindre.close();
+const connecte = r => { moi = r; ecrire('brique-moi', moi); majMoi(); dlgRejoindre.close(); rafraichir(); };
+const rjErreur = e => rjMsg.innerHTML = `<span style="color:var(--ko)">${esc(e.message)}</span>`;
 rjOk.onclick = async () => {
-  try { moi = await api('api/joueur', { pseudo: rjPseudo.value.trim(), code: rjCode.value.trim() }); ecrire('brique-moi', moi); majMoi(); dlgRejoindre.close(); }
-  catch (e) { rjMsg.innerHTML = `<span style="color:var(--ko)">${esc(e.message)}</span>`; }
+  try { connecte(await api('api/joueur', { pseudo: rjPseudo.value.trim(), code: rjCode.value.trim() })); alert('Bienvenue !\n\n' + rappelCode()); }
+  catch (e) { rjErreur(e); }
+};
+rjReco.onclick = async () => {
+  try { connecte(await api('api/reconnexion', { pseudo: rjPseudo.value.trim(), secret: rjSecret.value.trim() })); rjSecret.value = ''; }
+  catch (e) { rjErreur(e); }
 };
 async function api(url, corps, session) {
   const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;

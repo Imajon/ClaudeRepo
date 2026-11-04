@@ -391,15 +391,16 @@ function ajouterIdee(texte, pseudo, source) {          // meme idee (aux accents
 }
 const ideesPubliques = () => db.souhaits.map(s => ({ id: s.id, texte: s.texte, statut: s.statut, votes: s.votes.length, cree: s.cree }))
   .sort((a, b) => (a.statut === 'fait') - (b.statut === 'fait') || b.votes - a.votes).slice(0, 30);
-async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 'mistral-small-latest', delai = 15000, surMorceau) {
+async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 'mistral-small-latest', delai = 15000, surMorceau, brut) {   // brut : texte libre (le code), sinon un objet JSON
   const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
     method: 'POST', signal: AbortSignal.timeout(delai),
     headers: { Authorization: 'Bearer ' + process.env.MISTRAL_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: modele, temperature: 0.2, safe_prompt: true, response_format: { type: 'json_object' }, stream: !!surMorceau,   // safe_prompt : garde-fou officiel de Mistral
+    body: JSON.stringify({ model: modele, temperature: 0.2, safe_prompt: true, ...(brut ? {} : { response_format: { type: 'json_object' } }), stream: !!surMorceau,   // safe_prompt : garde-fou officiel de Mistral
       messages: [{ role: 'system', content: consigne }, { role: 'user', content: JSON.stringify(contenu) }] }),
   });
   if (!r.ok) throw new Error('Mistral ' + r.status + ' ' + (await r.text()).slice(0, 200));
-  if (!surMorceau) return JSON.parse((await r.json()).choices[0].message.content);
+  const lire = t => brut ? t : JSON.parse(t);
+  if (!surMorceau) return lire((await r.json()).choices[0].message.content);
   let tout = '', reste = '';                             // flux : lignes "data: {...}" jusqu'a "data: [DONE]"
   for await (const bout of r.body) {
     const ls = (reste + Buffer.from(bout).toString()).split('\n'); reste = ls.pop();
@@ -409,13 +410,13 @@ async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 
       if (d) { tout += d; surMorceau(d); }
     }
   }
-  return JSON.parse(tout);
+  return lire(tout);
 }
 // ---------- mode script (c3-berry) : l'IA ecrit tout le jeu en Berry ; la consigne est dans consigne-script.txt ----------
 const CONSIGNE_SCRIPT = fs.readFileSync(path.join(__dirname, 'consigne-script.txt'), 'utf8');
 async function iaScript(texte, script, erreur, avant, auto, test, surMorceau) {   // test = ce que le verificateur a vu en jouant le programme ; auto = correction d'une erreur de la console : le modele rapide suffit
-  const r = await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special', test_automatique: test || '(pas de programme)',
-    demandes_precedentes: avant, demande: texte }, auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest', 60000, surMorceau);
+  const r = decoupe(await mistral(CONSIGNE_SCRIPT, { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special', test_automatique: test || '(pas de programme)',
+    demandes_precedentes: avant, demande: texte }, auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest', 60000, surMorceau, true));
   const t = v => typeof v === 'string' ? v.trim() : '';
   let nouveau = t(r.script);
   if (nouveau.length < 20 || nouveau.length > 20000) throw new Error('programme vide ou trop long');
@@ -425,6 +426,12 @@ async function iaScript(texte, script, erreur, avant, auto, test, surMorceau) { 
   nouveau = nouveau.replace(/(\bfor\s+\w+\s*:\s*)(.+?)\s*\.\.\s*(.+?)\s+step\s+(\S+)/g, '$1range($2, $3, $4)');   // "for i: 0 .. 360 step 10" n'existe pas en Berry (malgre la consigne) -> range(debut, fin, pas)
   if (GROS_MOTS.test(nouveau) || GROS_MOTS.test(t(r.explication))) return { refus: 'Je ne peux pas mettre ça dans un jeu.' };
   return { script: nouveau, explication: t(r.explication).slice(0, 400), limite: t(r.limite).slice(0, 300), question: t(r.question).slice(0, 200), astuce: t(r.astuce).slice(0, 300) };
+}
+function decoupe(t) {                                   // reponse de l'IA : le programme dans un bloc ``` (pas d'echappement JSON qui abime le code), puis un petit JSON pour l'enfant
+  const m = /```[^\n]*\n([\s\S]*?)```/.exec(t);
+  const reste = m ? t.slice(m.index + m[0].length) : t;
+  let o = {}; try { o = JSON.parse(reste.slice(reste.indexOf('{'), reste.lastIndexOf('}') + 1)); } catch {}
+  return { ...o, script: m ? m[1] : '' };
 }
 function avecLignes(erreur, script) {                    // "jeu:12: ..." -> on joint les lignes 11 a 13 : l'IA voit ce qu'elle doit corriger
   const n = +(/jeu:(\d+)/.exec(erreur) || [])[1]; if (!n || !script) return erreur;

@@ -3272,16 +3272,10 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     sauver(); rendre();
   }
   const CORRIGE = '🔧 Correction automatique de l\'erreur signalée par la console';
-  function scriptPartiel(t) {                            // le champ "script" du JSON en cours d'écriture, décodé jusqu'où il est arrivé
-    const m = t.match(/"script"\s*:\s*"/); if (!m) return null;
-    let o = '', i = m.index + m[0].length;
-    while (i < t.length && t[i] !== '"') {
-      if (t[i] !== '\\') { o += t[i++]; continue; }
-      const n = t[i + 1]; if (n === undefined || (n === 'u' && i + 6 > t.length)) break;
-      if (n === 'u') { o += String.fromCharCode(parseInt(t.substr(i + 2, 4), 16)); i += 6; continue; }
-      o += { n: '\n', t: '\t', r: '', b: '', f: '' }[n] ?? n; i += 2;
-    }
-    return o;
+  function scriptPartiel(t) {                            // le bloc ``` du programme en cours d'écriture, jusqu'où il est arrivé
+    const i = t.indexOf('```'); if (i < 0) return null;
+    const d = t.indexOf('\n', i); if (d < 0) return null;
+    const f = t.indexOf('```', d); return t.slice(d + 1, f < 0 ? t.length : f);
   }
   async function apiFlux(corps, surTexte) {              // api/script en flux : le texte arrive au fur et à mesure, puis "\0" + la réponse vérifiée
     const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;

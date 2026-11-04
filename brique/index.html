@@ -1714,6 +1714,86 @@ body{overflow-x:clip}                                           /* la bande 100v
 </footer>
 
 <script src="fiche.js"></script>   <!-- la fiche de jeu (FICHE-JEU.md) : même code que server.js -->
+<script id="textesSite" type="application/json">__TEXTES__</script>   <!-- textes modifiés en mode édition (remplis par server.js) -->
+<script>
+// ---------- Mode édition des textes ----------
+// Chaque texte fixe de la page reçoit une clé (balise + empreinte du texte d'origine + rang) : une modif reste attachée à son texte,
+// et disparaît d'elle-même si le texte d'origine change dans index.html. Ouvrir la page avec ?edition, puis entrer le code (EDIT_CODE du serveur).
+(() => {
+  const INLINE = { B: 1, STRONG: 1, EM: 1, I: 1, BR: 1, SMALL: 1, A: 1, U: 1, SPAN: 1 };
+  const okLien = h => /^(https?:\/\/|#|\/|mailto:)/i.test(h || '');
+  const propre = n => [...n.attributes].every(a => a.name === 'class' || a.name === 'title' || (a.name === 'href' && okLien(a.value)) || (n.tagName === 'A' && /^(target|rel)$/.test(a.name)));
+  const editable = el => !el.id && !el.closest('a,button,script,template,[data-no-edit]') && el.textContent.trim()
+    && [...el.querySelectorAll('*')].every(n => INLINE[n.tagName] && !n.id && propre(n));
+  // seul ce qui est permis survit : texte, b/strong/em/i/u/small/span/br, liens http(s)/#// (aucun script, aucun attribut on…)
+  function nettoyer(html) {
+    const t = document.createElement('template'); t.innerHTML = html;
+    const copie = (src, dst) => src.childNodes.forEach(n => {
+      if (n.nodeType === 3) return dst.append(n.textContent);
+      if (n.nodeType !== 1) return;
+      if (!INLINE[n.tagName]) return copie(n, dst);          // balise inconnue (div d'un Entrée…) : on garde son texte
+      const e = document.createElement(n.tagName);
+      for (const a of ['class', 'title']) if (n.getAttribute(a)) e.setAttribute(a, n.getAttribute(a));
+      if (n.tagName === 'A' && okLien(n.getAttribute('href'))) { e.href = n.getAttribute('href'); if (n.getAttribute('target') === '_blank') { e.target = '_blank'; e.rel = 'noopener'; } }
+      copie(n, e); dst.append(e);
+    });
+    const d = document.createElement('div'); copie(t.content, d); return d.innerHTML;
+  }
+  const hash = s => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.codePointAt(0), 16777619); return (h >>> 0).toString(36); };
+  const SEL = 'h1,h2,h3,h4,h5,h6,p,li,figcaption,label,td,th,dt,dd,blockquote,summary,legend';
+  const vus = {}, elems = [];
+  for (const el of document.body.querySelectorAll(SEL)) {
+    if (!editable(el)) continue;
+    const base = el.tagName.toLowerCase() + '-' + hash(el.textContent.replace(/\s+/g, ' ').trim());
+    vus[base] = (vus[base] || 0) + 1;
+    el.dataset.editCle = base + '-' + vus[base]; el._origine = el.innerHTML; elems.push(el);
+  }
+  let textes = {}; try { textes = JSON.parse(document.getElementById('textesSite').textContent) || {}; } catch {}   // page sans serveur : rien
+  for (const el of elems) if (typeof textes[el.dataset.editCle] === 'string') el.innerHTML = nettoyer(textes[el.dataset.editCle]);
+
+  if (!new URLSearchParams(location.search).has('edition')) return;
+  const api = (u, b) => fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(async r => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) }));
+  let code = ''; try { code = sessionStorage.getItem('brique-edition') || ''; } catch {}
+  addEventListener('load', async () => {
+    for (;;) {                                               // le code est vérifié par le serveur (jamais dans la page)
+      if (!code) code = prompt('Code d’édition :') || ''; if (!code) return;
+      const r = await api('/api/edition/connexion', { code });
+      if (r.ok) break;
+      alert(r.erreur || 'Code refusé'); code = ''; if (r.bloque) return;
+    }
+    try { sessionStorage.setItem('brique-edition', code); } catch {}
+    const st = document.createElement('style');
+    st.textContent = '[data-edit-cle][contenteditable]{outline:1px dashed var(--acc);outline-offset:2px;cursor:text}[data-edit-cle].modifie{outline:2px solid var(--hot)}'
+      + '#barreEdition{position:fixed;z-index:9999;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:8px;align-items:center;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px 12px;box-shadow:0 4px 18px #0004;font:14px system-ui}';
+    document.head.append(st);
+    const modifies = new Set();
+    for (const el of elems) {
+      el.contentEditable = 'true';
+      el.addEventListener('input', () => { modifies.add(el); el.classList.add('modifie'); maj(); });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertLineBreak'); } });
+      el.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')); });
+    }
+    document.addEventListener('click', e => { if (e.target.closest('[data-edit-cle]')) e.stopPropagation(); }, true);   // cliquer un texte l'édite, sans déclencher la page
+    const barre = document.createElement('div'); barre.id = 'barreEdition';
+    barre.innerHTML = '<b>✎ Édition</b><span id="editN"></span><button id="editSauver">Enregistrer</button><button id="editRetab" class="sec" title="Remettre les textes d’origine des éléments modifiés">Texte d’origine</button><button id="editQuitter" class="sec">Quitter</button>';
+    document.body.append(barre);
+    const maj = () => { editN.textContent = modifies.size ? modifies.size + ' modifié(s)' : 'clique un texte pour le modifier'; };
+    maj();
+    editSauver.onclick = async () => {
+      if (!modifies.size) return;
+      const envoi = {};
+      for (const el of modifies) { const h = nettoyer(el.innerHTML); envoi[el.dataset.editCle] = h === nettoyer(el._origine) ? '' : h; }   // '' = retour au texte d'origine
+      const r = await api('/api/edition/textes', { code, textes: envoi });
+      if (!r.ok) return alert(r.erreur || 'Échec de l’enregistrement');
+      modifies.forEach(el => el.classList.remove('modifie')); modifies.clear(); maj();
+    };
+    editRetab.onclick = () => { for (const el of [...modifies]) { el.innerHTML = el._origine; } modifies.clear(); elems.forEach(el => el.classList.remove('modifie')); maj();
+      if (confirm('Remettre aussi le texte d’origine partout (toutes les modifs déjà enregistrées) ?')) elems.forEach(el => { if (el.innerHTML !== el._origine) { el.innerHTML = el._origine; modifies.add(el); el.classList.add('modifie'); } }), maj(); };
+    editQuitter.onclick = () => { try { sessionStorage.removeItem('brique-edition'); } catch {} location.href = location.pathname + location.hash; };
+    addEventListener('beforeunload', e => { if (modifies.size) e.preventDefault(); });
+  });
+})();
+</script>
 <script>
 // ---------- Constantes reprises du firmware (c3-tft-meatboy.ino) ----------
 const TILE = 16, COLS = 20, SW = 320, SH = 240;

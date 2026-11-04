@@ -1,4 +1,5 @@
 # Saute plateformes
+# exemple: Course sans fin sur des plateformes (plateformes creees au fur et a mesure, saut, defilement) | mots: sans fin, infini, runner, courir, saut, sauter, plateforme, defile, distance
 var PX = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 var PY = [0, 0, 0, 0, 0, 0]
 var PW = [0, 0, 0, 0, 0, 0]

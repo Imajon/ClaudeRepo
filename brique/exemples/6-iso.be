@@ -1,4 +1,5 @@
 # Iso
+# exemple: Isometrique (grille, cubes, deplacement case par case, ordre de dessin) | mots: iso, isometrique, 3d, cube, case, grille, carte, bloc, relief
 var CARTE = [
 "........",
 "..#.....",

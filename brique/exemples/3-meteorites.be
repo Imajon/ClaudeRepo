@@ -1,4 +1,5 @@
 # Meteorites
+# exemple: Esquive et tir (objets qui tombent, tirs vers le haut, listes de taille fixe, difficulte qui monte) | mots: meteorite, esquive, eviter, tombe, pluie, tir, tirer, vaisseau, espace, asteroide, balle, laser
 var x = 152.0
 var BX = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 var BY = [-10.0, -10.0, -10.0, -10.0, -10.0, -10.0]

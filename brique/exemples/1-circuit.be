@@ -1,4 +1,5 @@
 # Circuit
+# exemple: Course sur circuit (vue de dessus, camera qui suit, piste en boucle) | mots: course, circuit, voiture, piste, route, kart, moto, derape, virage, tours
 import math
 import string
 var P = [[160, 120], [420, 90], [620, 160], [680, 340], [560, 480], [340, 430], [200, 520], [60, 420], [40, 240]]

@@ -1,4 +1,5 @@
 # Combat de robots
+# exemple: Combat (deux robots face a face, coup de poing et garde avec P3, adversaire joue par la console, barres de vie, manches) | mots: combat, bagarre, baston, boxe, coup, poing, frapper, points de vie, barre de vie, adversaire, duel, robot, ninja, karate, garde
 import math
 var SOL = 200
 var X = [90.0, 230.0] var VX = [0.0, 0.0]

@@ -1,4 +1,5 @@
 # Glisse
+# exemple: Glisse (sol fabrique au fur et a mesure dans un anneau, pente, saut, figures en l'air, atterrissage) | mots: glisse, ski, snow, skate, surf, pente, descente, neige, figure, saut, rampe, colline
 import math
 import string
 var NB = 64 var PAS = 16

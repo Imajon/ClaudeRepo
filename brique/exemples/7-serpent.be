@@ -1,4 +1,5 @@
 # Serpent
+# exemple: Serpent a deux consoles (grille, pas a pas, radio : chaque console envoie sa tete, dessine l'autre serpent, fruit partage) | mots: serpent, snake, grille, fruit, deux consoles, plusieurs consoles, multijoueur, a deux, ensemble, radio, copain
 import string
 var C = 16 var W = 20 var H = 14
 var DX = [1, 0, -1, 0] var DY = [0, 1, 0, -1]

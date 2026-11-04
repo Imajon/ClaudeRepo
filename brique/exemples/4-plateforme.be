@@ -1,4 +1,5 @@
 # Plateforme
+# exemple: Plateforme (niveau en texte, gravite, saut, camera horizontale) | mots: plateforme, niveau, saut, sauter, gravite, drapeau, piece, mario, grimper, mur
 var NIV = [
 "................................................",
 "................................................",

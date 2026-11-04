@@ -1,4 +1,5 @@
 # Labyrinthe
+# exemple: Vue de dessus (labyrinthe en texte, tourner et avancer avec 3 boutons) | mots: labyrinthe, dessus, tourner, avancer, mur, sortie, cle, chemin, couloir, tank
 import math
 var NIV = [
 "################",

@@ -15,7 +15,7 @@ const VERSION = (() => {
   try { const n = +require('child_process').execSync('git rev-list --count HEAD -- .', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] }); if (n > 1) return 'v1.' + n; } catch {}
   return process.env.RENDER_GIT_COMMIT ? 'v-' + process.env.RENDER_GIT_COMMIT.slice(0, 7) : 'dev';
 })();
-const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [], courses: [], reponses: [], clients: [], commandes: [] };
+const VIDE = { niveaux: [], parties: [], animateurs: [], groupes: [], joueurs: [], sessions: {}, liens: {}, souhaits: [], courses: [], reponses: [], clients: [], commandes: [], textes: {} };
 let db;
 
 // ---------- stockage : tout l'etat dans une ligne MySQL (ou un fichier) ----------
@@ -229,6 +229,37 @@ const ipDe = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAd
 const dernierMail = new Map();                           // 1 lien de connexion par minute et par adresse (pas de bombardement)
 const liensIP = new Map(); setInterval(() => liensIP.clear(), 3600000);   // et 5 demandes de lien par heure et par IP (pas de comptes en rafale)
 const tropDeLiens = ip => { const n = (liensIP.get(ip) || 0) + 1; liensIP.set(ip, n); return n > 5; };
+
+// ---------- code du mode edition : EDIT_CODE (12 caracteres mini), compare en temps constant ----------
+// 10 essais faux par heure pour tout le serveur (l'IP est falsifiable) : au-dela, plus aucun essai pendant l'heure
+let ratesEdition = 0; setInterval(() => { ratesEdition = 0; }, 3600000);
+function codeEdition(code) {                             // -> null si bon code, sinon { statut, erreur }
+  const vrai = process.env.EDIT_CODE || '';
+  if (vrai.length < 12) return { statut: 503, erreur: 'Édition désactivée : EDIT_CODE (12 caractères minimum) manque sur le serveur.', bloque: true };
+  if (ratesEdition >= 10) return { statut: 429, erreur: 'Trop de codes faux : réessaie dans une heure.', bloque: true };
+  if (typeof code === 'string' && crypto.timingSafeEqual(Buffer.from(empreinte(code)), Buffer.from(empreinte(vrai)))) return null;
+  ratesEdition++; return { statut: 403, erreur: 'Code refusé.' };
+}
+
+// ---------- copie des medias du site dans _images/C3-Brique/Selection Brique Web (en local seulement : le dossier n'existe pas sur Render) ----------
+function copierMedias() {
+  const dest = path.join(__dirname, '..', '_images', 'C3-Brique', 'Selection Brique Web');
+  if (!fs.existsSync(path.dirname(dest))) return;
+  const EXT = /\.(jpe?g|png|gif|webp|svg|mp4|webm|pdf|docx?|odt|pptx?|xlsx?)$/i, SAUF = new Set(['node_modules', 'versions', 'firmware', 'firmware-berry', 'verif', 'test-claude', '.git']);
+  let n = 0;
+  (function parcourir(rel) {
+    for (const e of fs.readdirSync(path.join(__dirname, rel), { withFileTypes: true })) {
+      const r = path.join(rel, e.name);
+      if (e.isDirectory()) { if (!SAUF.has(e.name)) parcourir(r); continue; }
+      if (!EXT.test(e.name)) continue;
+      const a = path.join(__dirname, r), b = path.join(dest, r), sa = fs.statSync(a);
+      if (fs.existsSync(b) && fs.statSync(b).size === sa.size && fs.statSync(b).mtimeMs >= sa.mtimeMs) continue;
+      fs.mkdirSync(path.dirname(b), { recursive: true }); fs.copyFileSync(a, b); n++;
+    }
+  })('');
+  if (n) console.log(n + ' media(s) copie(s) dans ' + dest);
+}
+if (require.main === module) try { copierMedias(); } catch (e) { console.error('copie des medias :', e.message); }
 
 // ---------- quotas IA par jour : l'IA coute, elle est reservee aux comptes (+ un petit essai sans compte) ----------
 // ponytail: compteurs en memoire, remis a zero chaque jour (et au redemarrage) ; a stocker si le serveur redemarre souvent
@@ -520,7 +551,8 @@ function lireJSON(req) {
 const serveur = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8').replace('__VERSION__', VERSION));
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8').replace('__VERSION__', VERSION)
+    .replace('__TEXTES__', () => JSON.stringify(db.textes).replace(/</g, '\\u003c')));   // textes du mode edition (< echappe : aucun </script> possible)
   }
   const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.(jpg|png|mp4)$/);   // photos et videos du site (nom simple : pas de chemin) ; png = image avec transparence
   if (img && fs.existsSync(path.join(__dirname, 'images', img[1] + '.' + img[2]))) {
@@ -573,6 +605,17 @@ const serveur = http.createServer(async (req, res) => {
   if (tropDeRequetes(ipDe(req))) return repondre(res, 429, { erreur: 'Doucement ! Réessaie dans une minute.' });
   let b; try { b = await lireJSON(req); } catch { return repondre(res, 400, { erreur: 'requête illisible' }); }
 
+  if (url === '/api/edition/connexion' || url === '/api/edition/textes') {   // mode edition des textes de la page (?edition) : code EDIT_CODE
+    const pas = codeEdition(b.code); if (pas) return repondre(res, pas.statut, pas);
+    if (url === '/api/edition/connexion') return repondre(res, 200, { ok: true });
+    const t = b.textes; if (!t || typeof t !== 'object') return repondre(res, 400, { erreur: 'rien a enregistrer' });
+    for (const [k, v] of Object.entries(t)) {
+      if (!/^[a-z0-9]{1,12}-[a-z0-9]{1,8}-\d{1,4}$/.test(k) || typeof v !== 'string' || v.length > 8000) return repondre(res, 400, { erreur: 'texte refuse : ' + k.slice(0, 40) });
+      if (v) db.textes[k] = v; else delete db.textes[k];   // '' = texte d'origine ; la page re-nettoie tout a l'affichage (balises permises seulement)
+    }
+    if (Object.keys(db.textes).length > 2000) return repondre(res, 400, { erreur: 'trop de textes' });
+    sauver(); return repondre(res, 200, { ok: true });
+  }
   if (url === '/api/script') {                        // mode script : la demande, le programme actuel, ce que la console a dit -> nouveau programme
     if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim()) return repondre(res, 400, { erreur: 'demande vide' });

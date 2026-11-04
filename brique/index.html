@@ -1787,8 +1787,11 @@ body{overflow-x:clip}                                           /* la bande 100v
       if (!r.ok) return alert(r.erreur || 'Échec de l’enregistrement');
       modifies.forEach(el => el.classList.remove('modifie')); modifies.clear(); maj();
     };
-    editRetab.onclick = () => { for (const el of [...modifies]) { el.innerHTML = el._origine; } modifies.clear(); elems.forEach(el => el.classList.remove('modifie')); maj();
-      if (confirm('Remettre aussi le texte d’origine partout (toutes les modifs déjà enregistrées) ?')) elems.forEach(el => { if (el.innerHTML !== el._origine) { el.innerHTML = el._origine; modifies.add(el); el.classList.add('modifie'); } }), maj(); };
+    editRetab.onclick = () => {                              // tous les textes modifiés reprennent leur version d'origine (à enregistrer ensuite)
+      if (!confirm('Remettre le texte d’origine de tous les textes modifiés ?')) return;
+      for (const el of elems) if (el.innerHTML !== el._origine) { el.innerHTML = el._origine; modifies.add(el); el.classList.add('modifie'); }
+      maj();
+    };
     editQuitter.onclick = () => { try { sessionStorage.removeItem('brique-edition'); } catch {} location.href = location.pathname + location.hash; };
     addEventListener('beforeunload', e => { if (modifies.size) e.preventDefault(); });
   });

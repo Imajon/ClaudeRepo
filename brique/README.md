@@ -43,8 +43,11 @@ Sans variables, tout marche en local : données dans `data.json`, liens de conne
 | `STRIPE_SECRET_KEY` | boutique : paiement Stripe Checkout (`sk_test_…` pour tester) ; sans clé en local, paiement simulé |
 | `BOUTIQUE_SECRET` | boutique : clé du HMAC des e-mails acheteurs (longue, aléatoire, **ne jamais la changer** : sinon les comptes sont perdus) ; obligatoire en ligne |
 | `ADMIN_EMAILS` | boutique : e-mails animateurs qui voient les commandes (séparés par des virgules) |
+| `EDIT_CODE` | mode édition des textes de la page : ouvrir `/?edition`, entrer ce code (12 caractères minimum ; 10 codes faux par heure au total, puis blocage d'une heure). Modifs gardées dans les données (MySQL), texte d'origine remis par le bouton « Texte d'origine » ; sans variable : édition désactivée |
 | `PUBLIC_URL` | adresse des liens envoyés par mail (sur Render, prise automatiquement) |
 | `DATA` | chemin du fichier de données quand il n'y a pas de MySQL |
+
+En local, au démarrage, le serveur copie toutes les images, vidéos, PDF et documents de `brique/` (sauf `versions/`, `firmware*`, `node_modules/`) dans `_images/C3-Brique/Selection Brique Web/` (mêmes sous-dossiers, seulement les fichiers nouveaux ou changés). Sur Render ce dossier n'existe pas : rien n'est copié.
 
 ## Hébergement sur Render
 

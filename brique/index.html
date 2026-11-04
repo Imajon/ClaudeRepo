@@ -401,6 +401,12 @@ body{overflow-x:clip}                                           /* la bande 100v
 .page-hero{grid-column:1/-1;align-self:stretch;text-align:center;padding-bottom:8px}   /* titre de page : centré sur toute la largeur, au-dessus des colonnes ou des fiches */
 .support .fiche{background:#fff;border-radius:8px;padding:8px;margin:10px 0}
 .support .fiche svg{display:block;width:100%;height:auto}
+.sup-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-self:stretch}
+.sup-nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px;border:2px solid var(--line);border-radius:14px;background:var(--surface);color:var(--txt);font:inherit;cursor:pointer;box-shadow:var(--glow)}
+.sup-nav button span{font-size:38px;line-height:1.1}.sup-nav button b{font-size:17px}.sup-nav button small{color:var(--mute);font-size:13px;text-align:center}
+.sup-nav button:hover,.sup-nav button.on{border-color:var(--acc)}.sup-nav button.on{background:var(--soft2)}
+@media (max-width:560px){.sup-nav{gap:6px}.sup-nav button{padding:10px 4px}.sup-nav button span{font-size:28px}.sup-nav button small{display:none}}
+.support .capture{border:2px dashed var(--line);border-radius:10px;padding:18px;margin:8px 0 14px;text-align:center;color:var(--mute);font-size:14px}
 /* ----- possibilités de la console : défi « % exploré » (communauté) ----- */
 .defi-pc{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:6px}
 .defi-pc b{font:800 34px/1.1 var(--mono);color:var(--acc2);text-shadow:var(--brille)}.defi-pc span{color:var(--mute);font-size:14px}
@@ -804,46 +810,13 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p class="sh-sur">Support · montage et prise en main</p>
     <h2 class="sh-titre">Besoin d'info ?<br>C'est ici.</h2>
   </div>
-  <section>
-    <h2>La console Brique</h2>
-    <p>Une console à souder soi-même : un ESP32-C3, un écran TFT 2" et 3 boutons. Une fois montée, elle fait tourner Pixel Run et reçoit par câble USB les niveaux créés ici.</p>
-    <p><b>Console pré-soudée ?</b> Elle arrive montée et testée : passe directement au branchement USB et à l'envoi de ton premier jeu. Les étapes de soudure ci-dessous ne concernent que le kit.</p>
-    <p class="aide">Environ 1 h 30 de montage pour un enfant accompagné (CM1 → 4ᵉ), puis 10 minutes pour la première programmation.</p>
-  </section>
-  <section>
-    <h2>Matériel et outils</h2>
-    <div class="tab"><table>
-      <tr><th>Qté</th><th>Pièce</th><th>Détail</th></tr>
-      <tr><td>1</td><td>ESP32-C3 Super Mini</td><td>Microcontrôleur, prise USB-C</td></tr>
-      <tr><td>1</td><td>Écran TFT 2" ST7789</td><td>SPI, 320×240, 7 broches (GND, VCC, SCL, SDA, RES, DC, CS)</td></tr>
-      <tr><td>2</td><td>Bouton-poussoir 6×6 mm</td><td>Gauche, Droite</td></tr>
-      <tr><td>1</td><td>Bouton-poussoir 12×12 mm</td><td>Saut</td></tr>
-      <tr><td>1</td><td>Support</td><td>Plaque à pastilles (V1) ou PCB hexagonal (V2)</td></tr>
-      <tr><td>~15</td><td>Fils fins</td><td>Seulement pour la plaque à pastilles</td></tr>
-      <tr><td>1</td><td>Câble USB-C <b>de données</b></td><td>Pas un câble de charge seule</td></tr>
-    </table></div>
-    <p><b>Outils :</b> fer à souder (~330 °C), étain, pince coupante, multimètre (conseillé), lunettes de protection.</p>
-    <p><b>Pour programmer :</b> un ordinateur avec Chrome ou Edge.</p>
-  </section>
-  <section>
-    <h2>Assemblage pas à pas</h2>
-    <p>Câblage <b>standard</b>, celui du firmware principal : chaque fil relie une broche de l'écran ou d'un bouton à une broche de l'ESP32-C3.</p>
-    <div class="tab"><table>
-      <tr><th>Élément</th><th>Broche</th><th>ESP32-C3</th></tr>
-      <tr><td>Écran</td><td>GND</td><td>GND</td></tr>
-      <tr><td>Écran</td><td>VCC</td><td>3V3</td></tr>
-      <tr><td>Écran</td><td>SCL (horloge)</td><td>GPIO 4</td></tr>
-      <tr><td>Écran</td><td>SDA (données)</td><td>GPIO 6</td></tr>
-      <tr><td>Écran</td><td>RES</td><td>GPIO 10</td></tr>
-      <tr><td>Écran</td><td>DC</td><td>GPIO 5</td></tr>
-      <tr><td>Écran</td><td>CS</td><td>GPIO 7</td></tr>
-      <tr><td>Bouton Gauche</td><td>une patte</td><td>GPIO 2</td></tr>
-      <tr><td>Bouton Droite</td><td>une patte</td><td>GPIO 1</td></tr>
-      <tr><td>Bouton Saut</td><td>une patte</td><td>GPIO 3</td></tr>
-      <tr><td>Les 3 boutons</td><td>autre patte</td><td>GND</td></tr>
-    </table></div>
-    <p class="aide">Aucune résistance pour les boutons : le firmware active celles de l'ESP32.</p>
-    <h3>Fiche d'assemblage : le sens de chaque pièce (carte hexagonale)</h3>
+  <nav class="sup-nav" aria-label="Sections du support">
+    <button data-groupe="montage" class="on"><span>🔧</span><b>Montage</b><small>Matériel et assemblage</small></button>
+    <button data-groupe="tuto"><span>🖥️</span><b>Tuto interface</b><small>Brancher, créer, envoyer</small></button>
+    <button data-groupe="pb"><span>🩺</span><b>Problèmes possibles</b><small>Dépannage et fiche de test</small></button>
+  </nav>
+  <section data-groupe="montage">
+    <h2>Le sens de chaque pièce</h2>
     <p class="aide">L'ESP32-C3 au verso (côté QR code), puce visible et USB-C sur le bord plat ; l'écran et les boutons au recto.</p>
     <button id="ficheAssImprimer" class="sec">🖨 Imprimer la fiche d'assemblage</button>
     <div id="ficheAss" class="fiche"><!-- FICHE-ASSEMBLAGE : remplacee par c3-tft-meatboy/materiel/make_fiche_assemblage.py --><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1414" width="210mm" height="297mm" font-family="Segoe UI, Arial, sans-serif">
@@ -1089,7 +1062,47 @@ body{overflow-x:clip}                                           /* la bande 100v
       <li><b>Fixer</b> la carte dans le boîtier (4 trous de fixation, alignés sur l'écran).</li>
     </ol>
   </section>
-  <section>
+  <section data-groupe="montage">
+    <h2>La console Brique</h2>
+    <p>Une console à souder soi-même : un ESP32-C3, un écran TFT 2" et 3 boutons. Une fois montée, elle fait tourner Pixel Run et reçoit par câble USB les niveaux créés ici.</p>
+    <p><b>Console pré-soudée ?</b> Elle arrive montée et testée : passe directement au branchement USB et à l'envoi de ton premier jeu. Les étapes de soudure ci-dessous ne concernent que le kit.</p>
+    <p class="aide">Environ 1 h 30 de montage pour un enfant accompagné (CM1 → 4ᵉ), puis 10 minutes pour la première programmation.</p>
+  </section>
+  <section data-groupe="montage">
+    <h2>Matériel et outils</h2>
+    <div class="tab"><table>
+      <tr><th>Qté</th><th>Pièce</th><th>Détail</th></tr>
+      <tr><td>1</td><td>ESP32-C3 Super Mini</td><td>Microcontrôleur, prise USB-C</td></tr>
+      <tr><td>1</td><td>Écran TFT 2" ST7789</td><td>SPI, 320×240, 7 broches (GND, VCC, SCL, SDA, RES, DC, CS)</td></tr>
+      <tr><td>2</td><td>Bouton-poussoir 6×6 mm</td><td>Gauche, Droite</td></tr>
+      <tr><td>1</td><td>Bouton-poussoir 12×12 mm</td><td>Saut</td></tr>
+      <tr><td>1</td><td>Support</td><td>Plaque à pastilles (V1) ou PCB hexagonal (V2)</td></tr>
+      <tr><td>~15</td><td>Fils fins</td><td>Seulement pour la plaque à pastilles</td></tr>
+      <tr><td>1</td><td>Câble USB-C <b>de données</b></td><td>Pas un câble de charge seule</td></tr>
+    </table></div>
+    <p><b>Outils :</b> fer à souder (~330 °C), étain, pince coupante, multimètre (conseillé), lunettes de protection.</p>
+    <p><b>Pour programmer :</b> un ordinateur avec Chrome ou Edge.</p>
+  </section>
+  <section data-groupe="montage">
+    <h2>Câblage des broches</h2>
+    <p>Câblage <b>standard</b>, celui du firmware principal : chaque fil relie une broche de l'écran ou d'un bouton à une broche de l'ESP32-C3.</p>
+    <div class="tab"><table>
+      <tr><th>Élément</th><th>Broche</th><th>ESP32-C3</th></tr>
+      <tr><td>Écran</td><td>GND</td><td>GND</td></tr>
+      <tr><td>Écran</td><td>VCC</td><td>3V3</td></tr>
+      <tr><td>Écran</td><td>SCL (horloge)</td><td>GPIO 4</td></tr>
+      <tr><td>Écran</td><td>SDA (données)</td><td>GPIO 6</td></tr>
+      <tr><td>Écran</td><td>RES</td><td>GPIO 10</td></tr>
+      <tr><td>Écran</td><td>DC</td><td>GPIO 5</td></tr>
+      <tr><td>Écran</td><td>CS</td><td>GPIO 7</td></tr>
+      <tr><td>Bouton Gauche</td><td>une patte</td><td>GPIO 2</td></tr>
+      <tr><td>Bouton Droite</td><td>une patte</td><td>GPIO 1</td></tr>
+      <tr><td>Bouton Saut</td><td>une patte</td><td>GPIO 3</td></tr>
+      <tr><td>Les 3 boutons</td><td>autre patte</td><td>GND</td></tr>
+    </table></div>
+    <p class="aide">Aucune résistance pour les boutons : le firmware active celles de l'ESP32.</p>
+  </section>
+  <section data-groupe="tuto">
     <h2>Premier démarrage</h2>
     <p>Une console d'atelier a déjà son firmware : on branche, l'écran titre s'affiche. Sinon, l'installer une fois depuis un ordinateur avec l'IDE Arduino 2 :</p>
     <ol>
@@ -1099,17 +1112,17 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ol>
     <p><b>À vérifier :</b> l'écran titre s'affiche dans le bon sens · Gauche/Droite déplacent le sélecteur · Saut valide · « 1 Joueur » lance le niveau 1.</p>
   </section>
-  <section>
+  <section data-groupe="tuto">
     <h2>Programmer sa console</h2>
     <p class="aide" style="margin-top:0">Chrome ou Edge sur ordinateur, IDE Arduino et moniteur série fermés, console sur l'accueil ou dans un menu.</p>
     <ol>
-      <li><b>Connecter</b> : brancher le câble USB, onglet 🛠 Créer, 🔌 Connecter ma console, choisir le port. La première fois, installer le moteur de jeu (bouton « Installer », environ 1 minute).</li>
-      <li><b>Décrire</b> son jeu avec ses mots, puis Envoyer : l'IA écrit le programme, la console le lance aussitôt.</li>
-      <li><b>Faire grandir</b> le jeu demande après demande. Si la console signale une erreur, l'IA la reçoit avec la demande suivante.</li>
-      <li><b>Rejouer plus tard</b> : menu de la console → <b>Jouer</b> (le dernier jeu reçu, gardé même éteinte). G + D tenus 1 s pour revenir au menu.</li>
+      <li><b>Connecter</b> : brancher le câble USB, onglet 🛠 Créer, 🔌 Connecter ma console, choisir le port. La première fois, installer le moteur de jeu (bouton « Installer », environ 1 minute).<div class="capture">📷 Capture à ajouter : Créer → 🔌 Connecter ma console, choix du port<br><code>images/tuto-1-connecter.png</code></div></li>
+      <li><b>Décrire</b> son jeu avec ses mots, puis Envoyer : l'IA écrit le programme, la console le lance aussitôt.<div class="capture">📷 Capture à ajouter : la demande écrite et le bouton Envoyer<br><code>images/tuto-2-decrire.png</code></div></li>
+      <li><b>Faire grandir</b> le jeu demande après demande. Si la console signale une erreur, l'IA la reçoit avec la demande suivante.<div class="capture">📷 Capture à ajouter : l'historique des demandes<br><code>images/tuto-3-grandir.png</code></div></li>
+      <li><b>Rejouer plus tard</b> : menu de la console → <b>Jouer</b> (le dernier jeu reçu, gardé même éteinte). G + D tenus 1 s pour revenir au menu.<div class="capture">📷 Capture à ajouter : le menu Jouer sur la console<br><code>images/tuto-4-rejouer.png</code></div></li>
     </ol>
   </section>
-  <section>
+  <section data-groupe="pb">
     <h2>Dépannage</h2>
     <div class="tab"><table>
       <tr><th>Symptôme</th><th>Cause probable</th><th>Solution</th></tr>
@@ -1124,7 +1137,9 @@ body{overflow-x:clip}                                           /* la bande 100v
       <tr><td>Téléversement échoue</td><td>Liaison USB capricieuse</td><td>Maintenir BOOT en branchant, ou <code>esptool --no-stub</code></td></tr>
       <tr><td>Recherche d'icônes vide</td><td>Filtre réseau de l'école</td><td>Autoriser <code>api.iconify.design</code></td></tr>
     </table></div>
-    <h3>Fiche de test au multimètre (console V1)</h3>
+  </section>
+  <section data-groupe="pb">
+    <h2>Fiche de test au multimètre (console V1)</h2>
     <p class="aide">Console débranchée, multimètre en mode continuité (bip). Une ligne à cocher par fil, puis les ponts d'étain à chercher entre broches voisines.</p>
     <button id="ficheImprimer" class="sec">🖨 Imprimer la fiche</button>
     <div id="fiche" class="fiche"><!-- FICHE-TEST : remplacee par c3-tft-meatboy/materiel/make_test_continuite.py --><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1414" width="210mm" height="297mm" font-family="Segoe UI, Arial, sans-serif">
@@ -3356,7 +3371,12 @@ const imprimer = f => () => {                            // la fiche seule, en A
   const w = open(URL.createObjectURL(new Blob([f.innerHTML], { type: 'image/svg+xml' })));
   if (w) w.onload = () => w.print();
 };
-ficheImprimer.onclick = imprimer(fiche); ficheAssImprimer.onclick = imprimer(ficheAss);
+ficheImprimer.onclick = imprimer(fiche);
+document.querySelectorAll('.sup-nav button').forEach(b => b.onclick = () => {   // Support : une section a la fois
+  document.querySelectorAll('.sup-nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('#support section[data-groupe]').forEach(x => x.classList.toggle('hide', x.dataset.groupe !== b.dataset.groupe));
+});
+document.querySelector('.sup-nav .on').onclick(); ficheAssImprimer.onclick = imprimer(ficheAss);
 vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
 accVoirCommu.onclick = () => afficher('commu');
 accVoirDefi.onclick = accBlagueDefi.onclick = () => { afficher('commu'); document.querySelector('.c-defi').scrollIntoView(); };

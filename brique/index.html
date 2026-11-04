@@ -2771,8 +2771,10 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
   const img = demoConsole.querySelector('img'), c = demoEcran.getContext('2d');
   const TEXTE = 'Je veux un jeu de plateforme, fond bleu, plateformes roses, avec un personnage arc-en-ciel';
   const COINS = [[427, 266], [783, 191], [854, 438], [485, 519]];   // coins de l'écran sur la photo (1205 x 880) : haut-gauche, haut-droit, bas-droit, bas-gauche
+  let largeurCalee = 0;                                 // largeur de la photo au dernier calage (0 tant que l'accueil était caché)
   function caler() {                                    // 320 x 240 -> les 4 coins (homographie, en matrix3d)
     const k = img.clientWidth / 1205; if (!k) return;
+    largeurCalee = img.clientWidth;
     const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = COINS.map(([x, y]) => [x * k, y * k]);
     const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2, sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3, den = dx1 * dy2 - dx2 * dy1;
     const g = (sx * dy2 - dx2 * sy) / den, h = (dx1 * sy - sx * dy1) / den;
@@ -2853,6 +2855,7 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
   function image(now) {
     requestAnimationFrame(image);
     if (accueil.classList.contains('hide')) return;
+    if (img.clientWidth !== largeurCalee) reglage ? majReglage() : caler();   // page chargée ailleurs : la photo avait 0 px, on cale au retour sur l'accueil
     if (calme || reglage) { if (dernier < 0) { demoTxt.textContent = TEXTE; delete demoConsole.dataset.kit; dernier = 0; } niveau(15, now); return; }   // réglage : le jeu reste affiché
     let t = (now - t0) % (KIT + FIN);
     const e = t < KIT ? ETAPES.filter(([d]) => t >= d).pop() : null, k = e ? e[1] : '';

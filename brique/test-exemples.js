@@ -3,7 +3,7 @@ const assert = require('assert'), { execFileSync } = require('child_process'), p
 const { EXEMPLES, choisir } = require('./exemples.js');
 const VERIF = path.join(__dirname, 'verif', process.platform === 'win32' ? 'verif.exe' : 'verif');
 
-if (fs.existsSync(VERIF)) for (const e of EXEMPLES) {
+if (fs.existsSync(VERIF)) for (const e of [...EXEMPLES, ...require('./exemples.js').systemes.EXEMPLES]) {
   const v = JSON.parse(execFileSync(VERIF, [], { input: e.code }));
   assert(v.ok, `${e.f} : ${v.erreur}`);
   assert(v.ops <= 1200 && v.memoire <= 70000, `${e.f} : trop lourd (${v.ops} dessins, ${v.memoire} octets)`);
@@ -17,4 +17,4 @@ assert.strictEqual(premier('un serpent à deux consoles'), '7-serpent.be');
 assert.strictEqual(premier('ajoute un deuxième robot', [], '# Combat de robots'), '9-combat.be');   // la suite d'un jeu : son nom suffit
 assert.deepStrictEqual(choisir('bonjour'), []);
 assert(choisir('un jeu de saut avec des plateformes et un labyrinthe et du ski').length === 2, '2 exemples au plus');
-console.log(`ok : ${EXEMPLES.length} exemples`);
+console.log(`ok : ${EXEMPLES.length} exemples, ${require('./exemples.js').systemes.EXEMPLES.length} systemes`);

@@ -9,7 +9,8 @@ Site de l'atelier : les enfants (9-14 ans) décrivent un jeu, l'IA (Mistral) le 
 - `server.js` (~750 l.) : Node sans framework, routes `/api/...` (ia, script, jeu, niveaux, communauté, animateur/*, client/* = boutique, parties, courses, idées, questions). Données : MySQL si `DB_*`, sinon `data.json`.
 - `fiche.js` + `FICHE-JEU.md` : format « Ma fiche », partagé page/serveur. Test : `node test-fiche.js`.
 - `consigne-script.txt` : prompt système du mode script (Berry), sans les exemples.
-- `exemples/*.be` + `exemples.js` : jeux d'exemple complets ; l'IA ne reçoit que les 2 plus proches de la demande (mots-clés de la 2e ligne `# exemple: <titre> | mots: a, b`). Ajouter un exemple = un fichier `.be` + `node test-exemples.js` (le joue dans verif, vérifie le choix).
+- `systemes/*.be` + `exemples.js` : un système de jeu par fichier (saut, tirs, jauge, radio...) ; l'IA reçoit les 3 plus proches de la demande (mots-clés de la 2e ligne `# exemple: <titre> | mots: a, b`). Ajouter un système = un fichier `.be` + `node test-exemples.js` (le joue dans verif). `exemples/*.be` (jeux entiers) ne sert plus qu'au banc d'essai.
+- `bench-exemples.js` : banc d'essai jeux entiers contre systèmes (Mistral génère, verif joue, un juge compare à l'aveugle) ; `MISTRAL_API_KEY=... node bench-exemples.js`, résultats dans `bench/` (non versionné).
 - `version.txt` : numéro du site (`75` → affiché v1.75).
 - `bump-sections.js` : au commit, monte le `data-version` de chaque `<main>` touché (affiché « section v1.x » en pied de page). Hook à installer une fois par clone : `node brique/bump-sections.js --installer`.
 

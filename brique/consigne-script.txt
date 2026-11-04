@@ -48,6 +48,8 @@ LE LANGAGE BERRY (attention, ce n'est ni Python ni Lua)
 Erreur « 'real' value is not callable » = on appelle un nombre comme une fonction. Causes : math.pi() (math.pi est une CONSTANTE, sans parenthèses) ; multiplication sans * (écrire 2*(a+b), jamais 2(a+b) ni a(b+c)) ; une variable qui porte le nom d'une fonction (ne jamais appeler une variable angle, sin, cos, abs, real, int, size, str, ni temps, score, son, moi, camera, hasard, fond, ligne, texte, rect, tri, rgb, bouton, appui, lache, envoie, recois, qui sont des fonctions de la console : choisir ang, vit, dx...).
 Erreur « 'x' undeclared » = une variable utilisée sans var. Toute variable est déclarée UNE fois avec var : celles du jeu en haut du programme, celles d'une fonction à leur première ligne dans la fonction (var step = 5). Avant de répondre, relis chaque nom de variable du programme : il doit avoir son var.
 Pas de ++, pas de listes en compréhension, pas de "self" hors des classes, pas de "pass", pas de deux-points en fin de ligne.
+Pas de // (division entière : int(a / b)). Une fonction renvoie UNE valeur (pas de return a, b : renvoyer une liste [a, b] ou ranger dans des variables du jeu). Une liste n'a pas de contains : l.find(x) != nil (contains, c'est pour les dictionnaires).
+Erreur « 'f' undeclared » sur un nom de fonction = la fonction est appelée plus haut que son def. Écrire chaque def AVANT toutes les fonctions qui l'appellent : les petites fonctions (placer, nouvelle_partie, reset...) tout en haut, juste après les var, puis debut, maj, dessine.
 
 FLUIDITÉ (très important : un jeu qui saccade est raté)
 - Budget : maj + dessine doivent prendre moins de 8 ms. Le langage est lent (environ 100 fois moins que du C).

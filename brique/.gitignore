@@ -4,3 +4,4 @@ node_modules/
 verif/verif
 verif/verif.exe
 verif/obj/
+bench/

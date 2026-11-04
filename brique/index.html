@@ -257,6 +257,16 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .agent-btns{display:flex;flex-direction:column;gap:8px;width:190px;flex:none}
 .agent-btns .big{width:100%;margin:0;padding:9px 10px;font-size:14px;border-radius:10px;background:linear-gradient(90deg,#4fbf83,#38a56b);box-shadow:0 2px 8px rgba(11,122,65,.2)}
 @media (max-width:600px){.agent-ligne{flex-direction:column}.agent-btns{width:auto}}
+.sc-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.sc-actions .big{flex:1 1 100%;margin:0;padding:12px;font-size:17px;border-radius:12px;background:linear-gradient(90deg,#4fbf83,#38a56b)}
+.sc-actions .sec{flex:1}
+#scZero{color:var(--mute)}#scZero:hover{color:var(--ko);border-color:var(--ko)}
+#scPartage .partage{margin-top:10px}
+.occupe{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);padding:14px 22px;border-radius:16px;background:var(--panel);color:var(--txt);border:2px solid var(--acc);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:18px;pointer-events:none}
+.occupe small{color:var(--mute);font-size:14px}.occupe small:empty{display:none}
+.occupe .rond{width:20px;height:20px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--acc);animation:tourne .8s linear infinite;flex:none}
+@keyframes tourne{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.occupe .rond{animation-duration:3s}}
 #scMettre:disabled{opacity:.45;cursor:default;filter:grayscale(1)}   /* déjà sur la console : grisé jusqu'au prochain programme */
 #scHist{margin-top:14px}
 #scHist .q{font-style:normal;background:var(--acc);color:var(--onacc);border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:85%;margin:6px 0 6px auto;width:fit-content}   /* ma demande : bulle à droite, comme un agent IA */
@@ -442,7 +452,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : le projet (la console, les étapes, les photos) et le prix en avant ===== -->
-<main id="accueil">
+<main id="accueil" data-version="1.0">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -476,7 +486,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <li><b>🧱 Tout est trié</b>Notre serveur ne garde que les réglages que la console connaît. Le reste est jeté avant d'arriver à l'écran.</li>
       <li><b>🛡 Les consignes pièges sont ignorées</b>Une demande hors sujet ne la fait pas sortir de son rôle. Le garde-fou de Mistral est activé, et un filtre de gros mots passe derrière.</li>
       <li><b>👤 Aucune donnée personnelle</b>Elle ne reçoit que la phrase et les réglages du jeu : jamais de nom, d'adresse ou de mail.</li>
-      <li><b>🔑 Réservée aux inscrits</b>L'enfant rejoint le groupe créé par un adulte (animateur, prof ou parent). Sans groupe : 3 essais par jour pour découvrir.</li>
+      <li><b>🔑 Réservée aux inscrits</b>L'enfant crée son compte avec un simple pseudo, ou rejoint le groupe d'un adulte (animateur, prof ou parent). Sans compte : 3 essais par jour pour découvrir.</li>
       <li><b>⏱ Un nombre de demandes limité</b>Quelques dizaines par jour et par enfant : de quoi créer, pas de quoi passer la journée devant l'écran.</li>
     </ul>
     <a href="#" class="pp-note" onclick="afficher('boutique');donneesIA.scrollIntoView();return false" style="color:var(--acc)">Ce que nous gardons sur les enfants et les adultes ›</a>
@@ -605,7 +615,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== COMMUNAUTÉ : créations, classement, joueurs ===== -->
-<main id="commu" class="commu hide">
+<main id="commu" class="commu hide" data-version="1.0">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Communauté · jeux, parties, classement</p>
     <h2 class="sh-titre">Ici tu crées,<br>tu partages, tu découvres.</h2>
@@ -655,7 +665,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
-<main id="boutique" class="shop hide">
+<main id="boutique" class="shop hide" data-version="1.0">
   <div class="sh-hero">
     <h2 class="sh-titre">Un kit simple, à deux,<br>ou un support pédagogique clé en main.</h2>
   </div>
@@ -778,7 +788,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== PANIER : compte, point relais, paiement ===== -->
-<main id="vuePanier" class="shop hide">
+<main id="vuePanier" class="shop hide" data-version="1.0">
   <div id="panierBloc" class="sh-bloc sh-panier">
     <h3 class="sh-h">Mon panier.</h3>
     <div id="panierLignes"></div>
@@ -805,7 +815,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== SUPPORT : notice d'assemblage et de prise en main ===== -->
-<main id="support" class="anim support hide">
+<main id="support" class="anim support hide" data-version="1.0">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Support · montage et prise en main</p>
     <h2 class="sh-titre">Besoin d'info ?<br>C'est ici.</h2>
@@ -1367,7 +1377,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== ATELIER : présentation pour les professeurs ===== -->
-<main id="profs" class="anim hide">
+<main id="profs" class="anim hide" data-version="1.0">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Atelier · Brique en classe</p>
     <h2 class="sh-titre">Ils fabriquent.<br>Ils créent. Ils apprennent.</h2>
@@ -1435,14 +1445,14 @@ body{overflow-x:clip}                                           /* la bande 100v
       <ol style="margin:0;padding-left:20px;line-height:1.6">
         <li>Ouvrez l'<b>espace Animateur</b> et créez un groupe : vous obtenez un code (ex. LUNE-42).</li>
         <li>Écrivez vos questions de cours et, si besoin, activez le mode atelier.</li>
-        <li>Les élèves cliquent « Rejoindre mon groupe » avec ce code et un pseudo.</li>
+        <li>Les élèves cliquent « Créer mon compte » avec ce code et un pseudo.</li>
       </ol>
       <div class="actions" style="justify-content:flex-start;margin-top:12px"><button id="profsAnim" class="big" style="width:auto;margin:0">🎓 Ouvrir l'espace Animateur</button></div></section>
   </div>
 </main>
 
 <!-- ===== ESPACE ANIMATEUR ===== -->
-<main id="anim" class="anim hide">
+<main id="anim" class="anim hide" data-version="1.0">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Espace animateur</p>
     <h2 class="sh-titre">Ton groupe,<br>en un coup d'œil.</h2>
@@ -1468,10 +1478,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== REJOINDRE UN GROUPE (enfant) ===== -->
 <dialog id="dlgRejoindre">
-  <h2><b>👤</b>Rejoindre mon groupe</h2>
-  <p class="aide" style="margin-top:0">Ton animateur te donne le code du groupe. Choisis un pseudo : <b>pas ton vrai nom !</b></p>
-  <label class="champ">Code du groupe<input id="rjCode" class="pseudo" placeholder="ex. LUNE-42" autocapitalize="characters"></label>
+  <h2><b>👤</b>Mon compte créateur</h2>
+  <p class="aide" style="margin-top:0">Choisis un pseudo : <b>pas ton vrai nom !</b> Ton animateur t'a donné un code de groupe ? Ajoute-le, sinon laisse la case vide.</p>
   <label class="champ">Mon pseudo<input id="rjPseudo" class="pseudo" maxlength="12" placeholder="2 à 12 lettres ou chiffres"></label>
+  <label class="champ">Code du groupe (si tu en as un)<input id="rjCode" class="pseudo" placeholder="ex. LUNE-42" autocapitalize="characters"></label>
   <div id="rjMsg" class="envoi"></div>
   <div class="actions" style="justify-content:flex-end"><button id="rjAnnuler" class="sec">Annuler</button><button id="rjOk" class="sec" style="border-color:var(--acc)">C'est parti !</button></div>
 </dialog>
@@ -1633,9 +1643,9 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide">
+<main id="vueScript" class="hide" data-version="1.0">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mon groupe, animateur -->
-    <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Rejoindre mon groupe</button></span>
+    <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
   <section class="agent">                        <!-- l'agent IA : la demande en haut, l'historique (demandes et réponses) dessous -->
@@ -1643,7 +1653,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <h2>Agent IA <span class="ref" style="margin-left:6px">tu décris, l'IA écrit le programme</span></h2>
     <div class="agent-ligne">                    <!-- le prompt, ses deux boutons empilés à droite -->
       <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:110px;font-size:17px"></textarea>
-      <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button><button id="scMettre" class="big hide">📟 Mettre mon jeu sur la console</button></div>
+      <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button></div>
     </div>
     <div id="scCompris" class="compris">Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».</div>
     <div id="scHist" class="hist"><p class="vide">Ce que tu demandes, ce que l'IA a fait et ce que la console en dit apparaîtront ici.</p></div>
@@ -1662,16 +1672,21 @@ body{overflow-x:clip}                                           /* la bande 100v
         </esp-web-install-button>
       </div>
     </div>
+    <div class="sc-actions">                     <!-- par ordre d'importance : envoyer, publier, puis effacer (discret) -->
+      <button id="scMettre" class="big" disabled>📟 Envoyer sur la console</button>
+      <button id="scPublier" class="sec">📢 Publier</button>
+      <button id="scZero" class="sec" title="Efface le programme et tes essais">🗑 Repartir de zéro</button>
+    </div>
+    <div id="scPartage"></div>
     <h3 class="code-titre">🔧 Le programme de ton jeu</h3>
     <div class="code">                           <!-- toujours visible et colorisé : on tape dans le textarea transparent, la couleur vient du pre dessous -->
       <pre id="scCouleur" aria-hidden="true"></pre>
       <pre id="scNum" aria-hidden="true"></pre>
       <textarea id="scCode" spellcheck="false" placeholder="Pas encore de programme : demande quelque chose à l'IA."></textarea>
     </div>
-    <div class="actions"><button id="scEnvoyerCode" class="sec">📟 Envoyer ce programme</button><button id="scPublier" class="sec">📢 Publier mon jeu</button><button id="scZero" class="sec">🗑 Repartir de zéro</button></div>
-    <div id="scPartage"></div>
     <pre id="scJournal" class="hide"></pre>
   </section>
+  <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><span class="rond"></span><b></b><small></small></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
 </main>
 
 <footer class="pied">                             <!-- pied de page : plan du site -->
@@ -1686,7 +1701,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <li><a data-vue="creer">Créer un jeu</a></li><li><a data-vue="profs">Atelier</a></li><li><a data-vue="support">Support</a></li>
     </ul></nav>
     <div><h4>Espaces</h4><ul>
-      <li><a data-clic="rejoindreBtn">Rejoindre mon groupe</a></li><li><a data-vue="anim">Espace animateur</a></li>
+      <li><a data-clic="rejoindreBtn">Mon compte créateur</a></li><li><a data-vue="anim">Espace animateur</a></li>
       <li><a data-vue="accueil" data-ancre="partipris">Pourquoi 3 boutons</a></li>
       <li><a data-vue="accueil" data-ancre="apropos">À propos de nous</a></li>
       <li><a data-vue="accueil" data-ancre="ia-francaise">Notre IA française</a></li>
@@ -1695,7 +1710,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
   </div>
-  <div class="pied-bas"><span>© 2026 Brique · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="consoleVersions"></span></span><span><button class="sec theme" title="Mode sombre / mode clair">🌙</button> <a id="piedSite" href="/">brique.studioeya.com</a></span></div>
+  <div class="pied-bas"><span>© 2026 Brique · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="sectionVersion" title="Version de cette section (data-version de sa balise main)"></span><span id="consoleVersions"></span></span><span><button class="sec theme" title="Mode sombre / mode clair">🌙</button> <a id="piedSite" href="/">brique.studioeya.com</a></span></div>
 </footer>
 
 <script src="fiche.js"></script>   <!-- la fiche de jeu (FICHE-JEU.md) : même code que server.js -->
@@ -2616,10 +2631,10 @@ const pseudo = () => moi?.pseudo || '';
 const ident = () => ({ pseudo: moi?.pseudo, secret: moi?.secret });
 function majMoi() {
   moiTxt.innerHTML = moi ? `${avatar(moi.pseudo)} <b>${esc(moi.pseudo)}</b> <small style="color:var(--mute)">${esc(moi.groupe)}</small>` : '';
-  rejoindreBtn.textContent = moi ? '↩ Changer' : '👤 Rejoindre mon groupe';
+  rejoindreBtn.textContent = moi ? '↩ Changer' : '👤 Créer mon compte';
 }
 rejoindreBtn.onclick = () => {
-  if (moi && !confirm('Quitter « ' + moi.pseudo + ' » sur cet ordinateur ? Pour le reprendre ailleurs, ton animateur devra le libérer.')) return;
+  if (moi && !confirm('Quitter « ' + moi.pseudo + ' » sur cet ordinateur ? Sans groupe, ce pseudo sera perdu ; dans un groupe, ton animateur pourra le libérer.')) return;
   moi = null; ecrire('brique-moi', null); majMoi(); rjMsg.textContent = ''; dlgRejoindre.showModal();
 };
 rjAnnuler.onclick = () => dlgRejoindre.close();
@@ -2635,7 +2650,7 @@ async function api(url, corps, session) {
 async function publier(commun) {
   if (!jeu) return dire('Crée un jeu d\'abord !');
   if (!EN_LIGNE) return dire('Hors ligne : lance le serveur (node server.js) et ouvre http://localhost:8080');
-  if (!moi) { dlgRejoindre.showModal(); return dire('Rejoins d\'abord ton groupe avec le code de ton animateur.'); }
+  if (!moi) { dlgRejoindre.showModal(); return dire('Crée d\'abord ton compte (un pseudo suffit).'); }
   // ponytail: vérifié dans la page seulement (la console n'est pas authentifiée) ; suffit pour l'atelier
   if (!jeu.niv.fini) return dire('Termine ton jeu au moins une fois sur la console avant de le partager : on ne publie que des jeux faisables !');
   try {
@@ -3191,12 +3206,13 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
     scNum.textContent = Array.from({ length: scCode.value.split('\n').length }, (_, i) => i + 1).join('\n') + '\n';
     suivre();
   }
-  scCode.oninput = colorer; scCode.onscroll = suivre;
-  const mettreCode = t => { scCode.value = t; colorer(); };
+  scCode.oninput = () => { colorer(); majMettre(); }; scCode.onscroll = suivre;
+  const mettreCode = t => { scCode.value = t; colorer(); majMettre(); };
+  let iaEnCours = false;
+  const occupe = (t, detail = '') => { scOccupe.classList.toggle('hide', !t); scOccupe.querySelector('b').textContent = t || ''; scOccupe.querySelector('small').textContent = detail; };   // le message au centre : ce que fait la page
   mettreCode(etat.script);
-  function majMettre() {                                 // le gros bouton : seulement après un essai avec l'IA ; grisé tant que ce programme est déjà sur la console
-    scMettre.classList.toggle('hide', !etat.script || !etat.essais.some(e => e.demande !== '(programme modifié à la main)'));
-    scMettre.disabled = etat.surConsole === etat.essais.length;
+  function majMettre() {                                 // grisé : pas de programme, l'IA écrit, ou ce programme est déjà sur la console
+    scMettre.disabled = iaEnCours || !scCode.value.trim() || (scCode.value === etat.script && etat.surConsole === etat.essais.length);
   }
   function rendre() {
     majMettre();
@@ -3240,6 +3256,10 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   async function fermer() { const p = port; port = null; try { await lecteur?.cancel(); } catch {} try { await p?.close(); } catch {} dire('Console pas connectée.'); brancheTxt(false); }
   const brancheTxt = ok => { scBrancher.textContent = ok ? '✓ Console connectée' : '🔌 Connecter ma console'; scBrancher.classList.toggle('connecte', ok); };   // le bouton laisse place à l'état
   async function relier(p) {                             // ouvre le port, demande la version ; true = console avec le moteur de jeu
+    occupe('🔌 Je cherche ta console…');
+    try { return await relier0(p); } finally { occupe(); }
+  }
+  async function relier0(p) {
     port = p; await port.open({ baudRate: 115200 }); ecouter();
     const v = await new Promise(ok => { versionVue = ok; setTimeout(() => ok(''), 1500); ecrire(new TextEncoder().encode('VERSION\n')); }); versionVue = null;
     if (v.startsWith('BERRY')) { brancheTxt(true); dire('✓ Console connectée (' + v.replace('BERRY VERSION ', 'moteur ') + ').', true); return true; }
@@ -3260,9 +3280,13 @@ donBtn.onclick = () => SOUTIEN_URL ? open(`${SOUTIEN_URL}${SOUTIEN_URL.includes(
   scInstallBtn.addEventListener('click', () => { if (port) fermer(); }, true);   // l'installation a besoin du port
   async function envoyer(prog) {                         // "SCRIPT <octets>" puis le programme ; la console répond OK ou ERR
     if (!port && !(await auto())) {
-      dire('👉 Appuie sur « 📟 Mettre mon jeu sur la console » et choisis ta console.', false); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' }); scMettre.focus();
-      return 'Pas encore sur la console : appuie sur « 📟 Mettre mon jeu sur la console ».';
+      dire('👉 Appuie sur « 📟 Envoyer sur la console » et choisis ta console.', false); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' }); scMettre.focus();
+      return 'Pas encore sur la console : appuie sur « 📟 Envoyer sur la console ».';
     }
+    occupe('📟 J\'envoie ton jeu sur la console…');
+    try { return await envoyer0(prog); } finally { occupe(); }
+  }
+  async function envoyer0(prog) {
     const ver = etat.essais.length;                      // numéro de version : affiché 5 s en bas de l'écran de la console, pour comparer avec l'historique
     const octets = new TextEncoder().encode(prog + `
 # --- ajoute par la page : numero de version ---
@@ -3279,7 +3303,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     return l ? '' : 'La console ne répond pas : rebranche-la.';
   }
   async function mesurer() {                             // 4,5 s de mesures "STAT" : la fluidité est donnée à l'IA à la prochaine demande (une erreur pendant ce temps arrive par finErreur)
-    const vus = []; statVue = l => vus.push(l); dire('⏱ Je mesure la fluidité du jeu…');
+    const vus = []; statVue = l => vus.push(l); dire('⏱ Je mesure la fluidité du jeu…'); occupe('⏱ Je vérifie que ton jeu tourne bien…', 'quelques secondes');
     try { await ecrire(new TextEncoder().encode('STAT 1\n')); await pause(4500); await ecrire(new TextEncoder().encode('STAT 0\n')); } catch {}
     statVue = null; dire('✓ Console connectée.', true);
     const m = vus.slice(1).map(l => l.match(/STAT (\d+) img\/s\s+script (\d+) us.*?pire (\d+) ms.*?appels (\d+)/)).filter(Boolean);   // la 1re seconde compte le chargement
@@ -3310,16 +3334,17 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   }
   async function ecrireJeu(texte, auto) {                // une demande à l'IA puis l'envoi à la console ; false = rien écrit
     const attenteTxt = auto ? '🔧 L\'IA corrige l\'erreur…' : '⏳ L\'IA écrit ton programme…';
-    scGo.disabled = true; scGo.textContent = attenteTxt; const t0 = performance.now(); let r;
+    scGo.disabled = true; scGo.textContent = attenteTxt; iaEnCours = true; majMettre(); occupe(attenteTxt, 'ça peut prendre une minute'); const t0 = performance.now(); let r;
     try { r = await apiFlux({ ...ident(), auto, texte: auto ? 'Corrige seulement l\'erreur que la console a signalee, sans rien changer d\'autre au jeu.' : texte, script: etat.script, erreur: etat.erreur || etat.lent || '',
       avant: etat.essais.filter(e => !e.auto).map(e => e.demande).slice(-6) }, (t, corrige) => {
-        if (corrige) scGo.textContent = '🔧 Erreur trouvée en testant : l\'IA corrige…';
+        if (corrige) { scGo.textContent = '🔧 Erreur trouvée en testant : l\'IA corrige…'; occupe('🔧 L\'IA a trouvé une erreur en testant, elle corrige…'); }
         const s = scriptPartiel(t); if (s === null) return;
         mettreCode(s); scCode.scrollTop = scCode.scrollHeight; scCode.dispatchEvent(new Event('scroll'));   // on voit le code s'écrire
         scGo.textContent = `${corrige ? '🔧 L\'IA corrige l\'erreur trouvée en testant…' : attenteTxt} ${s.split('\n').length} lignes`;
+        occupe(corrige ? '🔧 L\'IA corrige l\'erreur trouvée en testant…' : attenteTxt, `${s.split('\n').length} lignes écrites`);
       }); }
     catch (e) { mettreCode(etat.script); scCompris.innerHTML = `<span style="color:var(--ko)">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : e.message || 'L\'IA ne répond pas : réessaie.')}</span>`; }
-    scGo.disabled = false; scGo.textContent = '✨ Envoyer à l\'IA';
+    scGo.disabled = false; scGo.textContent = '✨ Envoyer à l\'IA'; iaEnCours = false; occupe();
     if (!r) return false;
     if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return false; }
     scCompris.innerHTML = `Programme écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s${r.corrections ? ` (testé : ${r.corrections} erreur${r.corrections > 1 ? 's' : ''} corrigée${r.corrections > 1 ? 's' : ''} avant l'envoi)` : ''}. ${esc(r.explication || '')}${r.astuce ? `<br>💡 ${esc(r.astuce)}` : ''}${r.question ? `<br>❓ ${esc(r.question)}` : ''}`;
@@ -3337,15 +3362,11 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     for (let n = 0; n < 2 && etat.erreur && etat.essais.at(-1)?.demande !== '(programme modifié à la main)'; n++) if (!(await ecrireJeu('', true))) return;
   }
   scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
-  scEnvoyerCode.onclick = async () => {                  // le programme modifié à la main
-    etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '', date: Date.now() }); sauver(); rendre();
-    const pb = await envoyer(scCode.value); if (pb) { etat.essais.at(-1).console = pb; sauver(); rendre(); }
-  };
   scZero.onclick = () => { if (!confirm('Repartir de zéro ? Le programme et tes essais seront effacés.')) return; etat = { script: '', essais: [], erreur: '' }; mettreCode(''); scPartage.innerHTML = ''; sauver(); rendre(); };
   const partage = (t, code) => scPartage.innerHTML = `<div class="partage">${t} · code <span class="code">${esc(code)}</span><br><small>Tes copains le récupèrent sur Brique avec ce code (Communauté), puis le mettent sur leur console.</small></div>`;
   scPublier.onclick = async () => {                      // publier : seulement un programme qui tourne sur la console sans erreur
     if (!EN_LIGNE) return dire('Hors ligne : la publication a besoin du serveur Brique.', false);
-    if (!moi) { dlgRejoindre.showModal(); return dire('Rejoins d\'abord ton groupe avec le code de ton animateur.', false); }
+    if (!moi) { dlgRejoindre.showModal(); return dire('Crée d\'abord ton compte (un pseudo suffit).', false); }
     if (!etat.script || etat.erreur || etat.surConsole !== etat.essais.length) return dire('Mets ton jeu sur la console et vérifie qu\'il tourne sans erreur avant de le publier.', false);
     const titre = prompt('Le nom de ton jeu ?', etat.titre || ''); if (titre === null) return;
     try {
@@ -3357,18 +3378,58 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     if (etat.script && etat.script !== n.niv.script && !confirm(`Remplacer ton programme par « ${n.titre} » de ${n.pseudo} ?`)) return;
     etat = { script: n.niv.script, essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo} (code ${n.code})`, console: '', date: Date.now() }], erreur: '' };
     mettreCode(etat.script); sauver(); rendre(); partage(`« ${esc(n.titre)} » de ${esc(n.pseudo)}`, n.code);
-    afficher('creer'); scMettre.classList.remove('hide'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    afficher('creer'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
-  scMettre.onclick = async () => {                       // envoie le jeu ; pas encore de console : ce clic ouvre le choix du port
+  scMettre.onclick = async () => {                       // envoie le programme affiché (de l'IA ou modifié à la main) ; pas encore de console : ce clic ouvre le choix du port
     if (!port && !(await auto())) {
       if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.', false);
       try { if (!(await relier(await navigator.serial.requestPort()))) return; }
       catch (e) { await fermer(); return dire(e.name === 'NotFoundError' ? 'Aucune console choisie.' : 'Câble débranché ou port occupé (ferme l\'IDE Arduino, l\'autre onglet ou la fenêtre d\'installation).', false); }
     }
+    if (scCode.value !== etat.script) { etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '', date: Date.now() }); sauver(); rendre(); }   // modifié à la main : nouvelle version
     scMettre.disabled = true; const pb = await envoyer(etat.script); majMettre();
     if (pb) { const e = etat.essais.at(-1); if (e) { e.console = pb; e.consoleOk = false; } sauver(); rendre(); }
     else await corriger();
   };
+})();
+
+// ---------- Fenêtre d'installation du firmware (esp-web-tools, écrite en anglais) : traduite à la volée, shadow DOM compris ----------
+(() => {
+  const FR = [
+    [/^Connecting$/, 'Connexion à la console…'], [/^Preparing installation$/, 'Préparation…'], [/^Installing$/, 'Installation…'],
+    [/^Erasing$/, 'Effacement…'], [/^Wrapping up$/, 'Presque fini…'], [/^Installation complete!$/, 'C\'est installé ! Ta console est prête.'],
+    [/^Installation failed$/, 'L\'installation a échoué'], [/^Confirm Installation$/, 'Installer le moteur de jeu'],
+    [/^Do you want to$/, 'Veux-tu'], [/^install$/, 'installer'], [/^update to$/, 'passer à'], [/^Your device is running$/, 'Ta console a'],
+    [/^This will take$/, 'Ça prend'], [/^2 minutes$/, 'environ 2 minutes'], [/^a minute$/, 'environ 1 minute'],
+    [/^Keep this page visible to prevent slow down$/, 'Garde cette page affichée, sinon ça ralentit.'],
+    [/^Do you want to erase the device before installing$/, 'Veux-tu effacer la console avant d\'installer'],
+    [/^\? All data on the device will be lost\.$/, ' ? Tout ce qu\'elle contient sera perdu.'], [/^All data on the device will be erased\.$/, 'Tout ce qu\'elle contient sera effacé.'],
+    [/^Erase device$/, 'Effacer la console'], [/^Erase User Data$/, 'Effacer les données'],
+    [/^Do you want to reset your device and erase all user data from your\s+device\?$/, 'Veux-tu remettre la console à zéro et effacer toutes ses données ?'],
+    [/^Install (.+)$/, 'Installer $1'], [/^Update (.+)$/, 'Mettre à jour $1'], [/^Install$/, 'Installer'], [/^Back$/, 'Retour'], [/^Next$/, 'Suivant'],
+    [/^Close$/, 'Fermer'], [/^Skip$/, 'Passer'], [/^Connect$/, 'Connecter'], [/^Continue$/, 'Continuer'], [/^Connected to$/, 'Connectée :'],
+    [/^Logs & Console$/, 'Journal de la console'], [/^Download Logs$/, 'Télécharger le journal'], [/^Reset Device$/, 'Redémarrer la console'],
+    [/^Error$/, 'Erreur'], [/^Disconnected$/, 'Console débranchée'], [/^Timeout$/, 'La console ne répond pas'],
+    [/^Failed to download manifest$/, 'Impossible de télécharger le moteur de jeu : vérifie ta connexion.'],
+    [/^Serial port is not (ready|readable\/writable)\..*$/, 'La console est occupée : ferme l\'autre onglet, l\'IDE Arduino ou tout ce qui l\'utilise, puis réessaie.'],
+    [/^Unknown error \((.*)\)$/, 'Erreur inconnue ($1)'],
+  ];
+  const tr = t => { const s = t.trim(); if (!s) return null; for (const [re, f] of FR) if (re.test(s)) return t.replace(s, s.replace(re, f)); return null; };
+  const vus = new WeakSet();
+  function traduire(n) {
+    if (n.nodeType === 3) { const f = tr(n.data); if (f !== null && f !== n.data) n.data = f; return; }
+    if (n.nodeType !== 1 && n.nodeType !== 11) return;
+    if (n.nodeType === 1) for (const a of ['label', 'heading']) { const v = n.getAttribute(a), f = v && tr(v); if (f && f !== v) n.setAttribute(a, f); }
+    if (n.shadowRoot) suivre(n.shadowRoot);
+    n.childNodes.forEach(traduire);
+  }
+  function suivre(r) {                                   // chaque shadow root (dialogue, barre de progression, message) est observé
+    if (vus.has(r)) return; vus.add(r); traduire(r);
+    new MutationObserver(ms => ms.forEach(m => m.type === 'characterData' ? traduire(m.target) : m.type === 'attributes' ? traduire(m.target) : m.addedNodes.forEach(traduire)))
+      .observe(r, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['label', 'heading'] });
+  }
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeName === 'EWT-INSTALL-DIALOG') setTimeout(() => n.shadowRoot && suivre(n.shadowRoot)); })))
+    .observe(document.body, { childList: true });
 })();
 
 // ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
@@ -3381,6 +3442,7 @@ function afficher(v) {
   atelier.classList.add('hide'); vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché, à retirer quand le mode script aura sa communauté
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
+  const m = document.querySelector("main[data-version]:not(.hide)"); sectionVersion.textContent = m ? " · section v" + m.dataset.version : "";   // numéro de la grande section affichée, à monter à la main dans sa balise <main>
   history.replaceState(null, '', location.pathname + location.search + (v === 'accueil' ? '' : '#' + v));   // la vue reste après actualisation
   scrollTo(0, 0);
 }

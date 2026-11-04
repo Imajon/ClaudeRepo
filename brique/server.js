@@ -240,7 +240,7 @@ function quotaIA(req, b) {                               // -> null si ok, sinon
   const cles = j ? [['j:' + j.pseudo.toLowerCase(), QUOTA.joueur], ['g:' + j.groupe, QUOTA.groupe]]
     : a ? [['a:' + a, QUOTA.animateur]] : [['ip:' + ipDe(req), QUOTA.essai]];
   if (cles.some(([k, max]) => (quotas.get(k) || 0) >= max))
-    return j || a ? 'Tu as beaucoup créé aujourd’hui : l’IA se repose, reviens demain !' : 'Les essais du jour sont finis : rejoins ton groupe (bouton « Rejoindre » en haut) pour continuer avec l’IA.';
+    return j || a ? 'Tu as beaucoup créé aujourd’hui : l’IA se repose, reviens demain !' : 'Les essais du jour sont finis : crée ton compte (bouton « 👤 Créer mon compte » en haut) pour continuer avec l’IA.';
   cles.forEach(([k]) => quotas.set(k, (quotas.get(k) || 0) + 1));
   return null;
 }
@@ -755,8 +755,11 @@ const serveur = http.createServer(async (req, res) => {
   // ----- enfant : rejoindre un groupe avec pseudo + code -----
   if (url === '/api/joueur') {
     if (!PSEUDO.test(b.pseudo || '')) return repondre(res, 400, { erreur: 'Pseudo : 2 à 12 lettres ou chiffres, sans espace.' });
-    const g = db.groupes.find(g => g.code === String(b.code || '').trim().toUpperCase());
-    if (!g) return repondre(res, 400, { erreur: 'Code de groupe inconnu : demande-le à ton animateur.' });
+    const code = String(b.code || '').trim().toUpperCase();
+    // sans code : compte créateur libre (groupe ''), ses jeux vont dans la communauté publique
+    // ponytail: aucun animateur ne modère les créateurs libres ; ajouter une liste admin si des titres posent problème
+    const g = code ? db.groupes.find(g => g.code === code) : { code: '', nom: 'Créateur' };
+    if (!g) return repondre(res, 400, { erreur: 'Code de groupe inconnu : vérifie-le, ou laisse la case vide.' });
     if (db.joueurs.some(j => j.pseudo.toLowerCase() === b.pseudo.toLowerCase())) return repondre(res, 409, { erreur: 'Ce pseudo est déjà pris : choisis-en un autre.' });
     const secret = aleatoire(16);
     db.joueurs.push({ pseudo: b.pseudo, groupe: g.code, secret: empreinte(secret), cree: Date.now() }); sauver();
@@ -765,7 +768,7 @@ const serveur = http.createServer(async (req, res) => {
 
   // ----- ecritures des enfants : pseudo + secret obligatoires -----
   const j = joueurDe(b);
-  if (!j) return repondre(res, 401, { erreur: 'Rejoins d\'abord ton groupe (bouton « Rejoindre » en haut).' });
+  if (!j) return repondre(res, 401, { erreur: 'Crée d\'abord ton compte (bouton « 👤 Créer mon compte » en haut).' });
   if (url === '/api/niveaux') {                       // publier un jeu (commun=false) ou ajouter un niveau au jeu commun (commun=true)
     const titre = String(b.titre || '').replace(/[<>]/g, '').trim().slice(0, 30) || 'Sans titre';
     if (typeof b.script === 'string') {               // mode script : le programme Berry tel quel

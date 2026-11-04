@@ -512,7 +512,7 @@ async function iaFiche(texte, avant) {
 const repondre = (res, code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(obj)); };
 function lireJSON(req) {
   return new Promise((ok, ko) => {
-    let s = ''; req.on('data', c => { s += c; if (s.length > 12288) { ko(new Error('trop gros')); req.destroy(); } });
+    let s = ''; req.on('data', c => { s += c; if (s.length > 65536) { ko(new Error('trop gros')); req.destroy(); } });
     req.on('end', () => { try { ok(JSON.parse(s || '{}')); } catch (e) { ko(e); } });
   });
 }
@@ -767,8 +767,14 @@ const serveur = http.createServer(async (req, res) => {
   const j = joueurDe(b);
   if (!j) return repondre(res, 401, { erreur: 'Rejoins d\'abord ton groupe (bouton « Rejoindre » en haut).' });
   if (url === '/api/niveaux') {                       // publier un jeu (commun=false) ou ajouter un niveau au jeu commun (commun=true)
-    if (!nivValide(b.niv)) return repondre(res, 400, { erreur: 'niveau invalide' });
     const titre = String(b.titre || '').replace(/[<>]/g, '').trim().slice(0, 30) || 'Sans titre';
+    if (typeof b.script === 'string') {               // mode script : le programme Berry tel quel
+      if (!b.script.trim() || b.script.length > 30000) return repondre(res, 400, { erreur: 'programme vide ou trop long' });
+      const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), code: codeJeu(), pseudo: j.pseudo, groupe: j.groupe, prive: !!db.groupes.find(g => g.code === j.groupe)?.prive,
+                  titre, commun: false, cree: Date.now(), niv: { format: 'berry', script: b.script } };
+      db.niveaux.push(n); sauver(); return repondre(res, 200, { id: n.id, code: n.code });
+    }
+    if (!nivValide(b.niv)) return repondre(res, 400, { erreur: 'niveau invalide' });
     const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), code: codeJeu(), pseudo: j.pseudo, groupe: j.groupe, prive: !!db.groupes.find(g => g.code === j.groupe)?.prive, titre, commun: !!b.commun,
                 cree: Date.now(), niv: { format: 'brique-v1', params: b.niv.params || {}, rows: b.niv.rows, icones: icValides(b.niv.icones),
                        ...(b.niv.params?.jeu === 'fiche' ? (({ rows, ...f }) => ({ rows, fiche: f }))(ficheDe(b.niv)) : {}),

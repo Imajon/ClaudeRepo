@@ -1668,7 +1668,8 @@ body{overflow-x:clip}                                           /* la bande 100v
       <pre id="scNum" aria-hidden="true"></pre>
       <textarea id="scCode" spellcheck="false" placeholder="Pas encore de programme : demande quelque chose à l'IA."></textarea>
     </div>
-    <div class="actions"><button id="scEnvoyerCode" class="sec">📟 Envoyer ce programme</button><button id="scZero" class="sec">🗑 Repartir de zéro</button></div>
+    <div class="actions"><button id="scEnvoyerCode" class="sec">📟 Envoyer ce programme</button><button id="scPublier" class="sec">📢 Publier mon jeu</button><button id="scZero" class="sec">🗑 Repartir de zéro</button></div>
+    <div id="scPartage"></div>
     <pre id="scJournal" class="hide"></pre>
   </section>
 </main>
@@ -2834,7 +2835,7 @@ async function rafraichir() {
       + (n.stats.multi?.courses ? `<br>🏁 ${n.stats.multi.courses} course${n.stats.multi.courses > 1 ? 's' : ''} à plusieurs${n.stats.multi.roi ? ` · 👑 ${esc(n.stats.multi.roi.pseudo)} (${n.stats.multi.roi.victoires} victoire${n.stats.multi.roi.victoires > 1 ? 's' : ''})` : ''}` : ''),
       top[0].stats.parties, n.stats.parties)).join('') || vide('Aucun jeu publié pour l\'instant : sois le premier !');
   nouveaux.innerHTML = [...enLigne].sort((a, b) => b.cree - a.cree).slice(0, 8).map(n => `<div class="carte">
-      <div class="vig"><img class="mini" src="${vignette(n.niv.fiche ? Fiche.apercu(n.niv).rows : n.niv.rows)}" alt=""></div>
+      <div class="vig">${n.niv.script ? '<span style="font-size:40px">📜</span>' : `<img class="mini" src="${vignette(n.niv.fiche ? Fiche.apercu(n.niv).rows : n.niv.rows)}" alt="">`}</div>
       <div class="t">${esc(n.titre)}${Date.now() - n.cree < 864e5 ? '<span class="neuf">NEUF</span>' : ''}</div>
       <small class="r" style="color:var(--mute)">par ${esc(n.pseudo)} · ${depuis(n.cree)}${n.commun ? ' · 🧱 commun' : ''}<br>code <b style="color:var(--acc2)">${esc(n.code || '')}</b></small>${bouton(n)}</div>`).join('')
     || vide('Aucun niveau pour l\'instant.');
@@ -2910,7 +2911,7 @@ const sansAccent = t => String(t || '').toLowerCase().normalize('NFD').replace(/
 const possDans = t => { t = sansAccent(t); return POSS_TOUT.filter(p => p.re.some(r => r.test(t))).map(p => p.id); };
 const GENRE_POSS = { plateforme: ['plateforme'], cote: ['cote'], iso: ['iso', 'tourner'], briques: ['casse'], invaders: ['invaders'] };
 function possJeu(n) {                                   // ce qu'un jeu publié explore : son genre, sa fiche, les mots de son titre
-  const f = n.niv?.fiche, ids = [...(GENRE_POSS[f ? f.modele : n.niv?.params?.jeu || 'plateforme'] || []), ...possDans(n.titre)];
+  const f = n.niv?.fiche, ids = [...(n.niv?.script ? [] : GENRE_POSS[f ? f.modele : n.niv?.params?.jeu || 'plateforme'] || []), ...possDans(n.titre)];
   const b = f?.heros?.boutons ? Object.values(f.heros.boutons) : [];
   if (b.some(a => /^tourner/.test(a))) ids.push('tourner');
   if (b.includes('tirer')) ids.push('tourelle');
@@ -2964,7 +2965,9 @@ idees.onchange = async e => {                            // animateur connecté 
   if (v === 'x' && !confirm('Supprimer cette idée ?')) return rafraichir();
   try { rendreIdees((await api('api/animateur/idee', v === 'x' ? { id, supprimer: true } : { id, statut: v }, session)).idees); } catch (err) { alert(err.message); }
 };
+let ouvrirScript;                                        // défini par le mode script : un jeu Berry publié
 function jouerNiveau(n) {
+  if (n.niv.script) return ouvrirScript(n);
   charger({ ...n.niv, id: n.id, code: n.code, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params); setGenre(params.jeu || 'plateforme');
   if (n.niv.fiche) { fiche = { ...structuredClone(n.niv.fiche), rows: [...n.niv.rows] }; ficheLire(); }
   envoi.innerHTML = `<div class="partage">« ${esc(n.titre)} » de ${esc(n.pseudo)} · code <span class="code">${esc(n.code)}</span><br><small>Envoie-le sur ta console pour y jouer, seul ou à plusieurs (« Mes jeux »).</small></div>`;
@@ -3338,7 +3341,24 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '', date: Date.now() }); sauver(); rendre();
     const pb = await envoyer(scCode.value); if (pb) { etat.essais.at(-1).console = pb; sauver(); rendre(); }
   };
-  scZero.onclick = () => { if (!confirm('Repartir de zéro ? Le programme et tes essais seront effacés.')) return; etat = { script: '', essais: [], erreur: '' }; mettreCode(''); sauver(); rendre(); };
+  scZero.onclick = () => { if (!confirm('Repartir de zéro ? Le programme et tes essais seront effacés.')) return; etat = { script: '', essais: [], erreur: '' }; mettreCode(''); scPartage.innerHTML = ''; sauver(); rendre(); };
+  const partage = (t, code) => scPartage.innerHTML = `<div class="partage">${t} · code <span class="code">${esc(code)}</span><br><small>Tes copains le récupèrent sur Brique avec ce code (Communauté), puis le mettent sur leur console.</small></div>`;
+  scPublier.onclick = async () => {                      // publier : seulement un programme qui tourne sur la console sans erreur
+    if (!EN_LIGNE) return dire('Hors ligne : la publication a besoin du serveur Brique.', false);
+    if (!moi) { dlgRejoindre.showModal(); return dire('Rejoins d\'abord ton groupe avec le code de ton animateur.', false); }
+    if (!etat.script || etat.erreur || etat.surConsole !== etat.essais.length) return dire('Mets ton jeu sur la console et vérifie qu\'il tourne sans erreur avant de le publier.', false);
+    const titre = prompt('Le nom de ton jeu ?', etat.titre || ''); if (titre === null) return;
+    try {
+      const { code } = await api('api/niveaux', { ...ident(), titre, script: etat.script });
+      etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » est publié, signé ${esc(pseudo())}`, code); rafraichir();
+    } catch (e) { dire(e.message, false); }
+  };
+  ouvrirScript = n => {                                  // le jeu d'un copain : remplace le programme en cours (après accord), puis part sur la console
+    if (etat.script && etat.script !== n.niv.script && !confirm(`Remplacer ton programme par « ${n.titre} » de ${n.pseudo} ?`)) return;
+    etat = { script: n.niv.script, essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo} (code ${n.code})`, console: '', date: Date.now() }], erreur: '' };
+    mettreCode(etat.script); sauver(); rendre(); partage(`« ${esc(n.titre)} » de ${esc(n.pseudo)}`, n.code);
+    afficher('creer'); scMettre.classList.remove('hide'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
   scMettre.onclick = async () => {                       // envoie le jeu ; pas encore de console : ce clic ouvre le choix du port
     if (!port && !(await auto())) {
       if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.', false);

@@ -10,6 +10,7 @@ Site de l'atelier : les enfants (9-14 ans) décrivent un jeu, l'IA (Mistral) le 
 - `fiche.js` + `FICHE-JEU.md` : format « Ma fiche », partagé page/serveur. Test : `node test-fiche.js`.
 - `consigne-script.txt` : prompt système du mode script (Berry).
 - `version.txt` : numéro du site (`75` → affiché v1.75).
+- `bump-sections.js` : au commit, monte le `data-version` de chaque `<main>` touché (affiché « section v1.x » en pied de page). Hook à installer une fois par clone : `node brique/bump-sections.js --installer`.
 
 ## À ne jamais lire (ou seulement sur demande)
 - `versions/`, `index-V*.html`, `server-avant-*.js` : anciennes versions, servent de sauvegarde.

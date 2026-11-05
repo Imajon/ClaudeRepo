@@ -55,25 +55,19 @@ Pas de // (division entière : int(a / b)). Une fonction renvoie UNE valeur (pas
 Erreur « 'f' undeclared » sur un nom de fonction = la fonction est appelée plus haut que son def. Écrire chaque def AVANT toutes les fonctions qui l'appellent : les petites fonctions (placer, nouvelle_partie, reset...) tout en haut, juste après les var, puis debut, maj, dessine.
 
 FLUIDITÉ (très important : un jeu qui saccade est raté)
-- Budget : maj + dessine doivent prendre moins de 8 ms. Le langage est lent (environ 100 fois moins que du C).
+- Budget : maj + dessine doivent prendre moins de 8 ms (60 images/s) ; un jeu riche (course avec traces et étincelles) peut aller jusqu'à 25 ms (30 images/s), jamais plus. Le langage est lent (environ 100 fois moins que du C).
 - Précalculer dans debut() tout ce qui ne change pas (décors, bords, tableaux de sinus si besoin).
 - Ne pas créer de listes ou de chaînes dans les boucles de chaque image ; réutiliser des listes de taille fixe.
-- Moins de 250 appels de dessin par image ; ne dessiner que ce qui est à l'écran ; pas de pixel par pixel.
+- Moins de 600 appels de dessin par image (la console en accepte 1200) : ne dessiner que ce qui est à l'écran (précalculer une boîte par morceau de décor et sauter celles hors de l'écran) ; pas de pixel par pixel.
+- Dans maj() et dessine(), écrire les grandes boucles avec while (i += 1) : plus rapide que for, qui fabrique un itérateur à chaque fois.
 - Éviter sqrt, sin, cos dans les grandes boucles ; comparer des distances au carré.
 - Limiter les particules, traces et ennemis (quelques dizaines au plus).
 - string.format seulement pour l'affichage du score ou du temps.
 
-GÉOMÉTRIE QUI MARCHE (à adapter, seulement si la demande en a besoin)
-Piste, route, circuit, couloir, rivière (une bande avec deux bords à ne pas toucher) : ne JAMAIS dessiner les bords à la main ni avec des rectangles.
-  1. Le centre de la piste = une liste de points P = [[x, y], ...] (une boucle fermée : le point après le dernier est P[0]). La piste peut être plus grande que l'écran (camera).
-  2. Dans debut(), pour chaque segment a -> b, calculer la normale (nx, ny) = (-dy / l * LARG, dx / l * LARG) avec l = longueur du segment, LARG = demi-largeur.
-     Bord gauche = a + n -> b + n ; bord droit = a - n -> b - n. Garder ces nombres dans des listes (précalculés une fois).
-  3. dessine() : une ligne() par bord et par segment (avec camera(x - 160, y - 120) pour suivre le joueur), et un disque de rayon LARG à chaque point P pour boucher les coins des virages.
-  4. Toucher un bord = la distance du joueur au segment le plus proche dépasse LARG - rayon du joueur.
-     Distance au segment a -> b : u = ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy + 0.0), u ramené entre 0 et 1, point proche q = a + u * (dx, dy), distance = |p - q|.
-     Ne tester que le segment actuel et ses 2 voisins de chaque côté (mémoriser l'indice du segment actuel), pas toute la piste.
-  5. Le joueur part SUR le centre (au point P[0], jamais au bord), tourné vers P[1] : angle de départ = math.atan2(P[1][1] - P[0][1], P[1][0] - P[0][0]).
-  6. Quand il touche un bord : le ramener vers le centre (au point q, décalé de LARG - rayon) et réduire sa vitesse. Ne JAMAIS l'empêcher de bouger en refusant le déplacement : s'il est déjà au bord, il resterait bloqué pour toujours.
+PISTE, CIRCUIT, ROUTE, COULOIR, RIVIÈRE (une bande avec deux bords)
+- Ne devine JAMAIS de coordonnées pour la tracer : décris-la comme une tortue, ["a", longueur] = tout droit, ["v", degrés, rayon] = virage (+ à droite, - à gauche), et laisse debut() calculer les points, les bords et une boîte par tronçon (voir le système Piste s'il est fourni). Épingle = ["v", 180, 60] ; spirale = virages de même sens au rayon qui diminue ; circuit en boucle = les angles font 360 en tout.
+- Le joueur part sur le centre, tourné dans le sens de la piste ; quand il touche un bord, le ramener vers le centre et le freiner, sans jamais refuser le déplacement (il resterait bloqué).
+- Ne tester que les tronçons voisins du joueur (mémoriser l'indice du tronçon actuel), et ne dessiner que les tronçons dont la boîte est à l'écran.
 
 TA RÉPONSE
 Réponds en deux parties, rien d'autre :

@@ -1,95 +1,98 @@
 # Piste
-# exemple: SYSTEME piste en boucle (bords precalcules, distance au segment, vue de dessus, camera qui suit, piste en boucle) | mots: course, circuit, voiture, piste, route, kart, moto, derape, virage, tours, riviere, couloir
+# exemple: SYSTEME piste decrite a la tortue (avance / virage au lieu de coordonnees, circuit ouvert ou en boucle, bords precalcules, ne dessiner que ce qui est a l'ecran, camera, rester sur la piste, arrivee au chrono) | mots: course, circuit, chrono, arrivee, voiture, piste, route, kart, moto, virage, epingle, spirale, zigzag, tours, riviere, couloir, slalom
 import math
 import string
-var P = [[160, 120], [420, 90], [620, 160], [680, 340], [560, 480], [340, 430], [200, 520], [60, 420], [40, 240]]
-var LARG = 34
+# La piste se DECRIT comme une tortue : ne jamais deviner de coordonnees. ["a", longueur] = tout droit ; ["v", degres, rayon] = virage (+ a droite, - a gauche).
+# Epingle = ["v", 180, 60] ; zigzag = virages alternes ; spirale = virages de meme sens au rayon qui diminue ; boucle = angles qui font 360 en tout.
+var TRACE = [["a", 250], ["v", 90, 140], ["a", 150], ["v", -180, 70], ["a", 150], ["v", 180, 70], ["a", 200], ["v", -90, 120], ["a", 250]]
+var LARG = 32                                  # demi-largeur ; un virage plus serre que LARG + 12 est agrandi tout seul
+var CX = [] var CY = [] var LX = [] var LY = [] var RX = [] var RY = [] var BB = []   # centre, bords, boite de chaque troncon de 6 points
 var N = 0
-var BG = []
-var BD = []
-var px = 0.0 var py = 0.0 var ang = 0.0 var vit = 0.0
-var seg = 0
-var tours = 0
-var chrono = 0.0
-var record = 0.0
-var qx = 0.0 var qy = 0.0
-var ROUTE = 0 var HERBE = 0 var BLANC = 0 var ROUGE = 0
+var px = 0.0 var py = 0.0 var ang = 0.0 var vit = 0.0 var seg = 0
+var chrono = 0.0 var record = 0.0 var fini = false
 
-def debut()
-  N = size(P)
-  for i: 0 .. N - 1
-    var a = P[i] var b = P[(i + 1) % N]
-    var dx = b[0] - a[0] var dy = b[1] - a[1]
-    var l = math.sqrt(dx * dx + dy * dy)
-    var nx = -dy / l * LARG var ny = dx / l * LARG
-    BG.push([int(a[0] + nx), int(a[1] + ny), int(b[0] + nx), int(b[1] + ny)])
-    BD.push([int(a[0] - nx), int(a[1] - ny), int(b[0] - nx), int(b[1] - ny)])
+def construit()                                # la tortue pose un point tous les 20 px environ
+  var x = 0.0 var y = 0.0 var a = 0.0
+  CX.push(x) CY.push(y)
+  for c: TRACE
+    var n = 0 var da = 0.0 var ds = 0.0
+    if c[0] == "a" n = int(c[1] / 20) + 1 ds = c[1] / real(n)
+    else
+      var r = math.max(c[2], LARG + 12) var rad = c[1] * math.pi / 180
+      n = int(math.abs(rad) * r / 20) + 2 da = rad / n ds = math.abs(rad) * r / n
+    end
+    for k: 1 .. n
+      a += da / 2 x += math.cos(a) * ds y += math.sin(a) * ds a += da / 2
+      CX.push(x) CY.push(y)
+    end
   end
-  px = real(P[0][0]) py = real(P[0][1])
-  ang = math.atan2(P[1][1] - P[0][1], P[1][0] - P[0][0])
-  ROUTE = rgb(70, 70, 80) HERBE = rgb(40, 120, 50) BLANC = rgb(255, 255, 255) ROUGE = rgb(232, 50, 43)
+  N = size(CX)
+  for k: 0 .. N - 1                            # bords : decales de LARG de part et d'autre de la direction locale
+    var i = k > 0 ? k - 1 : 0 var j = k < N - 1 ? k + 1 : N - 1
+    var dx = CX[j] - CX[i] var dy = CY[j] - CY[i] var l = math.sqrt(dx * dx + dy * dy)
+    var nx = -dy / l * LARG var ny = dx / l * LARG
+    LX.push(int(CX[k] + nx)) LY.push(int(CY[k] + ny)) RX.push(int(CX[k] - nx)) RY.push(int(CY[k] - ny))
+  end
+  var b = 0
+  while b < N - 1                              # boite de chaque troncon : dessine() saute ceux hors de l'ecran
+    var x0 = 99999 var y0 = 99999 var x1 = -99999 var y1 = -99999 var i = b
+    while i <= b + 6 && i < N
+      x0 = math.min(x0, LX[i], RX[i]) x1 = math.max(x1, LX[i], RX[i]) y0 = math.min(y0, LY[i], RY[i]) y1 = math.max(y1, LY[i], RY[i]) i += 1
+    end
+    BB.push(x0) BB.push(x1) BB.push(y0) BB.push(y1)
+    b += 6
+  end
 end
-
-def dist2(i)
-  var a = P[i] var b = P[(i + 1) % N]
-  var dx = b[0] - a[0] var dy = b[1] - a[1]
-  var u = ((px - a[0]) * dx + (py - a[1]) * dy) / (dx * dx + dy * dy + 0.0)
-  if u < 0 u = 0.0 elif u > 1 u = 1.0 end
-  qx = a[0] + u * dx qy = a[1] + u * dy
-  var ex = px - qx var ey = py - qy
-  return ex * ex + ey * ey
-end
+def depart() px = CX[1] py = CY[1] ang = math.atan2(CY[2] - CY[0], CX[2] - CX[0]) vit = 0.0 seg = 1 chrono = 0.0 fini = false end
+def debut() construit() depart() end
 
 def maj(dt)
-  if bouton(G) ang -= 2.6 * dt end
-  if bouton(D) ang += 2.6 * dt end
-  if bouton(P3) vit += 160 * dt else vit -= 90 * dt end
-  if vit < 0 vit = 0.0 elif vit > 190 vit = 190.0 end
-  px += math.cos(ang) * vit * dt
-  py += math.sin(ang) * vit * dt
-  var best = 99999999.0 var bi = seg
-  for k: -2 .. 2
-    var i = (seg + k + N) % N
-    var d = dist2(i)
-    if d < best best = d bi = i end
-  end
-  if bi == 0 && seg == N - 1
-    tours += 1 score(tours) son(988, 120)
-    if record == 0 || chrono < record record = chrono end
-    chrono = 0.0
-  elif bi == N - 1 && seg == 0
-    tours -= 1
-  end
-  seg = bi
-  dist2(seg)
-  var lim = LARG - 6
-  if best > lim * lim
-    var d = math.sqrt(best)
-    px = qx + (px - qx) / d * (lim - 1)
-    py = qy + (py - qy) / d * (lim - 1)
-    vit = vit * 0.5
-    son(120, 40)
-  end
+  if fini if appui(P3) depart() end return end
+  if bouton(G) ang -= 2.8 * dt end
+  if bouton(D) ang += 2.8 * dt end
+  if bouton(P3) vit += 200 * dt else vit -= 120 * dt end
+  if vit < 0 vit = 0.0 elif vit > 200 vit = 200.0 end
+  px += math.cos(ang) * vit * dt py += math.sin(ang) * vit * dt
   chrono += dt
+  var bd = 1e9 var qx = 0.0 var qy = 0.0       # segment du centre le plus proche, parmi les voisins de seg seulement
+  var i = math.max(0, seg - 3) var fin = math.min(N - 2, seg + 4)
+  while i <= fin
+    var ax = CX[i] var ay = CY[i] var ex = CX[i + 1] - ax var ey = CY[i + 1] - ay
+    var u = ((px - ax) * ex + (py - ay) * ey) / (ex * ex + ey * ey + 0.001)
+    if u < 0 u = 0.0 elif u > 1 u = 1.0 end
+    var x = ax + ex * u var y = ay + ey * u var d = (px - x) * (px - x) + (py - y) * (py - y)
+    if d < bd bd = d qx = x qy = y seg = i end
+    i += 1
+  end
+  var lim = LARG - 6
+  if bd > lim * lim                            # sorti : ramene sur le bord (jamais bloque), freine
+    var d = math.sqrt(bd) px = qx + (px - qx) / d * lim py = qy + (py - qy) / d * lim vit *= 0.6 son(140, 30)
+  end
+  if seg >= N - 3 fini = true if record == 0 || chrono < record record = chrono end son(1047, 200) end
 end
 
 def dessine()
-  fond(HERBE)
-  camera(int(px) - 160, int(py) - 120)
-  for i: 0 .. N - 1 disque(P[i][0], P[i][1], LARG, ROUTE) end
-  for i: 0 .. N - 1
-    var g = BG[i] var d = BD[i]
-    tri(g[0], g[1], g[2], g[3], d[2], d[3], ROUTE)
-    tri(g[0], g[1], d[2], d[3], d[0], d[1], ROUTE)
-    ligne(g[0], g[1], g[2], g[3], BLANC)
-    ligne(d[0], d[1], d[2], d[3], BLANC)
+  fond(rgb(40, 110, 50))
+  var X0 = int(px) - 160 var Y0 = int(py) - 120
+  camera(X0, Y0)
+  var route = rgb(70, 70, 80) var bord = rgb(255, 255, 255)
+  var b = 0 var nb = size(BB)
+  while b < nb                                 # seulement les troncons a l'ecran
+    if BB[b + 1] >= X0 && BB[b] <= X0 + 320 && BB[b + 3] >= Y0 && BB[b + 2] <= Y0 + 240
+      var i = b / 4 * 6 var e = math.min(i + 6, N - 1)
+      while i < e
+        tri(LX[i], LY[i], LX[i + 1], LY[i + 1], RX[i + 1], RY[i + 1], route) tri(LX[i], LY[i], RX[i + 1], RY[i + 1], RX[i], RY[i], route)
+        ligne(LX[i], LY[i], LX[i + 1], LY[i + 1], bord) ligne(RX[i], RY[i], RX[i + 1], RY[i + 1], bord)
+        i += 1
+      end
+    end
+    b += 4
   end
-  ligne(BG[0][0], BG[0][1], BD[0][0], BD[0][1], BLANC)
-  var c = math.cos(ang) var s = math.sin(ang)
-  var x = int(px) var y = int(py)
-  tri(x + int(c * 10), y + int(s * 10), x + int(-c * 7 - s * 6), y + int(-s * 7 + c * 6), x + int(-c * 7 + s * 6), y + int(-s * 7 - c * 6), ROUGE)
+  ligne(LX[N - 1], LY[N - 1], RX[N - 1], RY[N - 1], rgb(232, 50, 43))   # arrivee
+  var c = math.cos(ang) var s = math.sin(ang) var x = int(px) var y = int(py)
+  tri(x + int(c * 10), y + int(s * 10), x + int(-c * 7 - s * 6), y + int(-s * 7 + c * 6), x + int(-c * 7 + s * 6), y + int(-s * 7 - c * 6), rgb(232, 50, 43))
   camera(0, 0)
-  texte(4, 4, "Tours " + str(tours), BLANC, 2)
-  texte(4, 24, string.format("%.1f s", chrono), BLANC, 2)
-  if record > 0 texte(200, 4, string.format("Rec %.1f", record), BLANC, 2) end
+  texte(4, 4, string.format("%.2f", chrono), bord, 2)
+  if record > 0 texte(200, 4, string.format("rec %.2f", record), bord, 1) end
+  if fini texte(70, 110, "ARRIVEE ! P3 = rejouer", bord, 2) end
 end

@@ -159,6 +159,7 @@ bntvclos* be_newntvclosure(bvm *vm, bntvfunc cf, int nupvals)
         f->f = cf;
         f->nupvals = (bbyte)nupvals;
         if (nupvals) {
+            memset(&be_ntvclos_upval(f, 0), 0, sizeof(bupval*) * nupvals); /* le GC peut passer pendant init_upvals : pas de pointeurs au hasard */
             var_setntvclos(vm->top, f);
             be_incrtop(vm);
             init_upvals(vm, f); /* may be GC */

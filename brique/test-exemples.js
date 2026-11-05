@@ -19,5 +19,6 @@ assert.deepStrictEqual(choisir('bonjour'), []);
 const sys = t => require('./exemples.js').systemes.choisir(t).map(e => e.f);
 assert(['piste.be', 'derapage.be'].every(f => sys('un drift dans des épingles au chrono').includes(f)), 'drift + epingles : piste et derapage');
 assert(sys('une course en spirale').includes('piste.be'), 'spirale : piste');
+assert(sys('les ennemis doivent disparaitre la ou le tir les touche, mes soldats forment une foule').includes('foule.be'), 'foule : foule');
 assert(choisir('un jeu de saut avec des plateformes et un labyrinthe et du ski').length === 2, '2 exemples au plus');
 console.log(`ok : ${EXEMPLES.length} exemples, ${require('./exemples.js').systemes.EXEMPLES.length} systemes`);

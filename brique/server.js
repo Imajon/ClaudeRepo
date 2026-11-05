@@ -533,13 +533,17 @@ function decoupe(t) {                                   // reponse de l'IA : le 
 function avecLignes(erreur, script) {                    // "jeu:12: ..." -> on joint les lignes 11 a 13 : l'IA voit ce qu'elle doit corriger
   const n = +(/jeu:(\d+)/.exec(erreur) || [])[1]; if (!n || !script) return erreur;
   const s = Math.max(0, n - 2);
-  return erreur + '\nLignes concernees :\n' + script.split('\n').slice(s, n + 1).map((l, i) => `${s + i + 1}: ${l}`).join('\n');
+  const double = /not callable/.test(erreur) ? [...new Set([...(script.split('\n')[n - 1] || '').matchAll(/\b(\w+)\s*\(/g)].map(m => m[1]))]
+    .filter(f => new RegExp(`\\bvar\\s+${f}\\b`).test(script)) : [];   // "def depart()" + "var depart" : la variable ecrase la fonction, l'IA ne le voit pas sur 3 lignes
+  return erreur + '\nLignes concernees :\n' + script.split('\n').slice(s, n + 1).map((l, i) => `${s + i + 1}: ${l}`).join('\n')
+    + double.map(f => `\nCAUSE : "${f}" est a la fois une fonction (def ${f}) et une variable (var ${f}) : la variable ecrase la fonction. Renomme la VARIABLE partout (ex. ${f}_ok), garde le nom de la fonction.`).join('');
 }
 // ---------- verification avant la console : verif/verif.c (meme Berry que la console) joue 10 s du jeu ; compile par "postinstall" ----------
 const VERIF = path.join(__dirname, 'verif', process.platform === 'win32' ? 'verif.exe' : 'verif');
+const FIN = /^(fini|termine|gagne|victoire|arrive)$/;
 function verifier(script) {                              // null = pas de verificateur sur ce serveur
   if (!fs.existsSync(VERIF)) return Promise.resolve(null);
-  const noms = [...new Set([...script.matchAll(/^var\s.*$/gm)].flatMap(l => [...l[0].matchAll(/\bvar\s+(\w+)/g)].map(m => m[1])))].slice(0, 20);   // variables du jeu a suivre
+  const noms = [...new Set([...script.matchAll(/^var\s.*$/gm)].flatMap(l => [...l[0].matchAll(/\bvar\s+(\w+)/g)].map(m => m[1])))].sort((a, b) => FIN.test(b) - FIN.test(a)).slice(0, 20);   // variables du jeu a suivre ; fini, gagne... d'abord : probleme() les surveille
   return new Promise(ok => {
     const p = require('child_process').execFile(VERIF, noms, { timeout: 5000 }, (e, sortie) => { try { ok(JSON.parse(sortie)); } catch { ok(null); } });
     p.stdin.end(script);
@@ -548,6 +552,8 @@ function verifier(script) {                              // null = pas de verifi
 function probleme(v) {                                   // ce qui irait de travers sur la console, '' si rien
   if (!v) return '';
   if (!v.ok) return (v.erreur || 'erreur').replace(/\s+/g, ' ').trim();
+  const tot = /^1 s .*?\b(fini|termine|gagne|victoire|arrive)=true/m.exec(v.suivi || '');   // gagner / finir en 1 s en tenant P3 = la condition de fin est vraie au depart (jamais voulu)
+  if (tot) return `des la 1re seconde (le joueur tient juste P3), ${tot[1]} devient true : la partie se termine au depart. Cherche pourquoi la condition qui met ${tot[1]} a true est deja vraie au depart (souvent un index qui fait le tour avec % N, ou une distance qui vaut 0 au point de depart) et corrige-la`;
   if (v.ops > 1200 || v.texte > 3000) return `trop de dessins par image (${v.ops} appels, la console en accepte 1200 au plus) : le bas de l'image ne s'affiche pas`;
   if (v.memoire > 70000) return `le jeu utilise ${Math.round(v.memoire / 1000)} Ko de memoire, la console n'en a qu'environ 80 : elle risque de planter`;   // ponytail: seuil estime (drift2 = 45 Ko tourne), a ajuster avec les mesures
   return '';

@@ -3664,7 +3664,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   scAnnuler.onclick = () => arret?.abort();
   async function apiFlux(corps, surTexte) {              // api/script en flux : le texte arrive au fur et à mesure, puis "\0" + la réponse vérifiée
     const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;
-    const r = await fetch('api/script', { method: 'POST', headers, body: JSON.stringify({ ...corps, flux: true }), signal: arret?.signal });
+    const r = await fetch('api/script', { method: 'POST', headers, body: JSON.stringify({ ...corps, flux: true, methode: new URLSearchParams(location.search).get('methode') || undefined }), signal: arret?.signal });
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.erreur); }
     const lec = r.body.getReader(), dec = new TextDecoder(); let t = '', vu = 0;
     for (;;) {

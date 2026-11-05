@@ -492,7 +492,7 @@ async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 
     method: 'POST', signal: AbortSignal.timeout(delai),
     headers: { Authorization: 'Bearer ' + process.env.MISTRAL_API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: modele, temperature: chaud, safe_prompt: true, ...(brut ? {} : { response_format: { type: 'json_object' } }), stream: !!surMorceau,   // safe_prompt : garde-fou officiel de Mistral
-      messages: [{ role: 'system', content: consigne }, { role: 'user', content: JSON.stringify(contenu) }] }),
+      messages: [{ role: 'system', content: consigne }, ...(Array.isArray(contenu) ? contenu : [{ role: 'user', content: JSON.stringify(contenu) }])] }),   // tableau = conversation (methode Claude)
   });
   if (!r.ok) throw new Error('Mistral ' + r.status + ' ' + (await r.text()).slice(0, 200));
   const lire = t => brut ? t : JSON.parse(t);
@@ -514,6 +514,9 @@ const Exemples = require('./exemples.js').systemes;    // systemes/*.be : l'IA r
 async function iaScript(texte, script, erreur, avant, auto, test, surMorceau, images, points, chaud, plan) {   // plan = plan du jeu (planifier), premier jeu seulement ;   // points = la demande en liste (lister) ; chaud = temperature de l'ecriture   // test = ce que le verificateur a vu en jouant le programme ; auto = correction d'une erreur de la console : le modele rapide suffit
   const r = decoupe(await mistral(CONSIGNE_SCRIPT + (auto ? '' : Exemples.texte(Exemples.choisir(texte, avant, script?.split('\n')[0]))), { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special', test_automatique: test || '(pas de programme)',
     demandes_precedentes: avant, ...(points?.length ? { points_a_faire: points } : {}), ...(plan ? { plan_du_jeu: plan } : {}), images_du_jeu: images?.length ? images : '(aucune : le jeu dessine avec rect, disque...)', demande: texte }, auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest', 60000, surMorceau, true, auto ? 0.2 : chaud ?? 0.4));   // ecriture plus libre (0.4), correction d'erreur precise (0.2)
+  return finScript(r);
+}
+function finScript(r) {                                 // reponse decoupee -> programme nettoye + textes pour l'enfant (iaScript et methode Claude)
   const t = v => typeof v === 'string' ? v.trim() : '';
   let nouveau = t(r.script);
   if (nouveau.length < 20 || nouveau.length > 20000) throw new Error('programme vide ou trop long');
@@ -654,7 +657,42 @@ async function scriptVerifie(args, surMorceau) {         // liste de points, ecr
   (db.mesures ||= []).push(m); if (db.mesures.length > 500) db.mesures.shift(); sauver();
   return { ...r, corrections: n, verif: pb, refait: !!m.refait };
 }
-const iaMistral = async (texte, base) => iaReglages(await mistral(CONSIGNE, { reglages_actuels: base, demande: texte }), base);
+// ---------- methode Claude (essai, ?methode=claude) : une seule conversation, sans systemes : imaginer en mots, ecrire, faire jouer le robot, se relire comme un joueur, reecrire ----------
+const METHODE = `\n\nMETHODE DE TRAVAIL : tu travailles en plusieurs etapes dans cette conversation. On te dit a chaque message quelle etape faire. Tu penses comme un concepteur de jeux : d'abord le jeu tel qu'on le vit, ensuite le code, puis tu verifies ce que le robot a vraiment vu en jouant.`;
+const PLAN_ETAPE = `ETAPE 1 : ne code pas encore. En quelques phrases simples, imagine CE jeu (ou cette modification) tel qu'on le vit seconde apres seconde :
+ce que fait chaque bouton, ce qui bouge tout seul et comment, ce qui menace le joueur, comment on gagne et on perd, ce qui le rend amusant et plus difficile avec le temps, ce qu'on voit a l'ecran.
+Pour une modification : ce qui change concretement a l'ecran et dans maj(). Reste fidele aux mots de l'enfant. Puis liste les variables et les fonctions dont tu auras besoin.`;
+const ECRIS = 'ETAPE 2 : ecris maintenant le programme complet qui fait exactement ce plan, au format demande (le programme dans un bloc ```, puis le petit JSON).';
+async function methodeClaude(args, surMorceau) {
+  const [texte, script, erreur, avant, , images] = args, t0 = Date.now(), m = { date: t0, methode: 'claude', modif: !!script };
+  const L = process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest', test = script ? await verifier(script) : null;
+  const msgs = [{ role: 'user', content: JSON.stringify({ programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special',
+    test_automatique: test?.suivi || '(pas de programme)', demandes_precedentes: avant, images_du_jeu: images?.length ? images : '(aucune : le jeu dessine avec rect, disque...)', demande: texte }) + '\n\n' + PLAN_ETAPE }];
+  const dire = async (txt, flux, chaud) => { msgs.push({ role: 'user', content: txt }); const rep = await mistral(CONSIGNE_SCRIPT + METHODE, msgs, L, 90000, flux, true, chaud); msgs.push({ role: 'assistant', content: rep }); return rep; };
+  msgs.push({ role: 'assistant', content: await mistral(CONSIGNE_SCRIPT + METHODE, msgs, L, 60000, null, true, 0.6) });   // le plan, en mots
+  m.ia = Date.now() - t0;
+  let r = finScript(decoupe(await dire(ECRIS, surMorceau, 0.4))), bon = null, pb = '', n = 0;
+  for (; n < 3; n++) {                                     // ponytail: 3 tours au plus (duree), a monter si les mesures le permettent
+    if (r.refus) return r;
+    const v = r.script ? await verifier(r.script) : null;
+    pb = r.script ? probleme(v) : 'pas de programme dans ta reponse';
+    if (!pb) bon = { r, v };
+    const msg = pb ? `Le robot a fait tourner ton programme. PROBLEME : ${v && !v.ok ? avecLignes(pb, r.script) : pb}${v?.suivi ? '\nCe qu\'il a vu :\n' + v.suivi : ''}\nTrouve la vraie cause, puis reecris le programme complet, au meme format.`
+      : `Le robot a joue 10 s (P3 tenu, puis P3 + G, P3 + D, P3 tape, G seul, D seul) ; voici les variables du jeu a chaque instant :\n${v?.suivi || '(pas de robot sur ce serveur : relis seulement le code)'}
+Relis ton plan, ton code et ces valeurs comme un joueur : chaque bouton fait-il ce que dit le plan ? ce qui doit bouger bouge-t-il (une valeur qui ne change jamais = fige) ? la menace arrive-t-elle ? peut-on vraiment perdre et gagner ? dessine() montre-t-il tout cela ?
+Si tout est bon, reponds seulement OK. Sinon dis en une phrase ce qui ne va pas, puis reecris le programme complet, au meme format.`;
+    surMorceau?.('\x01');
+    const rep = await dire(msg, surMorceau, 0.3).catch(e => { console.error(e.message); return ''; });
+    if (!pb && !/```/.test(rep)) break;                   // le modele valide son jeu
+    if (!/```/.test(rep)) { if (pb) continue; break; }
+    r = { ...finScript(decoupe(rep)), explication: r.explication, astuce: r.astuce, question: r.question, limite: r.limite };
+  }
+  if (pb && bon) ({ r } = bon), pb = '';                  // la derniere reecriture casse : on garde le dernier programme qui tournait
+  Object.assign(m, { corrections: n, ok: !pb, duree: Date.now() - t0, lignes: r.script ? r.script.split('\n').length : 0 });
+  (db.mesures ||= []).push(m); if (db.mesures.length > 500) db.mesures.shift(); sauver();
+  return { ...r, corrections: n, verif: pb, refait: false };
+}
+const iaMistral = async(texte, base) => iaReglages(await mistral(CONSIGNE, { reglages_actuels: base, demande: texte }), base);
 // ---------- IA de la fiche : phrase de l'enfant -> changements de la fiche (FICHE-JEU.md), verifies ici ----------
 const CONSIGNE_FICHE = `Tu aides des enfants de 9 a 14 ans a decrire un jeu pour une petite console, avec une "fiche".
 On te donne la fiche actuelle et la demande de l'enfant. Unites : cases (16 pixels) et secondes. La grille "rows" : une lettre par case, ligne 0 en haut, colonne 0 a gauche ;
@@ -774,12 +812,13 @@ const serveur = http.createServer(async (req, res) => {
     const avant = (Array.isArray(b.avant) ? b.avant : []).filter(x => typeof x === 'string').slice(-6).map(x => x.slice(0, 300));
     const images = (Array.isArray(b.images) ? b.images : []).slice(0, 16).map((m, i) => `image ${i + 1} : ${String(m?.nom || 'image').replace(/[<>"]/g, '').slice(0, 20)}, ${+m?.l || 0} x ${+m?.h || 0} pixels, ${+m?.n || 1} image(s) d'animation`);
     const args = [b.texte.slice(0, 500), typeof b.script === 'string' ? b.script.slice(0, 20000) : '', typeof b.erreur === 'string' ? b.erreur.slice(0, 600) : '', avant, b.auto === true, images];
+    const faire = b.methode === 'claude' && !b.auto ? methodeClaude : scriptVerifie;   // essai : la methode Claude (?methode=claude dans l'adresse de la page)
     if (b.flux) {                                     // flux : le texte de l'IA au fur et a mesure, puis "\0" + la reponse verifiee
       res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' });
-      let fin; try { fin = await scriptVerifie(args, d => res.write(d)); } catch (e) { console.error(e.message); fin = { erreur: 'L\'IA ne répond pas' }; }
+      let fin; try { fin = await faire(args, d => res.write(d)); } catch (e) { console.error(e.message); fin = { erreur: 'L\'IA ne répond pas' }; }
       return res.end('\0' + JSON.stringify(fin));
     }
-    try { return repondre(res, 200, await scriptVerifie(args)); }
+    try { return repondre(res, 200, await faire(args)); }
     catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
   }
   if (url === '/api/ia') {                            // compte (groupe ou animateur) ; sans compte : quelques essais par jour

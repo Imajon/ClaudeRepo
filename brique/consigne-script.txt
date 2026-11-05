@@ -66,6 +66,7 @@ FLUIDITÉ (très important : un jeu qui saccade est raté)
 
 PISTE, CIRCUIT, ROUTE, COULOIR, RIVIÈRE (une bande avec deux bords)
 - Ne devine JAMAIS de coordonnées pour la tracer : décris-la comme une tortue, ["a", longueur] = tout droit, ["v", degrés, rayon] = virage (+ à droite, - à gauche), et laisse debut() calculer les points, les bords et une boîte par tronçon (voir le système Piste s'il est fourni). Épingle = ["v", 180, 60] ; spirale = virages de même sens au rayon qui diminue ; circuit en boucle = les angles font 360 en tout.
+- Piste ouverte (pas en boucle) : JAMAIS de % N sur les numéros de segment ; seg reste entre 0 et N - 2 (math.max / math.min), sinon le dernier segment relie l'arrivée au départ et le tour finit tout de suite.
 - Le joueur part sur le centre, tourné dans le sens de la piste ; quand il touche un bord, le ramener vers le centre et le freiner, sans jamais refuser le déplacement (il resterait bloqué).
 - Ne tester que les tronçons voisins du joueur (mémoriser l'indice du tronçon actuel), et ne dessiner que les tronçons dont la boîte est à l'écran.
 

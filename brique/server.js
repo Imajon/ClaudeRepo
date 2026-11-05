@@ -552,8 +552,8 @@ function verifier(script) {                              // null = pas de verifi
 function probleme(v) {                                   // ce qui irait de travers sur la console, '' si rien
   if (!v) return '';
   if (!v.ok) return (v.erreur || 'erreur').replace(/\s+/g, ' ').trim();
-  const tot = /^1 s .*?\b(fini|termine|gagne|victoire|arrive)=true/m.exec(v.suivi || '');   // gagner / finir en 1 s en tenant P3 = la condition de fin est vraie au depart (jamais voulu)
-  if (tot) return `des la 1re seconde (le joueur tient juste P3), ${tot[1]} devient true : la partie se termine au depart. Cherche pourquoi la condition qui met ${tot[1]} a true est deja vraie au depart (souvent un index qui fait le tour avec % N, ou une distance qui vaut 0 au point de depart) et corrige-la`;
+  const tot = /^[1-3] s .*?\b(fini|termine|gagne|victoire|arrive)=true/m.exec(v.suivi || '');   // gagner / finir en 1 s en tenant P3 = la condition de fin est vraie au depart (jamais voulu)
+  if (tot) return `dans les 3 premieres secondes (le joueur tient juste P3), ${tot[1]} devient true : la partie se termine presque au depart. Cherche pourquoi la condition qui met ${tot[1]} a true est deja vraie au depart (souvent : sur une piste ouverte, un numero de segment qui fait le tour avec % N, si bien que le dernier segment arrivee->depart passe sur la ligne de depart ; supprimer tout % N et garder seg entre 0 et N - 2 avec math.max / math.min) et corrige-la`;
   if (v.ops > 1200 || v.texte > 3000) return `trop de dessins par image (${v.ops} appels, la console en accepte 1200 au plus) : le bas de l'image ne s'affiche pas`;
   if (v.memoire > 70000) return `le jeu utilise ${Math.round(v.memoire / 1000)} Ko de memoire, la console n'en a qu'environ 80 : elle risque de planter`;   // ponytail: seuil estime (drift2 = 45 Ko tourne), a ajuster avec les mesures
   return '';

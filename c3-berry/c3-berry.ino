@@ -6,7 +6,7 @@
 //   dessine()    les appels de dessin ; enregistres une fois, rejoues pour chaque bande de l'ecran
 // Envoi : ligne "SCRIPT <octets> [nom]" puis le script (suivi, s'il a des images, d'un octet 0 et des images : voir chargeImages) ; reponse "OK ..." ou "ERR ...". Chaque jeu est garde dans /j/<ordre>_<nom code>.be (1re ligne = son nom), MAXJ au plus.
 // Jouer = la liste des jeux gardes (P3 tenu sur un jeu = le supprimer).
-// Au demarrage : logo, puis le menu (Jouer, Classement, Mes stats, A propos). G + D tenus 1 s pendant un jeu = retour au menu.
+// Au demarrage : l'image MaconsoleBrique (photo.h, gen-photo.py), puis le menu (Jouer, Classement, Mes stats, A propos) avec le cosmonaute qui bouge. G + D tenus 1 s pendant un jeu = retour au menu.
 // Mesures sur le port serie si on les demande ("STAT 1").
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
@@ -21,8 +21,9 @@
 #include "driver/gpio.h"
 #include "esp_heap_caps.h"
 #include "op.h"                                  // struct Op (avant les prototypes automatiques d'Arduino)
+#include "photo.h"                               // image de demarrage 320x240
 
-#define BERRY_VERSION "b5"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
+#define BERRY_VERSION "b6"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
 #define TFT_SCLK 4
 #define TFT_MOSI 6
 #define TFT_CS   7
@@ -83,7 +84,7 @@ class Bande : public Adafruit_GFX {
 Bande g;
 
 // ---- liste des appels de dessin de l'image ----
-enum { O_RECT, O_CADRE, O_DISQUE, O_CERCLE, O_LIGNE, O_TRI, O_TEXTE, O_IMAGE };
+enum { O_RECT, O_CADRE, O_DISQUE, O_CERCLE, O_LIGNE, O_TRI, O_TEXTE, O_IMAGE, O_PHOTO, O_RRECT, O_RCADRE };   // les 3 derniers : ecrans de la console seulement
 Op ops[NOPS]; int nOps = 0; char txt[NTXT]; int nTxt = 0;
 uint16_t fondCol = 0; int camX = 0, camY = 0; bool tropOps = false;
 Op *ajoute(uint8_t op, int y0, int y1, int col) {
@@ -141,6 +142,9 @@ void rejoue(int sTop) {                          // rejoue la liste dans la band
       case O_TRI: g.fillTriangle(o.a, o.b - s, o.c, o.d - s, o.e, o.f - s, o.col); break;
       case O_TEXTE: g.setTextSize(o.t); g.setTextColor(o.col); g.setCursor(o.a, o.b - s); g.print(txt + o.c); break;
       case O_IMAGE: if (o.c < nImgs) blit(o, s); break;
+      case O_PHOTO: memcpy(g.b, PHOTO + s * W, W * BH * 2); break;
+      case O_RRECT: g.fillRoundRect(o.a, o.b - s, o.c, o.d, o.e, o.col); break;
+      case O_RCADRE: g.drawRoundRect(o.a, o.b - s, o.c, o.d, o.e, o.col); break;
     }
   }
 }
@@ -202,23 +206,62 @@ void puce(int x, int y, int w, int h, int k) {   // le logo : un cadre de puce a
   rectOp(x, y, w, h, VERT, false); rectOp(x + 1, y + 1, w - 2, h - 2, VERT, false);
   for (int i = 0; i < 6 && i < k; i++) { const int px = x + 14 + i * (w - 28) / 5; rectOp(px, y - 8, 3, 7, VERT); rectOp(px, y + h + 1, 3, 7, VERT); }
 }
+void rrOp(int x, int y, int w, int h, int r, uint16_t c, bool plein = true) { if (Op *o = ajoute(plein ? O_RRECT : O_RCADRE, y, y + h, c)) { o->a = x; o->b = y; o->c = w; o->d = h; o->e = r; } }
+constexpr uint16_t RGB(int r, int g, int b) { return (uint16_t)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3)); }
+// le cosmonaute de la console jeux (drawChibi de c3-tft-meatboy, stade 23 : combinaison, sac, jetpack), k = echelle
+// pose : 0 repos, 1 course, 2 saut, 3 chute, 4 atterrissage ; fr = image d'animation ; t = secondes
+void cosmo(int cx, int by, int k, int pose, int fr, bool right, float t) {
+  const uint16_t WH = RGB(246, 246, 250), SHD = RGB(200, 204, 222), BL = RGB(40, 100, 230), NAVY = RGB(40, 46, 84), RIM = RGB(225, 228, 238);
+  const uint16_t GR = RGB(160, 166, 182), CY = RGB(60, 236, 255), OR = RGB(255, 150, 40), YE = RGB(255, 220, 80), RD = RGB(220, 60, 60);
+  auto R = [&](int x, int y, int w, int h, uint16_t c) { if (!right) x = -(x + w); rectOp(cx + x * k, by + y * k, w * k, h * k, c); };
+  const int hb = pose == 0 && ((int)(t * 2.5f) & 1) ? 1 : 0, sq = pose == 4 ? 1 : 0;   // tete qui respire ; ecrasement
+  int la = -3, ra = 1, ly = -3, ry = -3, lh = 3, rh = 3;                                // jambes
+  if (pose == 1) { if (fr & 1) { la = -4; ly = -4; lh = 2; ra = 2; } else { ra = 2; ry = -4; rh = 2; la = -4; } }
+  else if (pose == 2) { ly = ry = -4; lh = rh = 2; la = -2; ra = 0; }
+  else if (pose == 3) { la = -5; ra = 3; }
+  R(la, ly, 2, lh, SHD); R(ra, ry, 2, rh, SHD);
+  R(-8, -9, 3, 5, GR);                                                                   // sac a dos
+  if (pose >= 1 && pose <= 3) { R(-8, -4, 3, 2 + (fr & 1), OR); R(-7, -2 + (fr & 1), 1, 2, YE); }   // jetpack
+  R(-4, -7 + sq, 8, 4 - sq, WH);                                                         // corps
+  R(-1, -6, 1, 1, RD); R(0, -6, 1, 1, CY); R(1, -6, 1, 1, YE);                           // panneau de poitrine
+  int ay1 = -7, ay2 = -7;                                                                // bras
+  if (pose == 1) { ay1 = -7 - (fr & 1); ay2 = -7 - ((fr + 1) & 1); }
+  else if (pose == 2) ay1 = ay2 = -11;
+  else if (pose == 3) ay1 = ay2 = -12;
+  R(pose == 3 ? -7 : -6, ay1, 2, 3, WH); R(pose == 3 ? 5 : 4, ay2, 2, 3, WH);
+  const int hy = -17 + hb + sq, hx = sq ? -7 : -6, hw = sq ? 14 : 12;                    // tete + casque
+  rrOp(cx + (right ? hx : -(hx + hw)) * k, by + hy * k, hw * k, 10 * k, 2 * k, WH);
+  R(hx + 1, hy + 8, hw - 2, 1, SHD);
+  rrOp(cx - 7 * k, by + (hy - 1) * k, 14 * k, 11 * k, 4 * k, NAVY); rrOp(cx - 6 * k, by + hy * k, 12 * k, 9 * k, 3 * k, RIM, false);
+  R(-4, hy + 1, 1, 1, WH); R(-3, hy, 1, 1, WH);
+  R(-1, hy + 5, 2, 2, BL); R(0, hy + 4, 1, 1, RGB(150, 210, 255));
+}
+void cosmoMenu(uint32_t now) {                   // en boucle (8 s) : respire, court a gauche puis a droite, saute au jetpack
+  const float u = (now % 8000) / 1000.0f, fr = u - (int)u, t = now / 1000.0f;
+  int pose = 0, dx = 0, hop = 0; bool right = false;
+  if (u >= 4 && u < 5) { pose = 1; dx = (int)(-24 * sinf(fr * 3.1416f)); }
+  else if (u >= 5 && u < 6) { pose = 1; right = true; dx = (int)(24 * sinf(fr * 3.1416f)); }
+  else if (u >= 6 && u < 7) { hop = (int)(4 * fr * (1 - fr) * 36); pose = fr < 0.5f ? 2 : 3; }
+  else if (u >= 7 && u < 7.15f) pose = 4;
+  const int cx = 248 + dx, by = 196, sh = max(14, 44 - hop);
+  rectOp(cx - sh / 2, by + 1, sh, 3, 0x0000);                                            // ombre qui retrecit quand il saute
+  cosmo(cx, by - hop, 5, pose, now / 110, right, t);
+}
 void dessineEcran() {                            // remplit la liste de dessin pour l'ecran courant (hors jeu)
   nOps = nTxt = 0; camX = camY = 0; fondCol = 0x0841; char b[64];
   const uint32_t t = millis() - ecranT;
   if (ecran == E_LOGO) {
-    const int k = t / 180;
-    puce(76, 70, 168, 64, k); txtOp(88, 86, "BRIQUE", VERT, 4);
-    if (t > 900) txtOp(46, 160, "tu decris, l'IA ecrit, la console joue", GRIS, 1);
-    txtOp(132, 224, "moteur " BERRY_VERSION, 0x4A69, 1);
+    ajoute(O_PHOTO, 0, H, 0);                    // l'image MaconsoleBrique, plein ecran
     return;
   }
   puce(8, 10, 98, 26, 6); txtOp(16, 16, "BRIQUE", VERT, 2);
   if (ecran == E_MENU) {
     for (int i = 0; i < 4; i++) {
       const int y = 62 + i * 36;
-      if (i == choix) rectOp(40, y - 6, 240, 30, VERT);
-      txtOp(56, y, MENU[i], i == choix ? 0x0841 : 0xFFFF, 2);
+      if (i == choix) rectOp(12, y - 6, 164, 30, VERT);
+      txtOp(26, y, MENU[i], i == choix ? 0x0841 : 0xFFFF, 2);
     }
+    cosmoMenu(millis());
     if (note[0]) txtOp(8, 206, note, 0xFE60, 1);
     txtOp(8, 226, "G / D : choisir    P3 : ouvrir", GRIS, 1);
     txtOp(312 - 6 * strlen("moteur " BERRY_VERSION), 226, "moteur " BERRY_VERSION, 0x4A69, 1);   // la version installee (comparer avec celle du site)
@@ -473,7 +516,7 @@ void loop() {
   if (ecran == E_LOGO) {
     const uint32_t t = now - ecranT;
     if (t > 180 && t < 200) { tone(SND_PIN, 659); sonFin = now + 90; } else if (t > 360 && t < 380) { tone(SND_PIN, 784); sonFin = now + 90; } else if (t > 540 && t < 560) { tone(SND_PIN, 1047); sonFin = now + 160; }
-    if (t > 2200 || (t > 300 && (appuiP3 || appuiG || appuiD))) allerMenu();
+    if (t > 3000 || (t > 300 && (appuiP3 || appuiG || appuiD))) allerMenu();
     dessineEcran();
   } else if (ecran == E_MENU) {
     if (appuiG) choix = (choix + 3) % 4; if (appuiD) choix = (choix + 1) % 4;

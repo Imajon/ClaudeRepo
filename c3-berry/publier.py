@@ -6,7 +6,7 @@ import glob, json, os, re, shutil, subprocess
 ICI = os.path.dirname(os.path.abspath(__file__))
 CLI = r"C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe"
 FQBN = "esp32:esp32:esp32c3:CDCOnBoot=cdc,PartitionScheme=huge_app"
-BUILD = os.path.join(ICI, "build")
+BUILD = os.path.join(os.environ.get("TEMP", ICI), "c3-berry-build")   # hors Dropbox : il verrouille build/ pendant la synchro
 DEST = os.path.join(ICI, "..", "brique", "firmware-berry")
 version = re.search(r'#define BERRY_VERSION "([^"]+)"', open(os.path.join(ICI, "c3-berry.ino"), encoding="utf-8").read()).group(1)
 env = dict(os.environ, ARDUINO_DIRECTORIES_USER=os.path.join(ICI, "..", "c3-tft-meatboy", "libs"))

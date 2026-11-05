@@ -265,6 +265,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #scPartage .partage{margin-top:10px}
 .occupe{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);padding:14px 22px;border-radius:16px;background:var(--panel);color:var(--txt);border:2px solid var(--acc);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:18px;pointer-events:none}
 .occupe small{color:var(--mute);font-size:14px}.occupe small:empty{display:none}
+.occupe ol{flex-basis:100%;margin:4px 0 0;padding:8px 0 0;border-top:1px solid var(--line);list-style:none;font-size:15px}.occupe ol:empty{display:none}
+.occupe li{display:flex;justify-content:space-between;gap:16px;padding:2px 0}.occupe li.fait{color:var(--mute)}.occupe li span{font-variant-numeric:tabular-nums}
 .occupe .rond{width:20px;height:20px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--acc);animation:tourne .8s linear infinite;flex:none}
 @keyframes tourne{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.occupe .rond{animation-duration:3s}}
@@ -1665,7 +1667,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.2">
+<main id="vueScript" class="hide" data-version="1.3">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
@@ -1714,7 +1716,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <pre id="scJournal" class="hide"></pre>
   </section>
-  <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><span class="rond"></span><b></b><small></small></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
+  <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><span class="rond"></span><b></b><small></small><ol></ol></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
 </main>
 
 <footer class="pied">                             <!-- pied de page : plan du site -->
@@ -3469,7 +3471,14 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   scCode.oninput = () => { colorer(); majMettre(); }; scCode.onscroll = suivre;
   const mettreCode = t => { scCode.value = t; colorer(); majMettre(); };
   let iaEnCours = false;
-  const occupe = (t, detail = '') => { scOccupe.classList.toggle('hide', !t); scOccupe.querySelector('b').textContent = t || ''; scOccupe.querySelector('small').textContent = detail; };   // le message au centre : ce que fait la page
+  let seance = null;                                     // pendant une demande à l'IA : l'historique des étapes [{t, d, f}] (début, fin en ms)
+  const majSeance = () => { scOccupe.querySelector('ol').innerHTML = (seance || []).map(e => `<li${e.f ? ' class="fait"' : ''}>${e.f ? '✓' : '▸'} ${esc(e.t)}<span>${Math.floor(((e.f || performance.now()) - e.d) / 1000)} s</span></li>`).join(''); };
+  const occupe = (t, detail = '') => {                   // le message au centre : ce que fait la page
+    const der = seance?.at(-1), maint = performance.now();
+    if (der && !der.f && der.t !== t) der.f = maint;     // l'étape en cours est finie
+    if (seance && t && (!der || der.f)) seance.push({ t, d: maint });
+    scOccupe.classList.toggle('hide', !t && !seance); if (t) scOccupe.querySelector('b').textContent = t; scOccupe.querySelector('small').textContent = detail; majSeance();
+  };
   mettreCode(etat.script); majJeux();
   const sources = new Map();                             // les images d'origine (cette page ouverte seulement) : pour changer la taille sans tout refaire
   const ko = n => (n / 1024).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
@@ -3661,7 +3670,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     scGo.disabled = true; scGo.textContent = attenteTxt; iaEnCours = true; majMettre(); occupe(attenteTxt, 'ça peut prendre une minute'); const t0 = performance.now(); let r;
     try { r = await apiFlux({ ...ident(), auto, images: (etat.images || []).map(({ nom, l, h, n }) => ({ nom, l, h, n })), texte: auto ? 'Corrige seulement l\'erreur que la console a signalee, sans rien changer d\'autre au jeu.' : texte, script: etat.script, erreur: etat.erreur || etat.lent || '',
       avant: etat.essais.filter(e => !e.auto).map(e => e.demande).slice(-6) }, (t, corrige) => {
-        if (corrige) { scGo.textContent = '🔧 Erreur trouvée en testant : l\'IA corrige…'; occupe('🔧 L\'IA a trouvé une erreur en testant, elle corrige…'); }
+        if (corrige) { scGo.textContent = '🔧 Erreur trouvée en testant : l\'IA corrige…'; occupe('🔧 L\'IA corrige l\'erreur trouvée en testant…'); }
         const s = scriptPartiel(t); if (s === null) return;
         mettreCode(s); scCode.scrollTop = scCode.scrollHeight; scCode.dispatchEvent(new Event('scroll'));   // on voit le code s'écrire
         scGo.textContent = `${corrige ? '🔧 L\'IA corrige l\'erreur trouvée en testant…' : attenteTxt} ${s.split('\n').length} lignes`;
@@ -3680,7 +3689,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   }
   scGo.onclick = async () => {
     const texte = scDemande.value.trim(); if (!texte) return scDemande.focus();
-    if (await ecrireJeu(texte)) await corriger();
+    seance = []; const tic = setInterval(majSeance, 250);   // les secondes défilent
+    try { if (await ecrireJeu(texte)) await corriger(); } finally { clearInterval(tic); seance = null; occupe(); }
   };
   async function corriger() {                            // erreur au chargement ou dans les premières secondes d'un programme de l'IA : elle la corrige seule (2 essais au plus)
     for (let n = 0; n < 2 && etat.erreur && etat.essais.at(-1)?.demande !== '(programme modifié à la main)'; n++) if (!(await ecrireJeu('', true))) return;

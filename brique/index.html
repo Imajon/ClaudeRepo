@@ -831,7 +831,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== SUPPORT : notice d'assemblage et de prise en main ===== -->
-<main id="support" class="anim support hide" data-version="1.0">
+<main id="support" class="anim support hide" data-version="1.1">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Support · montage et prise en main</p>
     <h2 class="sh-titre">Besoin d'info ?<br>C'est ici.</h2>
@@ -1130,12 +1130,13 @@ body{overflow-x:clip}                                           /* la bande 100v
   </section>
   <section data-groupe="tuto">
     <h2>Premier démarrage</h2>
-    <p>Une console d'atelier a déjà son firmware : on branche, l'écran titre s'affiche. Sinon, l'installer une fois depuis un ordinateur avec l'IDE Arduino 2 :</p>
+    <p>Tout se fait depuis cette page, dans Chrome ou Edge sur ordinateur : rien d'autre à installer.</p>
     <ol>
       <li>Brancher la console en USB.</li>
-      <li>Lancer <code>c3-tft-meatboy/compiler-upload-c3-tft-meatboy.bat</code> : il trouve le port COM, compile et téléverse.</li>
+      <li>Onglet 🛠 Créer, 🔌 Connecter ma console, choisir le port, puis « Installer » (environ 1 minute).</li>
       <li>Au tout premier démarrage, la console prépare sa mémoire quelques secondes : normal, une seule fois.</li>
     </ol>
+    <div class="capture">📷 Capture à ajouter : la console allumée sur l'écran titre<br><code>images/tuto-0-demarrage.png</code></div>
     <p><b>À vérifier :</b> l'écran titre s'affiche dans le bon sens · Gauche/Droite déplacent le sélecteur · Saut valide · « 1 Joueur » lance le niveau 1.</p>
   </section>
   <section data-groupe="tuto">
@@ -1158,7 +1159,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <tr><td>Aucun port proposé</td><td>Câble de charge seule</td><td>Changer de câble USB</td></tr>
       <tr><td>« Port occupé »</td><td>IDE Arduino ou moniteur série ouvert</td><td>Les fermer, réessayer</td></tr>
       <tr><td>« Console occupée »</td><td>Partie à 2, monde ou mini-jeu en cours</td><td>Revenir à l'accueil de la console</td></tr>
-      <tr><td>« Pas de réponse »</td><td>Ancien firmware sans lecture USB</td><td>Réinstaller le firmware (section 04)</td></tr>
+      <tr><td>« Pas de réponse »</td><td>Ancien firmware sans lecture USB</td><td>Réinstaller depuis 🔌 Connecter ma console → « Installer »</td></tr>
       <tr><td>« Niveau trop gros »</td><td>Niveau trop haut</td><td>Demander un niveau plus court</td></tr>
       <tr><td>Téléversement échoue</td><td>Liaison USB capricieuse</td><td>Maintenir BOOT en branchant, ou <code>esptool --no-stub</code></td></tr>
       <tr><td>Recherche d'icônes vide</td><td>Filtre réseau de l'école</td><td>Autoriser <code>api.iconify.design</code></td></tr>

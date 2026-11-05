@@ -266,6 +266,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .occupe{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);padding:14px 22px;border-radius:16px;background:var(--panel);color:var(--txt);border:2px solid var(--acc);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:18px;pointer-events:none}
 .occupe small{color:var(--mute);font-size:14px}.occupe small:empty{display:none}
 .occupe ol{flex-basis:100%;margin:4px 0 0;padding:8px 0 0;border-top:1px solid var(--line);list-style:none;font-size:15px}.occupe ol:empty{display:none}
+.voile{position:fixed;inset:0;z-index:49;backdrop-filter:grayscale(1) blur(2px);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' fill='none' stroke='rgba(201,154,60,.45)' stroke-width='2'%3E%3Cpath d='M0 44h64l22 22h70l22-22h42M44 220v-54l22-22V88M150 0v34l22 22v44l-22 22v98M0 160h24l22 22h48M110 220v-30l18-18h92'/%3E%3Cg fill='rgba(201,154,60,.45)' stroke='none'%3E%3Ccircle cx='66' cy='144' r='5'/%3E%3Ccircle cx='150' cy='34' r='5'/%3E%3Ccircle cx='94' cy='182' r='5'/%3E%3Ccircle cx='128' cy='172' r='4'/%3E%3C/g%3E%3Ccircle cx='172' cy='100' r='7'/%3E%3Ccircle cx='86' cy='66' r='6'/%3E%3C/svg%3E") 0 0/220px 220px,rgba(10,30,18,.55)}   /* page grisée sous un masque de pistes de cuivre pendant que l'IA travaille */
+.occupe.hide+.voile{display:none}
 .occupe:has(ol:not(:empty)){width:min(460px,calc(100vw - 32px))}.occupe button{pointer-events:auto}
 .occupe li{display:flex;justify-content:space-between;gap:16px;padding:2px 0}.occupe li.fait{color:var(--mute)}.occupe li span{font-variant-numeric:tabular-nums}
 .occupe .rond{width:20px;height:20px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--acc);animation:tourne .8s linear infinite;flex:none}
@@ -1668,7 +1670,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.4">
+<main id="vueScript" class="hide" data-version="1.5">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
@@ -1717,7 +1719,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <pre id="scJournal" class="hide"></pre>
   </section>
-  <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><span class="rond"></span><b></b><small></small><button id="scAnnuler" class="sec hide">✋ Annuler</button><ol></ol></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
+  <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><span class="rond"></span><b></b><small></small><button id="scAnnuler" class="sec hide">✋ Annuler</button><ol></ol></div><div class="voile"></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
 </main>
 
 <footer class="pied">                             <!-- pied de page : plan du site -->

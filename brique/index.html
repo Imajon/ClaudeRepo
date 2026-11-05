@@ -266,6 +266,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .occupe{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);padding:14px 22px;border-radius:16px;background:var(--panel);color:var(--txt);border:2px solid var(--acc);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:18px;pointer-events:none}
 .occupe small{color:var(--mute);font-size:14px}.occupe small:empty{display:none}
 .occupe ol{flex-basis:100%;margin:4px 0 0;padding:8px 0 0;border-top:1px solid var(--line);list-style:none;font-size:15px}.occupe ol:empty{display:none}
+.occupe:has(ol:not(:empty)){width:min(460px,calc(100vw - 32px))}.occupe button{pointer-events:auto}
 .occupe li{display:flex;justify-content:space-between;gap:16px;padding:2px 0}.occupe li.fait{color:var(--mute)}.occupe li span{font-variant-numeric:tabular-nums}
 .occupe .rond{width:20px;height:20px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--acc);animation:tourne .8s linear infinite;flex:none}
 @keyframes tourne{to{transform:rotate(360deg)}}
@@ -1667,7 +1668,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.3">
+<main id="vueScript" class="hide" data-version="1.4">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
@@ -1716,7 +1717,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <pre id="scJournal" class="hide"></pre>
   </section>
-  <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><span class="rond"></span><b></b><small></small><ol></ol></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
+  <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><span class="rond"></span><b></b><small></small><button id="scAnnuler" class="sec hide">✋ Annuler</button><ol></ol></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
 </main>
 
 <footer class="pied">                             <!-- pied de page : plan du site -->
@@ -3652,9 +3653,11 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const d = t.indexOf('\n', i); if (d < 0) return null;
     const f = t.indexOf('```', d); return t.slice(d + 1, f < 0 ? t.length : f);
   }
+  let arret = null;                                      // pour annuler la demande en cours (bouton ✋)
+  scAnnuler.onclick = () => arret?.abort();
   async function apiFlux(corps, surTexte) {              // api/script en flux : le texte arrive au fur et à mesure, puis "\0" + la réponse vérifiée
     const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;
-    const r = await fetch('api/script', { method: 'POST', headers, body: JSON.stringify({ ...corps, flux: true }) });
+    const r = await fetch('api/script', { method: 'POST', headers, body: JSON.stringify({ ...corps, flux: true }), signal: arret?.signal });
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.erreur); }
     const lec = r.body.getReader(), dec = new TextDecoder(); let t = '', vu = 0;
     for (;;) {
@@ -3668,6 +3671,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   async function ecrireJeu(texte, auto) {                // une demande à l'IA puis l'envoi à la console ; false = rien écrit
     const attenteTxt = auto ? '🔧 L\'IA corrige l\'erreur…' : '⏳ L\'IA écrit ton programme…';
     scGo.disabled = true; scGo.textContent = attenteTxt; iaEnCours = true; majMettre(); occupe(attenteTxt, 'ça peut prendre une minute'); const t0 = performance.now(); let r;
+    arret = new AbortController(); scAnnuler.classList.remove('hide');
     try { r = await apiFlux({ ...ident(), auto, images: (etat.images || []).map(({ nom, l, h, n }) => ({ nom, l, h, n })), texte: auto ? 'Corrige seulement l\'erreur que la console a signalee, sans rien changer d\'autre au jeu.' : texte, script: etat.script, erreur: etat.erreur || etat.lent || '',
       avant: etat.essais.filter(e => !e.auto).map(e => e.demande).slice(-6) }, (t, corrige) => {
         if (corrige) { scGo.textContent = '🔧 Erreur trouvée en testant : l\'IA corrige…'; occupe('🔧 L\'IA corrige l\'erreur trouvée en testant…'); }
@@ -3676,7 +3680,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
         scGo.textContent = `${corrige ? '🔧 L\'IA corrige l\'erreur trouvée en testant…' : attenteTxt} ${s.split('\n').length} lignes`;
         occupe(corrige ? '🔧 L\'IA corrige l\'erreur trouvée en testant…' : attenteTxt, `${s.split('\n').length} lignes écrites`);
       }); }
-    catch (e) { mettreCode(etat.script); scCompris.innerHTML = `<span style="color:var(--ko)">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : e.message || 'L\'IA ne répond pas : réessaie.')}</span>`; }
+    catch (e) { mettreCode(etat.script); if (e.name === 'AbortError') { scCompris.textContent = '✋ Demande annulée : modifie ton texte, puis renvoie-la.'; scDemande.focus(); } else scCompris.innerHTML = `<span style="color:var(--ko)">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : e.message || 'L\'IA ne répond pas : réessaie.')}</span>`; }
+    arret = null; scAnnuler.classList.add('hide');
     scGo.disabled = false; scGo.textContent = '✨ Envoyer à l\'IA'; iaEnCours = false; occupe();
     if (!r) return false;
     if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return false; }

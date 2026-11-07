@@ -692,6 +692,52 @@ Si tout est bon, reponds seulement OK. Sinon dis en une phrase ce qui ne va pas,
   (db.mesures ||= []).push(m); if (db.mesures.length > 500) db.mesures.shift(); sauver();
   return { ...r, corrections: n, verif: pb, refait: false };
 }
+// ---------- essais devstral / sonnet (?methode=devstral | sonnet) : contexte-mistral.md seul, une conversation ; le robot joue, le modele corrige (2 fois au plus) ----------
+const CONTEXTE = fs.readFileSync(path.join(__dirname, 'contexte-mistral.md'), 'utf8');
+async function anthropic(consigne, msgs, surMorceau) {   // API Messages en direct (pas de SDK), comme mistral()
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST', signal: AbortSignal.timeout(120000),
+    headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5', max_tokens: 16000, system: consigne, messages: msgs, stream: !!surMorceau }),
+  });
+  if (!r.ok) throw new Error('Anthropic ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  if (!surMorceau) return (await r.json()).content.filter(c => c.type === 'text').map(c => c.text).join('');
+  let tout = '', reste = '';                             // flux : "data: {type: content_block_delta, delta: {text}}"
+  for await (const bout of r.body) {
+    const ls = (reste + Buffer.from(bout).toString()).split('\n'); reste = ls.pop();
+    for (const l of ls) {
+      if (!l.startsWith('data: ')) continue;
+      const d = JSON.parse(l.slice(6)).delta?.text || '';
+      if (d) { tout += d; surMorceau(d); }
+    }
+  }
+  return tout;
+}
+const MODELES = {
+  devstral: (c, msgs, f) => mistral(c, msgs, process.env.MISTRAL_MODEL_DEVSTRAL || 'devstral-medium-latest', 90000, f, true, 0.3),
+  sonnet: anthropic,
+};
+function lireContexte(t) {                               // contexte-mistral.md : le programme en bloc ```, puis 2-3 phrases (pas de JSON)
+  const d = decoupe(t);
+  return finScript({ ...d, explication: d.explication || t.slice(t.lastIndexOf('```') + 3).trim() });
+}
+async function methodeContexte(nom, args, surMorceau) {
+  const [texte, script, erreur, avant, , images] = args, t0 = Date.now(), m = { date: t0, methode: nom, modif: !!script }, appel = MODELES[nom];
+  const msgs = [{ role: 'user', content: JSON.stringify({ programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special',
+    demandes_precedentes: avant, images_du_jeu: images?.length ? images : '(aucune : le jeu dessine avec rect, disque...)', demande: texte }) }];
+  const dire = async () => { const rep = await appel(CONTEXTE, msgs, surMorceau); msgs.push({ role: 'assistant', content: rep }); return rep; };
+  let r = lireContexte(await dire()), v = null, pb = '', n = 0;
+  m.ia = Date.now() - t0;
+  while (!r.refus && (pb = probleme(v = await verifier(r.script))) && n < 2) {
+    n++; surMorceau?.('\x01');                           // la page repart de zero pour afficher la correction
+    msgs.push({ role: 'user', content: `La console a fait tourner ton programme. PROBLEME : ${v && !v.ok ? avecLignes(pb, r.script) : pb}${v?.suivi ? '\nCe qu\'elle a vu :\n' + v.suivi : ''}\nTrouve la vraie cause et corrige-la sans rien changer d'autre au jeu. Renvoie le programme complet, au meme format.` });
+    try { r = { ...lireContexte(await dire()), explication: r.explication }; } catch (e) { console.error(e.message); break; }
+  }
+  if (r.refus) return r;
+  Object.assign(m, { corrections: n, ok: v ? !pb : null, duree: Date.now() - t0, lignes: r.script.split('\n').length, ops: v?.ops, memoire: v?.memoire });
+  (db.mesures ||= []).push(m); if (db.mesures.length > 500) db.mesures.shift(); sauver();
+  return { ...r, corrections: n, verif: pb, refait: false };
+}
 const iaMistral = async(texte, base) => iaReglages(await mistral(CONSIGNE, { reglages_actuels: base, demande: texte }), base);
 // ---------- IA de la fiche : phrase de l'enfant -> changements de la fiche (FICHE-JEU.md), verifies ici ----------
 const CONSIGNE_FICHE = `Tu aides des enfants de 9 a 14 ans a decrire un jeu pour une petite console, avec une "fiche".
@@ -806,13 +852,14 @@ const serveur = http.createServer(async (req, res) => {
     sauver(); return repondre(res, 200, { ok: true });
   }
   if (url === '/api/script') {                        // mode script : la demande, le programme actuel, ce que la console a dit -> nouveau programme
-    if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
+    if (!process.env[b.methode === 'sonnet' ? 'ANTHROPIC_API_KEY' : 'MISTRAL_API_KEY']) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim()) return repondre(res, 400, { erreur: 'demande vide' });
     const pas = quotaIA(req, b); if (pas) return repondre(res, 429, { erreur: pas });
     const avant = (Array.isArray(b.avant) ? b.avant : []).filter(x => typeof x === 'string').slice(-6).map(x => x.slice(0, 300));
     const images = (Array.isArray(b.images) ? b.images : []).slice(0, 16).map((m, i) => `image ${i + 1} : ${String(m?.nom || 'image').replace(/[<>"]/g, '').slice(0, 20)}, ${+m?.l || 0} x ${+m?.h || 0} pixels, ${+m?.n || 1} image(s) d'animation`);
     const args = [b.texte.slice(0, 500), typeof b.script === 'string' ? b.script.slice(0, 20000) : '', typeof b.erreur === 'string' ? b.erreur.slice(0, 600) : '', avant, b.auto === true, images];
-    const faire = b.methode === 'claude' && !b.auto ? methodeClaude : scriptVerifie;   // essai : la methode Claude (?methode=claude dans l'adresse de la page)
+    const faire = MODELES[b.methode] ? (a, f) => methodeContexte(b.methode, a, f)   // essais devstral / sonnet, corrections d'erreur de la console comprises
+      : b.methode === 'claude' && !b.auto ? methodeClaude : scriptVerifie;   // essai : la methode Claude (?methode=claude dans l'adresse de la page)
     if (b.flux) {                                     // flux : le texte de l'IA au fur et a mesure, puis "\0" + la reponse verifiee
       res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' });
       let fin; try { fin = await faire(args, d => res.write(d)); } catch (e) { console.error(e.message); fin = { erreur: 'L\'IA ne répond pas' }; }

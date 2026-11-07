@@ -723,8 +723,9 @@ function lireContexte(t) {                               // contexte-mistral.md 
 }
 async function methodeContexte(nom, args, surMorceau) {
   const [texte, script, erreur, avant, , images] = args, t0 = Date.now(), m = { date: t0, methode: nom, modif: !!script }, appel = MODELES[nom];
+  const test = script ? await verifier(script) : null;   // le robot joue le programme actuel : le modele voit les valeurs (ex. y qui tombe) et pas seulement la phrase de l'enfant
   const msgs = [{ role: 'user', content: JSON.stringify({ programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special',
-    demandes_precedentes: avant, images_du_jeu: images?.length ? images : '(aucune : le jeu dessine avec rect, disque...)', demande: texte }) }];
+    ...(test?.suivi ? { le_robot_a_joue_10s_variables_a_chaque_instant: test.suivi } : {}), demandes_precedentes: avant, images_du_jeu: images?.length ? images : '(aucune : le jeu dessine avec rect, disque...)', demande: texte }) }];
   const dire = async () => { const rep = await appel(CONTEXTE, msgs, surMorceau); msgs.push({ role: 'assistant', content: rep }); return rep; };
   let r = lireContexte(await dire()), v = null, pb = '', n = 0;
   m.ia = Date.now() - t0;

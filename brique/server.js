@@ -280,7 +280,7 @@ function espaceAnimateur(email) {
     commandes: ADMINS.includes(email) ? db.commandes.filter(c => c.statut !== 'attente').sort((a, b) => b.cree - a.cree)   // admin boutique
     .map(c => ({ ...vueCommande(c), stripe: c.paiement ? `https://dashboard.stripe.com/${test}payments/${c.paiement}` : '' })) : undefined, groupes: db.groupes.filter(g => g.email === email).map(g => ({
     code: g.code, nom: g.nom, matiere: g.matiere || '', prive: !!g.prive, age: g.age || 'libre', questions: (g.questions || []).map(q => ({ ...q, stats: statsQuestion(q.id) })),
-    joueurs: db.joueurs.filter(j => j.groupe === g.code).map(j => ({ pseudo: j.pseudo, cree: j.cree })),
+    joueurs: db.joueurs.filter(j => j.groupe === g.code).map(j => { const c = db.conso?.['j:' + j.pseudo.toLowerCase()]; return { pseudo: j.pseudo, cree: j.cree, tokens: c?.t || 0, jour: c?.jour === aujourdhui() ? c.j : 0 }; }),
     niveaux: db.niveaux.filter(n => n.groupe === g.code).map(n => ({ id: n.id, titre: n.titre, pseudo: n.pseudo, cree: n.cree, masque: !!n.masque, parties: stats(n.id).parties, ...(n.attente ? aVerifier(n) : {}) })),
   })) };
 }
@@ -326,19 +326,41 @@ function copierMedias() {
 }
 if (require.main === module) try { copierMedias(); } catch (e) { console.error('copie des medias :', e.message); }
 
-// ---------- quotas IA par jour : l'IA coute, elle est reservee aux comptes (+ un petit essai sans compte) ----------
-// ponytail: compteurs en memoire, remis a zero chaque jour (et au redemarrage) ; a stocker si le serveur redemarre souvent
-const QUOTA = { essai: 3, joueur: 30, groupe: 300, animateur: 100 };
-let quotaJour = '', quotas = new Map();
-function quotaIA(req, b) {                               // -> null si ok, sinon le message a afficher
-  const jour = new Date().toISOString().slice(0, 10); if (jour !== quotaJour) { quotaJour = jour; quotas = new Map(); }
+// ---------- quotas IA en tokens : par jour, et un forfait de 3 mois par compte joueur (la console est vendue avec) ----------
+// les tokens reels rendus par Mistral / Anthropic (usage), comptes dans db.conso : { cle: { jour, j: tokens du jour, t: tokens du forfait } }
+// ponytail: on verifie avant l'appel et on compte apres : une demande peut depasser un peu le reste du jour
+const QUOTA = { essai: +process.env.QUOTA_ESSAI || 60e3, joueur: +process.env.QUOTA_JOUR || 300e3, groupe: +process.env.QUOTA_GROUPE || 3e6, animateur: +process.env.QUOTA_ANIMATEUR || 1e6 };
+const FORFAIT = { tokens: +process.env.FORFAIT_TOKENS || 10e6, jours: +process.env.FORFAIT_JOURS || 90 };
+const CONSO = new (require('async_hooks').AsyncLocalStorage)();   // les cles du compte qui demande : mistral() et anthropic() y ajoutent les tokens
+const aujourdhui = () => new Date().toISOString().slice(0, 10);
+function conso(k) {                                      // la ligne du compte, remise a zero du jour si on a change de jour
+  const c = ((db.conso ||= {})[k] ||= { jour: '', j: 0, t: 0 }), jour = aujourdhui();
+  if (c.jour !== jour) { c.jour = jour; c.j = 0; }
+  return c;
+}
+function clesQuota(req, b) {                             // [cle, max du jour] ; groupe '' = createurs libres : pas de plafond commun
   const j = joueurDe(b), a = !j && animateurDe(req);
-  const cles = j ? [['j:' + j.pseudo.toLowerCase(), QUOTA.joueur], ['g:' + j.groupe, QUOTA.groupe]]
-    : a ? [['a:' + a, QUOTA.animateur]] : [['ip:' + ipDe(req), QUOTA.essai]];
-  if (cles.some(([k, max]) => (quotas.get(k) || 0) >= max))
+  if (j) return { j, cles: [['j:' + j.pseudo.toLowerCase(), QUOTA.joueur], ...(j.groupe ? [['g:' + j.groupe, QUOTA.groupe]] : [])] };
+  return { a, cles: a ? [['a:' + a, QUOTA.animateur]] : [['ip:' + ipDe(req), QUOTA.essai]] };
+}
+const finForfait = j => (j.cree || 0) + FORFAIT.jours * JOUR;
+function etatQuota(req, b) {                             // ce que la page affiche : tokens du jour, et du forfait pour un joueur
+  const { j, cles } = clesQuota(req, b), c = conso(cles[0][0]);
+  return { jour: { utilise: c.j, max: cles[0][1] }, ...(j ? { forfait: { utilise: c.t, max: FORFAIT.tokens, fin: finForfait(j) } } : {}) };
+}
+function quotaIA(req, b) {                               // -> null si ok, sinon le message a afficher
+  const { j, a, cles } = clesQuota(req, b);
+  if (j && (Date.now() > finForfait(j) || conso(cles[0][0]).t >= FORFAIT.tokens)) return 'Le forfait IA de ta console est terminé : demande à un adulte de le renouveler.';
+  if (cles.some(([k, max]) => conso(k).j >= max))
     return j || a ? 'Tu as beaucoup créé aujourd’hui : l’IA se repose, reviens demain !' : 'Les essais du jour sont finis : crée ton compte (bouton « 👤 Créer mon compte » en haut) pour continuer avec l’IA.';
-  cles.forEach(([k]) => quotas.set(k, (quotas.get(k) || 0) + 1));
+  CONSO.enterWith(cles.map(([k]) => k));                 // la suite de cette requete compte ses tokens sur ces cles
   return null;
+}
+function compter(n) {                                    // appele par mistral() / anthropic() avec les tokens d'un appel
+  const cles = CONSO.getStore(); if (!cles || !(n > 0)) return;
+  for (const k of cles) { const c = conso(k); c.j += n; if (k.startsWith('j:')) c.t += n; }
+  for (const [k, c] of Object.entries(db.conso)) if (k.startsWith('ip:') && c.jour !== aujourdhui()) delete db.conso[k];   // les essais sans compte ne durent qu'un jour
+  sauver();
 }
 
 // palette des couleurs que l'enfant peut choisir (meme liste que la page ; le firmware lit le code hexa)
@@ -496,13 +518,14 @@ async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 
   });
   if (!r.ok) throw new Error('Mistral ' + r.status + ' ' + (await r.text()).slice(0, 200));
   const lire = t => brut ? t : JSON.parse(t);
-  if (!surMorceau) return lire((await r.json()).choices[0].message.content);
+  if (!surMorceau) { const j = await r.json(); compter(j.usage?.total_tokens); return lire(j.choices[0].message.content); }
   let tout = '', reste = '';                             // flux : lignes "data: {...}" jusqu'a "data: [DONE]"
   for await (const bout of r.body) {
     const ls = (reste + Buffer.from(bout).toString()).split('\n'); reste = ls.pop();
     for (const l of ls) {
       if (!l.startsWith('data: ') || l === 'data: [DONE]') continue;
-      const d = JSON.parse(l.slice(6)).choices?.[0]?.delta?.content || '';
+      const j = JSON.parse(l.slice(6)); compter(j.usage?.total_tokens);   // le dernier morceau porte l'usage
+      const d = j.choices?.[0]?.delta?.content || '';
       if (d) { tout += d; surMorceau(d); }
     }
   }
@@ -701,13 +724,15 @@ async function anthropic(consigne, msgs, surMorceau) {   // API Messages en dire
     body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5', max_tokens: 16000, system: consigne, messages: msgs, stream: !!surMorceau }),
   });
   if (!r.ok) throw new Error('Anthropic ' + r.status + ' ' + (await r.text()).slice(0, 200));
-  if (!surMorceau) return (await r.json()).content.filter(c => c.type === 'text').map(c => c.text).join('');
+  if (!surMorceau) { const j = await r.json(); compter((j.usage?.input_tokens || 0) + (j.usage?.output_tokens || 0)); return j.content.filter(c => c.type === 'text').map(c => c.text).join(''); }
   let tout = '', reste = '';                             // flux : "data: {type: content_block_delta, delta: {text}}"
   for await (const bout of r.body) {
     const ls = (reste + Buffer.from(bout).toString()).split('\n'); reste = ls.pop();
     for (const l of ls) {
       if (!l.startsWith('data: ')) continue;
-      const d = JSON.parse(l.slice(6)).delta?.text || '';
+      const j = JSON.parse(l.slice(6));                  // usage : l'entree dans message_start, la sortie dans message_delta
+      compter(j.type === 'message_start' ? j.message?.usage?.input_tokens : j.type === 'message_delta' ? j.usage?.output_tokens : 0);
+      const d = j.delta?.text || '';
       if (d) { tout += d; surMorceau(d); }
     }
   }
@@ -869,6 +894,7 @@ const serveur = http.createServer(async (req, res) => {
     try { return repondre(res, 200, await faire(args)); }
     catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
   }
+  if (url === '/api/quota') return repondre(res, 200, etatQuota(req, b));   // jauge de tokens de la page
   if (url === '/api/ia') {                            // compte (groupe ou animateur) ; sans compte : quelques essais par jour
     if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim() || typeof (b.fiche || b.base) !== 'object' || !(b.fiche || b.base)) return repondre(res, 400, { erreur: 'demande vide' });

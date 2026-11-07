@@ -249,7 +249,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #vueScript{grid-template-columns:minmax(0,1fr) 440px}   /* créer : l'agent IA prend la place, la console reste à droite */
 @media (max-width:1100px){#vueScript{grid-template-columns:minmax(0,1fr)}}
 .sc-barre{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.sc-barre .moi{display:flex;align-items:center;gap:8px}.sc-barre .moi b{color:var(--acc2)}
+.sc-barre .moi{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tok{white-space:nowrap;font-size:.85em}.tok meter{width:60px;vertical-align:middle}.sc-barre .moi b{color:var(--acc2)}
 .sc-barre .sec{padding:5px 10px;font-size:14px}
 .sc-jeux{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-right:auto}.sc-jeux select{margin:0;width:auto;max-width:260px;padding:5px 8px;font-size:15px}
 #vueScript .agent>.theme{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;font-size:16px}
@@ -473,7 +474,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : le projet (la console, les étapes, les photos) et le prix en avant ===== -->
-<main id="accueil" data-version="1.3">
+<main id="accueil" data-version="1.4">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -508,7 +509,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <li><b>🧱 Tout est trié</b>Notre serveur ne garde que les réglages que la console connaît. Le reste est jeté avant d'arriver à l'écran.</li>
       <li><b>🛡 Les consignes pièges sont ignorées</b>Une demande hors sujet ne la fait pas sortir de son rôle. Le garde-fou de Mistral est activé, et un filtre de gros mots passe derrière.</li>
       <li><b>👤 Aucune donnée personnelle</b>Elle ne reçoit que la phrase et les réglages du jeu : jamais de nom, d'adresse ou de mail.</li>
-      <li><b>🔑 Réservée aux inscrits</b>L'enfant crée son compte avec un simple pseudo, ou rejoint le groupe d'un adulte (animateur, prof ou parent). Sans compte : 3 essais par jour pour découvrir.</li>
+      <li><b>🔑 Réservée aux inscrits</b>L'enfant crée son compte avec un simple pseudo, ou rejoint le groupe d'un adulte (animateur, prof ou parent). Sans compte : quelques essais par jour pour découvrir. Chaque console arrive avec un forfait IA de 3 mois, visible en jauge.</li>
       <li><b>⏱ Un nombre de demandes limité</b>Quelques dizaines par jour et par enfant : de quoi créer, pas de quoi passer la journée devant l'écran.</li>
     </ul>
     <a href="#" class="pp-note" onclick="afficher('boutique');donneesIA.scrollIntoView();return false" style="color:var(--acc)">Ce que nous gardons sur les enfants et les adultes ›</a>
@@ -692,7 +693,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
-<main id="boutique" class="shop hide" data-version="1.1">
+<main id="boutique" class="shop hide" data-version="1.2">
   <div class="sh-hero">
     <h2 class="sh-titre">Un kit simple, à deux,<br>ou un support pédagogique clé en main.</h2>
   </div>
@@ -784,7 +785,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <h4>Contre les abus</h4>
     <ul>
-      <li>Nombre de demandes à l'IA limité par jour : par enfant, par groupe, et 3 essais sans compte.</li>
+      <li>Usage de l'IA compté en tokens : un quota par jour (par enfant, par groupe, et quelques essais sans compte), et un forfait de 3 mois livré avec la console.</li>
       <li>Liens de connexion limités : un par minute et par adresse, cinq par heure et par connexion Internet.</li>
       <li>Si le code d'un groupe circule, l'adulte le change en un clic : l'ancien ne marche plus, les enfants déjà inscrits restent.</li>
       <li>L'adulte peut masquer un jeu publié et libérer un pseudo ; libérer un pseudo l'efface.</li>
@@ -1676,10 +1677,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.6">
+<main id="vueScript" class="hide" data-version="1.7">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
-    <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
+    <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
   <section class="agent">                        <!-- l'agent IA : la demande en haut, l'historique (demandes et réponses) dessous -->
@@ -2759,6 +2760,17 @@ const ident = () => ({ pseudo: moi?.pseudo, secret: moi?.secret });
 function majMoi() {
   moiTxt.innerHTML = moi ? `${avatar(moi.pseudo)} <b>${esc(moi.pseudo)}</b> <small style="color:var(--mute)">${esc(moi.groupe)}</small> <button class="sec" data-moncode title="Mon code secret">🔑</button>` : '';
   rejoindreBtn.textContent = moi ? '↩ Changer' : '👤 Créer mon compte';
+  majTokens();
+}
+// jauge de tokens IA : le quota du jour, et le forfait de 3 mois livré avec la console
+const kTok = n => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + ' M' : Math.round(n / 1e3) + ' k';
+const barreTok = (t, q) => { const p = Math.min(100, Math.round(100 * q.utilise / q.max)); return `<span class="tok" title="${kTok(q.utilise)} / ${kTok(q.max)} tokens">${t} <meter min="0" max="100" low="15" high="40" optimum="100" value="${100 - p}"></meter> ${100 - p} % restant</span>`; };   // comme une batterie : pleine = tout reste
+async function majTokens() {
+  if (!EN_LIGNE) return;
+  try {
+    const q = await api('api/quota', ident());
+    tokTxt.innerHTML = barreTok('⚡ aujourd’hui', q.jour) + (q.forfait ? ' ' + barreTok('📦 forfait', q.forfait) + ` <small style="color:var(--mute)">jusqu’au ${new Date(q.forfait.fin).toLocaleDateString('fr-FR')}</small>` : '');
+  } catch {}
 }
 const rappelCode = () => `Pseudo : ${moi.pseudo}\nCode secret : ${moi.secret}\n\nNote-les bien : ils servent à te reconnecter, sur cet ordinateur ou un autre.`;
 moiTxt.onclick = e => { if (e.target.closest('[data-moncode]')) alert(rappelCode()); };
@@ -2780,7 +2792,7 @@ rjReco.onclick = async () => {
 async function api(url, corps, session) {
   const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;
   const r = await fetch(url, corps ? { method: 'POST', headers, body: JSON.stringify(corps) } : { headers });
-  const j = await r.json(); if (!r.ok) throw Object.assign(new Error(j.erreur), { code: r.status }); return j;
+  const j = await r.json(); if (url === 'api/ia') majTokens(); if (!r.ok) throw Object.assign(new Error(j.erreur), { code: r.status }); return j;
 }
 async function publier(commun) {
   if (!jeu) return dire('Crée un jeu d\'abord !');
@@ -2976,7 +2988,7 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 
 async function rafraichir() {
   let c;
-  try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); EN_LIGNE = true; }
+  try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); if (!EN_LIGNE) { EN_LIGNE = true; majTokens(); } }
   catch { EN_LIGNE = false; [vCommu, vAnim, moiBox, accCommu, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('accueil'); return; }   // GitHub Pages / fichier : pas de communauté
   enLigne = c.niveaux; modeAtelier(c.atelier);
   if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant : la tranche d'âge choisie par son animateur
@@ -3171,7 +3183,7 @@ async function rendreAnim(donnees) {
     <h2><b>${esc(g.nom)}</b></h2>
     <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span> <a href="#" data-nouveaucode="${esc(g.code)}" title="Le code a circulé hors du groupe ? Les enfants déjà inscrits restent, l'ancien code ne marche plus" style="color:var(--mute)">↻ changer le code</a></p>
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
-    <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
+    <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <small style="color:var(--mute)" title="tokens IA : aujourd'hui / depuis le début du forfait">⚡${kTok(j.jour || 0)} · ${kTok(j.tokens || 0)}</small> <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
     <h3>🎂 Tranche d'âge — c'est toi qui la choisis, les enfants ne peuvent pas la changer</h3>
     <div class="chips" data-age="${esc(g.code)}"><button class="chip ${g.age === 'guide' ? 'on' : ''}" data-agev="guide">CM1 · CM2 — guidé</button><button class="chip ${g.age === 'guide' ? '' : 'on'}" data-agev="libre">6ᵉ · 4ᵉ — libre</button></div>
     <p class="aide" style="margin:4px 0 0">Guidé : on choisit avec des boutons, plus une phrase. Libre : on décrit tout son jeu avec ses mots.</p>
@@ -3711,7 +3723,10 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   async function apiFlux(corps, surTexte) {              // api/script en flux : le texte arrive au fur et à mesure, puis "\0" + la réponse vérifiée
     const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;
     const r = await fetch('api/script', { method: 'POST', headers, body: JSON.stringify({ ...corps, flux: true, methode: new URLSearchParams(location.search).get('methode') || undefined }), signal: arret?.signal });
-    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.erreur); }
+    if (!r.ok) { const j = await r.json().catch(() => ({})); majTokens(); throw new Error(j.erreur); }
+    try { return await lireFlux(r, surTexte); } finally { majTokens(); }
+  }
+  async function lireFlux(r, surTexte) {
     const lec = r.body.getReader(), dec = new TextDecoder(); let t = '', vu = 0;
     for (;;) {
       const { value, done } = await lec.read(); if (done) break;

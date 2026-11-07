@@ -272,6 +272,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .occupe li{display:flex;justify-content:space-between;gap:16px;padding:2px 0}.occupe li.fait{color:var(--mute)}.occupe li span{font-variant-numeric:tabular-nums}
 .occupe .rond{width:20px;height:20px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--acc);animation:tourne .8s linear infinite;flex:none}
 @keyframes tourne{to{transform:rotate(360deg)}}
+.occupe .cosmo{display:none;flex-basis:100%;max-width:200px;margin:0 auto;image-rendering:pixelated}.occupe.ia .cosmo{display:block}   /* le cosmonaute de la console, pendant que l'IA travaille */
 @media (prefers-reduced-motion:reduce){.occupe .rond{animation-duration:3s}}
 #scMettre:disabled{opacity:.45;cursor:default;filter:grayscale(1)}   /* déjà sur la console : grisé jusqu'au prochain programme */
 #scHist{margin-top:14px}
@@ -1675,7 +1676,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.5">
+<main id="vueScript" class="hide" data-version="1.6">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
@@ -1724,7 +1725,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <pre id="scJournal" class="hide"></pre>
   </section>
-  <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><span class="rond"></span><b></b><small></small><button id="scAnnuler" class="sec hide">✋ Annuler</button><ol></ol></div><div class="voile"></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
+  <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><canvas class="cosmo" width="200" height="130" aria-hidden="true"></canvas><span class="rond"></span><b></b><small></small><button id="scAnnuler" class="sec hide">✋ Annuler</button><ol></ol></div><div class="voile"></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
 </main>
 
 <footer class="pied">                             <!-- pied de page : plan du site -->
@@ -3490,7 +3491,47 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
     if (der && !der.f && der.t !== t) der.f = maint;     // l'étape en cours est finie
     if (seance && t && (!der || der.f)) seance.push({ t, d: maint });
     scOccupe.classList.toggle('hide', !t && !seance); if (t) scOccupe.querySelector('b').textContent = t; scOccupe.querySelector('small').textContent = detail; majSeance();
+    const ia = !!seance || iaEnCours; if (ia && !scOccupe.classList.contains('ia')) requestAnimationFrame(cosmoAnim); scOccupe.classList.toggle('ia', ia);
   };
+  // le cosmonaute de la console (cosmo() / cosmoMenu() de c3-berry.ino) : respire, court à gauche puis à droite, saute au jetpack
+  const cosmoCtx = scOccupe.querySelector('.cosmo').getContext('2d');
+  function cosmo(cx, by, k, pose, fr, right, t) {
+    const c = cosmoCtx, WH = '#f6f6fa', SHD = '#c8ccde', BL = '#2864e6', NAVY = '#282e54', RIM = '#e1e4ee', GR = '#a0a6b6', CY = '#3cecff', OR = '#ff9628', YE = '#ffdc50', RD = '#dc3c3c';
+    const R = (x, y, w, h, col) => { if (!right) x = -(x + w); c.fillStyle = col; c.fillRect(cx + x * k, by + y * k, w * k, h * k); };
+    const RR = (x, y, w, h, r, col, plein = true) => { c.beginPath(); c.roundRect(x, y, w, h, r); if (plein) { c.fillStyle = col; c.fill(); } else { c.strokeStyle = col; c.lineWidth = 1; c.stroke(); } };
+    const hb = pose === 0 && (Math.floor(t * 2.5) & 1) ? 1 : 0, sq = pose === 4 ? 1 : 0;
+    let la = -3, ra = 1, ly = -3, ry = -3, lh = 3, rh = 3;
+    if (pose === 1) { if (fr & 1) { la = -4; ly = -4; lh = 2; ra = 2; } else { ra = 2; ry = -4; rh = 2; la = -4; } }
+    else if (pose === 2) { ly = ry = -4; lh = rh = 2; la = -2; ra = 0; }
+    else if (pose === 3) { la = -5; ra = 3; }
+    R(la, ly, 2, lh, SHD); R(ra, ry, 2, rh, SHD);
+    R(-8, -9, 3, 5, GR);                                                                   // sac à dos
+    if (pose >= 1 && pose <= 3) { R(-8, -4, 3, 2 + (fr & 1), OR); R(-7, -2 + (fr & 1), 1, 2, YE); }   // jetpack
+    R(-4, -7 + sq, 8, 4 - sq, WH);                                                         // corps
+    R(-1, -6, 1, 1, RD); R(0, -6, 1, 1, CY); R(1, -6, 1, 1, YE);                           // panneau de poitrine
+    let ay1 = -7, ay2 = -7;
+    if (pose === 1) { ay1 = -7 - (fr & 1); ay2 = -7 - ((fr + 1) & 1); } else if (pose === 2) ay1 = ay2 = -11; else if (pose === 3) ay1 = ay2 = -12;
+    R(pose === 3 ? -7 : -6, ay1, 2, 3, WH); R(pose === 3 ? 5 : 4, ay2, 2, 3, WH);
+    const hy = -17 + hb + sq, hx = sq ? -7 : -6, hw = sq ? 14 : 12;                        // tête + casque
+    RR(cx + (right ? hx : -(hx + hw)) * k, by + hy * k, hw * k, 10 * k, 2 * k, WH);
+    R(hx + 1, hy + 8, hw - 2, 1, SHD);
+    RR(cx - 7 * k, by + (hy - 1) * k, 14 * k, 11 * k, 4 * k, NAVY); RR(cx - 6 * k, by + hy * k, 12 * k, 9 * k, 3 * k, RIM, false);
+    R(-4, hy + 1, 1, 1, WH); R(-3, hy, 1, 1, WH);
+    R(-1, hy + 5, 2, 2, BL); R(0, hy + 4, 1, 1, '#96d2ff');
+  }
+  function cosmoAnim(now) {                              // tourne tant que le panneau est en mode IA
+    if (!scOccupe.classList.contains('ia') || scOccupe.classList.contains('hide')) return;
+    const u = (now % 8000) / 1000, fr = u - Math.floor(u), t = now / 1000;
+    let pose = 0, dx = 0, hop = 0, right = false;
+    if (u >= 4 && u < 5) { pose = 1; dx = -40 * Math.sin(fr * Math.PI); }
+    else if (u >= 5 && u < 6) { pose = 1; right = true; dx = 40 * Math.sin(fr * Math.PI); }
+    else if (u >= 6 && u < 7) { hop = 4 * fr * (1 - fr) * 36; pose = fr < 0.5 ? 2 : 3; }
+    else if (u >= 7 && u < 7.15) pose = 4;
+    const cx = Math.round(100 + dx), by = 122, sh = Math.max(12, 36 - hop), c = cosmoCtx;
+    c.clearRect(0, 0, 200, 130); c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(cx - sh / 2, by + 1, sh, 3);   // ombre qui rétrécit quand il saute
+    cosmo(cx, Math.round(by - hop), 4, pose, Math.floor(now / 110), right, t);
+    requestAnimationFrame(cosmoAnim);
+  }
   mettreCode(etat.script); majJeux();
   const sources = new Map();                             // les images d'origine (cette page ouverte seulement) : pour changer la taille sans tout refaire
   const ko = n => (n / 1024).toLocaleString('fr-FR', { maximumFractionDigits: 1 });

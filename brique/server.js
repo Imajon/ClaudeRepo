@@ -862,7 +862,7 @@ const serveur = http.createServer(async (req, res) => {
       : b.methode === 'claude' && !b.auto ? methodeClaude : scriptVerifie;   // essai : la methode Claude (?methode=claude dans l'adresse de la page)
     if (b.flux) {                                     // flux : le texte de l'IA au fur et a mesure, puis "\0" + la reponse verifiee
       res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' });
-      let fin; try { fin = await faire(args, d => res.write(d)); } catch (e) { console.error(e.message); fin = { erreur: 'L\'IA ne répond pas' }; }
+      let fin; try { fin = await faire(args, d => res.write(d)); } catch (e) { console.error(e.message); fin = { erreur: 'L\'IA ne répond pas' + (MODELES[b.methode] ? ' (' + e.message.slice(0, 200) + ')' : '') }; }   // essais : la cause, pour regler
       return res.end('\0' + JSON.stringify(fin));
     }
     try { return repondre(res, 200, await faire(args)); }

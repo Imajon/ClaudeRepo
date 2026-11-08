@@ -812,7 +812,7 @@ function lireJSON(req) {
 const serveur = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8').replace('__VERSION__', VERSION)
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return res.end(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8').replace('__VERSION__', VERSION)
     .replace('__TEXTES__', () => JSON.stringify(db.textes).replace(/</g, '\\u003c')));   // textes du mode edition (< echappe : aucun </script> possible)
   }
   const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.(jpg|png|mp4)$/);   // photos et videos du site (nom simple : pas de chemin) ; png = image avec transparence

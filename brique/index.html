@@ -112,7 +112,28 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 @media (max-width:800px){#partipris.acc-commu{grid-template-columns:minmax(0,1fr)}}
 .acc-blague{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:0 auto 32px;max-width:900px;padding:18px 22px;border:2px dashed var(--acc);border-radius:14px;background:var(--soft);text-align:center}
 .acc-blague p{margin:0;font-size:clamp(18px,2.2vw,24px);line-height:1.3}.acc-blague button{width:auto;margin:0}
-#apropos,#ia-francaise,#partipris,#donnees,#donneesIA{scroll-margin-top:140px}   /* ancres : pas cachées sous l'en-tête fixe */
+#apropos,#ia-francaise,#partipris,#accDefi,#histoire,#assembler,#creer-jeux,#donnees,#donneesIA{scroll-margin-top:140px}
+/* accueil en chapitres, façon page produit : un grand titre centré, une phrase, puis les images ; pas de carte autour */
+html{scroll-behavior:smooth}
+.acc-nav{display:flex;justify-content:center;gap:8px 28px;flex-wrap:wrap;margin:28px auto 8px}
+.acc-nav a{color:var(--acc);text-decoration:none;font-weight:600}.acc-nav a::after{content:" ↓"}
+.acc-acheter{width:auto;margin:0;padding:8px 22px;border-radius:999px}
+.commu>section.chap{grid-column:1/-1;background:none;box-shadow:none;padding:88px 0 24px;border-top:1px solid var(--soft);border-radius:0;display:flex;flex-direction:column;gap:24px}
+.chap::after{display:none}
+.chap-tete{text-align:center;max-width:820px;margin:0 auto}
+.chap-tete h2{margin:8px 0 12px;font-size:clamp(34px,5.5vw,60px);line-height:1.05;letter-spacing:-.02em;font-weight:800}
+.chap-tete h2::before{display:none}
+.chap-tete p{margin:0;color:var(--mute);font-size:clamp(18px,2.2vw,22px)}
+.chap-h3{margin:24px 0 0;text-align:center;font-size:clamp(22px,3vw,30px);color:var(--txt)}
+.chap-video video{display:block;width:100%;max-width:980px;margin:0 auto;border-radius:18px;aspect-ratio:16/9;object-fit:cover}
+.chap .c-console,.chap .acc-commu{display:grid}
+.chap .etapes{grid-template-columns:repeat(2,minmax(0,1fr))}
+.chap-liens{display:flex;justify-content:center;gap:8px 32px;flex-wrap:wrap;margin:8px 0 0;font-size:18px}
+#histoire .acc-commu{grid-template-columns:minmax(0,1fr);max-width:900px;margin:0 auto}   /* l'histoire : une colonne de lecture, comme un récit */
+#histoire article:first-child{background:none;box-shadow:none;padding:0;gap:14px}
+#histoire article:first-child p{font-size:clamp(17px,1.8vw,20px);line-height:1.55}
+.chap-liens a{color:var(--acc);text-decoration:none}.chap-liens a:hover{text-decoration:underline}
+@media (max-width:800px){.chap .etapes,.chap .c-console,.chap .acc-commu{grid-template-columns:minmax(0,1fr)}.commu>section.chap{padding-top:56px}}   /* ancres : pas cachées sous l'en-tête fixe */
 .acc-ia{margin:0 auto 32px;max-width:1100px;padding:24px;border:1px solid var(--line);border-radius:14px;background:var(--soft);text-align:left}   /* parti pris : une IA qui ne sait faire que des jeux */
 .acc-ia h3{margin:4px 0 8px;font-size:clamp(22px,2.6vw,30px)}.acc-ia>p{margin:0 0 16px}.acc-ia b{color:var(--txt)}
 .ia-points{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 20px;margin:0 0 14px;padding:0;list-style:none}
@@ -369,7 +390,7 @@ canvas.pix,img.pix{image-rendering:pixelated;background:repeating-conic-gradient
 .demo-console[data-kit]:not([data-kit="6"])>img,.demo-console[data-kit]>canvas,.demo-console[data-kit] .demo-bulle{opacity:0}
 @container (max-width:520px){.demo-bulle{top:12%;width:38%;padding:.5em .6em;border-radius:12px}}
 body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
-:root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
+:root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)),:root:not([data-theme="dark"]) body:has(#partis:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
 .sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}
 /* titre de l'accueil : glitch de console (deux copies decalees magenta / cyan, tranches qui sautent), quelques fractions de seconde toutes les ~4 s */
 .glitch{position:relative}
@@ -473,8 +494,8 @@ body{overflow-x:clip}                                           /* la bande 100v
   </div>
 </header>
 
-<!-- ===== ACCUEIL : le projet (la console, les étapes, les photos) et le prix en avant ===== -->
-<main id="accueil" data-version="1.6">
+<!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
+<main id="accueil" data-version="1.7">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -494,41 +515,74 @@ body{overflow-x:clip}                                           /* la bande 100v
   <div class="sh-apres">
     <p class="sh-sous">Tu soudes ta console, tu décris ton jeu, l'IA (Mistral, française) le construit : tu le transfères dans ta console par USB depuis ton PC.</p>
     <p class="sh-sous sh-but">Le but : découvrir l'électronique, apprendre à te servir d'une IA de façon sûre et amusante, inventer tes propres mécaniques de jeu vidéo, puis partager tes créations, à jouer seul ou à plusieurs en même temps.</p>
-    <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">29 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">19,90 €</b> par console pour une classe</span></p>
+    <p class="acc-prix"><span class="acc-etiquette"><b id="accPrix1">29 €</b> la console en kit</span> <span class="acc-classe">dès <b id="accPrixMin">19,90 €</b> par console pour une classe</span> <button class="acc-acheter" onclick="afficher('boutique')">Acheter</button></p>
   </div>
-  <aside class="acc-blague">                    <!-- la console se moque d'elle-même : renvoie vers le défi -->
-    <p><b>Ça ne vaut pas une Switch, ni même la calculette de ta sœur.<br>Mais sauras-tu en explorer les limites pour autant ?</b></p>
-    <button id="accBlagueDefi" class="sec">🎯 Relever le défi</button>
-  </aside>
-  <section id="ia-francaise" class="acc-ia">     <!-- parti pris : IA spécialisée (Mistral, française), pas un assistant qui parle de tout -->
-    <span class="ref">Parti pris · IA française : Mistral AI</span>
-    <h3>Une IA qui ne sait faire que des jeux</h3>
-    <p>Brique n'utilise pas un assistant qui discute de tout. L'IA, celle de <b>Mistral AI</b>, une entreprise française, a été cantonnée à un seul travail : transformer la phrase de l'enfant en réglages de jeu. Moins de liberté pour elle, moins de débordements pour les plus jeunes.</p>
-    <ul class="ia-points">
-      <li><b>🎮 Elle ne discute pas</b>Pas de conversation, pas de recherche sur Internet, pas d'images : une phrase entre, des réglages de jeu sortent.</li>
-      <li><b>🧱 Tout est trié</b>Notre serveur ne garde que les réglages que la console connaît. Le reste est jeté avant d'arriver à l'écran.</li>
-      <li><b>🛡 Les consignes pièges sont ignorées</b>Une demande hors sujet ne la fait pas sortir de son rôle. Le garde-fou de Mistral est activé, et un filtre de gros mots passe derrière.</li>
-      <li><b>👤 Aucune donnée personnelle</b>Elle ne reçoit que la phrase et les réglages du jeu : jamais de nom, d'adresse ou de mail.</li>
-      <li><b>🔑 Réservée aux inscrits</b>L'enfant crée son compte avec un simple pseudo, ou rejoint le groupe d'un adulte (animateur, prof ou parent). Sans compte : quelques essais par jour pour découvrir. Chaque console arrive avec un forfait IA de 3 mois, visible en jauge.</li>
-      <li><b>⏱ Un nombre de demandes limité</b>Quelques dizaines par jour et par enfant : de quoi créer, pas de quoi passer la journée devant l'écran.</li>
-    </ul>
-    <a href="#" class="pp-note" onclick="afficher('boutique');donneesIA.scrollIntoView();return false" style="color:var(--acc)">Ce que nous gardons sur les enfants et les adultes ›</a>
-  </section>
-
+  <div class="acc-nav"><a href="#histoire">L'histoire</a><a href="#assembler">Assembler sa console</a><a href="#creer-jeux">Créer ses jeux</a></div>
 </div>
 <div class="commu">
-  <!-- ce qui fait Brique : on soude soi-même, l'IA aide à créer. Trois étapes reliées par une piste de circuit -->
-  <section class="c-intro">
-    <div class="intro-txt">
-      <span class="ref">Kit à souder · IA · USB</span>
-      <p class="intro-titre">Soude ta console.<br>Invente ton jeu avec l'IA.</p>
+  <!-- 1. l'histoire -->
+  <section id="histoire" class="chap">
+    <div class="chap-tete"><span class="ref">L'histoire</span><h2>Tout part d'une entrée au collège.</h2>
+      <p>Et de la grande question du premier smartphone.</p></div>
+    <div class="acc-commu" id="apropos">
+    <article style="grid-column:1/-1">       <!-- le pourquoi du projet -->
+            <p>Tout a commencé lorsque mon fils de 11 ans est entré au collège.</p>
+      <p>Comme beaucoup de ses camarades, il voulait son premier smartphone. Mais après en avoir discuté avec lui, j'ai compris que c'était surtout pour jouer pendant les trajets en bus.</p>
+      <p>Passionné d'électronique, je lui ai alors lancé un défi : <b style="color:var(--txt)">« Et si on fabriquait notre propre console de jeux ? »</b></p>
+      <p>Avec l'aide de l'intelligence artificielle, nous pouvions même imaginer et créer nos propres jeux. C'est ainsi que Brique a vu le jour.</p>
+      <p>Très vite, son petit frère de 7 ans a voulu la sienne. Mes deux garçons sont devenus mes premiers testeurs. Chaque matin, nous faisions évoluer les jeux au rythme de leurs idées et de leurs envies.</p>
+      <p>Puis j'ai tenté une petite expérience : intégrer des questions de culture générale et des leçons de l'école directement dans les jeux. Pour passer au niveau suivant, il fallait répondre correctement. Sinon, on recommençait !</p>
+      <p><b style="color:var(--txt)">Et à ma grande surprise, ils ont adoré !</b></p>
+      <p>Ils se lançaient des défis, comparaient leurs réponses et apprenaient sans même s'en rendre compte. Le plus jeune cherchait constamment à rivaliser avec son grand frère.</p>
+      <p>C'est là que j'ai compris que Brique pouvait devenir bien plus qu'une simple console.</p>
+      <p>Aujourd'hui, Brique grandit avec cette idée : offrir aux enfants le plaisir de jouer, tout en éveillant leur curiosité et leur envie d'apprendre.</p>
+      <p>Une aventure née en famille, avec l'envie de proposer une autre façon de jouer.</p>
+    </article>
+    <article class="apropos">
+      <img src="images/apropos.jpg" alt="Jonathan et Anti, bras en arche, dans le vaisseau Arcadia, une de leurs installations de jeu" width="1600" height="1067" loading="lazy">
+      <div>
+      <span class="ref">À propos de nous</span><h3>Deux artisans du tiers-lieu Le Cercle</h3>
+      <p>Brique est né dans les tiers-lieux, pour rendre l'électronique, la programmation et les outils numériques accessibles à tous.</p>
+      <div class="acc-commu" style="margin-top:8px">
+        <p><b style="color:var(--txt)">Jonathan Moriot</b><br>Concepteur et développeur.</p>
+        <p><b style="color:var(--txt)">Anti</b><br>Plasticien, cofondateur du Cercle, où il porte des projets artistiques et techniques.</p>
+      </div>
+      <p><b style="color:var(--txt)">Le Cercle</b>, c'est un tiers-lieu à Lunery, dans le Cher, à 20 km au sud de Bourges, installé dans l'ancienne cité ouvrière de l'usine de Rosières. Des artistes, des artisans et des créateurs y partagent ateliers, expositions et savoir-faire numérique.</p>
+      <p><b style="color:var(--txt)">C'est tout l'enjeu du Cercle</b> : un lieu ouvert à tous, pour apprendre et créer. Acheter une Brique, ce n'est pas juste acheter un produit de plus, c'est participer à faire grandir ce lieu.</p>
+      <p>Suivez l'aventure sur Instagram : <a href="https://instagram.com/brique_console" target="_blank" rel="noopener">@brique_console</a></p>
+      </div>
+    </article>
     </div>
+  </section>
+  <!-- 2. assembler sa console -->
+  <section id="assembler" class="chap">
+    <div class="chap-tete"><span class="ref">Assembler sa console</span><h2>Ce sont eux qui soudent.</h2>
+      <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p></div>
+    <div class="chap-video"><video src="images/souder.mp4" poster="images/souder-video.jpg" autoplay muted loop playsinline preload="auto" width="640" height="480" aria-label="Un enfant soude sa console : l'étain d'une main, le fer de l'autre, la plaque tenue par un support"></video></div>
+  <section class="c-console c-soude">           <!-- en atelier : ce sont les enfants qui soudent -->
+    <figure><img src="images/atelier-04.jpg" alt="Un enfant soude, le fer d'une main et l'étain de l'autre" width="800" height="800" loading="lazy">
+      <figcaption><b>Le fer d'une main</b>, l'étain de l'autre, la plaque tenue par un support</figcaption></figure>
+    <figure><img src="images/atelier-12.jpg" alt="Gros plan sur la soudure d'un connecteur" width="800" height="800" loading="lazy">
+      <figcaption><b>Patte par patte</b>, avec soin, encadré par un adulte</figcaption></figure>
+    <figure><img src="images/console-main-carre.jpg" alt="La console tenue en main, allumée sur l'écran titre de son premier jeu" width="800" height="800" loading="lazy">
+      <figcaption><b>Ça s'allume !</b> Le premier jeu tourne sur la console qu'on vient de souder</figcaption></figure>
+  </section>
+    <h3 class="chap-h3">Ce qu'il y a dedans</h3>
+  <section class="c-console">
+    <figure><img src="images/cerveau-esp32.jpg" alt="Le cerveau de la console : une carte ESP32-C3 grande comme un doigt, avec prise USB-C" width="1192" height="900" loading="lazy">
+      <figcaption><b>Le cerveau</b> : un ESP32-C3 grand comme un doigt, Wi-Fi, Bluetooth et USB-C</figcaption></figure>
+    <figure><img src="images/bouton-ecran.jpg" alt="Un bouton soudé sur le circuit vert, à côté de l'écran" width="1200" height="1200" loading="lazy">
+      <figcaption><b>Les boutons</b> : soudés à la main, juste à côté de l'écran couleur</figcaption></figure>
+    <figure><img src="images/pcb-hexagon.jpg" alt="Le circuit vert hexagonal, nu, avec ses pistes de cuivre" width="1200" height="1200" loading="lazy">
+      <figcaption><b>Le circuit</b> : hexagonal, ses pistes relient chaque bouton au cerveau</figcaption></figure>
+  </section>
+    <p class="chap-liens"><a href="#" data-partis="partipris">Pourquoi 3 boutons, et pas de croix ? ›</a> <a href="#" data-vue-lien="support">Le montage pas à pas ›</a></p>
+  </section>
+  <!-- 3. créer ses propres jeux -->
+  <section id="creer-jeux" class="chap">
+    <div class="chap-tete"><span class="ref">Créer ses propres jeux</span><h2>Tu décris. L'IA construit.<br>Tu joues avec tes copains.</h2>
+      <p>Pas besoin de savoir coder : tu racontes ton jeu, il arrive sur ta console, et tes copains y jouent avec toi.</p></div>
     <div class="etapes">
-      <article class="etape">
-        <video src="images/souder.mp4" poster="images/souder-video.jpg" autoplay muted loop playsinline preload="auto" width="640" height="480" aria-label="Un enfant soude sa console : l'étain d'une main, le fer de l'autre, la plaque tenue par un support"></video>
-        <span class="ref">Étape 1 · SW1</span><h3>Je soude ma console</h3>
-        <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p>
-      </article>
       <article class="etape">
         <div class="ia-demo" aria-hidden="true">
           <div class="bulle">« <span id="iaTxt">un volcan très haut avec des scies</span><i class="demo-caret"></i> »</div>
@@ -547,7 +601,6 @@ body{overflow-x:clip}                                           /* la bande 100v
         <p>Le jeu part dans la console par le câble USB. Un code le partage aux copains, pour jouer jusqu'à 4.</p>
       </article>
     </div>
-  </section>
   <section id="accCommu" class="acc-commu">      <!-- la communauté et le jeu commun, en bref (chiffres en direct) -->
     <article>
       <span class="ref">Communauté</span><h3>🏆 Les jeux de la communauté</h3>
@@ -562,23 +615,35 @@ body{overflow-x:clip}                                           /* la bande 100v
       <div class="actions" style="justify-content:flex-start"><button id="accCommun" class="sec">🧱 Jouer au jeu commun</button><button id="accAjouter" class="sec">➕ Ajouter mon niveau</button></div>
     </article>
   </section>
-  <section class="c-console c-soude">           <!-- en atelier : ce sont les enfants qui soudent -->
-    <h2>Ce sont eux qui soudent</h2>
-    <figure><img src="images/atelier-04.jpg" alt="Un enfant soude, le fer d'une main et l'étain de l'autre" width="800" height="800" loading="lazy">
-      <figcaption><b>Le fer d'une main</b>, l'étain de l'autre, la plaque tenue par un support</figcaption></figure>
-    <figure><img src="images/atelier-12.jpg" alt="Gros plan sur la soudure d'un connecteur" width="800" height="800" loading="lazy">
-      <figcaption><b>Patte par patte</b>, avec soin, encadré par un adulte</figcaption></figure>
-    <figure><img src="images/console-main-carre.jpg" alt="La console tenue en main, allumée sur l'écran titre de son premier jeu" width="800" height="800" loading="lazy">
-      <figcaption><b>Ça s'allume !</b> Le premier jeu tourne sur la console qu'on vient de souder</figcaption></figure>
+    <p class="chap-liens"><a href="#" data-partis="ia-francaise">Une IA française qui ne sait faire que des jeux ›</a> <a href="#" data-partis="accDefi">Le défi : explorer la console ›</a></p>
   </section>
-  <section class="c-console">
-    <figure><img src="images/cerveau-esp32.jpg" alt="Le cerveau de la console : une carte ESP32-C3 grande comme un doigt, avec prise USB-C" width="1192" height="900" loading="lazy">
-      <figcaption><b>Le cerveau</b> : un ESP32-C3 grand comme un doigt, Wi-Fi, Bluetooth et USB-C</figcaption></figure>
-    <figure><img src="images/bouton-ecran.jpg" alt="Un bouton soudé sur le circuit vert, à côté de l'écran" width="1200" height="1200" loading="lazy">
-      <figcaption><b>Les boutons</b> : soudés à la main, juste à côté de l'écran couleur</figcaption></figure>
-    <figure><img src="images/pcb-hexagon.jpg" alt="Le circuit vert hexagonal, nu, avec ses pistes de cuivre" width="1200" height="1200" loading="lazy">
-      <figcaption><b>Le circuit</b> : hexagonal, ses pistes relient chaque bouton au cerveau</figcaption></figure>
+</div>
+</main>
+
+<!-- ===== PARTIS PRIS : les pages secondaires de l'accueil (IA française, 3 boutons, défi) ===== -->
+<main id="partis" class="hide" data-version="1.1">
+<div class="shop">
+  <div class="sh-hero page-hero"><p class="sh-sur">Nos partis pris</p><h2 class="sh-titre">Des choix faits exprès.</h2></div>
+  <section id="ia-francaise" class="acc-ia">     <!-- parti pris : IA spécialisée (Mistral, française), pas un assistant qui parle de tout -->
+    <span class="ref">Parti pris · IA française : Mistral AI</span>
+    <h3>Une IA qui ne sait faire que des jeux</h3>
+    <p>Brique n'utilise pas un assistant qui discute de tout. L'IA, celle de <b>Mistral AI</b>, une entreprise française, a été cantonnée à un seul travail : transformer la phrase de l'enfant en réglages de jeu. Moins de liberté pour elle, moins de débordements pour les plus jeunes.</p>
+    <ul class="ia-points">
+      <li><b>🎮 Elle ne discute pas</b>Pas de conversation, pas de recherche sur Internet, pas d'images : une phrase entre, des réglages de jeu sortent.</li>
+      <li><b>🧱 Tout est trié</b>Notre serveur ne garde que les réglages que la console connaît. Le reste est jeté avant d'arriver à l'écran.</li>
+      <li><b>🛡 Les consignes pièges sont ignorées</b>Une demande hors sujet ne la fait pas sortir de son rôle. Le garde-fou de Mistral est activé, et un filtre de gros mots passe derrière.</li>
+      <li><b>👤 Aucune donnée personnelle</b>Elle ne reçoit que la phrase et les réglages du jeu : jamais de nom, d'adresse ou de mail.</li>
+      <li><b>🔑 Réservée aux inscrits</b>L'enfant crée son compte avec un simple pseudo, ou rejoint le groupe d'un adulte (animateur, prof ou parent). Sans compte : quelques essais par jour pour découvrir. Chaque console arrive avec un forfait IA de 3 mois, visible en jauge.</li>
+      <li><b>⏱ Un nombre de demandes limité</b>Quelques dizaines par jour et par enfant : de quoi créer, pas de quoi passer la journée devant l'écran.</li>
+    </ul>
+    <a href="#" class="pp-note" onclick="afficher('boutique');donneesIA.scrollIntoView();return false" style="color:var(--acc)">Ce que nous gardons sur les enfants et les adultes ›</a>
   </section>
+  <aside class="acc-blague">                    <!-- la console se moque d'elle-même : renvoie vers le défi -->
+    <p><b>Ça ne vaut pas une Switch, ni même la calculette de ta sœur.<br>Mais sauras-tu en explorer les limites pour autant ?</b></p>
+    <button id="accBlagueDefi" class="sec">🎯 Relever le défi</button>
+  </aside>
+</div>
+<div class="commu">
   <section id="partipris" class="acc-commu">     <!-- parti pris : 3 boutons plutôt qu'une croix -->
     <article class="partipris">
       <span class="ref">Parti pris</span><h3>Pourquoi 3 boutons, et pas de croix ?</h3>
@@ -607,36 +672,6 @@ body{overflow-x:clip}                                           /* la bande 100v
       <div><b id="accDefiPc" class="pc">–</b> <span class="aide">de la console déjà explorée par la communauté</span></div>
       <div class="barre defi-barre"><i id="accDefiBarre" style="width:0"></i></div>
       <button id="accVoirDefi" class="sec">🎯 Relever le défi</button>
-    </article>
-  </section>
-  <section id="apropos" class="acc-commu">       <!-- à propos de nous -->
-    <article style="grid-column:1/-1">       <!-- le pourquoi du projet -->
-      <span class="ref">Pourquoi Brique ?</span><h3>📱 Tout part d'une entrée au collège et la grande question d'un smartphone qui fait ses premiers pas…</h3>
-      <p>Tout a commencé lorsque mon fils de 11 ans est entré au collège.</p>
-      <p>Comme beaucoup de ses camarades, il voulait son premier smartphone. Mais après en avoir discuté avec lui, j'ai compris que c'était surtout pour jouer pendant les trajets en bus.</p>
-      <p>Passionné d'électronique, je lui ai alors lancé un défi : <b style="color:var(--txt)">« Et si on fabriquait notre propre console de jeux ? »</b></p>
-      <p>Avec l'aide de l'intelligence artificielle, nous pouvions même imaginer et créer nos propres jeux. C'est ainsi que Brique a vu le jour.</p>
-      <p>Très vite, son petit frère de 7 ans a voulu la sienne. Mes deux garçons sont devenus mes premiers testeurs. Chaque matin, nous faisions évoluer les jeux au rythme de leurs idées et de leurs envies.</p>
-      <p>Puis j'ai tenté une petite expérience : intégrer des questions de culture générale et des leçons de l'école directement dans les jeux. Pour passer au niveau suivant, il fallait répondre correctement. Sinon, on recommençait !</p>
-      <p><b style="color:var(--txt)">Et à ma grande surprise, ils ont adoré !</b></p>
-      <p>Ils se lançaient des défis, comparaient leurs réponses et apprenaient sans même s'en rendre compte. Le plus jeune cherchait constamment à rivaliser avec son grand frère.</p>
-      <p>C'est là que j'ai compris que Brique pouvait devenir bien plus qu'une simple console.</p>
-      <p>Aujourd'hui, Brique grandit avec cette idée : offrir aux enfants le plaisir de jouer, tout en éveillant leur curiosité et leur envie d'apprendre.</p>
-      <p>Une aventure née en famille, avec l'envie de proposer une autre façon de jouer.</p>
-    </article>
-    <article class="apropos">
-      <img src="images/apropos.jpg" alt="Jonathan et Anti, bras en arche, dans le vaisseau Arcadia, une de leurs installations de jeu" width="1600" height="1067" loading="lazy">
-      <div>
-      <span class="ref">À propos de nous</span><h3>Deux artisans du tiers-lieu Le Cercle</h3>
-      <p>Brique est né dans les tiers-lieux, pour rendre l'électronique, la programmation et les outils numériques accessibles à tous.</p>
-      <div class="acc-commu" style="margin-top:8px">
-        <p><b style="color:var(--txt)">Jonathan Moriot</b><br>Concepteur et développeur.</p>
-        <p><b style="color:var(--txt)">Anti</b><br>Plasticien, cofondateur du Cercle, où il porte des projets artistiques et techniques.</p>
-      </div>
-      <p><b style="color:var(--txt)">Le Cercle</b>, c'est un tiers-lieu à Lunery, dans le Cher, à 20 km au sud de Bourges, installé dans l'ancienne cité ouvrière de l'usine de Rosières. Des artistes, des artisans et des créateurs y partagent ateliers, expositions et savoir-faire numérique.</p>
-      <p><b style="color:var(--txt)">C'est tout l'enjeu du Cercle</b> : un lieu ouvert à tous, pour apprendre et créer. Acheter une Brique, ce n'est pas juste acheter un produit de plus, c'est participer à faire grandir ce lieu.</p>
-      <p>Suivez l'aventure sur Instagram : <a href="https://instagram.com/brique_console" target="_blank" rel="noopener">@brique_console</a></p>
-      </div>
     </article>
   </section>
 </div>
@@ -1751,9 +1786,9 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ul></nav>
     <div><h4>Espaces</h4><ul>
       <li><a data-clic="rejoindreBtn">Mon compte créateur</a></li><li><a data-vue="anim">Espace animateur</a></li>
-      <li><a data-vue="accueil" data-ancre="partipris">Pourquoi 3 boutons</a></li>
+      <li><a data-vue="partis" data-ancre="partipris">Pourquoi 3 boutons</a></li>
       <li><a data-vue="accueil" data-ancre="apropos">À propos de nous</a></li>
-      <li><a data-vue="accueil" data-ancre="ia-francaise">Notre IA française</a></li>
+      <li><a data-vue="partis" data-ancre="ia-francaise">Notre IA française</a></li>
       <li><a data-vue="boutique" data-ancre="donnees">Vos données</a></li>
       <li><a href="https://instagram.com/brique_console" target="_blank" rel="noopener">📷 Instagram @brique_console</a></li>
     </ul></div>
@@ -3857,7 +3892,7 @@ let vue = 'accueil';
 function afficher(v) {
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
-  accueil.classList.toggle('hide', v !== 'accueil'); vAccueil.classList.toggle('on', v === 'accueil');
+  accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');
   atelier.classList.add('hide'); vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché, à retirer quand le mode script aura sa communauté
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
@@ -3868,7 +3903,12 @@ function afficher(v) {
 }
 vAccueil.onclick = () => afficher('accueil');
 vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique'); vSupport.onclick = () => afficher('support'); vPanier.onclick = () => afficher('panier');
-vApropos.onclick = () => { afficher('accueil'); apropos.scrollIntoView(); };
+vApropos.onclick = () => { afficher('accueil'); histoire.scrollIntoView(); };
+accueil.addEventListener('click', e => {               // liens « en savoir plus » des chapitres : vers la page Partis pris ou une autre vue
+  const a = e.target.closest('a[data-partis],a[data-vue-lien]'); if (!a) return; e.preventDefault();
+  if (a.dataset.vueLien) return afficher(a.dataset.vueLien);
+  afficher('partis'); document.getElementById(a.dataset.partis).scrollIntoView();
+});
 const imprimer = f => () => {                            // la fiche seule, en A4, dans un nouvel onglet
   const w = open(URL.createObjectURL(new Blob([f.innerHTML], { type: 'image/svg+xml' })));
   if (w) w.onload = () => w.print();
@@ -3892,7 +3932,7 @@ document.querySelector('.pied').onclick = e => {      // pied de page : mêmes v
 piedSite.textContent = location.host;
 if (siteVersion.textContent === '__VERSION__') siteVersion.textContent = 'hors ligne';   // page ouverte sans le serveur (fichier, GitHub Pages)
 majMoi();
-if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
+if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 </script>

@@ -2988,18 +2988,20 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
   }
   requestAnimationFrame(image);
 })();
-// accueil, étape 3 : la phrase se tape, trois consoles arrivent et jouent la même course (chacune voit son joueur en grand)
+// accueil, étape 3 : la phrase se tape, trois consoles arrivent et jouent au même drift (chacune voit sa voiture en grand)
 (() => {
   const box = document.querySelector('.multi-demo'), cvs = [...box.querySelectorAll('canvas')], TXT = 'Fais ton propre jeu multijoueur local';
   const COUL = ['#e8322b', '#2f6fe0', '#ffd400'], VIT = [1, .92, .85];   // un joueur par console
-  const sol = [[0, 52, 80], [18, 40, 12], [44, 32, 12], [62, 42, 14]];   // [x, y, largeur] : le sol et trois plateformes (écran de 80 x 60)
-  function course(c, moi, p) {                          // p : 0 -> 1 au fil de la course ; arrivée à droite
-    const g = c.getContext('2d'); g.fillStyle = '#2f6fe0'; g.fillRect(0, 0, 80, 60);
-    g.fillStyle = '#ff7ab8'; sol.forEach(([x, y, w]) => g.fillRect(x, y, w, y === 52 ? 8 : 3));
-    g.fillStyle = '#eee'; g.fillRect(74, 40, 1, 12); g.fillStyle = '#4ade80'; g.fillRect(75, 40, 4, 3);
+  function course(c, moi, p) {                          // le jeu drift vu du dessus : piste ovale, les voitures dérapent dans les virages, traces au sol
+    const g = c.getContext('2d'); g.fillStyle = '#0e0e18'; g.fillRect(0, 0, 80, 60);
+    g.strokeStyle = '#50e6ff'; g.lineWidth = 1; g.beginPath(); g.ellipse(40, 30, 37, 27, 0, 0, 7); g.moveTo(59, 30); g.ellipse(40, 30, 19, 10, 0, 0, 7); g.stroke();
+    g.fillStyle = '#eee'; for (let k = 0; k < 4; k++) g.fillRect(40 + (k % 2), 41 + k * 4, 1, 3);   // ligne d'arrivée
+    const pos = a => [40 + 28 * Math.cos(a), 30 + 18.5 * Math.sin(a)];
     COUL.forEach((col, i) => {
-      const x = 2 + Math.min(1, p * VIT[i] * 1.15) * 68, saut = Math.abs(Math.sin((x + i * 7) / 6)) * 7, t = i === moi ? 5 : 3;
-      g.fillStyle = col; g.fillRect(x, 52 - t - saut, t, t);
+      const a = Math.PI / 2 - i * .25 + p * VIT[i] * 7.5;
+      g.fillStyle = '#3c3a4c'; for (let k = 1; k < 7; k++) { const [tx, ty] = pos(a - k * .12); g.fillRect(tx, ty, 1, 1); }   // traces de dérapage
+      const [x, y] = pos(a), cap = Math.atan2(18.5 * Math.cos(a), -28 * Math.sin(a)) + .5, L = i === moi ? 4 : 2.6, hx = Math.cos(cap), hy = Math.sin(cap);
+      g.fillStyle = col; g.beginPath(); g.moveTo(x + hx * L * 1.5, y + hy * L * 1.5); g.lineTo(x - hx * L - hy * L, y - hy * L + hx * L); g.lineTo(x - hx * L + hy * L, y - hy * L - hx * L); g.fill();
     });
   }
   const calme = matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -130,6 +130,7 @@ html{scroll-behavior:smooth}
 .chap .etapes{grid-template-columns:repeat(2,minmax(0,1fr))}
 .chap-liens{display:flex;justify-content:center;gap:8px 32px;flex-wrap:wrap;margin:8px 0 0;font-size:18px}
 #histoire .acc-commu{grid-template-columns:minmax(0,1fr);max-width:900px;margin:0 auto}   /* l'histoire : une colonne de lecture, comme un récit */
+#histoire .suite{display:flex;flex-direction:column;gap:14px}#histoire .suite[open]{display:block}#histoire .suite[open] p{margin:0 0 14px}#histoire .suite summary{align-self:flex-start;cursor:pointer;color:var(--acc);font-weight:600;font-size:18px;list-style:none}#histoire .suite summary::after{content:" ›"}#histoire .suite[open] summary{display:none}
 #histoire article:first-child{background:none;box-shadow:none;padding:0;gap:14px}
 #histoire article:first-child p{font-size:clamp(17px,1.8vw,20px);line-height:1.55}
 .chap-liens a{color:var(--acc);text-decoration:none}.chap-liens a:hover{text-decoration:underline}
@@ -390,7 +391,7 @@ canvas.pix,img.pix{image-rendering:pixelated;background:repeating-conic-gradient
 .demo-console[data-kit]:not([data-kit="6"])>img,.demo-console[data-kit]>canvas,.demo-console[data-kit] .demo-bulle{opacity:0}
 @container (max-width:520px){.demo-bulle{top:12%;width:38%;padding:.5em .6em;border-radius:12px}}
 body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
-:root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)),:root:not([data-theme="dark"]) body:has(#partis:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
+:root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)),:root:not([data-theme="dark"]) body:has(#partis:not(.hide)),:root:not([data-theme="dark"]) body:has(#propos:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
 .sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}
 /* titre de l'accueil : glitch de console (deux copies decalees magenta / cyan, tranches qui sautent), quelques fractions de seconde toutes les ~4 s */
 .glitch{position:relative}
@@ -495,7 +496,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
-<main id="accueil" data-version="1.7">
+<main id="accueil" data-version="1.8">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -524,11 +525,12 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section id="histoire" class="chap">
     <div class="chap-tete"><span class="ref">L'histoire</span><h2>Tout part d'une entrée au collège.</h2>
       <p>Et de la grande question du premier smartphone.</p></div>
-    <div class="acc-commu" id="apropos">
+    <div class="acc-commu">
     <article style="grid-column:1/-1">       <!-- le pourquoi du projet -->
-            <p>Tout a commencé lorsque mon fils de 11 ans est entré au collège.</p>
+      <p>Tout a commencé lorsque mon fils de 11 ans est entré au collège.</p>
       <p>Comme beaucoup de ses camarades, il voulait son premier smartphone. Mais après en avoir discuté avec lui, j'ai compris que c'était surtout pour jouer pendant les trajets en bus.</p>
       <p>Passionné d'électronique, je lui ai alors lancé un défi : <b style="color:var(--txt)">« Et si on fabriquait notre propre console de jeux ? »</b></p>
+      <details class="suite"><summary>Lire la suite</summary>
       <p>Avec l'aide de l'intelligence artificielle, nous pouvions même imaginer et créer nos propres jeux. C'est ainsi que Brique a vu le jour.</p>
       <p>Très vite, son petit frère de 7 ans a voulu la sienne. Mes deux garçons sont devenus mes premiers testeurs. Chaque matin, nous faisions évoluer les jeux au rythme de leurs idées et de leurs envies.</p>
       <p>Puis j'ai tenté une petite expérience : intégrer des questions de culture générale et des leçons de l'école directement dans les jeux. Pour passer au niveau suivant, il fallait répondre correctement. Sinon, on recommençait !</p>
@@ -537,20 +539,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p>C'est là que j'ai compris que Brique pouvait devenir bien plus qu'une simple console.</p>
       <p>Aujourd'hui, Brique grandit avec cette idée : offrir aux enfants le plaisir de jouer, tout en éveillant leur curiosité et leur envie d'apprendre.</p>
       <p>Une aventure née en famille, avec l'envie de proposer une autre façon de jouer.</p>
-    </article>
-    <article class="apropos">
-      <img src="images/apropos.jpg" alt="Jonathan et Anti, bras en arche, dans le vaisseau Arcadia, une de leurs installations de jeu" width="1600" height="1067" loading="lazy">
-      <div>
-      <span class="ref">À propos de nous</span><h3>Deux artisans du tiers-lieu Le Cercle</h3>
-      <p>Brique est né dans les tiers-lieux, pour rendre l'électronique, la programmation et les outils numériques accessibles à tous.</p>
-      <div class="acc-commu" style="margin-top:8px">
-        <p><b style="color:var(--txt)">Jonathan Moriot</b><br>Concepteur et développeur.</p>
-        <p><b style="color:var(--txt)">Anti</b><br>Plasticien, cofondateur du Cercle, où il porte des projets artistiques et techniques.</p>
-      </div>
-      <p><b style="color:var(--txt)">Le Cercle</b>, c'est un tiers-lieu à Lunery, dans le Cher, à 20 km au sud de Bourges, installé dans l'ancienne cité ouvrière de l'usine de Rosières. Des artistes, des artisans et des créateurs y partagent ateliers, expositions et savoir-faire numérique.</p>
-      <p><b style="color:var(--txt)">C'est tout l'enjeu du Cercle</b> : un lieu ouvert à tous, pour apprendre et créer. Acheter une Brique, ce n'est pas juste acheter un produit de plus, c'est participer à faire grandir ce lieu.</p>
-      <p>Suivez l'aventure sur Instagram : <a href="https://instagram.com/brique_console" target="_blank" rel="noopener">@brique_console</a></p>
-      </div>
+      </details>
     </article>
     </div>
   </section>
@@ -616,6 +605,29 @@ body{overflow-x:clip}                                           /* la bande 100v
     </article>
   </section>
     <p class="chap-liens"><a href="#" data-partis="ia-francaise">Une IA française qui ne sait faire que des jeux ›</a> <a href="#" data-partis="accDefi">Le défi : explorer la console ›</a></p>
+  </section>
+</div>
+</main>
+
+<!-- ===== À PROPOS : qui fait Brique (bouton « À propos » du menu) ===== -->
+<main id="propos" class="hide" data-version="1.1">
+<div class="shop"><div class="sh-hero page-hero"><p class="sh-sur">À propos</p><h2 class="sh-titre">Qui fait Brique ?</h2></div></div>
+<div class="commu">
+  <section id="apropos" class="acc-commu">
+    <article class="apropos">
+      <img src="images/apropos.jpg" alt="Jonathan et Anti, bras en arche, dans le vaisseau Arcadia, une de leurs installations de jeu" width="1600" height="1067" loading="lazy">
+      <div>
+      <span class="ref">À propos de nous</span><h3>Deux artisans du tiers-lieu Le Cercle</h3>
+      <p>Brique est né dans les tiers-lieux, pour rendre l'électronique, la programmation et les outils numériques accessibles à tous.</p>
+      <div class="acc-commu" style="margin-top:8px">
+        <p><b style="color:var(--txt)">Jonathan Moriot</b><br>Concepteur et développeur.</p>
+        <p><b style="color:var(--txt)">Anti</b><br>Plasticien, cofondateur du Cercle, où il porte des projets artistiques et techniques.</p>
+      </div>
+      <p><b style="color:var(--txt)">Le Cercle</b>, c'est un tiers-lieu à Lunery, dans le Cher, à 20 km au sud de Bourges, installé dans l'ancienne cité ouvrière de l'usine de Rosières. Des artistes, des artisans et des créateurs y partagent ateliers, expositions et savoir-faire numérique.</p>
+      <p><b style="color:var(--txt)">C'est tout l'enjeu du Cercle</b> : un lieu ouvert à tous, pour apprendre et créer. Acheter une Brique, ce n'est pas juste acheter un produit de plus, c'est participer à faire grandir ce lieu.</p>
+      <p>Suivez l'aventure sur Instagram : <a href="https://instagram.com/brique_console" target="_blank" rel="noopener">@brique_console</a></p>
+      </div>
+    </article>
   </section>
 </div>
 </main>
@@ -728,7 +740,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
-<main id="boutique" class="shop hide" data-version="1.2">
+<main id="boutique" class="shop hide" data-version="1.3">
   <div class="sh-hero">
     <h2 class="sh-titre">Un kit simple, à deux,<br>ou un support pédagogique clé en main.</h2>
   </div>
@@ -771,7 +783,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <h3 class="sh-h">Plus qu'une console.</h3>
     <p class="sh-sous">Acheter une Brique, ce n'est pas acheter un objet de plus. C'est aider à faire grandir <b>Le Cercle</b>, un tiers-lieu ouvert à tous dans le Cher, où l'on vient apprendre, fabriquer et créer ensemble : souder, programmer, inventer.</p>
     <p class="sh-sous">Chaque console vendue fait vivre ce lieu, ses ateliers et les prochaines idées qui en sortiront.</p>
-    <button class="sec" onclick="afficher('accueil');apropos.scrollIntoView()" style="width:auto;margin:16px auto 0">👋 Découvrir Le Cercle</button>
+    <button class="sec" onclick="afficher('propos')" style="width:auto;margin:16px auto 0">👋 Découvrir Le Cercle</button>
   </div>
 
   <div id="donnees" class="sh-bloc sh-donnees">
@@ -1787,7 +1799,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div><h4>Espaces</h4><ul>
       <li><a data-clic="rejoindreBtn">Mon compte créateur</a></li><li><a data-vue="anim">Espace animateur</a></li>
       <li><a data-vue="partis" data-ancre="partipris">Pourquoi 3 boutons</a></li>
-      <li><a data-vue="accueil" data-ancre="apropos">À propos de nous</a></li>
+      <li><a data-vue="propos">À propos de nous</a></li>
       <li><a data-vue="partis" data-ancre="ia-francaise">Notre IA française</a></li>
       <li><a data-vue="boutique" data-ancre="donnees">Vos données</a></li>
       <li><a href="https://instagram.com/brique_console" target="_blank" rel="noopener">📷 Instagram @brique_console</a></li>
@@ -3892,7 +3904,7 @@ let vue = 'accueil';
 function afficher(v) {
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
-  accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); vAccueil.classList.toggle('on', v === 'accueil');
+  accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); propos.classList.toggle('hide', v !== 'propos'); vApropos.classList.toggle('on', v === 'propos'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');
   atelier.classList.add('hide'); vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché, à retirer quand le mode script aura sa communauté
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
@@ -3903,7 +3915,7 @@ function afficher(v) {
 }
 vAccueil.onclick = () => afficher('accueil');
 vCommu.onclick = () => afficher('commu'); vCreer.onclick = ctaCreer.onclick = () => afficher('creer'); vAnim.onclick = () => afficher('anim'); vBoutique.onclick = () => afficher('boutique'); vSupport.onclick = () => afficher('support'); vPanier.onclick = () => afficher('panier');
-vApropos.onclick = () => { afficher('accueil'); histoire.scrollIntoView(); };
+vApropos.onclick = () => afficher('propos');
 accueil.addEventListener('click', e => {               // liens « en savoir plus » des chapitres : vers la page Partis pris ou une autre vue
   const a = e.target.closest('a[data-partis],a[data-vue-lien]'); if (!a) return; e.preventDefault();
   if (a.dataset.vueLien) return afficher(a.dataset.vueLien);
@@ -3932,7 +3944,7 @@ document.querySelector('.pied').onclick = e => {      // pied de page : mêmes v
 piedSite.textContent = location.host;
 if (siteVersion.textContent === '__VERSION__') siteVersion.textContent = 'hors ligne';   // page ouverte sans le serveur (fichier, GitHub Pages)
 majMoi();
-if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
+if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 </script>

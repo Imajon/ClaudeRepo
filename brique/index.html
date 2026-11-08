@@ -389,6 +389,10 @@ canvas.pix,img.pix{image-rendering:pixelated;background:repeating-conic-gradient
 .demo-console[data-kit="4"] .kit img:nth-child(-n+4),.demo-console[data-kit="5"] .kit img,.demo-console[data-kit]:not([data-kit="6"]) .kit p{opacity:1}
 .demo-console>img,.demo-console>canvas,.demo-bulle{transition:opacity .6s}
 .demo-console[data-kit]:not([data-kit="6"])>img,.demo-console[data-kit]>canvas,.demo-console[data-kit] .demo-bulle{opacity:0}
+.demo-console .teinte{position:absolute;left:0;top:0;opacity:0;animation:teinte 16s infinite}   /* vert (la photo du dessous) 4 s, puis bleu, rouge, violet */
+.demo-console .teinte:nth-of-type(2){animation-delay:4s}.demo-console .teinte:nth-of-type(3){animation-delay:8s}.demo-console .teinte:nth-of-type(4){animation-delay:12s}
+@keyframes teinte{0%{opacity:0}6%,25%{opacity:1}31%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.demo-console .teinte{animation:none}}
 @container (max-width:520px){.demo-bulle{top:12%;width:38%;padding:.5em .6em;border-radius:12px}}
 body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
 :root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)),:root:not([data-theme="dark"]) body:has(#partis:not(.hide)),:root:not([data-theme="dark"]) body:has(#propos:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
@@ -496,7 +500,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
-<main id="accueil" data-version="1.10">
+<main id="accueil" data-version="1.11">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -505,6 +509,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <figure class="sh-photo">
     <div id="demoConsole" class="sh-console demo-console">   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->
       <img src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
+      <img class="teinte" src="images/console-v2-bleu.jpg" alt="" width="1205" height="880"><img class="teinte" src="images/console-v2-rouge.jpg" alt="" width="1205" height="880"><img class="teinte" src="images/console-v2-violet.jpg" alt="" width="1205" height="880">   <!-- les autres couleurs, même cadrage : fondu l'une après l'autre -->
       <canvas id="demoEcran" width="320" height="240" aria-hidden="true"></canvas>
       <div class="kit" aria-hidden="true" hidden>   <!-- en pause (KIT = 0) ; avant la console : le montage pas à pas (photos prises du même point de vue) -->
         <img src="images/montage-1.jpg" alt="" width="960" height="701"><img src="images/montage-2.jpg" alt="" width="960" height="701"><img src="images/montage-3.jpg" alt="" width="960" height="701"><img src="images/montage-4.jpg" alt="" width="960" height="701"><img src="images/montage-5.jpg" alt="" width="960" height="701">

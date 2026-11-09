@@ -306,12 +306,20 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .occupe .cosmo{display:none;flex-basis:100%;max-width:200px;margin:0 auto;image-rendering:pixelated}.occupe.ia .cosmo{display:block}   /* le cosmonaute de la console, pendant que l'IA travaille */
 @media (prefers-reduced-motion:reduce){.occupe .rond{animation-duration:3s}}
 #scMettre:disabled{opacity:.45;cursor:default;filter:grayscale(1)}   /* déjà sur la console : grisé jusqu'au prochain programme */
-#scHist{margin-top:14px}
-#scHist .q{font-style:normal;background:var(--acc);color:var(--onacc);border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:85%;margin:6px 0 6px auto;width:fit-content}   /* ma demande : bulle à droite, comme un agent IA */
+#vueScript .agent{display:flex;flex-direction:column;height:calc(100vh - 150px);min-height:520px}   /* agent classique : l'historique défile au-dessus du champ, collé en bas */
+#scHist{flex:1;min-height:0;max-height:none;margin:6px 0 0;padding-right:4px}
+#scHist .q{font-style:normal;background:var(--acc);color:var(--onacc);border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:85%;margin:0 0 0 auto;width:fit-content}   /* ma demande : bulle à droite */
+#scHist .q.auto{background:none;color:var(--mute);font-size:13px;padding:0}
+#scHist .it{max-width:92%;margin-right:auto;cursor:default}#scHist .it>*{display:block!important}#scHist .it .n::before{content:none}   /* la réponse de l'IA : bulle à gauche, jamais condensée */
+#scHist .vide{margin:auto;text-align:center}
+.code-carte{background:var(--panel2);border-radius:12px;padding:8px;border-left:4px solid var(--acc)}
+.code-tete{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:14px}.code-tete .sec{padding:2px 8px}
+#vueScript .agent .compris{margin-top:8px}
+.agent-ligne{margin-top:8px}
 #vueScript .console{align-items:stretch}
 .sc-console img{max-width:240px}
 .code-titre{margin:16px 0 6px;font-size:15px}
-.code{position:relative;height:420px;border-radius:12px;background:#0d1117;overflow:hidden}   /* éditeur : fond sombre dans les deux thèmes */
+.code{position:relative;height:380px;border-radius:12px;background:#0d1117;overflow:hidden}   /* éditeur : fond sombre dans les deux thèmes */
 .code pre,.code textarea{position:absolute;inset:0;margin:0;padding:12px;border:0;border-radius:0;font:12px/1.5 var(--mono);white-space:pre;overflow:auto;tab-size:4;box-sizing:border-box;width:100%;height:100%;min-height:0;max-width:none;background:none}
 .code pre{color:#c9d1d9;pointer-events:none;overflow:hidden;scrollbar-gutter:stable}
 .code pre,.code textarea{padding-left:50px}
@@ -519,11 +527,11 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
-<main id="accueil" data-version="1.11">
+<main id="accueil" data-version="1.12">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
-    <h2 class="sh-titre glitch" data-text="La console que tu assembles,&#10;des jeux que tu inventes">La console que tu assembles,<br>des jeux que tu inventes</h2>
+    <h2 class="sh-titre glitch" data-text="La console que tu assembles,&#10;les jeux que tu inventes.">La console que tu assembles,<br>les jeux que tu inventes.</h2>
   </div>
   <figure class="sh-photo">
     <div id="demoConsole" class="sh-console demo-console">   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->
@@ -712,7 +720,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== COMMUNAUTÉ : créations, classement, joueurs ===== -->
-<main id="commu" class="commu hide" data-version="1.0">
+<main id="commu" class="commu hide" data-version="1.1">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Communauté · jeux, parties, classement</p>
     <h2 class="sh-titre">Ici tu crées,<br>tu partages, tu découvres.</h2>
@@ -738,7 +746,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section class="c-class"><h2>🏆 Classement des jeux</h2><div id="classement" class="liste"></div></section>
   <section class="c-new"><h2>🆕 Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
   <section><h2>🔥 Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
-  <section><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu : chacun y ajoute un niveau signé de son pseudo.</p><div id="commun" class="liste"></div></section>
+  <section id="communSec"><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu de plateforme, celui de la première console : on grimpe jusqu'au drapeau. Chacun y ajoute un niveau signé de son pseudo. Prends un niveau (ou pars de zéro dans Créer), change-le à ta façon et ajoute-le à la suite.</p><div id="jcMsg" class="envoi" style="margin:0 0 8px"></div><div id="commun" class="liste"></div></section>
   <section class="c-defi">
     <h2>🎯 Le défi : explorer toute la console</h2>
     <p style="margin:0 0 4px">Soyons honnêtes : un ESP32-C3 à 3 € ne vaut pas une Switch. Ni même une PS Vita. Ni même la calculette de ta sœur. 🤏 Sauras-tu en atteindre les limites pour autant ?</p>
@@ -1762,21 +1770,29 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.7">
+<main id="vueScript" class="hide" data-version="1.8">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
-  <section class="agent">                        <!-- l'agent IA : la demande en haut, l'historique (demandes et réponses) dessous -->
+  <section class="agent">                        <!-- l'agent IA, comme un agent classique : l'historique monte, le champ reste en bas -->
     <button class="sec theme" title="Mode sombre / mode clair">🌙</button>
     <h2>Agent IA <span class="ref" style="margin-left:6px">tu décris, l'IA écrit le programme</span></h2>
-    <div class="agent-ligne">                    <!-- le prompt, ses deux boutons empilés à droite -->
-      <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:110px;font-size:17px"></textarea>
-      <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button></div>
+    <div id="scHist" class="hist"><p class="vide">Ce que tu demandes, ce que l'IA a fait et ce que la console en dit apparaîtront ici.</p></div>
+    <div id="scCodeCarte" class="code-carte hide">  <!-- le code : seulement si on le demande, il s'affiche dans l'historique (rendre() le remet en dernier) -->
+      <div class="code-tete"><b>&lt;/&gt; Code du programme</b><button id="scCodeFermer" class="sec" title="Cacher le code">✕</button></div>
+      <div class="code">                         <!-- colorisé : on tape dans le textarea transparent, la couleur vient du pre dessous -->
+        <pre id="scCouleur" aria-hidden="true"></pre>
+        <pre id="scNum" aria-hidden="true"></pre>
+        <textarea id="scCode" spellcheck="false" placeholder="Pas encore de programme : demande quelque chose à l'IA."></textarea>
+      </div>
     </div>
     <div id="scCompris" class="compris">Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».</div>
-    <div id="scHist" class="hist"><p class="vide">Ce que tu demandes, ce que l'IA a fait et ce que la console en dit apparaîtront ici.</p></div>
+    <div class="agent-ligne">                    <!-- le champ, en bas ; ses boutons empilés à droite -->
+      <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:76px;font-size:17px"></textarea>
+      <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button><button id="scVoirCode" class="sec">&lt;/&gt; Voir le code</button></div>
+    </div>
   </section>
   <section class="console">
     <h2>Ma console</h2>
@@ -1794,7 +1810,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <div class="sc-actions">                     <!-- par ordre d'importance : envoyer, publier, puis effacer (discret) -->
       <button id="scMettre" class="big" disabled>📟 Envoyer sur la console</button>
-      <button id="scPublier" class="sec">📢 Publier</button>
+      <button id="scPublier" class="sec">📢 Publier</button><button id="scCommun" class="sec" title="Ton niveau part à la suite du jeu commun, signé de ton pseudo">🧱 Ajouter au jeu commun</button>
       <button id="scZero" class="sec" title="Efface ce jeu, son programme et tes essais (pas celui gardé dans la console)">🗑 Supprimer ce jeu</button>
     </div>
     <div id="scPartage"></div>
@@ -1804,11 +1820,6 @@ body{overflow-x:clip}                                           /* la bande 100v
       Elle devient du pixel art 16 couleurs pour la console. Dis ensuite à l'IA à quoi elle sert : « l'image 1 est mon héros ».</div>
     <div id="scImgs" class="sc-imgs"></div>
     <div id="scJauge" class="sc-jauge" title="La place des images dans la console"><span></span></div>
-    <div class="code">                           <!-- toujours visible et colorisé : on tape dans le textarea transparent, la couleur vient du pre dessous -->
-      <pre id="scCouleur" aria-hidden="true"></pre>
-      <pre id="scNum" aria-hidden="true"></pre>
-      <textarea id="scCode" spellcheck="false" placeholder="Pas encore de programme : demande quelque chose à l'IA."></textarea>
-    </div>
     <pre id="scJournal" class="hide"></pre>
   </section>
   <div id="scOccupe" class="occupe hide" role="status" aria-live="polite"><canvas class="cosmo" width="200" height="130" aria-hidden="true"></canvas><span class="rond"></span><b></b><small></small><button id="scAnnuler" class="sec hide">✋ Annuler</button><ol></ol></div><div class="voile"></div>   <!-- ce que fait la page en ce moment (IA, envoi, vérification) -->
@@ -3012,13 +3023,32 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
     c.fillStyle = '#fff'; c.font = 'bold 14px monospace'; c.fillText('TOUR ' + (1 + Math.floor(a / (2 * Math.PI)) % 3) + '/3', 8, 18);
     if (nl < 15) { c.fillStyle = '#0b0d14'; c.fillRect(0, nl * 16, 320, 240 - nl * 16); }
   }
+  function quiz(nl, t, e) {                             // 4e demande : quiz chrono, le curseur hésite puis valide ; deux questions
+    const Q = [['7 × 8 = ?', ['54', '56', '48', '64'], 1, [0, 2, 1]], ['Quel nombre suit ?  2 4 8 16', ['18', '24', '32', '20'], 2, [1, 3, 2]]];
+    const qi = e < 2900 ? 0 : 1, q = Q[qi], te = e - qi * 2900;
+    const [txt, rep, bon, chemin] = q, sel = chemin[Math.min(2, Math.floor(te / 550))], valide = te > 1700;
+    c.fillStyle = '#1b1240'; c.fillRect(0, 0, 320, 240);
+    c.fillStyle = '#fff'; c.font = 'bold 14px monospace'; c.fillText('QUESTION ' + (qi + 1) + '/2', 8, 18);
+    c.fillText('SCORE ' + (qi + (valide ? 1 : 0)), 228, 18);
+    c.fillStyle = '#3a2a7a'; c.fillRect(8, 26, 304, 6); c.fillStyle = te > 1300 && !valide ? '#ff5a5a' : '#ffd400'; c.fillRect(8, 26, 304 * Math.max(0, 1 - te / 2000), 6);   // le chrono
+    c.fillStyle = '#fff'; c.font = 'bold 18px monospace'; c.textAlign = 'center'; c.fillText(txt, 160, 72);
+    rep.forEach((r, i) => {
+      const X = 16 + (i % 2) * 150, Y = 96 + (i >> 1) * 64, ok = valide && i === bon;
+      c.fillStyle = ok ? '#3ddc84' : ['#e8322b', '#2f6fe0', '#ff8a1f', '#8b5cf6'][i]; c.fillRect(X, Y, 138, 52);
+      if (i === sel && !valide || ok) { c.strokeStyle = '#fff'; c.lineWidth = 4; c.strokeRect(X - 2, Y - 2, 142, 56); }
+      c.fillStyle = '#fff'; c.font = 'bold 22px monospace'; c.fillText(ok ? '✓ ' + r : r, X + 69, Y + 34);
+    });
+    c.textAlign = 'left';
+    if (valide && te < 2500) { c.fillStyle = '#ffd400'; c.font = 'bold 16px monospace'; c.fillText('+1 BRAVO !', 112 + Math.sin(t / 80) * 3, 236); }
+    if (nl < 15) { c.fillStyle = '#0b0d14'; c.fillRect(0, nl * 16, 320, 240 - nl * 16); }
+  }
   function etoileDemo(x, y) { c.fillStyle = '#ffd400'; c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 2.5 : 6, a = -Math.PI / 2 + i * Math.PI / 5; c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } c.fill(); }
   function eteint(t, pense) {                           // écran noir ; pendant que « l'IA réfléchit », trois points
     c.fillStyle = '#0b0d14'; c.fillRect(0, 0, 320, 240);
     if (pense) { c.fillStyle = '#3ddc84'; for (let i = 0; i < 3; i++) if ((t / 250 | 0) % 4 > i) c.fillRect(140 + i * 16, 116, 8, 8); }
   }
   // déroulé (ms) de chaque demande : on tape (45 ms par lettre), l'IA réfléchit, le jeu s'allume ligne à ligne, on joue un moment, puis la demande suivante
-  const DEMOS = [[TEXTE, niveau], ['Un jeu où tu dois faire grandir un animal', animal], ['Une course de voitures vue du dessus, qui dérape dans les virages', course]].map(([txt, dessin]) => {
+  const DEMOS = [[TEXTE, niveau], ['Un jeu où tu dois faire grandir un animal', animal], ['Une course de voitures vue du dessus, qui dérape dans les virages', course], ['Un quiz pour tester mon cerveau, avec un chrono et des points', quiz]].map(([txt, dessin]) => {
     const tape = txt.length * 45; return { txt, dessin, tape, pense: tape + 500, allume: tape + 1600, joue: tape + 2300, fin: tape + 7300 };
   });
   const FIN = DEMOS.reduce((s, d) => s + d.fin, 0);
@@ -3119,11 +3149,10 @@ async function rafraichir() {
   const chauds = enLigne.filter(n => n.stats.semaine).sort((a, b) => b.stats.semaine - a.stats.semaine).slice(0, 6);
   tendance.innerHTML = chauds.map((n, i) => ligneRang(n, '🔥', `${n.stats.semaine} partie${n.stats.semaine > 1 ? 's' : ''} cette semaine`, chauds[0].stats.semaine, n.stats.semaine)).join('')
     || vide('Rien cette semaine : joue un niveau pour le faire monter !');
-  const niv = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree);
+  const niv = jcNiveaux();
   accNivCommun.textContent = niv.length;                 // accueil : le jeu commun en bref
-  accSignes.textContent = [...new Set(niv.slice().reverse().map(n => n.pseudo))].slice(0, 4).join(', ') || 'personne encore : sois le premier !';
-  commun.innerHTML = niv.map((n, i) => ligneRang(n, i + 1, n.stats.parties ? `record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'jamais fini')).join('')
-    || vide('Le jeu commun est vide : ajoute le premier niveau !');
+  accSignes.textContent = [...new Set(niv.filter(n => !n.base).reverse().map(n => n.pseudo))].slice(0, 4).join(', ') || 'personne encore : sois le premier !';
+  rendreCommun();
   rendreIdees(c.idees);
   rendreDefi(jeux);
 }
@@ -3263,6 +3292,45 @@ document.addEventListener('click', async e => {         // signaler un jeu : 2 j
 document.addEventListener('click', e => {
   const id = e.target.dataset?.id; if (!id) return;
   const n = enLigne.find(n => n.id === id); if (n) jouerNiveau(n);
+});
+// ---------- Jeu commun : la plateforme de la première console (jeu-commun.be), un niveau par joueur ; « Prendre » le copie dans Créer sans quitter la page ----------
+// niveaux 0 à 9 dessinés à la main pour la console (../c3-tft-meatboy/hand_levels.txt) : la base du jeu commun, signée Brique
+const JC_BASE = [
+  ["....................","....................","....................","....................","....................","....................","....................","..........G.........","........#####.......","....................","....................","....................",".S..................","####R...............","#####..............."],
+  ["....................","....................","....................","....................","....................","................G...","..............#####.","....................","....................","...*......*.........","..###...............",".........##R##......","....................","....................","....................",".S..................","####R...............","#####..............."],
+  ["....................","....................","....................","....................","....................","..............G.....","............#####...","....................","....................",".........*......*...","...............###..","........##R##.......","....................","....................","....................",".S..................","####R...............","#####..............."],
+  ["....................","....................","....................","....................","....................","...........G........",".........#####......","....................","....................","........*......*....",".......###..........","..............##R##.","....................","....................","..........*.........","....................",".........##R##......","....................","....................","....................",".S..................","####R...............","#####..............."],
+  ["....................","....................","....................","....................","....................","..........G.........","........#####.......","....................","....................",".............*...*..","..........W.....##^.","............##R##...","....................","....................",".........*..........","....................","........##R##.......","....................","....................","....................",".S..................","####R...............","#####..............."],
+  ["....................","....................","....................","....................","....................","......G.............","....#####...........","....................","....................","..........*.........","....................",".........##R##......","....................","....................","........*......*....",".......##^.W........","..............##R##.","....................","....................","..........*.........","....................",".........##R##......","....................","....................","....................",".S..................","####R...............","#####..............."],
+  ["....................","....................","....................","....................","....................","......G.............","....#####...........","....................","....................",".........*..........","....................","........##R##.......","....................","....................",".............*...*..","..........W.....##^.","............##R##...","....................","....................",".........*..........","....................","........##R##.......","....................","....................","....................",".S..................","####R...............","#####..............."],
+  ["....................","....................","....................",".........G..........","....................","......*.............","....................","....................",".........R..........","....................","....................","....................","...R................","....................","...........*........","....................","........R...........","....................","....................","....................","....................","..............R.....","....................","............*.......","....................","....................",".........R..........","....................","....................","....................",".S..................","####R###############","####################"],
+  ["....................","....................","....................","...............G....","....................","....................","....................","...............R....","....................","............*.......","....................",".........R..........","....................","....................","....................","...R................","....................","......*.............","....................",".........R..........","....................","....................","....................","................R...","....................",".............*......","....................","..........R.........","....................","....................",".S..................","####R###############","####################"],
+  ["....................","....................","....................","....................","....................","................G...","..............#####.","....................","....................","..........*.........","....................",".........##R##......","....................","....................",".....*..............","....................","....##R##...........","....................","....................","...*......*.........","..##^...............",".........##R##......","....................","....................","...............*....","...........W........","..............##R##.","....................","....................","..........*.........","....................",".........##R##......","....................","....................","....................",".S..................","####R...............","#####..............."]];
+const jcMoteur = fetch('jeu-commun.be').then(r => r.ok ? r.text() : Promise.reject());
+const jcNiv = rows => 'var NIV = [\n' + rows.map(r => JSON.stringify(r)).join(',\n') + ']\n';
+function jcRows(n) {                                     // la grille d'un niveau commun, quel que soit son format (Berry, fiche, générateur)
+  if (n.niv.script) { const m = /var NIV = \[([\s\S]*?)\]/.exec(n.niv.script); return m ? JSON.parse('[' + m[1] + ']') : null; }
+  const v = n.niv.fiche ? Fiche.apercu(n.niv) : n.niv;
+  return v.params?.jeu === 'plateforme' || !v.params?.jeu ? v.rows : null;   // casse-briques, iso... ne vont pas dans la plateforme
+}
+const jcBase = () => JC_BASE.map((rows, i) => ({ id: 'base' + i, titre: 'Niveau ' + (i + 1), pseudo: 'Brique', code: '', base: true, niv: { rows }, stats: { parties: 0 } }));
+const jcNiveaux = () => [...jcBase(), ...enLigne.filter(n => n.commun && jcRows(n)).sort((a, b) => a.cree - b.cree)];
+function rendreCommun() {
+  const pris = lire('brique-pris') || [];
+  commun.innerHTML = jcNiveaux().map((n, i) => `<div class="rang"><span class="pos">${i + 1}</span><img class="mini jc-vig" src="${vignette(jcRows(n))}" alt="">
+    <div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div>
+    <small>${n.base ? 'niveau d\'origine de la console' : n.stats.parties ? `record ${(n.stats.record.t / 1000).toFixed(1)} s par ${esc(n.stats.record.pseudo)}` : 'jamais fini'}</small></div>
+    ${pris.includes(n.id) ? '<button class="jouer" disabled>✓ Pris</button>' : `<button class="jouer" data-prendre="${n.id}">📥 Prendre</button>`}</div>`).join('');
+}
+document.addEventListener('click', async e => {
+  const id = e.target.dataset?.prendre; if (!id) return;
+  const n = jcNiveaux().find(n => n.id === id); if (!n) return;
+  try {
+    const script = n.niv.script || (await jcMoteur).replace(/var NIV = \[[\s\S]*?\]\n/, jcNiv(jcRows(n)));
+    ouvrirScript({ ...n, niv: { ...n.niv, script } }, true);
+    ecrire('brique-pris', [...(lire('brique-pris') || []), id]); rendreCommun();
+    jcMsg.innerHTML = `<span style="color:var(--ok)">✓ « ${esc(n.titre)} » de ${esc(n.pseudo)} est dans <a href="#" onclick="afficher('creer');return false" style="color:var(--acc)">Créer</a> : choisis-le dans « Mon jeu », change-le à ta façon, puis « 🧱 Ajouter au jeu commun ».</span>`;
+  } catch { jcMsg.innerHTML = '<span style="color:var(--ko)">Le jeu commun ne se charge pas (serveur Brique éteint ?).</span>'; }
 });
 
 // ---------- Espace animateur : connexion par lien mail, groupes, modération ----------
@@ -3731,12 +3799,19 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   }
   function rendre() {
     majMettre();
-    if (!etat.essais.length) { scHist.innerHTML = '<p class="vide">Ce que tu demandes, ce que l\'IA a fait et ce que la console en dit apparaîtront ici.</p>'; return; }
-    scHist.innerHTML = etat.essais.map((e, i) => `<div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
-      <span class="n">Version v${i + 1}${i + 1 === etat.surConsole ? ' · 📟 sur la console' : ''}${e.date ? ' · ' + new Date(e.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span><div class="q">« ${esc(e.demande)} »</div>
+    scHist.innerHTML = !etat.essais.length ? '<p class="vide">Ce que tu demandes, ce que l\'IA a fait et ce que la console en dit apparaîtront ici.</p>'
+      : etat.essais.map((e, i) => `<div class="q${e.auto || e.demande.startsWith('(') ? ' auto' : ''}">${esc(e.demande)}</div><div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
+      <span class="n">Version v${i + 1}${i + 1 === etat.surConsole ? ' · 📟 sur la console' : ''}${e.date ? ' · ' + new Date(e.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span>
       ${e.explication ? `<div class="r">🤖 ${esc(e.explication)}</div>` : ''}${e.astuce ? `<div class="r">💡 ${esc(e.astuce)}</div>` : ''}${e.limite ? `<div class="r">⚠️ ${esc(e.limite)}</div>` : ''}${e.question ? `<div class="r">❓ ${esc(e.question)}</div>` : ''}
-      ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`).reverse().join('');
+      ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`).join('');   // dans l'ordre : le plus récent en bas, juste au-dessus du champ
+    scHist.append(scCodeCarte); scHist.scrollTop = scHist.scrollHeight;   // le code (s'il est demandé) suit le dernier message
   }
+  function voirCode(oui) {                               // l'onglet code n'apparaît que si on le demande (bouton ou « montre le code »)
+    scCodeCarte.classList.toggle('hide', !oui); scVoirCode.textContent = oui ? 'Cacher le code' : '</> Voir le code';
+    if (oui) { colorer(); scHist.scrollTop = scHist.scrollHeight; }
+  }
+  scVoirCode.onclick = () => voirCode(scCodeCarte.classList.contains('hide'));
+  scCodeFermer.onclick = () => voirCode(false);
   rendre();
   let port = null, lecteur = null, attente = null, versionVue = null, errEnCours = null, statVue = null, versionNum = 0;
   const pause = ms => new Promise(r => setTimeout(r, ms));
@@ -3898,20 +3973,22 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     etat = chantiers.liste[chantiers.cur = Math.min(chantiers.cur, chantiers.liste.length - 1)]; scCode.value = etat.script; choisir(chantiers.cur);
   };
   const partage = (t, code) => scPartage.innerHTML = `<div class="partage">${t} · code <span class="code">${esc(code)}</span><br><small>Tes copains le récupèrent sur Brique avec ce code (Communauté), puis le mettent sur leur console.</small></div>`;
-  scPublier.onclick = async () => {                      // publier : seulement un programme qui tourne sur la console sans erreur
+  const publierScript = async commun => {                // publier (ou ajouter au jeu commun) : seulement un programme qui tourne sur la console sans erreur
     if (!EN_LIGNE) return dire('Hors ligne : la publication a besoin du serveur Brique.', false);
     if (!moi) { dlgRejoindre.showModal(); return dire('Crée d\'abord ton compte (un pseudo suffit).', false); }
     if (!etat.script || etat.erreur || etat.surConsole !== etat.essais.length) return dire('Mets ton jeu sur la console et vérifie qu\'il tourne sans erreur avant de le publier.', false);
-    const titre = prompt('Le nom de ton jeu ?', etat.titre || etat.nom || ''); if (titre === null) return;
+    const titre = prompt(commun ? 'Le nom de ton niveau ?' : 'Le nom de ton jeu ?', etat.titre || etat.nom || ''); if (titre === null) return;
     try {
-      const { code, attente } = await api('api/niveaux', { ...ident(), titre, script: etat.script, images: (etat.images || []).map(({ nom, l, h, n, pal, px }) => ({ nom, l, h, n, pal, px })) });
-      etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » est publié, signé ${esc(pseudo())}${attente ? `<br>⏳ ${esc(attente)}` : ''}`, code); rafraichir();
+      const { code, attente } = await api('api/niveaux', { ...ident(), titre, commun, script: etat.script, images: (etat.images || []).map(({ nom, l, h, n, pal, px }) => ({ nom, l, h, n, pal, px })) });
+      etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » ${commun ? 'est ajouté au jeu commun' : 'est publié'}, signé ${esc(pseudo())}${attente ? `<br>⏳ ${esc(attente)}` : ''}`, code); rafraichir();
     } catch (e) { dire(e.message, false); }
   };
-  ouvrirScript = n => {                                  // le jeu d'un copain : un nouveau chantier à côté des tiens, puis part sur la console
+  scPublier.onclick = () => publierScript(false);
+  scCommun.onclick = () => etat.script.includes('var NIV = [') ? publierScript(true) : dire('Le jeu commun est une plateforme : prends un niveau dans Communauté › Le jeu commun, puis change-le.', false);
+  ouvrirScript = (n, rester) => {                        // rester : pris depuis le jeu commun, on reste dans la Communauté                                  // le jeu d'un copain : un nouveau chantier à côté des tiens, puis part sur la console
     nouveau(n.titre || 'Jeu de ' + n.pseudo, { script: n.niv.script, images: structuredClone(n.niv.images || []).map(m => ({ ...m, taille: m.l === 160 && m.h === 120 ? 'fond' : Math.max(m.l, m.h) })), essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo} (code ${n.code})`, console: '', date: Date.now() }], erreur: '' });
     partage(`« ${esc(n.titre)} » de ${esc(n.pseudo)}`, n.code);
-    afficher('creer'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!rester) { afficher('creer'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   };
   scMettre.onclick = async () => {                       // envoie le programme affiché (de l'IA ou modifié à la main) ; pas encore de console : ce clic ouvre le choix du port
     if (!port && !(await auto())) {
@@ -4001,7 +4078,7 @@ vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('an
 accVoirCommu.onclick = () => afficher('commu');
 accVoirDefi.onclick = accBlagueDefi.onclick = () => { afficher('commu'); document.querySelector('.c-defi').scrollIntoView(); };
 accAjouter.onclick = () => afficher('creer'); accCommun.onclick = () => ctaCommun.onclick();
-ctaCommun.onclick = () => { const n = enLigne.filter(n => n.commun).sort((a, b) => a.cree - b.cree)[0]; n ? jouerNiveau(n) : afficher('creer'); };
+ctaCommun.onclick = () => { afficher('commu'); rendreCommun(); communSec.scrollIntoView({ behavior: 'smooth' }); };   // la liste des niveaux, sans quitter la page
 document.querySelector('.pied').onclick = e => {      // pied de page : mêmes vues que le menu
   const a = e.target.closest('a[data-vue],a[data-clic]'); if (!a) return;
   if (a.dataset.clic) return document.getElementById(a.dataset.clic).click();

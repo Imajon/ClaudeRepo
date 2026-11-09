@@ -433,6 +433,16 @@ body{overflow-x:clip}                                           /* la bande 100v
 .sh-panier .sh-h,.sh-donnees .sh-h{text-align:center}
 .sh-etape{margin:16px 0;padding:16px;border-radius:16px;background:var(--soft)}
 .sh-etape .aide{margin:6px 0 10px}
+.cmd-etapes{display:flex;gap:6px;list-style:none;padding:0;margin:0 0 8px;scroll-margin-top:130px}
+.cmd-etapes li{flex:1;text-align:center;padding:8px 4px;border-bottom:3px solid var(--line);color:var(--mute);font-size:14px}
+.cmd-etapes li.on{border-color:var(--acc);color:var(--txt);font-weight:700}
+.cmd-recap .rang{margin-top:6px}
+.cmd-recap .sh-btn{margin-top:14px}
+.cmd-total{font-size:18px;font-weight:700;background:none!important}
+.cmd-qte{display:inline-flex;align-items:center;gap:4px}
+.cmd-qte button{width:28px;height:28px;border:1px solid var(--line);border-radius:50%;background:var(--panel);color:var(--txt);cursor:pointer}
+.cmd-inclus{color:var(--ok);font-weight:600}
+.cmd-suite{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line);color:var(--mute)}
 #mrZone:not(:empty){margin-top:12px;background:#fff;border-radius:12px;overflow:hidden}
 .sh-btn:disabled{opacity:.4;cursor:default}
 .sh-colonnes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 24px}
@@ -866,18 +876,24 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== PANIER : compte, point relais, paiement ===== -->
-<main id="vuePanier" class="shop hide" data-version="1.0">
+<main id="vuePanier" class="shop hide" data-version="1.1">
   <div id="panierBloc" class="sh-bloc sh-panier">
     <h3 class="sh-h">Mon panier.</h3>
-    <div id="panierLignes"></div>
-    <div class="sh-etape"><b>1. Mon compte</b>
+    <ol id="cmdEtapes" class="cmd-etapes"><li class="on">1. Panier</li><li>2. Livraison</li><li>3. Paiement</li></ol>
+    <div class="sh-etape cmd-recap"><b>Récapitulatif</b>
+      <div id="panierLignes"></div>
+      <p id="panierSuite" class="cmd-suite">Prochaine étape : <b>la livraison</b> (compte et point relais), ensuite <b>le paiement</b>.</p>
+      <button id="cmdValider" class="sh-btn">Passer à la livraison</button>
+    </div>
+    <div id="cmdSuite" class="hide">
+    <div class="sh-etape"><b>2. Livraison · mon compte</b>
       <div id="cliConnexion">
         <p class="aide">Pas de mot de passe : vous recevez un lien de connexion par mail. Nous ne gardons pas votre adresse.</p>
         <div class="icRow"><input id="cliMail" class="pseudo" type="email" autocomplete="email" placeholder="votre.adresse@exemple.fr"><button id="cliLienBtn" class="sec">📧 Recevoir mon lien</button></div>
       </div>
       <p id="cliConnecte" class="aide hide">✅ Connecté · <a href="#" id="cliSortir">se déconnecter</a> · <a href="#" id="cliSupprimer">supprimer mon compte</a></p>
     </div>
-    <div class="sh-etape"><b>2. Mon point relais</b>
+    <div class="sh-etape"><b>2. Livraison · mon point relais</b>
       <p id="relaisChoisi" class="aide">Livraison uniquement en point relais Mondial Relay (4,90 €).</p>
       <button id="relaisBtn" class="sec">📍 Choisir mon point relais</button>
       <div id="mrZone"></div><input id="mrRetour" type="hidden">
@@ -885,6 +901,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div class="sh-etape"><b>3. Paiement</b>
       <p class="aide">Sur la page sécurisée de Stripe : vous y donnez votre carte, le nom pour retirer le colis et un téléphone pour l'avis d'arrivée. Rien de tout cela ne passe par notre serveur.</p>
       <button id="cmdPayer" class="sh-btn" disabled>Payer</button>
+    </div>
     </div>
     <p id="cmdMsg" class="envoi"></p>
     <div id="mesCommandes"></div>
@@ -3356,16 +3373,24 @@ btQte.oninput = majBoutique; majBoutique();
 btVersions.onclick = e => { const b = e.target.closest('[data-v]'); if (!b) return; version = b.dataset.v; btVersions.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); majBoutique(); };
 document.querySelectorAll('.sh-pm').forEach(b => b.onclick = () => { btQte.value = Math.max(1, (parseInt(btQte.value) || 1) + +b.dataset.d); majBoutique(); });
 // ---------- Panier -> compte (lien mail) -> point relais -> paiement Stripe ----------
-let panier = { kit: +lire('brique-panier')?.kit || 0, presoude: +lire('brique-panier')?.presoude || 0 }, relais = null, client = lire('brique-client');
+let panier = { kit: +lire('brique-panier')?.kit || 0, presoude: +lire('brique-panier')?.presoude || 0 }, relais = null, client = lire('brique-client'), suite = false;   // suite : panier validé, on passe livraison puis paiement
 function majPanier() {
   ecrire('brique-panier', panier);
   panierNb.textContent = (panier.kit + panier.presoude) || '';
   const n = panier.kit + panier.presoude, pu = n && PALIERS.find(([m]) => n >= m)[1];
   const lignes = [['kit', 'kit à souder', pu], ['presoude', 'pré-soudée', pu + PRESOUDE_SUPPLEMENT]].filter(([k]) => panier[k]);
-  panierLignes.innerHTML = n ? lignes.map(([k, nom, p]) => `<div class="rang"><div class="qui"><b>${panier[k]} × console ${nom}</b> <small>${prix(p)} pièce</small></div>
+  const sousTotal = lignes.reduce((s, [k, , p]) => s + panier[k] * p, 0), total = n ? sousTotal + PORT_RELAIS : 0;
+  panierLignes.innerHTML = n ? lignes.map(([k, nom, p]) => `<div class="rang"><div class="qui"><b>Console ${nom}</b><br><small>${prix(p)} pièce</small></div>
+    <span class="cmd-qte"><button data-k="${k}" data-d="-1" aria-label="Une de moins">−</button><b>${panier[k]}</b><button data-k="${k}" data-d="1" aria-label="Une de plus">+</button></span>
     <span>${prix(panier[k] * p)}</span><button class="jouer" data-retirer="${k}" aria-label="Retirer">🗑</button></div>`).join('')
-    + `<div class="rang"><div class="qui">Livraison en point relais</div><span>${prix(PORT_RELAIS)}</span></div>` : '<p class="vide">Votre panier est vide.</p>';
-  const total = n ? lignes.reduce((s, [k, , p]) => s + panier[k] * p, 0) + PORT_RELAIS : 0;
+    + `<div class="rang"><div class="qui"><b>Accès à l'interface Brique pendant 3 mois</b><br><small>La console peut aussi se programmer sans l'interface, avec n'importe quelle IA.</small></div><span class="cmd-inclus">Inclus</span></div>
+    <div class="rang"><div class="qui">Sous-total (${n} console${n > 1 ? 's' : ''})</div><span>${prix(sousTotal)}</span></div>
+    <div class="rang"><div class="qui">Livraison en point relais</div><span>${prix(PORT_RELAIS)}</span></div>
+    <div class="rang cmd-total"><div class="qui">Total TTC</div><span>${prix(total)}</span></div>` : '<p class="vide">Votre panier est vide.</p>';
+  if (!n) suite = false;
+  panierSuite.classList.toggle('hide', !n || suite); cmdValider.classList.toggle('hide', !n || suite); cmdSuite.classList.toggle('hide', !suite);
+  const etape = !suite ? 0 : client && relais ? 2 : 1;
+  cmdEtapes.querySelectorAll('li').forEach((li, i) => li.classList.toggle('on', i === etape));
   cliConnexion.classList.toggle('hide', !!client); cliConnecte.classList.toggle('hide', !client);
   relaisChoisi.innerHTML = relais ? `📍 <b>${esc(relais.nom)}</b>, ${esc(relais.cp)} ${esc(relais.ville)} (n° ${esc(relais.id)})` : 'Livraison uniquement en point relais Mondial Relay (4,90 €).';
   cmdPayer.textContent = n ? `Payer ${prix(total)}` : 'Payer';
@@ -3373,10 +3398,15 @@ function majPanier() {
 }
 const cmdDire = (t, ok) => cmdMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
 btCommander.onclick = () => {
-  const { n } = majBoutique(); panier[version] = Math.min(999, panier[version] + n); majPanier();
+  const { n } = majBoutique(); panier[version] = Math.min(999, panier[version] + n); suite = false; majPanier();
   afficher('panier');
 };
-panierLignes.onclick = e => { const k = e.target.dataset.retirer; if (k) { panier[k] = 0; majPanier(); } };
+panierLignes.onclick = e => {
+  const { retirer, k, d } = e.target.dataset;
+  if (retirer) panier[retirer] = 0; else if (k) panier[k] = Math.max(0, Math.min(999, panier[k] + +d)); else return;
+  majPanier();
+};
+cmdValider.onclick = () => { suite = true; majPanier(); cmdEtapes.scrollIntoView({ behavior: 'smooth' }); };
 cliLienBtn.onclick = async () => {
   try { await api('api/client/lien', { email: cliMail.value }); cmdDire('📧 Lien envoyé ! Ouvrez-le depuis ce navigateur pour garder votre panier.', true); }
   catch (e) { cmdDire(e.message); }
@@ -3416,7 +3446,7 @@ async function retourBoutique() {                       // arrivée depuis le li
   const p = new URLSearchParams(location.search), jeton = p.get('client'), paye = p.get('paye');
   if (!jeton && !paye && !p.has('boutique')) return false;
   history.replaceState(null, '', location.pathname);
-  afficher('panier');
+  afficher('panier'); suite = true;
   try {
     if (jeton) { client = (await api('api/client/connexion', { jeton })).session; ecrire('brique-client', client); cmdDire('✅ Connecté : choisissez votre point relais.', true); }
     if (paye && client) {

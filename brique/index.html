@@ -2947,18 +2947,42 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
       }
     }));
   }
-  function course(nl, t) {                              // 2e demande : une course vue du dessus, la voiture dérape dans les virages (allumée ligne à ligne comme le niveau)
-    c.fillStyle = '#2f8f3a'; c.fillRect(0, 0, 320, 240);
-    const pos = a => [160 + 118 * Math.cos(a), 122 + 78 * Math.sin(a)];
-    c.strokeStyle = '#4a4f5c'; c.lineWidth = 46; c.beginPath(); c.ellipse(160, 122, 118, 78, 0, 0, 2 * Math.PI); c.stroke();
-    c.strokeStyle = '#f2f2f2'; c.lineWidth = 2; c.setLineDash([8, 8]); c.beginPath(); c.ellipse(160, 122, 118, 78, 0, 0, 2 * Math.PI); c.stroke(); c.setLineDash([]);
-    for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? '#111' : '#fff'; c.fillRect(272 + (i % 2) * 6, 100 + i * 7.6, 6, 7.6); c.fillStyle = i % 2 ? '#fff' : '#111'; c.fillRect(272 + (1 - i % 2) * 6, 100 + i * 7.6, 6, 7.6); }   // ligne d'arrivée en damier
-    const a = t / 700, voiture = (b, col, derape) => {
-      const [x, y] = pos(b), [x2, y2] = pos(b + .01), cap = Math.atan2(y2 - y, x2 - x) + derape;
-      c.save(); c.translate(x, y); c.rotate(cap); c.fillStyle = col; c.fillRect(-9, -5, 18, 10); c.fillStyle = '#9fd8ff'; c.fillRect(1, -4, 4, 8); c.fillStyle = '#111'; c.fillRect(-7, -6, 4, 2); c.fillRect(-7, 4, 4, 2); c.fillRect(4, -6, 4, 2); c.fillRect(4, 4, 4, 2); c.restore();
+  function animal(nl, t, e) {                           // 2e demande : l'œuf tremble, éclot, le poussin sort et grandit (e : ms depuis l'allumage)
+    c.fillStyle = '#7ec8f0'; c.fillRect(0, 0, 320, 240); c.fillStyle = '#3a7d3a'; c.fillRect(0, 196, 320, 44); c.fillStyle = '#4fa34f'; c.fillRect(0, 196, 320, 6);
+    const ec = Math.max(0, (e - 2200) / 2800), s = Math.min(1, ec) * 1.6 + .6;   // éclosion à 2,2 s, puis croissance
+    c.fillStyle = '#fff'; c.font = 'bold 14px monospace'; c.fillText('TAILLE', 8, 18); c.strokeStyle = '#fff'; c.lineWidth = 2; c.strokeRect(70, 7, 100, 12);
+    c.fillStyle = '#ffd23f'; c.fillRect(72, 9, 96 * Math.min(1, ec), 8);
+    const coquille = (haut, dx, dy, rot) => {           // une moitié d'œuf, découpée en zigzag
+      c.save(); c.translate(160 + dx, 168 + dy); c.rotate(rot); c.beginPath(); c.moveTo(-34, haut ? -60 : 40);
+      for (let i = 0; i <= 8; i++) c.lineTo(-34 + i * 8.5, i % 2 ? -8 : 0); c.lineTo(34, haut ? -60 : 40); c.closePath(); c.clip();
+      c.fillStyle = '#fff4e0'; c.strokeStyle = '#c9b48a'; c.lineWidth = 3; c.beginPath(); c.ellipse(0, -4, 22, 28, 0, 0, 7); c.fill(); c.stroke(); c.restore();
     };
-    c.fillStyle = 'rgba(20,20,24,.55)'; for (let k = 1; k < 40; k++) { const [x, y] = pos(a - k * .02); c.fillRect(x - 1 + Math.sin(a - k * .02) * 3, y - 1, 2, 2); }   // traces de dérapage
-    voiture(a - .9, '#ff8a1f', 0); voiture(a, '#e8322b', .25 + .2 * Math.abs(Math.sin(a * 2)));
+    if (e < 2200) { const w = e > 600 ? Math.sin(e / 70) * .15 : 0; c.save(); c.translate(160, 196); c.rotate(w); c.translate(-160, -196); coquille(true, 0, 0, 0); coquille(false, 0, 0, 0); c.restore(); }
+    else {
+      const v = Math.min(1, (e - 2200) / 600);         // le haut de la coquille s'envole
+      c.save(); c.translate(160, 196); c.scale(s, s);  // le poussin, pieds au sol
+      c.fillStyle = '#ff8c1a'; c.fillRect(-8, -4, 4, 4); c.fillRect(4, -4, 4, 4);
+      c.fillStyle = '#ffd23f'; c.beginPath(); c.ellipse(0, -20, 18, 17, 0, 0, 7); c.fill(); c.beginPath(); c.arc(6, -42, 12, 0, 7); c.fill();
+      c.fillStyle = '#f2b800'; c.beginPath(); c.ellipse(-6, -20, 9, 6 + Math.sin(t / 120) * 2, 0, 0, 7); c.fill();
+      c.fillStyle = '#222'; c.fillRect(9, -46, 3, 3); c.fillStyle = '#ff8c1a'; c.beginPath(); c.moveTo(17, -43); c.lineTo(25, -40); c.lineTo(17, -37); c.fill(); c.restore();
+      if (v < 1) { c.globalAlpha = 1 - v; coquille(true, -30 * v, -80 * v, -v); c.globalAlpha = 1; }
+      if (ec < .3) coquille(false, 0, 0, 0);
+    }
+    if (nl < 15) { c.fillStyle = '#0b0d14'; c.fillRect(0, nl * 16, 320, 240 - nl * 16); }
+  }
+  function course(nl, t) {                              // 3e demande : façon jeu drift, vue du dessus, piste à bords lumineux, la voiture glisse dans les virages
+    c.fillStyle = '#0e0e18'; c.fillRect(0, 0, 320, 240);
+    const pos = a => [160 + 118 * Math.cos(a), 122 + 78 * Math.sin(a)];
+    c.strokeStyle = '#50e6ff'; c.lineWidth = 2; c.beginPath(); c.ellipse(160, 122, 145, 104, 0, 0, 7); c.stroke(); c.beginPath(); c.ellipse(160, 122, 92, 52, 0, 0, 7); c.stroke();
+    c.fillStyle = '#eee'; for (let i = 0; i < 6; i++) if (i % 2 === 0) c.fillRect(256, 112 + i * 8, 50, 2);   // ligne d'arrivée
+    const a = t / 700, voiture = (b, col, derape) => {  // triangle comme dans le jeu drift
+      const [x, y] = pos(b), [x2, y2] = pos(b + .01), cap = Math.atan2(y2 - y, x2 - x) + derape;
+      c.save(); c.translate(x, y); c.rotate(cap); c.fillStyle = col; c.beginPath(); c.moveTo(13, 0); c.lineTo(-9, -8); c.lineTo(-9, 8); c.fill(); c.restore();
+    };
+    c.fillStyle = '#3c3a4c'; for (let k = 1; k < 40; k++) { const [x, y] = pos(a - k * .02); c.fillRect(x - 1 + Math.sin(a - k * .02) * 3, y - 1, 3, 3); }   // traces de dérapage
+    const d = .3 + .25 * Math.abs(Math.sin(a * 2));
+    if (d > .5) { c.fillStyle = '#ffdc78'; const [x, y] = pos(a); for (let k = 0; k < 3; k++) c.fillRect(x + Math.sin(t / 40 + k * 2) * 12, y + Math.cos(t / 50 + k * 3) * 12, 3, 3); }   // étincelles
+    voiture(a - .9, '#ff8a1f', .2); voiture(a, '#fff', d);
     c.fillStyle = '#fff'; c.font = 'bold 14px monospace'; c.fillText('TOUR ' + (1 + Math.floor(a / (2 * Math.PI)) % 3) + '/3', 8, 18);
     if (nl < 15) { c.fillStyle = '#0b0d14'; c.fillRect(0, nl * 16, 320, 240 - nl * 16); }
   }
@@ -2968,7 +2992,7 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
     if (pense) { c.fillStyle = '#3ddc84'; for (let i = 0; i < 3; i++) if ((t / 250 | 0) % 4 > i) c.fillRect(140 + i * 16, 116, 8, 8); }
   }
   // déroulé (ms) de chaque demande : on tape (45 ms par lettre), l'IA réfléchit, le jeu s'allume ligne à ligne, on joue un moment, puis la demande suivante
-  const DEMOS = [[TEXTE, niveau], ['Une course de voitures vue du dessus, qui dérape dans les virages', course]].map(([txt, dessin]) => {
+  const DEMOS = [[TEXTE, niveau], ['Un jeu où tu dois faire grandir un animal', animal], ['Une course de voitures vue du dessus, qui dérape dans les virages', course]].map(([txt, dessin]) => {
     const tape = txt.length * 45; return { txt, dessin, tape, pense: tape + 500, allume: tape + 1600, joue: tape + 2300, fin: tape + 7300 };
   });
   const FIN = DEMOS.reduce((s, d) => s + d.fin, 0);
@@ -2989,24 +3013,22 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
     const n = Math.min(d.txt.length, Math.floor(t / 45));
     if (n !== dernier || demoTxt.dataset.i != i) { demoTxt.textContent = d.txt.slice(0, n); dernier = n; demoTxt.dataset.i = i; demoTxt.parentElement.setAttribute('aria-label', d.txt); }
     if (t < d.pense) eteint(t, false); else if (t < d.allume) eteint(t, true);
-    else d.dessin(t < d.joue ? Math.ceil(15 * (t - d.allume) / 700) : 15, now);
+    else d.dessin(t < d.joue ? Math.ceil(15 * (t - d.allume) / 700) : 15, now, t - d.allume);
   }
   requestAnimationFrame(image);
 })();
-// accueil, étape 3 : la phrase se tape, trois consoles arrivent et jouent au même drift (chacune voit sa voiture en grand)
+// accueil, étape 3 : la phrase se tape, trois consoles arrivent et jouent la même course (chacune voit son joueur en grand)
 (() => {
   const box = document.querySelector('.multi-demo'), cvs = [...box.querySelectorAll('canvas')], TXT = 'Fais ton propre jeu multijoueur local';
   const COUL = ['#e8322b', '#2f6fe0', '#ffd400'], VIT = [1, .92, .85];   // un joueur par console
-  function course(c, moi, p) {                          // le jeu drift vu du dessus : piste ovale, les voitures dérapent dans les virages, traces au sol
-    const g = c.getContext('2d'); g.fillStyle = '#0e0e18'; g.fillRect(0, 0, 80, 60);
-    g.strokeStyle = '#50e6ff'; g.lineWidth = 1; g.beginPath(); g.ellipse(40, 30, 37, 27, 0, 0, 7); g.moveTo(59, 30); g.ellipse(40, 30, 19, 10, 0, 0, 7); g.stroke();
-    g.fillStyle = '#eee'; for (let k = 0; k < 4; k++) g.fillRect(40 + (k % 2), 41 + k * 4, 1, 3);   // ligne d'arrivée
-    const pos = a => [40 + 28 * Math.cos(a), 30 + 18.5 * Math.sin(a)];
+  const sol = [[0, 52, 80], [18, 40, 12], [44, 32, 12], [62, 42, 14]];   // [x, y, largeur] : le sol et trois plateformes (écran de 80 x 60)
+  function course(c, moi, p) {                          // p : 0 -> 1 au fil de la course ; arrivée à droite
+    const g = c.getContext('2d'); g.fillStyle = '#2f6fe0'; g.fillRect(0, 0, 80, 60);
+    g.fillStyle = '#ff7ab8'; sol.forEach(([x, y, w]) => g.fillRect(x, y, w, y === 52 ? 8 : 3));
+    g.fillStyle = '#eee'; g.fillRect(74, 40, 1, 12); g.fillStyle = '#4ade80'; g.fillRect(75, 40, 4, 3);
     COUL.forEach((col, i) => {
-      const a = Math.PI / 2 - i * .25 + p * VIT[i] * 7.5;
-      g.fillStyle = '#3c3a4c'; for (let k = 1; k < 7; k++) { const [tx, ty] = pos(a - k * .12); g.fillRect(tx, ty, 1, 1); }   // traces de dérapage
-      const [x, y] = pos(a), cap = Math.atan2(18.5 * Math.cos(a), -28 * Math.sin(a)) + .5, L = i === moi ? 4 : 2.6, hx = Math.cos(cap), hy = Math.sin(cap);
-      g.fillStyle = col; g.beginPath(); g.moveTo(x + hx * L * 1.5, y + hy * L * 1.5); g.lineTo(x - hx * L - hy * L, y - hy * L + hx * L); g.lineTo(x - hx * L + hy * L, y - hy * L - hx * L); g.fill();
+      const x = 2 + Math.min(1, p * VIT[i] * 1.15) * 68, saut = Math.abs(Math.sin((x + i * 7) / 6)) * 7, t = i === moi ? 5 : 3;
+      g.fillStyle = col; g.fillRect(x, 52 - t - saut, t, t);
     });
   }
   const calme = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3031,20 +3053,6 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
     ['un monde de bonbons plein d’étoiles', { theme: 'bonbon', hauteur: 44, seed: 5, forme: 'iles', etoiles: 8 }],
     ['l’espace, avec des puits à escalader', { theme: 'espace', hauteur: 52, seed: 3, forme: 'puits' }],
   ].map(([t, p]) => [t, vignette(generer({ ...structuredClone(DEFAUT), ...p })), THEMES[p.theme].ciel]);
-  // 2e exemple : pas un niveau, une vignette animée (l'œuf tremble, s'ouvre, le poussin sort et grandit)
-  const R = 'dur="4s" repeatCount="indefinite"', COQ = 'fill="#fff4e0" stroke="#c9b48a" stroke-width="1.5"';
-  DEMANDES.splice(1, 0, ['un jeu où tu dois faire grandir un animal', 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 144">
-<clipPath id="b"><polygon points="0,144 0,110 24,106 27,110 30,106 33,110 36,106 39,110 64,108 64,144"/></clipPath>
-<clipPath id="h"><polygon points="0,0 64,0 64,108 39,110 36,106 33,110 30,106 27,110 24,106 0,110"/></clipPath>
-<rect y="124" width="64" height="20" fill="#3a7d3a"/>
-<g transform="translate(32 124)" opacity="0"><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.25;.3;1" ${R}/>
-<g><animateTransform attributeName="transform" type="scale" values=".5;.5;.8;1.6;1.6" keyTimes="0;.25;.35;.85;1" ${R}/>
-<ellipse cy="-9" rx="9" ry="9" fill="#ffd23f"/><ellipse cx="-3" cy="-9" rx="5" ry="3.5" fill="#f2b800"/><circle cx="3" cy="-20" r="6" fill="#ffd23f"/>
-<circle cx="5" cy="-21" r="1.2" fill="#222"/><polygon points="8,-20 12,-18.5 8,-17" fill="#ff8c1a"/></g></g>
-<g><animateTransform attributeName="transform" type="rotate" values="0 32 124;-8 32 124;8 32 124;-8 32 124;0 32 124;0 32 124" keyTimes="0;.06;.12;.18;.24;1" ${R}/>
-<g><animateTransform attributeName="transform" type="translate" values="0 0;0 0;-6 -30;-6 -30" keyTimes="0;.25;.4;1" ${R}/><animate attributeName="opacity" values="1;1;0;0" keyTimes="0;.25;.4;1" ${R}/>
-<ellipse cx="32" cy="110" rx="11" ry="14" ${COQ} clip-path="url(#h)"/></g>
-<ellipse cx="32" cy="110" rx="11" ry="14" ${COQ} clip-path="url(#b)"/></g></svg>`), ['#7ec8f0', '#d8f0ff']]);
   const montrer = ([, src, ciel]) => { iaDemo.src = src; iaDemo.style.background = `linear-gradient(${ciel[0]},${ciel[1]})`; };
   montrer(DEMANDES[0]);
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;

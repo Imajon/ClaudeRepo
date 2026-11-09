@@ -3959,6 +3959,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   }
   scGo.onclick = async () => {
     const texte = scDemande.value.trim(); if (!texte) return scDemande.focus();
+    if (texte.length < 50 && /\b(montre|affiche|voir|vois|ouvre|donne)\b.*\b(code|programme)\b/i.test(texte)) { scDemande.value = ''; return voirCode(true); }   // « montre-moi le code » : pas besoin de l'IA
     garderMain();                                        // l'IA part du programme affiché, modifications à la main comprises
     seance = []; const tic = setInterval(majSeance, 250);   // les secondes défilent
     try { if (await ecrireJeu(texte)) await corriger(); } finally { clearInterval(tic); seance = null; occupe(); }

@@ -164,6 +164,14 @@ html{scroll-behavior:smooth}
 @media (max-width:800px){.bande{grid-template-columns:repeat(3,minmax(0,1fr))}.bande .actifs{grid-column:1/-1}.tuile{padding:10px}.tuile>b{font-size:26px}.tuile>span{font-size:11px;letter-spacing:0}}
 header nav.mode{max-width:100%;overflow-x:auto;border-radius:4px;padding:2px;box-shadow:none}   /* menu du haut : fin, presque carré, sans contour */
 header nav.mode button{padding:5px 12px;border-radius:3px}   /* téléphone : le menu défile au lieu d'élargir la page */
+#burger{display:none;order:5;border:1px solid var(--line);background:none;color:var(--txt);border-radius:6px;padding:4px 10px;font-size:22px;line-height:1;cursor:pointer}
+@media (max-width:1100px){                                         /* téléphone, tablette : le menu se range derrière ☰ */
+  #burger{display:block}
+  header nav.mode{display:none;order:6;flex-basis:100%;flex-direction:column;overflow:visible}
+  header.ouvert nav.mode{display:flex}
+  header nav.mode button{text-align:left;padding:10px 12px}
+  #vAccueil::after{content:" · Accueil";font-weight:400}
+}
 .tuile{padding:12px 16px;border-radius:12px;background:var(--soft);box-shadow:var(--glow);min-width:0}
 .tuile>b{display:block;font:700 34px/1.1 var(--mono);color:var(--acc2);text-shadow:var(--brille)}
 .tuile>span{font:12px var(--mono);color:var(--mute);text-transform:uppercase;letter-spacing:1px}
@@ -492,7 +500,8 @@ body{overflow-x:clip}                                           /* la bande 100v
 <body>
 <header>
   <h1>BRI<span>QUE</span></h1>
-  <nav class="mode">
+  <button id="burger" aria-label="Menu" aria-expanded="false" onclick="this.setAttribute('aria-expanded',this.parentNode.classList.toggle('ouvert'))">☰</button>
+  <nav class="mode" onclick="if(event.target.closest('button')){this.parentNode.classList.remove('ouvert');burger.setAttribute('aria-expanded',false)}">
     <button id="vAccueil" class="on" title="Accueil" style="font-weight:900">B</button>
     <button id="vBoutique">🛒 Boutique</button>
     <button id="vCommu">🏆 Communauté</button>

@@ -66,7 +66,9 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .commu .c-stats,.commu .c-hero{grid-column:1/-1}
 .commu .c-class,.commu .c-new{grid-column:span 6}.commu .c-defi{grid-column:1/-1}           /* classement et nouveaux niveaux : même taille, même hauteur, se replient ensemble */
 .commu .c-class .liste,.commu .c-new .cartes{max-height:520px;overflow:auto}
-@media (max-width:1000px){.commu>section,.commu .c-class,.commu .c-new{grid-column:1/-1}}
+.commu #communSec{grid-column:span 8}.commu #communSec .liste{max-height:640px;overflow:auto}   /* le jeu commun : une grande place */
+.jc-vig{width:28px;height:54px;object-fit:cover;object-position:bottom;background:#283460;border-radius:4px}
+@media (max-width:1000px){.commu>section,.commu .c-class,.commu .c-new,.commu #communSec{grid-column:1/-1}}
 .commu .c-intro{grid-column:1/-1}
 .intro-titre{margin:6px 0 16px;font-size:clamp(26px,4vw,40px);font-weight:800;line-height:1.1}
 .etapes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;position:relative}
@@ -3024,7 +3026,7 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
     if (nl < 15) { c.fillStyle = '#0b0d14'; c.fillRect(0, nl * 16, 320, 240 - nl * 16); }
   }
   function quiz(nl, t, e) {                             // 4e demande : quiz chrono, le curseur hésite puis valide ; deux questions
-    const Q = [['7 × 8 = ?', ['54', '56', '48', '64'], 1, [0, 2, 1]], ['Quel nombre suit ?  2 4 8 16', ['18', '24', '32', '20'], 2, [1, 3, 2]]];
+    const Q = [['7 × 8 = ?', ['54', '56', '48', '64'], 1, [0, 2, 1]], ['Suite : 2 4 8 16 ?', ['18', '24', '32', '20'], 2, [1, 3, 2]]];
     const qi = e < 2900 ? 0 : 1, q = Q[qi], te = e - qi * 2900;
     const [txt, rep, bon, chemin] = q, sel = chemin[Math.min(2, Math.floor(te / 550))], valide = te > 1700;
     c.fillStyle = '#1b1240'; c.fillRect(0, 0, 320, 240);
@@ -3799,12 +3801,13 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   }
   function rendre() {
     majMettre();
+    const carte = scCodeCarte; carte.remove();             // sinon innerHTML l'efface avec scCode dedans
     scHist.innerHTML = !etat.essais.length ? '<p class="vide">Ce que tu demandes, ce que l\'IA a fait et ce que la console en dit apparaîtront ici.</p>'
       : etat.essais.map((e, i) => `<div class="q${e.auto || e.demande.startsWith('(') ? ' auto' : ''}">${esc(e.demande)}</div><div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
       <span class="n">Version v${i + 1}${i + 1 === etat.surConsole ? ' · 📟 sur la console' : ''}${e.date ? ' · ' + new Date(e.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span>
       ${e.explication ? `<div class="r">🤖 ${esc(e.explication)}</div>` : ''}${e.astuce ? `<div class="r">💡 ${esc(e.astuce)}</div>` : ''}${e.limite ? `<div class="r">⚠️ ${esc(e.limite)}</div>` : ''}${e.question ? `<div class="r">❓ ${esc(e.question)}</div>` : ''}
       ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`).join('');   // dans l'ordre : le plus récent en bas, juste au-dessus du champ
-    scHist.append(scCodeCarte); scHist.scrollTop = scHist.scrollHeight;   // le code (s'il est demandé) suit le dernier message
+    scHist.append(carte); scHist.scrollTop = scHist.scrollHeight;   // le code (s'il est demandé) suit le dernier message
   }
   function voirCode(oui) {                               // l'onglet code n'apparaît que si on le demande (bouton ou « montre le code »)
     scCodeCarte.classList.toggle('hide', !oui); scVoirCode.textContent = oui ? 'Cacher le code' : '</> Voir le code';
@@ -3987,8 +3990,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   scPublier.onclick = () => publierScript(false);
   scCommun.onclick = () => etat.script.includes('var NIV = [') ? publierScript(true) : dire('Le jeu commun est une plateforme : prends un niveau dans Communauté › Le jeu commun, puis change-le.', false);
   ouvrirScript = (n, rester) => {                        // rester : pris depuis le jeu commun, on reste dans la Communauté                                  // le jeu d'un copain : un nouveau chantier à côté des tiens, puis part sur la console
-    nouveau(n.titre || 'Jeu de ' + n.pseudo, { script: n.niv.script, images: structuredClone(n.niv.images || []).map(m => ({ ...m, taille: m.l === 160 && m.h === 120 ? 'fond' : Math.max(m.l, m.h) })), essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo} (code ${n.code})`, console: '', date: Date.now() }], erreur: '' });
-    partage(`« ${esc(n.titre)} » de ${esc(n.pseudo)}`, n.code);
+    nouveau(n.titre || 'Jeu de ' + n.pseudo, { script: n.niv.script, images: structuredClone(n.niv.images || []).map(m => ({ ...m, taille: m.l === 160 && m.h === 120 ? 'fond' : Math.max(m.l, m.h) })), essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo}${n.code ? ` (code ${n.code})` : ""}`, console: '', date: Date.now() }], erreur: '' });
+    if (n.code) partage(`« ${esc(n.titre)} » de ${esc(n.pseudo)}`, n.code);
     if (!rester) { afficher('creer'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   };
   scMettre.onclick = async () => {                       // envoie le programme affiché (de l'IA ou modifié à la main) ; pas encore de console : ce clic ouvre le choix du port

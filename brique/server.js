@@ -833,6 +833,7 @@ const serveur = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': fwb[1].endsWith('.json') ? 'application/json' : 'application/octet-stream', 'Cache-Control': 'no-cache' });
     return fs.createReadStream(path.join(__dirname, 'firmware-berry', fwb[1])).pipe(res);
   }
+  if (req.method === 'GET' && url === '/jeu-commun.be') { res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'jeu-commun.be')).pipe(res); }   // le jeu commun (plateforme de la premiere console), sans niveau
   if (req.method === 'GET' && url === '/fiche.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'fiche.js')).pipe(res); }
   const fw = req.method === 'GET' && url.match(/^\/firmware\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);
   if (fw) {                                             // mise a jour des consoles (esp-web-tools) : fichiers deposes par publier-firmware-brique.bat
@@ -1097,7 +1098,7 @@ const serveur = http.createServer(async (req, res) => {
       const images = imagesValides(b.images); if (!images) return repondre(res, 400, { erreur: 'images invalides ou trop lourdes' });
       const g = db.groupes.find(g => g.code === j.groupe);
       const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), code: codeJeu(), pseudo: j.pseudo, groupe: j.groupe, prive: !!g?.prive,
-                  titre, commun: false, cree: Date.now(), niv: { format: 'berry', script: b.script, ...(images.length ? { images } : {}) } };
+                  titre, commun: !!b.commun, cree: Date.now(), niv: { format: 'berry', script: b.script, ...(images.length ? { images } : {}) } };
       // images perso : groupe en mode atelier -> en ligne dans le groupe (l'animateur peut masquer) ; groupe ouvert -> l'animateur valide d'abord ;
       // hors groupe -> l'IA regarde les images, et au moindre doute l'admin du site valide
       if (images.length && g && !g.prive) { n.attente = 'animateur'; n.raison = 'images perso'; }

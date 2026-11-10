@@ -435,12 +435,6 @@ body{overflow-x:clip}                                           /* la bande 100v
 .acc-classe{color:var(--mute);font-size:16px}.acc-classe b{color:var(--acc2)}
 .sh-bloc{padding:56px 0;border-top:1px solid var(--soft)}
 .sh-h{margin:0 0 28px;font-size:clamp(26px,4.5vw,40px);color:var(--txt);font-weight:700;letter-spacing:-.01em}
-.sh-paliers{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
-.sh-paliers div{padding:22px 10px;border-radius:18px;background:var(--soft);transition:.2s}
-.sh-paliers div.on{background:var(--line);outline:1px solid var(--acc)}
-.sh-paliers b{display:block;font-size:30px;font-weight:700}
-.sh-paliers span{display:block;color:var(--mute);font-size:14px;margin-top:4px}
-.sh-paliers i{display:block;font-style:normal;color:var(--ok);font-size:13px;margin-top:6px;min-height:1em}
 .sh-qte{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--soft)}
 .sh-qte input{width:80px;text-align:center;background:none;border:0;color:var(--txt);font:600 24px system-ui;-moz-appearance:textfield}
 .sh-qte input::-webkit-inner-spin-button{-webkit-appearance:none}
@@ -772,7 +766,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
-<main id="boutique" class="shop hide" data-version="1.3">
+<main id="boutique" class="shop hide" data-version="1.4">
   <div class="sh-hero">
     <h2 class="sh-titre">Un kit simple, à deux,<br>ou un support pédagogique clé en main.</h2>
   </div>
@@ -804,11 +798,6 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p id="btDetail" class="sh-detail"></p>
       <button id="btCommander" class="sh-btn">Ajouter au panier</button>
     </div>
-  </div>
-
-  <div class="sh-bloc">
-    <h3 class="sh-h">Plus vous êtes, moins c'est cher.</h3>
-    <div id="paliers" class="sh-paliers"></div>
   </div>
 
   <div class="sh-bloc">                          <!-- acheter = faire grandir un lieu, pas seulement un produit -->
@@ -3130,7 +3119,7 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 async function rafraichir() {
   let c;
   try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); if (!EN_LIGNE) { EN_LIGNE = true; majTokens(); } }
-  catch { EN_LIGNE = false; [vCommu, vAnim, moiBox, accCommu, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'commu' || vue === 'anim') afficher('accueil'); return; }   // GitHub Pages / fichier : pas de communauté
+  catch { EN_LIGNE = false; [vAnim, moiBox, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'anim') afficher('accueil'); return; }   // serveur injoignable (Render endormi, fichier) : la Communauté reste, vide
   enLigne = c.niveaux; modeAtelier(c.atelier);
   if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant : la tranche d'âge choisie par son animateur
   nJeux.textContent = accJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = accAujourdhui.textContent = c.chiffres.aujourdhui;
@@ -3443,7 +3432,6 @@ accPrix1.textContent = prix(PALIERS.at(-1)[1]);   // accueil : même grille que 
 function majBoutique() {
   const n = Math.max(1, Math.min(999, parseInt(btQte.value) || 1)), pu = prixUnitaire(n);
   const max = PALIERS.at(-1)[1] + sup();
-  paliers.innerHTML = [...PALIERS].map(([min, p]) => [min, p + sup()]).reverse().map(([min, p], i, a) => `<div class="${p === pu ? 'on' : ''}"><b>${prix(min * p)}</b><span>${min} console${min > 1 ? 's' : ''}${a[i + 1] ? '' : ' et +'}</span><i>${p < max ? `−${Math.round((1 - p / max) * 100)} %` : ''}</i></div>`).join('');
   btTotal.textContent = prix(n * pu);
   btDetail.textContent = `${n} × ${prix(pu)} (${version === 'presoude' ? 'pré-soudée' : 'kit à souder'})` + (pu < max ? ` · ${prix(n * (max - pu))} d'économie` : '');
   return { n, pu };

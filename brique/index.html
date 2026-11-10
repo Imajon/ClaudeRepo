@@ -202,6 +202,7 @@ header .compte{margin:0 0 0 auto;width:auto}header .compte summary{color:var(--t
 .sc-console{display:flex;align-items:center;gap:16px}
 .sc-console img{flex:1;min-width:0;max-width:560px;height:auto}
 .sc-cote{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}.sc-cote .sec{width:100%}.sc-cote .envoi{margin:0}#scBrancher.connecte{border-color:var(--ok);color:var(--ok);font-weight:700}
+.sc-cote #scBrancher{width:70%;align-self:flex-start;font-size:.85em;padding:3px 8px;display:flex;align-items:center;justify-content:center;gap:6px}#scBrancher .prises{width:3.2em;height:1.35em;flex:none}
 @media (max-width:600px){.sc-console{flex-direction:column;align-items:stretch}}
 #vPanier b{margin-left:6px;padding:0 7px;border-radius:999px;background:var(--acc);color:#fff;font-size:12px}#vPanier b:empty{display:none}
 .sh-ajout{text-align:center;margin-top:18px}
@@ -1768,7 +1769,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.8">
+<main id="vueScript" class="hide" data-version="1.10">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Créer mon compte</button></span>
@@ -1797,7 +1798,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div class="sc-console">                     <!-- à droite de la console : connexion, son log, puis l'installation du firmware -->
       <img src="images/console-face.png" alt="La console Brique" width="1105" height="763">
       <div class="sc-cote">
-        <button id="scBrancher" class="sec">🔌 Connecter ma console</button>
+        <button id="scBrancher" class="sec"><svg class="prises" viewBox="0 0 48 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 10h5"/><rect x="6" y="4" width="9" height="12" rx="2"/><path d="M15 7h4M15 13h4"/><rect x="29" y="4" width="9" height="12" rx="2"/><path d="M38 10h9"/></g></svg> Connecter ma console</button>
         <div id="scEtat" class="envoi">Console pas connectée. C'est elle qui fait tourner ton jeu.</div>
         <esp-web-install-button id="scInstallBtn" manifest="firmware-berry/manifest.json">
           <button slot="activate" class="sec" title="Une fois suffit, environ 1 minute (Chrome ou Edge sur ordinateur, câble USB branché). La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la.">⬇ Installer la dernière version du firmware</button>
@@ -3858,7 +3859,9 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   }
   async function ecrire(octets) { const w = port.writable.getWriter(); try { await w.write(octets); } finally { w.releaseLock(); } }
   async function fermer() { const p = port; port = null; try { await lecteur?.cancel(); } catch {} try { await p?.close(); } catch {} dire('Console pas connectée.'); brancheTxt(false); }
-  const brancheTxt = ok => { scBrancher.textContent = ok ? '✓ Console connectée' : '🔌 Connecter ma console'; scBrancher.classList.toggle('connecte', ok); };   // le bouton laisse place à l'état
+  // deux prises : écartées = pas connectée, emboîtées = connectée
+  const prises = ok => `<svg class="prises" viewBox="0 0 48 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 10h5"/><rect x="6" y="4" width="9" height="12" rx="2"/><path d="M15 7h${ok ? 7 : 4}M15 13h${ok ? 7 : 4}"/><rect x="${ok ? 22 : 29}" y="4" width="9" height="12" rx="2"/><path d="M${ok ? 31 : 38} 10h${ok ? 16 : 9}"/></g></svg>`;
+  const brancheTxt = ok => { scBrancher.innerHTML = prises(ok) + (ok ? ' Console connectée' : ' Connecter ma console'); scBrancher.classList.toggle('connecte', ok); };   // le bouton laisse place à l'état
   async function relier(p) {                             // ouvre le port, demande la version ; true = console avec le moteur de jeu
     occupe('🔌 Je cherche ta console…');
     try { return await relier0(p); } finally { occupe(); }

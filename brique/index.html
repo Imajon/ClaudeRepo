@@ -315,7 +315,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 @media (prefers-reduced-motion:reduce){.occupe .rond{animation-duration:3s}}
 #scMettre:disabled{opacity:.45;cursor:default;filter:grayscale(1)}   /* déjà sur la console : grisé jusqu'au prochain programme */
 #vueScript .agent{display:flex;flex-direction:column;height:calc(100vh - 150px);min-height:520px}   /* agent classique : l'historique défile au-dessus du champ, collé en bas */
-#scHist{flex:1;min-height:0;max-height:none;margin:6px 0 0;padding-right:4px}
+#scHist{flex:1;min-height:0;max-height:none;margin:6px 0 0;padding-right:4px;flex-direction:column-reverse}   /* comme un chat : ancré en bas (le DOM est à l'envers : le plus récent en premier), se lit de bas en haut */
 #scHist .q{font-style:normal;background:var(--acc);color:var(--onacc);border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:85%;margin:0 0 0 auto;width:fit-content}   /* ma demande : bulle à droite */
 #scHist .q.auto{background:none;color:var(--mute);font-size:13px;padding:0}
 #scHist .it{max-width:92%;margin-right:auto;cursor:default}#scHist .it>*{display:block!important}#scHist .it .n::before{content:none}   /* la réponse de l'IA : bulle à gauche, jamais condensée */
@@ -530,7 +530,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
-<main id="accueil" data-version="1.12">
+<main id="accueil" data-version="1.13">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -578,9 +578,13 @@ body{overflow-x:clip}                                           /* la bande 100v
   </section>
   <!-- 2. assembler sa console -->
   <section id="assembler" class="chap">
-    <div class="chap-tete"><span class="ref">Assembler sa console</span><h2>Ce sont eux qui soudent.</h2>
+    <div class="chap-tete"><span class="ref">Assembler sa console</span><h2 id="assembler-titre">Ce sont eux qui soudent.</h2>
       <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p></div>
-    <div class="chap-video"><video src="images/kit-video.mp4" poster="images/kit-video.jpg" autoplay muted loop playsinline preload="metadata" width="1280" height="720" aria-label="Le kit Brique : de la plaque nue à la console qui s'allume"></video></div>
+    <div class="chap-video"><video id="assembler-video" src="images/kit-video.mp4" poster="images/kit-video.jpg" autoplay muted playsinline preload="metadata" width="1280" height="720" aria-label="Le kit Brique : de la plaque nue à la console qui s'allume"></video></div>
+    <script>/* deux vidéos à la suite, chacune avec son titre, puis on reboucle */
+    (function(){var v=document.getElementById('assembler-video'),t=document.getElementById('assembler-titre'),i=0,
+      L=[['images/kit-video.mp4','Ce sont eux qui soudent.'],['images/interface3.mp4','Ce sont eux qui font leur jeu.']];
+      v.addEventListener('ended',function(){i=(i+1)%L.length;v.src=L[i][0];t.textContent=L[i][1];v.play().catch(function(){});});})();</script>
   <section class="c-console c-soude">           <!-- en atelier : ce sont les enfants qui soudent -->
     <figure><img src="images/atelier-04.jpg" alt="Un enfant soude, le fer d'une main et l'étain de l'autre" width="800" height="800" loading="lazy">
       <figcaption><b>Le fer d'une main</b>, l'étain de l'autre, la plaque tenue par un support</figcaption></figure>
@@ -3814,15 +3818,15 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
     majMettre();
     const carte = scCodeCarte; carte.remove();             // sinon innerHTML l'efface avec scCode dedans
     scHist.innerHTML = !etat.essais.length ? '<p class="vide">Ce que tu demandes, ce que l\'IA a fait et ce que la console en dit apparaîtront ici.</p>'
-      : etat.essais.map((e, i) => `<div class="q${e.auto || e.demande.startsWith('(') ? ' auto' : ''}">${esc(e.demande)}</div><div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
+      : etat.essais.flatMap((e, i) => [`<div class="q${e.auto || e.demande.startsWith('(') ? ' auto' : ''}">${esc(e.demande)}</div>`, `<div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
       <span class="n">Version v${i + 1}${i + 1 === etat.surConsole ? ' · 📟 sur la console' : ''}${e.date ? ' · ' + new Date(e.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span>
       ${e.explication ? `<div class="r">🤖 ${esc(e.explication)}</div>` : ''}${e.astuce ? `<div class="r">💡 ${esc(e.astuce)}</div>` : ''}${e.limite ? `<div class="r">⚠️ ${esc(e.limite)}</div>` : ''}${e.question ? `<div class="r">❓ ${esc(e.question)}</div>` : ''}
-      ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`).join('');   // dans l'ordre : le plus récent en bas, juste au-dessus du champ
-    scHist.append(carte); scHist.scrollTop = scHist.scrollHeight;   // le code (s'il est demandé) suit le dernier message
+      ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`]).reverse().join('');   // à l'envers dans le DOM, column-reverse le remet : le plus récent en bas, juste au-dessus du champ
+    scHist.prepend(carte); scHist.scrollTop = 0;   // le code (s'il est demandé) suit le dernier message ; en column-reverse, 0 = tout en bas
   }
   function voirCode(oui) {                               // l'onglet code n'apparaît que si on le demande (bouton ou « montre le code »)
     scCodeCarte.classList.toggle('hide', !oui); scVoirCode.textContent = oui ? 'Cacher le code' : '</> Voir le code';
-    if (oui) { colorer(); scHist.scrollTop = scHist.scrollHeight; }
+    if (oui) { colorer(); scHist.scrollTop = 0; }
   }
   scVoirCode.onclick = () => voirCode(scCodeCarte.classList.contains('hide'));
   scCodeFermer.onclick = () => voirCode(false);

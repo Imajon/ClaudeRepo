@@ -110,6 +110,8 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .acc-commu .apropos{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;align-items:center}   /* à propos : la photo à gauche */
 .apropos img{width:100%;height:auto;border-radius:10px;display:block}.apropos>div{display:flex;flex-direction:column;gap:8px}
 @media (max-width:800px){.acc-commu .apropos{grid-template-columns:minmax(0,1fr)}}
+.acc-commu .protos{grid-column:1/-1}.protos-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:10px}   /* à propos : frise des prototypes */
+.protos-g figure{margin:0}.protos-g img{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:8px;display:block}.protos-g figcaption{font-size:.85em;margin-top:4px}.protos-g figcaption b{display:block;color:var(--txt)}
 #partipris.acc-commu{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);align-items:start}   /* parti pris : 3 boutons, et à côté le défi */
 @media (max-width:800px){#partipris.acc-commu{grid-template-columns:minmax(0,1fr)}}
 .acc-blague{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:0 auto 32px;max-width:900px;padding:18px 22px;border:2px dashed var(--acc);border-radius:14px;background:var(--soft);text-align:center}
@@ -644,7 +646,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== À PROPOS : qui fait Brique (bouton « À propos » du menu) ===== -->
-<main id="propos" class="hide" data-version="1.1">
+<main id="propos" class="hide" data-version="1.2">
 <div class="shop"><div class="sh-hero page-hero"><p class="sh-sur">À propos</p><h2 class="sh-titre">Qui fait Brique ?</h2></div></div>
 <div class="commu">
   <section id="apropos" class="acc-commu">
@@ -660,6 +662,24 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p><b style="color:var(--txt)">Le Cercle</b>, c'est un tiers-lieu à Lunery, dans le Cher, à 20 km au sud de Bourges, installé dans l'ancienne cité ouvrière de l'usine de Rosières. Des artistes, des artisans et des créateurs y partagent ateliers, expositions et savoir-faire numérique.</p>
       <p><b style="color:var(--txt)">C'est tout l'enjeu du Cercle</b> : un lieu ouvert à tous, pour apprendre et créer. Acheter une Brique, ce n'est pas juste acheter un produit de plus, c'est participer à faire grandir ce lieu.</p>
       <p>Suivez l'aventure sur Instagram : <a href="https://instagram.com/brique_console" target="_blank" rel="noopener">@brique_console</a></p>
+      </div>
+    </article>
+    <article class="protos">
+      <span class="ref">Les prototypes</span><h3>De la plaque à trous à la console</h3>
+      <p>Trois prototypes en six semaines : le premier le 21 septembre 2026, le troisième terminé le 31 octobre 2026.</p>
+      <div class="protos-g">
+      <figure><img src="images/proto1-260921.jpg" alt="Prototype 1 de Brique, 21 sept. 2026" loading="lazy"><figcaption><b>Proto 1</b>21 sept. 2026</figcaption></figure>
+      <figure><img src="images/proto1b-261006.jpg" alt="Prototype 1 de Brique, 6 oct. 2026" loading="lazy"><figcaption><b>Proto 1B</b>6 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto2-261014.jpg" alt="Prototype 2 de Brique, 14 oct. 2026" loading="lazy"><figcaption><b>Proto 2</b>14 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto2b-261014.jpg" alt="Prototype 2 de Brique, 14 oct. 2026" loading="lazy"><figcaption><b>Proto 2B</b>14 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto2c-261014.jpg" alt="Prototype 2 de Brique, 14 oct. 2026" loading="lazy"><figcaption><b>Proto 2C</b>14 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto2d-261015.jpg" alt="Prototype 2 de Brique, 15 oct. 2026" loading="lazy"><figcaption><b>Proto 2D</b>15 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3-261026.jpg" alt="Prototype 3 de Brique, 26 oct. 2026" loading="lazy"><figcaption><b>Proto 3</b>26 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3b-261026.jpg" alt="Prototype 3 de Brique, 26 oct. 2026" loading="lazy"><figcaption><b>Proto 3B</b>26 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3c-261027.jpg" alt="Prototype 3 de Brique, 27 oct. 2026" loading="lazy"><figcaption><b>Proto 3C</b>27 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3d-261027.jpg" alt="Prototype 3 de Brique, 27 oct. 2026" loading="lazy"><figcaption><b>Proto 3D</b>27 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3e-261029.jpg" alt="Prototype 3 de Brique, 29 oct. 2026" loading="lazy"><figcaption><b>Proto 3E</b>29 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3f-261031.jpg" alt="Prototype 3 de Brique, 31 oct. 2026" loading="lazy"><figcaption><b>Proto 3F</b>31 oct. 2026</figcaption></figure>
       </div>
     </article>
   </section>

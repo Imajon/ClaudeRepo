@@ -1612,6 +1612,13 @@ body{overflow-x:clip}                                           /* la bande 100v
   </details>
 </dialog>
 
+<!-- ===== MESSAGE IMPORTANT (Créer) ===== -->
+<dialog id="dlgAlerte" style="text-align:center">
+  <h2>⚠️</h2>
+  <p id="dlgAlerteTxt" style="font-size:1.15em;line-height:1.4"></p>
+  <form method="dialog" class="actions" style="justify-content:center"><button class="sec" style="border-color:var(--acc)" autofocus>J'ai compris</button></form>
+</dialog>
+
 <main id="atelier" class="hide">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Créer · ton jeu en une phrase</p>
@@ -3830,7 +3837,10 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   rendre();
   let port = null, lecteur = null, attente = null, versionVue = null, errEnCours = null, statVue = null, versionNum = 0;
   const pause = ms => new Promise(r => setTimeout(r, ms));
-  const dire = (t, ok) => scEtat.innerHTML = ok === undefined ? esc(t) : `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
+  const dire = (t, ok) => {
+    scEtat.innerHTML = ok === undefined ? esc(t) : `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
+    if (ok === false && !document.querySelector('dialog[open]:not(#dlgAlerte)')) { dlgAlerteTxt.textContent = t; if (!dlgAlerte.open) dlgAlerte.showModal(); }   // les avertissements s'affichent aussi au centre (sauf si une autre fenêtre est déjà ouverte)
+  };
   const journal = l => { journal.l = [...(journal.l || []), l].slice(-8); scJournal.textContent = journal.l.join('\n'); scJournal.classList.remove('hide'); };
   function ligne(l) {
     if (l.startsWith('STAT')) { statVue?.(l); return; }

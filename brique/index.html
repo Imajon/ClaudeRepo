@@ -2942,7 +2942,7 @@ async function majTokens() {
   if (!EN_LIGNE) return;
   try {
     const q = await api('api/quota', { ...ident(), methode: new URLSearchParams(location.search).get('methode') || undefined }); modeleIA ||= q.modele; majIA?.();
-    tokTxt.innerHTML = barreTok('⚡ aujourd’hui', q.jour) + (q.forfait ? ' ' + barreTok('📦 forfait', q.forfait) + ` <small style="color:var(--mute)">jusqu’au ${new Date(q.forfait.fin).toLocaleDateString('fr-FR')}</small>` : '');
+    tokTxt.innerHTML = !q.jour ? '' : barreTok('⚡ aujourd’hui', q.jour) + (q.forfait ? ' ' + barreTok('📦 forfait', q.forfait) + ` <small style="color:var(--mute)">jusqu’au ${new Date(q.forfait.fin).toLocaleDateString('fr-FR')}</small>` : '');
   } catch {}
 }
 // fenêtre de connexion : onglet « Se connecter » ou « Créer un compte » (pseudo + mot de passe, retenus par le navigateur)

@@ -359,12 +359,15 @@ function clesQuota(req, b) {                             // [cle, max du jour] ;
   return { a, cles: a ? [['a:' + a, QUOTA.animateur]] : [['ip:' + ipDe(req), QUOTA.essai]] };
 }
 const finForfait = j => (j.cree || 0) + FORFAIT.jours * JOUR;
+const QUOTAS_ACTIFS = false;
 function etatQuota(req, b) {                             // ce que la page affiche : tokens du jour, et du forfait pour un joueur
   const { j, cles } = clesQuota(req, b), c = conso(cles[0][0]);
+  if (!QUOTAS_ACTIFS) return {};
   return { jour: { utilise: c.j, max: cles[0][1] }, ...(j ? { forfait: { utilise: c.t, max: FORFAIT.tokens, fin: finForfait(j) } } : {}) };
 }
 function quotaIA(req, b) {                               // -> null si ok, sinon le message a afficher
   const { j, a, cles } = clesQuota(req, b);
+  if (!QUOTAS_ACTIFS) { CONSO.enterWith(cles.map(([k]) => k)); return null; }   // ponytail: quotas coupés pour le moment (on compte quand même)
   if (j && (Date.now() > finForfait(j) || conso(cles[0][0]).t >= FORFAIT.tokens)) return 'Le forfait IA de ta console est terminé : demande à un adulte de le renouveler.';
   if (cles.some(([k, max]) => conso(k).j >= max))
     return j || a ? 'Tu as beaucoup créé aujourd’hui : l’IA se repose, reviens demain !' : 'Les essais du jour sont finis : crée ton compte (bouton « Se connecter » en haut à droite) pour continuer avec l’IA.';

@@ -3446,7 +3446,11 @@ async function rendreAnim(donnees) {
     <p class="aide">L'IA a eu un doute sur leurs images, ou des joueurs les ont signalés. Valider = le jeu part dans la communauté ; masquer = il n'y va pas.</p>
     <div class="liste">${d.aModerer.map(n => `<div class="rang"><div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)} · ${depuis(n.cree)}</small></div><small>${attenteTxt(n)}</small></div>
       ${validerBtn(n)}<button class="jouer" data-masquer="${n.id}" data-etat="1">🚫 Masquer</button></div>`).join('') || '<span class="vide">Rien à vérifier.</span>'}</div></section>` : '';
-  animGroupes.innerHTML = aModerer + d.groupes.map(g => `<section>
+  const q = d.quotas, tk = x => `${kTok(x.t)} <small>(${kTok(x.j)} auj.)</small>`;   // admin : tokens IA par mail ; la ligne QUOTAS⟦…⟧ est relevée par l'Établi
+  const quotas = q ? `<section><h2>⚡ Tokens IA par mail</h2><div class="liste">${q.lignes.map(l => `<div class="rang"><div class="qui"><div><b>${esc(l.email)}</b> <small>${l.groupes} groupe${l.groupes > 1 ? 's' : ''} · ${l.joueurs} joueur${l.joueurs > 1 ? 's' : ''}</small></div>
+    <small>total ${tk(l.total)} · lui ${tk(l.perso)} · groupes ${tk(l.grp)}</small></div></div>`).join('') || '<span class="vide">Aucun mail enregistré.</span>'}</div>
+    <p class="aide">Joueurs sans groupe : ${tk(q.libres)} · essais sans compte : ${tk(q.essais)}</p><p class="aide" style="font-size:9px;word-break:break-all">QUOTAS⟦${esc(JSON.stringify(q))}⟧</p></section>` : '';
+  animGroupes.innerHTML = quotas + aModerer + d.groupes.map(g => `<section>
     <h2><b>${esc(g.nom)}</b></h2>
     <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span> <a href="#" data-nouveaucode="${esc(g.code)}" title="Le code a circulé hors du groupe ? Les enfants déjà inscrits restent, l'ancien code ne marche plus" style="color:var(--mute)">↻ changer le code</a></p>
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
@@ -3470,7 +3474,7 @@ async function rendreAnim(donnees) {
     <div class="liste">${g.niveaux.sort((a, b) => b.cree - a.cree).map(n => `<div class="rang ${n.masque ? 'masque' : ''}"><div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div>
       <small>${depuis(n.cree)} · ${n.parties} partie${n.parties > 1 ? 's' : ''}${n.masque ? ' · masqué' : ''}${attenteTxt(n)}</small></div>
       ${validerBtn(n)}<button class="jouer" data-masquer="${n.id}" data-etat="${n.masque ? 0 : 1}">${n.masque ? '👁 Remontrer' : '🚫 Masquer'}</button></div>`).join('') || '<span class="vide">Aucun niveau pour l\'instant.</span>'}</div>
-  </section>`).join('') || aModerer;
+  </section>`).join('') || quotas + aModerer;
   const enAttente = [...(d.aModerer || []), ...d.groupes.flatMap(g => g.niveaux)].filter(n => n.attente);
   for (const el of animGroupes.querySelectorAll('[data-apercu]')) imgApercus(el, enAttente.find(n => n.id === el.dataset.apercu)?.images, true);
 }

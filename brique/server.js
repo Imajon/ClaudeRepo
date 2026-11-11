@@ -289,9 +289,20 @@ function statsQuestion(id) {
   return { reponses: rs.length, justes: rs.filter(r => r.ok).length };
 }
 const aVerifier = n => ({ id: n.id, titre: n.titre, pseudo: n.pseudo, cree: n.cree, attente: n.attente, raison: n.raison || '', signale: (n.signale || []).length, images: n.niv.images || [] });
+// admin : tokens IA par mail enregistre (l'animateur lui-meme + ses groupes, qui comptent deja leurs joueurs), puis le reste
+function quotasParMail() {
+  const c = k => { const x = db.conso?.[k]; return { t: x?.t || 0, j: x?.jour === aujourdhui() ? x.j : 0 }; }, som = l => l.reduce((s, x) => ({ t: s.t + x.t, j: s.j + x.j }), { t: 0, j: 0 });
+  const lignes = db.animateurs.map(a => {
+    const gs = db.groupes.filter(g => g.email === a.email), perso = c('a:' + a.email), grp = som(gs.map(g => c('g:' + g.code)));
+    return { email: a.email, cree: a.cree, groupes: gs.length, joueurs: db.joueurs.filter(j => gs.some(g => g.code === j.groupe)).length, perso, grp, total: som([perso, grp]) };
+  }).sort((x, y) => y.total.t - x.total.t);
+  const libres = som(db.joueurs.filter(j => !j.groupe).map(j => c('j:' + j.pseudo.toLowerCase())));
+  const essais = som(Object.keys(db.conso || {}).filter(k => k.startsWith('ip:')).map(c));
+  return { lignes, libres, essais, releve: Date.now() };
+}
 function espaceAnimateur(email) {
   const test = (process.env.STRIPE_SECRET_KEY || '').startsWith('sk_test') ? 'test/' : '';
-  return { email, aModerer: ADMINS.includes(email) ? db.niveaux.filter(n => n.attente === 'admin' && !n.masque).map(aVerifier) : undefined,   // createurs hors groupe : l'admin du site verifie
+  return { email, quotas: ADMINS.includes(email) ? quotasParMail() : undefined, aModerer: ADMINS.includes(email) ? db.niveaux.filter(n => n.attente === 'admin' && !n.masque).map(aVerifier) : undefined,   // createurs hors groupe : l'admin du site verifie
     commandes: ADMINS.includes(email) ? db.commandes.filter(c => c.statut !== 'attente').sort((a, b) => b.cree - a.cree)   // admin boutique
     .map(c => ({ ...vueCommande(c), stripe: c.paiement ? `https://dashboard.stripe.com/${test}payments/${c.paiement}` : '' })) : undefined, groupes: db.groupes.filter(g => g.email === email).map(g => ({
     code: g.code, nom: g.nom, matiere: g.matiere || '', prive: !!g.prive, age: g.age || 'libre', questions: (g.questions || []).map(q => ({ ...q, stats: statsQuestion(q.id) })),

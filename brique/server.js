@@ -565,6 +565,10 @@ async function mistral(consigne, contenu, modele = process.env.MISTRAL_MODEL || 
 }
 // ---------- mode script (c3-berry) : l'IA ecrit tout le jeu en Berry ; la consigne est dans consigne-script.txt ----------
 const CONSIGNE_SCRIPT = fs.readFileSync(path.join(__dirname, 'consigne-script.txt'), 'utf8');
+const JEUX_BRIQUE = fs.readdirSync(path.join(__dirname, 'exemples')).filter(f => f.endsWith('.be')).sort((a, b) => parseInt(a) - parseInt(b)).map(f => {   // titre = 1re ligne, desc = 2e ligne avant « | mots: »
+  const script = fs.readFileSync(path.join(__dirname, 'exemples', f), 'utf8'), [l1, l2] = script.split('\n');
+  return { f, titre: l1.replace(/^#\s*/, '').trim(), desc: (l2.match(/exemple:\s*([^|]*)/) || [, ''])[1].trim(), script };
+});
 const Exemples = require('./exemples.js').systemes;    // systemes/*.be : l'IA recoit les 3 systemes de jeu les plus proches de la demande (pas pour une correction d'erreur) ; mieux que 2 jeux entiers (node bench-exemples.js)
 async function iaScript(texte, script, erreur, avant, auto, test, surMorceau, images, points, chaud, plan) {   // plan = plan du jeu (planifier), premier jeu seulement ;   // points = la demande en liste (lister) ; chaud = temperature de l'ecriture   // test = ce que le verificateur a vu en jouant le programme ; auto = correction d'une erreur de la console : le modele rapide suffit
   const r = decoupe(await mistral(CONSIGNE_SCRIPT + (auto ? '' : Exemples.texte(Exemples.choisir(texte, avant, script?.split('\n')[0]))), { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special', test_automatique: test || '(pas de programme)',
@@ -865,6 +869,7 @@ const serveur = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': fwb[1].endsWith('.json') ? 'application/json' : 'application/octet-stream', 'Cache-Control': 'no-cache' });
     return fs.createReadStream(path.join(__dirname, 'firmware-berry', fwb[1])).pipe(res);
   }
+  if (req.method === 'GET' && url === '/api/exemples') return repondre(res, 200, JEUX_BRIQUE);   // les jeux d'exemple (exemples/*.be), a prendre depuis la Communaute
   if (req.method === 'GET' && url === '/jeu-commun.be') { res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'jeu-commun.be')).pipe(res); }   // le jeu commun (plateforme de la premiere console), sans niveau
   if (req.method === 'GET' && url === '/fiche.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'fiche.js')).pipe(res); }
   const fw = req.method === 'GET' && url.match(/^\/firmware\/(manifest\.json|bootloader\.bin|partitions\.bin|boot_app0\.bin|console\.bin)$/);

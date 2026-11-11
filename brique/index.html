@@ -64,7 +64,7 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .commu{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;padding:16px;max-width:1400px;margin:0 auto}
 .commu>section{grid-column:span 4;min-width:0}
 .commu .c-stats,.commu .c-hero{grid-column:1/-1}
-.commu .c-class,.commu .c-new{grid-column:span 6}.commu .c-defi{grid-column:1/-1}           /* classement et nouveaux niveaux : même taille, même hauteur, se replient ensemble */
+.commu .c-class,.commu .c-new{grid-column:span 6}.commu .c-defi,.commu #exSec{grid-column:1/-1}           /* classement et nouveaux niveaux : même taille, même hauteur, se replient ensemble */
 .commu .c-class .liste,.commu .c-new .cartes{max-height:520px;overflow:auto}
 .commu #communSec{grid-column:span 8}.commu #communSec .liste{max-height:640px;overflow:auto}   /* le jeu commun : une grande place */
 .jc-vig{width:28px;height:54px;object-fit:cover;object-position:bottom;background:#283460;border-radius:4px}
@@ -750,7 +750,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== COMMUNAUTÉ : créations, classement, joueurs ===== -->
-<main id="commu" class="commu hide" data-version="1.2">
+<main id="commu" class="commu hide" data-version="1.3">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Communauté · jeux, parties, classement</p>
     <h2 class="sh-titre">Ici tu crées,<br>tu partages, tu découvres.</h2>
@@ -777,6 +777,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section class="c-new"><h2>🆕 Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
   <section><h2>🔥 Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
   <section id="communSec"><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu de plateforme, déjà dans ta console : on grimpe jusqu'au drapeau, puis le niveau suivant, jusqu'au dernier. Chacun y ajoute un niveau signé de son pseudo : prends un niveau, change-le à ta façon et ajoute-le à la suite. Une personne de Brique le regarde avant qu'il rejoigne le jeu.</p><div class="actions" style="justify-content:flex-start;margin:0 0 8px"><button id="jcJouer" class="sec">🎮 Mettre le jeu entier à jour sur ma console</button></div><div id="jcMsg" class="envoi" style="margin:0 0 8px"></div><div id="commun" class="liste"></div></section>
+  <section id="exSec"><h2>🧩 Les jeux de Brique</h2><p class="aide" style="margin-top:0">Des jeux complets écrits par l'équipe Brique. Prends-en un : il arrive dans Créer, tu peux l'envoyer sur ta console ou le changer à ta façon.</p><div id="exMsg" class="envoi" style="margin:0 0 8px"></div><div id="exemples" class="liste"></div></section>
   <section class="c-defi">
     <h2>🎯 Le défi : explorer toute la console</h2>
     <p style="margin:0 0 4px">Soyons honnêtes : un ESP32-C3 à 3 € ne vaut pas une Switch. Ni même une PS Vita. Ni même la calculette de ta sœur. 🤏 Sauras-tu en atteindre les limites pour autant ?</p>
@@ -3433,6 +3434,18 @@ document.addEventListener('click', async e => {
     jcMsg.innerHTML = `<span style="color:var(--ok)">✓ « ${esc(n.titre)} » de ${esc(n.pseudo)} est dans <a href="#" onclick="afficher('creer');return false" style="color:var(--acc)">Créer</a> : choisis-le dans « Mon jeu », change-le à ta façon, puis « 🧱 Ajouter au jeu commun ».</span>`;
   } catch { jcMsg.innerHTML = '<span style="color:var(--ko)">Le jeu commun ne se charge pas (serveur Brique éteint ?).</span>'; }
 });
+
+// ---------- Jeux de Brique : les jeux d'exemple (exemples/*.be), « Prendre » les copie dans Créer ----------
+let EXEMPLES = [];
+fetch('api/exemples').then(r => r.ok ? r.json() : Promise.reject()).then(l => {
+  EXEMPLES = l;
+  exemples.innerHTML = l.map((x, i) => `<div class="rang"><span class="pos">${i + 1}</span><div class="qui"><div><b>${esc(x.titre)}</b> <small>par Brique</small></div><small>${esc(x.desc)}</small></div><button class="jouer" data-exemple="${i}">📥 Prendre</button></div>`).join('');
+}).catch(() => exSec.classList.add('hide'));
+exemples.onclick = e => {
+  const x = EXEMPLES[e.target.dataset?.exemple]; if (!x) return;
+  ouvrirScript({ titre: x.titre, pseudo: 'Brique', code: '', niv: { script: x.script } }, true);
+  exMsg.innerHTML = `<span style="color:var(--ok)">✓ « ${esc(x.titre)} » est dans <a href="#" onclick="afficher('creer');return false" style="color:var(--acc)">Créer</a> : choisis-le dans « Mon jeu », puis envoie-le sur ta console.</span>`;
+};
 
 // ---------- Espace animateur : connexion par lien mail, groupes, modération ----------
 let session = lire('brique-session');                  // jeton de session animateur (30 jours)

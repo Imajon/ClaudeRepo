@@ -3841,15 +3841,18 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
     scMettre.disabled = iaEnCours || !scCode.value.trim() || (scCode.value === etat.script && etat.surConsole === etat.essais.length);
   }
   majIA = majIAScript; function majIAScript() {                                     // modèle + ce que l'IA reçoit : les 6 dernières demandes (le serveur coupe au-delà) et le programme (20 000 caractères au plus)
-    const n = etat.essais.filter(e => !e.auto).length, c = (etat.script || '').length;
+    const n = demandes().length, c = (etat.script || '').length;
     scIA.innerHTML = `🤖 Modèle : <b>${esc(modeleIA || '?')}</b> · contexte : ${Math.min(n, 6)}/6 demandes + programme ${c ? etat.script.split('\n').length : 0} lignes (${Math.round(c / 200)} % de la place)`
-      + (n > 6 || c > 16000 ? ` · <span style="color:var(--ko)">🔄 contexte plein : ${n > 6 ? 'les plus anciennes demandes sont oubliées' : 'le programme est presque trop long'}, commence un nouveau jeu si l’IA se perd</span>` : ' · ✅ contexte OK');
+      + (c > 16000 ? ` · <span style="color:var(--ko)">⚠️ programme presque trop long : ${c > 20000 ? 'l’IA ne peut plus le lire' : 'bientôt l’IA ne pourra plus le lire'}, enlève des parties inutiles ou commence un nouveau jeu</span>` : ' · ✅ contexte OK')
+      + (n && !iaEnCours ? ` · L’IA s’emmêle ? <button class="sec" data-ctx title="L'IA oublie tes anciennes demandes et repart du programme actuel de ce jeu">🔄 Repartir du programme actuel</button>` : '');
   }
+  const demandes = () => etat.essais.slice(etat.depuis || 0).filter(e => !e.auto);   // ce que l'IA relit : les demandes depuis le dernier « Nouveau contexte »
+  scIA.onclick = e => { if (e.target.dataset.ctx === undefined) return; garderMain(); etat.depuis = etat.essais.length; sauver(); majIAScript(); };
   function rendre() {
     majMettre(); majIAScript();
     const carte = scCodeCarte; carte.remove();             // sinon innerHTML l'efface avec scCode dedans
     scHist.innerHTML = !etat.essais.length ? '<p class="vide">Ce que tu demandes, ce que l\'IA a fait et ce que la console en dit apparaîtront ici.</p>'
-      : etat.essais.flatMap((e, i) => [`<div class="q${e.auto || e.demande.startsWith('(') ? ' auto' : ''}">${esc(e.demande)}</div>`, `<div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
+      : etat.essais.flatMap((e, i) => [...(i && i === etat.depuis ? ['<div class="q auto">🔄 L\'IA repart du programme ci-dessus (elle oublie les demandes d\'avant)</div>'] : []), `<div class="q${e.auto || e.demande.startsWith('(') ? ' auto' : ''}">${esc(e.demande)}</div>`, `<div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
       <span class="n">Version v${i + 1}${i + 1 === etat.surConsole ? ' · 📟 sur la console' : ''}${e.date ? ' · ' + new Date(e.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span>
       ${e.explication ? `<div class="r">🤖 ${esc(e.explication)}</div>` : ''}${e.astuce ? `<div class="r">💡 ${esc(e.astuce)}</div>` : ''}${e.limite ? `<div class="r">⚠️ ${esc(e.limite)}</div>` : ''}${e.question ? `<div class="r">❓ ${esc(e.question)}</div>` : ''}
       ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`]).reverse().join('');   // à l'envers dans le DOM, column-reverse le remet : le plus récent en bas, juste au-dessus du champ
@@ -3992,7 +3995,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     scGo.disabled = true; scGo.textContent = attenteTxt; iaEnCours = true; majMettre(); occupe(attenteTxt, 'ça peut prendre une minute'); const t0 = performance.now(); let r;
     arret = new AbortController(); scAnnuler.classList.remove('hide');
     try { r = await apiFlux({ ...ident(), auto, images: (etat.images || []).map(({ nom, l, h, n }) => ({ nom, l, h, n })), texte: auto ? 'Corrige seulement l\'erreur que la console a signalee, sans rien changer d\'autre au jeu.' : texte, script: etat.script, erreur: etat.erreur || etat.lent || '',
-      avant: etat.essais.filter(e => !e.auto).map(e => e.demande).slice(-6) }, (t, corrige) => {
+      avant: demandes().map(e => e.demande).slice(-6) }, (t, corrige) => {
         if (corrige) { scGo.textContent = '🔧 Erreur trouvée en testant : l\'IA corrige…'; occupe('🔧 L\'IA corrige l\'erreur trouvée en testant…'); }
         const s = scriptPartiel(t); if (s === null) return;
         mettreCode(s); scCode.scrollTop = scCode.scrollHeight; scCode.dispatchEvent(new Event('scroll'));   // on voit le code s'écrire

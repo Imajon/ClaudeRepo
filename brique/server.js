@@ -883,10 +883,11 @@ const serveur = http.createServer(async (req, res) => {
   if (url === '/api/script') {                        // mode script : la demande, le programme actuel, ce que la console a dit -> nouveau programme
     if (!process.env[b.methode === 'sonnet' ? 'ANTHROPIC_API_KEY' : 'MISTRAL_API_KEY']) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim()) return repondre(res, 400, { erreur: 'demande vide' });
+    if (typeof b.script === 'string' && b.script.length > 20000) return repondre(res, 400, { erreur: 'Ton programme est trop long pour que l\'IA le lise en entier : enlève des parties dont tu ne te sers plus, ou commence un nouveau jeu.' });   // le couper casserait le jeu sans prévenir
     const pas = quotaIA(req, b); if (pas) return repondre(res, 429, { erreur: pas });
     const avant = (Array.isArray(b.avant) ? b.avant : []).filter(x => typeof x === 'string').slice(-6).map(x => x.slice(0, 300));
     const images = (Array.isArray(b.images) ? b.images : []).slice(0, 16).map((m, i) => `image ${i + 1} : ${String(m?.nom || 'image').replace(/[<>"]/g, '').slice(0, 20)}, ${+m?.l || 0} x ${+m?.h || 0} pixels, ${+m?.n || 1} image(s) d'animation`);
-    const args = [b.texte.slice(0, 500), typeof b.script === 'string' ? b.script.slice(0, 20000) : '', typeof b.erreur === 'string' ? b.erreur.slice(0, 600) : '', avant, b.auto === true, images];
+    const args = [b.texte.slice(0, 500), typeof b.script === 'string' ? b.script : '', typeof b.erreur === 'string' ? b.erreur.slice(0, 600) : '', avant, b.auto === true, images];
     const faire = MODELES[b.methode] ? (a, f) => methodeContexte(b.methode, a, f)   // essais devstral / sonnet, corrections d'erreur de la console comprises
       : b.methode === 'claude' && !b.auto ? methodeClaude : scriptVerifie;   // essai : la methode Claude (?methode=claude dans l'adresse de la page)
     if (b.flux) {                                     // flux : le texte de l'IA au fur et a mesure, puis "\0" + la reponse verifiee

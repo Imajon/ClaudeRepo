@@ -1805,7 +1805,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.12">
+<main id="vueScript" class="hide" data-version="1.13">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
@@ -1853,7 +1853,19 @@ body{overflow-x:clip}                                           /* la bande 100v
     <h3 class="code-titre">🖼 Les images de ton jeu <span class="ref" id="scJaugeTxt"></span></h3>
     <div id="scImgDrop" class="icDrop">Glisse ici une image ou un <b>GIF animé</b> (du web ou de ton ordinateur), colle-la avec <b>Ctrl+V</b>,
       ou <label>choisis un fichier<input id="scImgFichier" type="file" accept="image/*" hidden></label>.<br>
-      Elle devient du pixel art 16 couleurs pour la console. Dis ensuite à l'IA à quoi elle sert : « l'image 1 est mon héros ».</div>
+      Elle devient du pixel art 16 couleurs pour la console. Dis ensuite à l'IA à quoi elle sert : « l'image 1 est mon héros ».
+      <div style="margin-top:8px"><button id="pxOuvrir" class="sec">✏️ Dessiner une image à la main</button></div></div>
+    <dialog id="dlgPixel" style="max-width:min(560px,96vw)">   <!-- l'éditeur de pixels : le dessin part dans « Les images de ton jeu » comme une image glissée -->
+      <h3 style="margin-top:0">✏️ Mon dessin</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <input id="pxNom" class="pseudo" maxlength="20" placeholder="Ce que c'est (ex : mon héros)">
+        <select id="pxTaille"><option>8</option><option selected>16</option><option>24</option><option>32</option></select> px
+        <button id="pxEffacer" class="sec">🧽 Tout effacer</button>
+      </div>
+      <canvas id="pxGrille" width="384" height="384" style="width:min(384px,86vw);touch-action:none;cursor:crosshair;background:repeating-conic-gradient(#bbb 0 25%,#eee 0 50%) 0 0/16px 16px;display:block;margin:auto"></canvas>
+      <div id="pxPal" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:10px 0"></div>
+      <div style="text-align:right"><button id="pxFermer" class="sec">Fermer</button> <button id="pxAjouter">➕ Ajouter à mon jeu</button></div>
+    </dialog>
     <div id="scImgs" class="sc-imgs"></div>
     <div id="scJauge" class="sc-jauge" title="La place des images dans la console"><span></span></div>
     <pre id="scJournal" class="hide"></pre>
@@ -3851,6 +3863,47 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   async function depuisLien(url) {
     try { const r = await fetch(url); if (!r.ok) throw 0; await ajouterImage(await r.blob(), decodeURIComponent(url.split('/').pop().split('?')[0])); }
     catch { imgDire('Ce site ne laisse pas copier son image : fais clic droit dessus → « Copier l\'image », puis Ctrl+V ici. Pour un GIF animé : enregistre-le, puis glisse le fichier ici.'); }
+  }
+  // ---------- éditeur de pixels ----------
+  {
+    const PAL = ['#000000', '#1d2b53', '#7e2553', '#008751', '#ab5236', '#5f574f', '#c2c3c7', '#fff1e8', '#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#83769c', '#ff77a8', '#ffccaa'];
+    let n = 16, px = [], coul = PAL[8], trace = false;     // px : une couleur par case, '' = vide (transparent)
+    const g = pxGrille.getContext('2d');
+    const dessiner = () => {
+      const k = 384 / n; g.clearRect(0, 0, 384, 384);
+      px.forEach((c, i) => { if (c) { g.fillStyle = c; g.fillRect(i % n * k, Math.floor(i / n) * k, k, k); } });
+      g.strokeStyle = 'rgba(0,0,0,.2)'; g.beginPath();
+      for (let i = 1; i < n; i++) { g.moveTo(i * k, 0); g.lineTo(i * k, 384); g.moveTo(0, i * k); g.lineTo(384, i * k); }
+      g.stroke();
+    };
+    const vider = () => { n = +pxTaille.value; px = Array(n * n).fill(''); dessiner(); };
+    pxPal.innerHTML = [...PAL, ''].map(c => `<button class="sec" data-c="${c}" title="${c ? c : 'Gomme'}" style="width:32px;height:32px;padding:0;background:${c || 'transparent'}">${c ? '' : '🧽'}</button>`).join('');
+    const choisir = c => { coul = c; for (const b of pxPal.children) b.style.outline = b.dataset.c === c ? '3px solid var(--txt)' : ''; };
+    pxPal.onclick = e => { const b = e.target.closest('[data-c]'); if (b) choisir(b.dataset.c); };
+    const poser = e => {
+      const r = pxGrille.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * n), y = Math.floor((e.clientY - r.top) / r.height * n);
+      if (x >= 0 && y >= 0 && x < n && y < n && px[y * n + x] !== coul) { px[y * n + x] = coul; dessiner(); }
+    };
+    pxGrille.onpointerdown = e => { trace = true; pxGrille.setPointerCapture(e.pointerId); poser(e); };
+    pxGrille.onpointermove = e => { if (trace) poser(e); };
+    pxGrille.onpointerup = pxGrille.onpointercancel = () => trace = false;
+    pxTaille.onchange = () => { if (!px.some(c => c) || confirm('Changer la taille efface ton dessin. On continue ?')) vider(); else pxTaille.value = n; };
+    pxEffacer.onclick = vider;
+    pxOuvrir.onclick = () => { if (!px.length) vider(); choisir(coul); dlgPixel.showModal(); };
+    pxFermer.onclick = () => dlgPixel.close();
+    pxAjouter.onclick = () => {
+      if (!px.some(c => c)) return alert('Dessine quelque chose d\'abord !');
+      if ((etat.images || []).length >= 16) return alert('16 images au plus par jeu.');
+      const cv = document.createElement('canvas'); cv.width = cv.height = n; const x = cv.getContext('2d');
+      px.forEach((c, i) => { if (c) { x.fillStyle = c; x.fillRect(i % n, Math.floor(i / n), 1, 1); } });
+      const cadres = [cv], b = cadres.boite = imgBoite(cadres);
+      const m = imgConvertir(cadres, Math.max(b[2], b[3]), place());   // taille du dessin lui-même : pas d'agrandissement flou
+      if (typeof m === 'string') return alert(m);
+      m.nom = pxNom.value.trim().slice(0, 20) || 'dessin ' + ((etat.images || []).length + 1);
+      (etat.images ||= []).push(m); sources.set(m, cadres); imagesChangees();
+      imgDire(`✏️ Ton dessin est l'image ${etat.images.length} : dis à l'IA à quoi elle sert.`, true);
+      dlgPixel.close(); pxNom.value = ''; vider();
+    };
   }
   scImgFichier.onchange = () => { const f = scImgFichier.files[0]; if (f) ajouterImage(f, f.name); scImgFichier.value = ''; };
   scImgDrop.ondragover = e => { e.preventDefault(); scImgDrop.classList.add('sur'); };

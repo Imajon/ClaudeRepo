@@ -302,7 +302,7 @@ function quotasParMail() {
 }
 function espaceAnimateur(email) {
   const test = (process.env.STRIPE_SECRET_KEY || '').startsWith('sk_test') ? 'test/' : '';
-  return { email, quotas: ADMINS.includes(email) ? quotasParMail() : undefined, aModerer: ADMINS.includes(email) ? db.niveaux.filter(n => n.attente === 'admin' && !n.masque).map(aVerifier) : undefined,   // createurs hors groupe : l'admin du site verifie
+  return { email, quotas: ADMINS.includes(email) ? quotasParMail() : undefined, notes: ADMINS.includes(email) ? (db.notes || []).slice().reverse() : undefined, aModerer: ADMINS.includes(email) ? db.niveaux.filter(n => n.attente === 'admin' && !n.masque).map(aVerifier) : undefined,   // createurs hors groupe : l'admin du site verifie
     commandes: ADMINS.includes(email) ? db.commandes.filter(c => c.statut !== 'attente').sort((a, b) => b.cree - a.cree)   // admin boutique
     .map(c => ({ ...vueCommande(c), stripe: c.paiement ? `https://dashboard.stripe.com/${test}payments/${c.paiement}` : '' })) : undefined, groupes: db.groupes.filter(g => g.email === email).map(g => ({
     code: g.code, nom: g.nom, matiere: g.matiere || '', prive: !!g.prive, age: g.age || 'libre', questions: (g.questions || []).map(q => ({ ...q, stats: statsQuestion(q.id) })),
@@ -1003,6 +1003,9 @@ const serveur = http.createServer(async (req, res) => {
       const n = db.niveaux.find(n => n.id === b.id); if (!aLui(n)) return repondre(res, 404, { erreur: 'niveau introuvable' });
       delete n.attente; delete n.raison; n.signale = []; n.valide = Date.now(); sauver(); return repondre(res, 200, espaceAnimateur(email));
     }
+    if (url === '/api/animateur/note' && ADMINS.includes(email)) {   // l'admin efface une note traitée
+      db.notes = (db.notes || []).filter(n => n.id !== b.id); sauver(); return repondre(res, 200, espaceAnimateur(email));
+    }
     if (url === '/api/animateur/idee') {              // suivi des idees : idee -> prevu -> fait, ou suppression
       const s = db.souhaits.find(s => s.id === b.id); if (!s) return repondre(res, 404, { erreur: 'idée introuvable' });
       if (b.supprimer) db.souhaits = db.souhaits.filter(x => x !== s); else if (STATUTS.includes(b.statut)) s.statut = b.statut;
@@ -1104,6 +1107,14 @@ const serveur = http.createServer(async (req, res) => {
     return repondre(res, 200, ouvrirSession(j));
   }
   if (url === '/api/deconnexion') { if (b.jeton) delete db.sessions[empreinte(b.jeton)]; sauver(); return repondre(res, 200, { ok: true }); }
+
+  if (url === '/api/note') {                          // observation laissée depuis Créer, par n'importe quel compte connecté (enfant ou adulte) ; lue par l'admin du site
+    const s = db.sessions[empreinte(req.headers['x-session'] || '')], ad = s?.exp > Date.now() && (s.email || (s.compte && 'client'));
+    const qui = joueurDe(b)?.pseudo || ad; if (!qui) return repondre(res, 401, { erreur: 'Connecte-toi pour laisser une note.' });
+    const texte = propre(b.texte, 500); if (!texte) return repondre(res, 400, { erreur: 'Écris ton observation.' });
+    (db.notes ||= []).push({ id: aleatoire(5), qui, texte, jeu: propre(b.jeu, 40), cree: Date.now() }); db.notes = db.notes.slice(-500); sauver();
+    return repondre(res, 200, { ok: true });
+  }
 
   // ----- ecritures des enfants : connecté obligatoire -----
   const j = joueurDe(b);

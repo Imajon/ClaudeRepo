@@ -1805,7 +1805,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.13">
+<main id="vueScript" class="hide" data-version="1.14">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
@@ -1850,6 +1850,9 @@ body{overflow-x:clip}                                           /* la bande 100v
       <button id="scZero" class="sec" title="Efface ce jeu, son programme et tes essais (pas celui gardé dans la console)">🗑 Supprimer ce jeu</button>
     </div>
     <div id="scPartage"></div>
+    <details id="scNote" class="hide" style="margin:8px 0"><summary>📝 Laisser une note à l'équipe Brique</summary>   <!-- comptes connectés : observations lues par l'admin (Espace animateur) -->
+      <textarea id="scNoteTxt" rows="3" maxlength="500" style="width:100%;margin-top:6px" placeholder="Un bug, une idée, quelque chose de bizarre… dis-nous ce que tu as vu."></textarea>
+      <button id="scNoteOk" class="sec">Envoyer la note</button></details>
     <h3 class="code-titre">🖼 Les images de ton jeu <span class="ref" id="scJaugeTxt"></span></h3>
     <div id="scImgDrop" class="icDrop">Glisse ici une image ou un <b>GIF animé</b> (du web ou de ton ordinateur), colle-la avec <b>Ctrl+V</b>,
       ou <label>choisis un fichier<input id="scImgFichier" type="file" accept="image/*" hidden></label>.<br>
@@ -2910,6 +2913,7 @@ function majMoi() {
 // (sessions boutique et animateur lues du stockage : `client` et `session` sont déclarés plus bas)
 const adulte = () => lire('brique-client') || lire('brique-session');
 function majCompte() {
+  scNote.classList.toggle('hide', !EN_LIGNE || !(moi || adulte()));   // la note : tout compte connecté
   compteTete.innerHTML = moi ? `${avatar(moi.pseudo)} <span class="compte-nom">${esc(moi.pseudo)}</span>` : `👤 <span class="compte-nom">${adulte() ? 'Mon compte' : 'Se connecter'}</span>`;
   compteMenu.innerHTML = (moi ? `<small>${esc(moi.pseudo)} · ${esc(moi.groupe || '')}</small><a data-c="groupe">👥 Rejoindre un groupe</a>` : '')
     + (lire('brique-client') ? '<a data-c="cmd">📦 Mes commandes</a>' : '<a data-c="cmd">🧺 Panier et commandes</a>')
@@ -3452,7 +3456,9 @@ async function rendreAnim(donnees) {
   const quotas = q ? `<section><h2>⚡ Tokens IA par mail</h2><div class="liste">${q.lignes.map(l => `<div class="rang"><div class="qui"><div><b>${esc(l.email)}</b> <small>${l.groupes} groupe${l.groupes > 1 ? 's' : ''} · ${l.joueurs} joueur${l.joueurs > 1 ? 's' : ''}</small></div>
     <small>total ${tk(l.total)} · lui ${tk(l.perso)} · groupes ${tk(l.grp)}</small></div></div>`).join('') || '<span class="vide">Aucun mail enregistré.</span>'}</div>
     <p class="aide">Joueurs sans groupe : ${tk(q.libres)} · essais sans compte : ${tk(q.essais)}</p><p class="aide" style="font-size:9px;word-break:break-all">QUOTAS⟦${esc(JSON.stringify(q))}⟧</p></section>` : '';
-  animGroupes.innerHTML = quotas + aModerer + d.groupes.map(g => `<section>
+  const notes = d.notes ? `<section><h2>📝 Notes des comptes (${d.notes.length})</h2><div class="liste">${d.notes.map(n => `<div class="rang"><div class="qui"><div>${esc(n.texte)}</div>
+    <small>${esc(n.qui)}${n.jeu ? ` · jeu « ${esc(n.jeu)} »` : ''} · ${depuis(n.cree)}</small></div><button class="jouer" data-note="${esc(n.id)}" title="Traitée : l'effacer">✓ Lu</button></div>`).join('') || '<span class="vide">Aucune note.</span>'}</div></section>` : '';
+  animGroupes.innerHTML = notes + quotas + aModerer + d.groupes.map(g => `<section>
     <h2><b>${esc(g.nom)}</b></h2>
     <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span> <a href="#" data-nouveaucode="${esc(g.code)}" title="Le code a circulé hors du groupe ? Les enfants déjà inscrits restent, l'ancien code ne marche plus" style="color:var(--mute)">↻ changer le code</a></p>
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
@@ -3476,7 +3482,7 @@ async function rendreAnim(donnees) {
     <div class="liste">${g.niveaux.sort((a, b) => b.cree - a.cree).map(n => `<div class="rang ${n.masque ? 'masque' : ''}"><div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div>
       <small>${depuis(n.cree)} · ${n.parties} partie${n.parties > 1 ? 's' : ''}${n.masque ? ' · masqué' : ''}${attenteTxt(n)}</small></div>
       ${validerBtn(n)}<button class="jouer" data-masquer="${n.id}" data-etat="${n.masque ? 0 : 1}">${n.masque ? '👁 Remontrer' : '🚫 Masquer'}</button></div>`).join('') || '<span class="vide">Aucun niveau pour l\'instant.</span>'}</div>
-  </section>`).join('') || quotas + aModerer;
+  </section>`).join('') || notes + quotas + aModerer;
   const enAttente = [...(d.aModerer || []), ...d.groupes.flatMap(g => g.niveaux)].filter(n => n.attente);
   for (const el of animGroupes.querySelectorAll('[data-apercu]')) imgApercus(el, enAttente.find(n => n.id === el.dataset.apercu)?.images, true);
 }
@@ -3507,6 +3513,7 @@ animGroupes.onclick = async e => {
     if (t.dataset.nouveaucode) { e.preventDefault(); if (confirm('Changer le code du groupe ? L’ancien ne marchera plus.')) rendreAnim(await api('api/animateur/code', { code: t.dataset.nouveaucode }, session)); }
     if (t.dataset.agev) rendreAnim(await api('api/animateur/age', { code: t.closest('[data-age]').dataset.age, age: t.dataset.agev }, session));
     if (t.dataset.masquer) rendreAnim(await api('api/animateur/masquer', { id: t.dataset.masquer, masque: t.dataset.etat === '1' }, session));
+    if (t.dataset.note) rendreAnim(await api('api/animateur/note', { id: t.dataset.note }, session));
     if (t.dataset.valider) rendreAnim(await api('api/animateur/valider', { id: t.dataset.valider }, session));
     if (t.dataset.mdp) { e.preventDefault(); if (confirm(`Donner un nouveau mot de passe à « ${t.dataset.mdp} » ?`)) { const r = await api('api/animateur/mdp', { pseudo: t.dataset.mdp }, session); alert(`Mot de passe provisoire de ${t.dataset.mdp} : ${r.mdp}\n\nÀ lui donner : il se connecte avec, puis peut le garder.`); rendreAnim(r); } return; }
     if (t.dataset.liberer) { e.preventDefault(); if (confirm(`Libérer le pseudo « ${t.dataset.liberer} » ?`)) rendreAnim(await api('api/animateur/liberer', { pseudo: t.dataset.liberer }, session)); }
@@ -4141,6 +4148,10 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
       const { code, attente } = await api('api/niveaux', { ...ident(), titre, commun, script: etat.script, images: (etat.images || []).map(({ nom, l, h, n, pal, px }) => ({ nom, l, h, n, pal, px })) });
       etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » ${commun ? 'est ajouté au jeu commun' : 'est publié'}, signé ${esc(pseudo())}${attente ? `<br>⏳ ${esc(attente)}` : ''}`, code); rafraichir();
     } catch (e) { dire(e.message, false); }
+  };
+  scNoteOk.onclick = async () => {
+    try { await api('api/note', { ...ident(), texte: scNoteTxt.value, jeu: etat.titre || etat.nom }, session || client); scNoteTxt.value = ''; scNote.open = false; dire('📝 Merci, ta note est envoyée !', true); }
+    catch (e) { dire(e.message, false); }
   };
   scPublier.onclick = () => publierScript(false);
   scCommun.onclick = () => etat.script.includes('var NIV = [') ? publierScript(true) : dire('Le jeu commun est une plateforme : prends un niveau dans Communauté › Le jeu commun, puis change-le.', false);

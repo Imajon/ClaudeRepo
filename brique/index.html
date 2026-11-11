@@ -402,6 +402,8 @@ canvas.pix,img.pix{image-rendering:pixelated;background:repeating-conic-gradient
 .demo-console canvas{position:absolute;left:0;top:0;width:320px;height:240px;max-width:none;transform-origin:0 0;border:0;border-radius:0;background:none}
 .demo-bulle{position:absolute;right:0;top:7%;width:31%;min-height:5.6em;margin:0;padding:.7em .9em;text-align:left;background:#13241a;color:#d9f5e3;
   font:600 clamp(8px,2cqw,16px)/1.35 var(--mono);border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.18)}   /* une vraie bulle, en haut à droite, la pointe vers l'écran */
+.demo-bulle{padding-top:2.1em;border:1px solid rgba(217,245,227,.3);border-radius:8px}   /* cadre de fenêtre discret : on est sur un ordinateur de bureau */
+.demo-bulle::before{content:"\2715";position:absolute;left:0;right:0;top:0;height:1.55em;padding:0 .65em;border-bottom:1px solid rgba(217,245,227,.2);text-align:right;font:400 .8em/1.95em var(--mono);opacity:.65}
 .demo-bulle::after{content:"";position:absolute;left:14%;bottom:-.9em;border:.5em solid transparent;border-top:.9em solid #13241a;border-bottom:0;transform:skewX(25deg)}
 .demo-caret{display:inline-block;width:.55em;height:1.1em;margin-left:2px;vertical-align:-.2em;background:#3ddc84;animation:clignote 1s steps(1) infinite}
 @keyframes clignote{50%{opacity:0}}
@@ -420,7 +422,7 @@ canvas.pix,img.pix{image-rendering:pixelated;background:repeating-conic-gradient
 .demo-console .teinte:nth-of-type(2){animation-delay:4s}.demo-console .teinte:nth-of-type(3){animation-delay:8s}.demo-console .teinte:nth-of-type(4){animation-delay:12s}
 @keyframes teinte{0%{opacity:0}6%,25%{opacity:1}31%,100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.demo-console .teinte{animation:none}}
-@container (max-width:520px){.demo-bulle{top:12%;width:38%;padding:.5em .6em;border-radius:12px}}
+@container (max-width:520px){.demo-bulle{top:12%;width:38%;padding:1.8em .6em .5em;border-radius:6px}}
 body{overflow-x:clip}                                           /* la bande 100vw ne fait pas défiler la page de côté */
 :root:not([data-theme="dark"]) body:has(#accueil:not(.hide)),:root:not([data-theme="dark"]) body:has(#boutique:not(.hide)),:root:not([data-theme="dark"]) body:has(#partis:not(.hide)),:root:not([data-theme="dark"]) body:has(#propos:not(.hide)){background:#fff}   /* thème clair : accueil et boutique sur blanc, la photo se fond dans la page */
 .sh-sur{margin:0;color:var(--hot);font-weight:600;font-size:17px}

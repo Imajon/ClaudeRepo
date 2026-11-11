@@ -2978,12 +2978,14 @@ rjLienBtn.onclick = async () => {
 async function api(url, corps, session) {
   const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;
   const r = await fetch(url, corps ? { method: 'POST', headers, body: JSON.stringify(corps) } : { headers });
-  const j = await r.json(); if (url === 'api/ia') majTokens(); if (!r.ok) throw Object.assign(new Error(j.erreur), { code: r.status }); return j;
+  const j = await r.json(); if (url === 'api/ia') majTokens();
+  if (r.status === 401 && moi && corps?.jeton === moi.jeton && corps?.pseudo) { moi = null; ecrire('brique-moi', null); majMoi(); ouvrirConnexion('co'); }   // session perdue côté serveur : la page ne fait plus semblant d'être connectée
+  if (!r.ok) throw Object.assign(new Error(j.erreur), { code: r.status }); return j;
 }
 async function publier(commun) {
   if (!jeu) return dire('Crée un jeu d\'abord !');
   if (!EN_LIGNE) return dire('Hors ligne : lance le serveur (node server.js) et ouvre http://localhost:8080');
-  if (!moi) { ouvrirConnexion('co'); return dire('Connecte-toi d\'abord (ou crée ton compte).'); }
+  if (!moi) { ouvrirConnexion('co'); return dire(adulte() ? 'Un jeu publié est signé d\'un pseudo : connecte-toi avec un compte joueur (pseudo + mot de passe), le compte mail ne suffit pas.' : 'Connecte-toi d\'abord (ou crée ton compte).'); }
   // ponytail: vérifié dans la page seulement (la console n'est pas authentifiée) ; suffit pour l'atelier
   if (!jeu.niv.fini) return dire('Termine ton jeu au moins une fois sur la console avant de le partager : on ne publie que des jeux faisables !');
   try {
@@ -4132,7 +4134,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const partage = (t, code) => scPartage.innerHTML = `<div class="partage">${t} · code <span class="code">${esc(code)}</span><br><small>Tes copains le récupèrent sur Brique avec ce code (Communauté), puis le mettent sur leur console.</small></div>`;
   const publierScript = async commun => {                // publier (ou ajouter au jeu commun) : seulement un programme qui tourne sur la console sans erreur
     if (!EN_LIGNE) return dire('Hors ligne : la publication a besoin du serveur Brique.', false);
-    if (!moi) { ouvrirConnexion('co'); return dire('Connecte-toi d\'abord (ou crée ton compte).', false); }
+    if (!moi) { ouvrirConnexion('co'); return dire(adulte() ? 'Un jeu publié est signé d\'un pseudo : connecte-toi avec un compte joueur (pseudo + mot de passe), le compte mail ne suffit pas.' : 'Connecte-toi d\'abord (ou crée ton compte).', false); }
     if (!etat.script || etat.erreur || etat.surConsole !== etat.essais.length) return dire('Mets ton jeu sur la console et vérifie qu\'il tourne sans erreur avant de le publier.', false);
     const titre = prompt(commun ? 'Le nom de ton niveau ?' : 'Le nom de ton jeu ?', etat.titre || etat.nom || ''); if (titre === null) return;
     try {

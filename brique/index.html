@@ -3985,7 +3985,9 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     if (ims.length && versionNum < 5) return 'Ta console doit être mise à jour pour afficher tes images : appuie sur « ⬇ Installer la dernière version du firmware ».';
     if (ims.length) { const p = imgPaquet(ims), t = new Uint8Array(octets.length + 1 + p.length); t.set(octets); t.set(p, octets.length + 1); octets = t; }   // le script, l'octet 0, puis les images
     const rep = new Promise(ok => { attente = ok; setTimeout(() => ok(''), 8000); });
-    await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length} ${nomConsole(etat.nom)}\n`));
+    const d = new Date(), z = n => String(n).padStart(2, '0');   // Mes jeux (moteur b7+) : date de la derniere modif et version sous les cartouches
+    const info = versionNum >= 7 ? `\t${z(d.getDate())}/${z(d.getMonth() + 1)}/${z(d.getFullYear() % 100)} ${z(d.getHours())}:${z(d.getMinutes())}\tv${ver}` : '';
+    await ecrire(new TextEncoder().encode(`SCRIPT ${octets.length} ${nomConsole(etat.nom)}${info}\n`));
     for (let i = 0; i < octets.length; i += 256) { await ecrire(octets.slice(i, i + 256)); await new Promise(r => setTimeout(r, 10)); }
     const l = await rep;
     if (l.startsWith('OK')) { etat.erreur = ''; etat.lent = ''; etat.surConsole = ver; const e = etat.essais.at(-1); if (e) { e.console = 'Ton jeu tourne sur la console.'; e.consoleOk = true; } sauver(); rendre(); await mesurer();

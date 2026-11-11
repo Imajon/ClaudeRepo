@@ -4,7 +4,7 @@
 //   debut()      une fois au lancement (facultatif)
 //   maj(dt)      la logique, dt en secondes
 //   dessine()    les appels de dessin ; enregistres une fois, rejoues pour chaque bande de l'ecran
-// Envoi : ligne "SCRIPT <octets> [nom]" puis le script (suivi, s'il a des images, d'un octet 0 et des images : voir chargeImages) ; reponse "OK ..." ou "ERR ...". Chaque jeu est garde dans /j/<ordre>_<nom code>.be (1re ligne = son nom), MAXJ au plus.
+// Envoi : ligne "SCRIPT <octets> [nom[<TAB>date<TAB>version]]" puis le script (suivi, s'il a des images, d'un octet 0 et des images : voir chargeImages) ; reponse "OK ..." ou "ERR ...". Chaque jeu est garde dans /j/<ordre>_<nom code>.be (1re ligne = son nom), MAXJ au plus.
 // Jouer = la liste des jeux gardes (P3 tenu sur un jeu = le supprimer).
 // Au demarrage : l'image MaconsoleBrique (photo.h, gen-photo.py), puis le menu (Jouer, Classement, Mes stats, A propos) avec le cosmonaute qui bouge. G + D tenus 1 s pendant un jeu = retour au menu.
 // Mesures sur le port serie si on les demande ("STAT 1").
@@ -23,7 +23,7 @@
 #include "op.h"                                  // struct Op (avant les prototypes automatiques d'Arduino)
 #include "photo.h"                               // image de demarrage 320x240
 
-#define BERRY_VERSION "b6"                       // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
+#define BERRY_VERSION "b7"                      // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
 #define TFT_SCLK 4
 #define TFT_MOSI 6
 #define TFT_CS   7
@@ -172,18 +172,21 @@ void nomDuJeu(const char *src) {                 // 1re ligne "# Nom du jeu" (si
 }
 // ---- les jeux gardes dans la console ----
 #define MAXJ 12
-struct Jeu { uint32_t seq; char nom[22]; char chemin[24]; };
+struct Jeu { uint32_t seq; char nom[22]; char info[24]; char chemin[24]; };   // info = "date<TAB>version" envoyee par la page (b7)
 Jeu jeux[MAXJ]; int nJeux = 0, choixJ = 0;
 uint32_t fnv(const char *s) { uint32_t h = 2166136261u; while (*s) { h ^= (uint8_t)*s++; h *= 16777619u; } return h; }
 void listeJeux() {                               // les plus recents d'abord
   nJeux = 0; File d = LittleFS.open("/j"); if (!d) return;
   for (File f = d.openNextFile(); f && nJeux < MAXJ; f = d.openNextFile()) {
     Jeu &j = jeux[nJeux++]; snprintf(j.chemin, sizeof j.chemin, "/j/%s", f.name()); j.seq = atol(f.name());
-    String n = f.readStringUntil('\n'); snprintf(j.nom, sizeof j.nom, "%s", n.c_str()); f.close();
+    String n = f.readStringUntil('\n'); f.close();
+    const int tab = n.indexOf('\t');           // 1re ligne : "nom" ou "nom<TAB>date<TAB>version"
+    snprintf(j.nom, sizeof j.nom, "%s", (tab < 0 ? n : n.substring(0, tab)).c_str());
+    snprintf(j.info, sizeof j.info, "%s", tab < 0 ? "" : n.c_str() + tab + 1);
   }
   for (int i = 0; i < nJeux; i++) for (int k = i + 1; k < nJeux; k++) if (jeux[k].seq > jeux[i].seq) { Jeu x = jeux[i]; jeux[i] = jeux[k]; jeux[k] = x; }
 }
-bool garde(const char *nom, const char *src, int n) {   // remplace le jeu du meme nom ; false = console pleine
+bool garde(const char *nom, const char *src, int n, const char *info = "") {   // remplace le jeu du meme nom ; false = console pleine
   listeJeux(); char suf[16]; snprintf(suf, sizeof suf, "_%08lx.be", (unsigned long)fnv(nom));
   int ici = -1; for (int i = 0; i < nJeux; i++) if (strstr(jeux[i].chemin, suf)) ici = i;
   if (ici < 0 && nJeux >= MAXJ) return false;
@@ -191,7 +194,7 @@ bool garde(const char *nom, const char *src, int n) {   // remplace le jeu du me
   const uint32_t seq = prefs.getUInt("seq") + 1; prefs.putUInt("seq", seq);
   char ch[24]; snprintf(ch, sizeof ch, "/j/%06lu%s", (unsigned long)seq, suf);
   File f = LittleFS.open(ch, "w", true); if (!f) return false;
-  f.print(nom); f.print('\n'); const bool ok = f.write((const uint8_t *)src, n) == (size_t)n; f.close();
+  f.print(nom); if (info[0]) { f.print('\t'); f.print(info); } f.print('\n'); const bool ok = f.write((const uint8_t *)src, n) == (size_t)n; f.close();
   if (!ok) LittleFS.remove(ch);                  // memoire de la console pleine (images) : pas de fichier a moitie ecrit
   return ok;
 }
@@ -247,6 +250,24 @@ void cosmoMenu(uint32_t now) {                   // en boucle (8 s) : respire, c
   rectOp(cx - sh / 2, by + 1, sh, 3, 0x0000);                                            // ombre qui retrecit quand il saute
   cosmo(cx, by - hop, 5, pose, now / 110, right, t);
 }
+void cartouche(int x, int y, int i) {            // Mes jeux : une cartouche 70x78, l'icone (motif 5x5 symetrique tire du nom) et le titre
+  if (i == choixJ) rrOp(x - 3, y - 3, 76, 84, 6, VERT);
+  if (i >= nJeux) {                              // la derniere case : retour au menu
+    rrOp(x, y, 70, 78, 4, 0x0841); rrOp(x, y, 70, 78, 4, GRIS, false); txtOp(x + 23, y + 24, "<", 0xFFFF, 3); txtOp(x + 23, y + 60, "Menu", 0xFFFF, 1);
+    return;
+  }
+  static const uint16_t PAL[8] = { RGB(239, 68, 68), RGB(249, 115, 22), RGB(234, 179, 8), RGB(34, 197, 94), RGB(6, 182, 212), RGB(59, 130, 246), RGB(167, 139, 250), RGB(236, 72, 153) };
+  const uint32_t h = fnv(jeux[i].nom); const uint16_t col = PAL[h & 7], fond = 0x18E3;
+  rrOp(x, y, 70, 78, 4, RGB(90, 94, 110));                                     // le boitier
+  for (int k = 0; k < 5; k++) rectOp(x + 9 + k * 11, y + 3, 7, 4, RGB(60, 63, 76));   // les stries du haut
+  rrOp(x + 6, y + 10, 58, 42, 3, fond);                                        // l'etiquette
+  for (int r = 0; r < 5; r++) for (int c = 0; c < 3; c++) if (h >> (6 + r * 3 + c) & 1) {   // l'icone, en miroir
+    rectOp(x + 20 + c * 6, y + 16 + r * 6, 6, 6, col); if (c < 2) rectOp(x + 44 - c * 6, y + 16 + r * 6, 6, 6, col); }
+  rectOp(x + 6, y + 48, 58, 4, col);
+  char t[12]; snprintf(t, sizeof t, "%s", jeux[i].nom); if (strlen(jeux[i].nom) > 10) t[9] = '.', t[10] = 0;
+  txtOp(x + 35 - 3 * strlen(t), y + 58, t, 0xFFFF, 1);
+  rectOp(x + 22, y + 72, 26, 6, 0x0841);                                       // l'encoche des contacts
+}
 void dessineEcran() {                            // remplit la liste de dessin pour l'ecran courant (hors jeu)
   nOps = nTxt = 0; camX = camY = 0; fondCol = 0x0841; char b[64];
   const uint32_t t = millis() - ecranT;
@@ -286,12 +307,14 @@ void dessineEcran() {                            // remplit la liste de dessin p
     txtOp(8, 226, "P3 : retour", GRIS, 1);
   } else if (ecran == E_LISTE) {
     txtOp(120, 18, "Mes jeux", 0xFFFF, 2);
-    if (!nJeux) txtOp(16, 190, "Pas encore de jeu : cree-le sur Brique.", GRIS, 1);
-    for (int i = 0; i <= nJeux; i++) {
-      const int y = 48 + i * 13;
-      if (i == choixJ) rectOp(12, y - 3, 296, 13, VERT);
-      txtOp(20, y, i < nJeux ? jeux[i].nom : "< Menu", i == choixJ ? 0x0841 : 0xFFFF, 1);
-    }
+    const int page = choixJ / 8, nPages = nJeux / 8 + 1;      // 8 cartouches par page (4 x 2), "Menu" en dernier
+    if (nPages > 1) { snprintf(b, sizeof b, "%d/%d", page + 1, nPages); txtOp(312 - 6 * strlen(b), 22, b, GRIS, 1); }
+    for (int i = page * 8; i <= nJeux && i < page * 8 + 8; i++) cartouche(11 + (i % 4) * 76, 44 + (i / 4 % 2) * 84, i);
+    if (choixJ < nJeux) {                         // le jeu choisi : nom entier, date, version
+      const Jeu &j = jeux[choixJ]; char inf[24]; snprintf(inf, sizeof inf, "%s", j.info);
+      for (char *p = inf; *p; p++) if (*p == '\t') *p = ' ';
+      txtOp(8, 212, j.nom, 0xFFFF, 1); txtOp(312 - 6 * strlen(inf), 212, inf, GRIS, 1);
+    } else if (!nJeux) txtOp(8, 212, "Pas encore de jeu : cree-le sur Brique.", GRIS, 1);
     txtOp(8, 226, "P3 : jouer    P3 tenu : supprimer", GRIS, 1);
   } else if (ecran == E_SUPPR) {
     txtOp(52, 70, "Supprimer ce jeu ?", 0xFFFF, 2);
@@ -435,7 +458,7 @@ const char *lance(char *mem, size_t o, size_t n, const char *nom = nullptr) {   
 // ---- reception d'un script par le cable ----
 bool stats = false;                              // mesures sur le port serie : seulement si on les demande ("STAT 1")
 uint8_t btSim = 0;                               // boutons simules par le cable (mesures en jeu)
-char nomRecu[22] = ""; char ligne[64]; int nLigne = 0; char *recu = nullptr; int attendu = 0, nRecu = 0; uint32_t recuT = 0;
+char nomRecu[22] = "", infoRecu[24] = ""; char ligne[64]; int nLigne = 0; char *recu = nullptr; int attendu = 0, nRecu = 0; uint32_t recuT = 0;
 void ecoute() {
   while (Serial.available()) {
     int c = Serial.read();
@@ -444,7 +467,7 @@ void ecoute() {
       if (nRecu == attendu) {
         recu[nRecu] = 0;
         if (!nomRecu[0]) { nomDuJeu(recu); strcpy(nomRecu, nomJeu); }
-        const bool ok = garde(nomRecu, recu, nRecu);
+        const bool ok = garde(nomRecu, recu, nRecu, infoRecu);
         stRecus++;
         const int nr = nRecu; char *m = recu; recu = nullptr;
         const char *e = lance(m, 0, nr, nomRecu);    // le jeu garde le tampon (ses images y sont lues)
@@ -459,7 +482,9 @@ void ecoute() {
       if (!strncmp(ligne, "BTN ", 4)) { btSim = 0; for (int k = 0; k < 3 && ligne[4 + k]; k++) btSim |= (ligne[4 + k] == '1') << k; }   // test : boutons tenus G D P3, ex. "BTN 011"
       if (!strncmp(ligne, "SCRIPT ", 7)) {
         attendu = atoi(ligne + 7); nRecu = 0;
-        const char *p = strchr(ligne + 7, ' '); snprintf(nomRecu, sizeof nomRecu, "%s", p ? p + 1 : ""); recuT = millis();
+        char *p = strchr(ligne + 7, ' '), *tab = p ? strchr(p, '\t') : nullptr;   // "SCRIPT <octets> <nom>[<TAB>date<TAB>version]"
+        snprintf(infoRecu, sizeof infoRecu, "%s", tab ? tab + 1 : ""); if (tab) *tab = 0;
+        snprintf(nomRecu, sizeof nomRecu, "%s", p ? p + 1 : ""); recuT = millis();
         finJeu();                                // le jeu en cours libere sa memoire : le nouveau (images comprises) peut la prendre
         recu = attendu > 0 && attendu < 60000 ? (char *)malloc(attendu + 1) : nullptr;
         if (!recu) { snprintf(erreur, sizeof erreur, "pas assez de memoire pour ce jeu"); Serial.println("ERR taille ou memoire"); }

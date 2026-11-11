@@ -878,6 +878,8 @@ const serveur = http.createServer(async (req, res) => {
     if (Object.keys(db.textes).length > 2000) return repondre(res, 400, { erreur: 'trop de textes' });
     sauver(); return repondre(res, 200, { ok: true });
   }
+  const modeleScript = b => b.methode === 'sonnet' ? process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5' : b.methode === 'devstral' ? process.env.MISTRAL_MODEL_DEVSTRAL || 'devstral-medium-latest'
+    : b.auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest';   // le modele qui ecrit le programme (affiche dans Creer)
   if (url === '/api/script') {                        // mode script : la demande, le programme actuel, ce que la console a dit -> nouveau programme
     if (!process.env[b.methode === 'sonnet' ? 'ANTHROPIC_API_KEY' : 'MISTRAL_API_KEY']) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim()) return repondre(res, 400, { erreur: 'demande vide' });
@@ -890,12 +892,12 @@ const serveur = http.createServer(async (req, res) => {
     if (b.flux) {                                     // flux : le texte de l'IA au fur et a mesure, puis "\0" + la reponse verifiee
       res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' });
       let fin; try { fin = await faire(args, d => res.write(d)); } catch (e) { console.error(e.message); fin = { erreur: 'L\'IA ne répond pas' + (MODELES[b.methode] ? ' (' + e.message.slice(0, 200) + ')' : '') }; }   // essais : la cause, pour regler
-      return res.end('\0' + JSON.stringify(fin));
+      return res.end('\0' + JSON.stringify({ ...fin, modele: modeleScript(b) }));
     }
-    try { return repondre(res, 200, await faire(args)); }
+    try { return repondre(res, 200, { ...await faire(args), modele: modeleScript(b) }); }
     catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
   }
-  if (url === '/api/quota') return repondre(res, 200, etatQuota(req, b));   // jauge de tokens de la page
+  if (url === '/api/quota') return repondre(res, 200, { ...etatQuota(req, b), modele: modeleScript(b) });   // jauge de tokens de la page
   if (url === '/api/ia') {                            // compte (groupe ou animateur) ; sans compte : quelques essais par jour
     if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim() || typeof (b.fiche || b.base) !== 'object' || !(b.fiche || b.base)) return repondre(res, 400, { erreur: 'demande vide' });

@@ -3455,7 +3455,8 @@ async function rendreAnim(donnees) {
   const q = d.quotas, tk = x => `${kTok(x.t)} <small>(${kTok(x.j)} auj.)</small>`;   // admin : tokens IA par mail ; la ligne QUOTAS⟦…⟧ est relevée par l'Établi
   const quotas = q ? `<section><h2>⚡ Tokens IA par mail</h2><div class="liste">${q.lignes.map(l => `<div class="rang"><div class="qui"><div><b>${esc(l.email)}</b> <small>${l.groupes} groupe${l.groupes > 1 ? 's' : ''} · ${l.joueurs} joueur${l.joueurs > 1 ? 's' : ''}</small></div>
     <small>total ${tk(l.total)} · lui ${tk(l.perso)} · groupes ${tk(l.grp)}</small></div></div>`).join('') || '<span class="vide">Aucun mail enregistré.</span>'}</div>
-    <p class="aide">Joueurs sans groupe : ${tk(q.libres)} · essais sans compte : ${tk(q.essais)}</p><p class="aide" style="font-size:9px;word-break:break-all">QUOTAS⟦${esc(JSON.stringify(q))}⟧</p></section>` : '';
+    <p class="aide">Joueurs sans groupe : ${tk(q.libres)} · essais sans compte : ${tk(q.essais)}</p></section>` : '';
+  if (q) document.title = `Brique QUOTAS⟦${JSON.stringify(q)}⟧`;   // l'outil de lecture de l'Établi ne lit que le titre et le 1er <main>, pas cette vue
   const notes = d.notes ? `<section><h2>📝 Notes des comptes (${d.notes.length})</h2><div class="liste">${d.notes.map(n => `<div class="rang"><div class="qui"><div>${esc(n.texte)}</div>
     <small>${esc(n.qui)}${n.jeu ? ` · jeu « ${esc(n.jeu)} »` : ''} · ${depuis(n.cree)}</small></div><button class="jouer" data-note="${esc(n.id)}" title="Traitée : l'effacer">✓ Lu</button></div>`).join('') || '<span class="vide">Aucune note.</span>'}</div></section>` : '';
   animGroupes.innerHTML = notes + quotas + aModerer + d.groupes.map(g => `<section>

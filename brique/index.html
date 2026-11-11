@@ -130,6 +130,8 @@ html{scroll-behavior:smooth}
 .chap-tete p{margin:0;color:var(--mute);font-size:clamp(18px,2.2vw,22px)}
 .chap-h3{margin:24px 0 0;text-align:center;font-size:clamp(22px,3vw,30px);color:var(--txt)}
 .chap-video video{display:block;width:100%;height:auto;max-width:980px;margin:0 auto;border-radius:18px;aspect-ratio:16/9;object-fit:cover}   /* height:auto : sinon l'attribut height=720 l'emporte et rogne les côtés */
+.chap-video video{filter:grayscale(1);transition:filter .8s}
+.chap-video video.lancee{filter:none}   /* grisée jusqu'à ce qu'on scrolle jusqu'à elle */
 .chap .c-console,.chap .acc-commu{display:grid}
 .chap .etapes{grid-template-columns:repeat(2,minmax(0,1fr))}
 .chap-liens{display:flex;justify-content:center;gap:8px 32px;flex-wrap:wrap;margin:8px 0 0;font-size:18px}
@@ -536,7 +538,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
-<main id="accueil" data-version="1.17">
+<main id="accueil" data-version="1.18">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -587,7 +589,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section id="assembler" class="chap">
     <div class="chap-tete"><span class="ref">Assembler sa console</span><h2>Comment ça marche ?</h2>
       <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p></div>
-    <div class="chap-video"><video src="images/kit-prompt.mp4" poster="images/kit-prompt.jpg" autoplay muted loop playsinline preload="metadata" width="1280" height="720" aria-label="Le kit Brique : on soude la console, puis on décrit son jeu à l'IA"></video></div>
+    <div class="chap-video"><video id="videoKit" src="images/kit-prompt.mp4" poster="images/kit-prompt.jpg" muted loop playsinline preload="metadata" width="1280" height="720" aria-label="Le kit Brique : on soude la console, puis on décrit son jeu à l'IA"></video></div>
   <section class="c-console c-soude">           <!-- en atelier : ce sont les enfants qui soudent -->
     <figure><img src="images/atelier-04.jpg" alt="Un enfant soude, le fer d'une main et l'étain de l'autre" width="800" height="800" loading="lazy">
       <figcaption><b>Le fer d'une main</b>, l'étain de l'autre, la plaque tenue par un support</figcaption></figure>
@@ -4277,6 +4279,10 @@ majMoi();
 if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
+new IntersectionObserver(([e], obs) => {      // vidéo du kit : se lance (et se colore) une fois arrivée à l'écran
+  if (!e.isIntersecting) return;
+  videoKit.classList.add('lancee'); videoKit.play().catch(() => {}); obs.disconnect();
+}, { threshold: .5 }).observe(videoKit);
 </script>
 </body>
 </html>

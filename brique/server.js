@@ -134,6 +134,9 @@ async function modererImages(images) {                   // { ok, raison } ; san
     return { ok: v.ok === true, raison: String(v.raison || '').slice(0, 120) };
   } catch (e) { console.error('moderation images :', e.message); return { ok: false, raison: 'verification automatique indisponible' }; }
 }
+// le jeu commun est un seul jeu, de base dans toutes les consoles : chaque niveau ajouté est regardé par un humain avant d'y entrer
+const attenteCommun = n => { n.attente = n.groupe ? 'animateur' : 'admin'; n.raison = (n.raison ? n.raison + ' · ' : '') + 'niveau du jeu commun'; };
+const MSG_COMMUN = 'Ton niveau est envoyé. Une personne de Brique (ou ton animateur) le regarde d\'abord : il rejoindra le jeu commun dès qu\'il sera validé.';
 const enLigne = n => !n.masque && !n.attente;           // visible par les autres (pas masque, pas en attente de validation)
 
 // ---------- secrets : on ne garde que des empreintes ----------
@@ -1136,8 +1139,9 @@ const serveur = http.createServer(async (req, res) => {
       // hors groupe -> l'IA regarde les images, et au moindre doute l'admin du site valide
       if (images.length && g && !g.prive) { n.attente = 'animateur'; n.raison = 'images perso'; }
       if (images.length && !g) { const m = await modererImages(images); if (!m.ok) { n.attente = 'admin'; n.raison = m.raison; } }
+      if (n.commun) attenteCommun(n);
       db.niveaux.push(n); sauver();
-      return repondre(res, 200, { id: n.id, code: n.code, attente: n.attente ? (n.attente === 'animateur' ? 'Ton animateur doit d\'abord regarder tes images : ton jeu apparaîtra dans la communauté dès qu\'il l\'aura validé.' : 'Une personne de Brique doit d\'abord regarder tes images : ton jeu apparaîtra dans la communauté dès qu\'elle l\'aura validé.') : '' });
+      return repondre(res, 200, { id: n.id, code: n.code, attente: n.commun ? MSG_COMMUN : n.attente ? (n.attente === 'animateur' ? 'Ton animateur doit d\'abord regarder tes images : ton jeu apparaîtra dans la communauté dès qu\'il l\'aura validé.' : 'Une personne de Brique doit d\'abord regarder tes images : ton jeu apparaîtra dans la communauté dès qu\'elle l\'aura validé.') : '' });
     }
     if (!nivValide(b.niv)) return repondre(res, 400, { erreur: 'niveau invalide' });
     const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), code: codeJeu(), pseudo: j.pseudo, groupe: j.groupe, prive: !!db.groupes.find(g => g.code === j.groupe)?.prive, titre, commun: !!b.commun,
@@ -1146,7 +1150,8 @@ const serveur = http.createServer(async (req, res) => {
                        questions: (db.groupes.find(g => g.code === j.groupe)?.questions || []).map(({ id, q, r, b }) => ({ id, q, r, b })) } };   // les questions du groupe voyagent avec le jeu
     if (JSON.stringify(n.niv.params).length > 1000) n.niv.params = {};
     if (n.niv.params.message) n.niv.params.message = filtreTexte(n.niv.params.message);   // le message part sur toutes les consoles qui recuperent le jeu
-    db.niveaux.push(n); sauver(); return repondre(res, 200, { id: n.id, code: n.code });
+    if (n.commun) attenteCommun(n);
+    db.niveaux.push(n); sauver(); return repondre(res, 200, { id: n.id, code: n.code, attente: n.commun ? MSG_COMMUN : '' });
   }
   if (url === '/api/signaler') {                      // un joueur signale un jeu ; 2 joueurs differents -> masque jusqu'a ce qu'un humain le regarde
     const n = db.niveaux.find(n => n.id === b.id); if (!n) return repondre(res, 404, { erreur: 'jeu introuvable' });

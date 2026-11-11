@@ -22,8 +22,9 @@
 #include "esp_heap_caps.h"
 #include "op.h"                                  // struct Op (avant les prototypes automatiques d'Arduino)
 #include "photo.h"                               // image de demarrage 320x240
+#include "jeu_commun.h"                          // JEU_COMMUN : le jeu commun Brique, de base dans Jouer (genere par publier.py depuis ../brique/jeu-commun.be)
 
-#define BERRY_VERSION "b7"                      // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
+#define BERRY_VERSION "b8"                    // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
 #define TFT_SCLK 4
 #define TFT_MOSI 6
 #define TFT_CS   7
@@ -516,6 +517,7 @@ void setup() {
     if (s) { f.read((uint8_t *)s, n); s[n] = 0; nomDuJeu(s); garde(nomJeu, s, n); free(s); }
     f.close(); LittleFS.remove("/jeu.be");
   }
+  if (prefs.getString("jc") != BERRY_VERSION && garde("Jeu commun", JEU_COMMUN, strlen(JEU_COMMUN))) prefs.putString("jc", BERRY_VERSION);   // a chaque nouveau firmware : le jeu commun de base (la page le met a jour avec tous les niveaux valides)
   ecran = E_LOGO; ecranT = millis(); tone(SND_PIN, 523); sonFin = millis() + 90;
 }
 

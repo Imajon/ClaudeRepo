@@ -1,6 +1,6 @@
 {
  "name": "Console Brique (script)",
- "version": "b7",
+ "version": "b8",
  "new_install_prompt_erase": false,
  "builds": [
   {

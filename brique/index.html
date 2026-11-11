@@ -744,7 +744,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== COMMUNAUTÉ : créations, classement, joueurs ===== -->
-<main id="commu" class="commu hide" data-version="1.1">
+<main id="commu" class="commu hide" data-version="1.2">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Communauté · jeux, parties, classement</p>
     <h2 class="sh-titre">Ici tu crées,<br>tu partages, tu découvres.</h2>
@@ -770,7 +770,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section class="c-class"><h2>🏆 Classement des jeux</h2><div id="classement" class="liste"></div></section>
   <section class="c-new"><h2>🆕 Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
   <section><h2>🔥 Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
-  <section id="communSec"><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu de plateforme, celui de la première console : on grimpe jusqu'au drapeau. Chacun y ajoute un niveau signé de son pseudo. Prends un niveau (ou pars de zéro dans Créer), change-le à ta façon et ajoute-le à la suite.</p><div id="jcMsg" class="envoi" style="margin:0 0 8px"></div><div id="commun" class="liste"></div></section>
+  <section id="communSec"><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu de plateforme, déjà dans ta console : on grimpe jusqu'au drapeau, puis le niveau suivant, jusqu'au dernier. Chacun y ajoute un niveau signé de son pseudo : prends un niveau, change-le à ta façon et ajoute-le à la suite. Une personne de Brique le regarde avant qu'il rejoigne le jeu.</p><div class="actions" style="justify-content:flex-start;margin:0 0 8px"><button id="jcJouer" class="sec">🎮 Mettre le jeu entier à jour sur ma console</button></div><div id="jcMsg" class="envoi" style="margin:0 0 8px"></div><div id="commun" class="liste"></div></section>
   <section class="c-defi">
     <h2>🎯 Le défi : explorer toute la console</h2>
     <p style="margin:0 0 4px">Soyons honnêtes : un ESP32-C3 à 3 € ne vaut pas une Switch. Ni même une PS Vita. Ni même la calculette de ta sœur. 🤏 Sauras-tu en atteindre les limites pour autant ?</p>
@@ -2995,7 +2995,7 @@ async function publier(commun) {
   try {
     const { id, code } = await api('api/niveaux', { ...ident(), titre: titreIn.value, commun, niv: jeu.niv });
     Object.assign(jeu.niv, { id, code, titre: jeu.niv.titre || titreIn.value });
-    envoi.innerHTML = `<span style="color:var(--ok)">✓ ${commun ? 'Ton niveau est ajouté au jeu commun' : 'Ton jeu est publié, signé ' + esc(pseudo())} !</span>
+    envoi.innerHTML = `<span style="color:var(--ok)">✓ ${commun ? 'Ton niveau est envoyé au jeu commun : il y entrera dès qu\'une personne de Brique l\'aura validé' : 'Ton jeu est publié, signé ' + esc(pseudo())} !</span>
       <div class="partage">Code de ton jeu : <span class="code">${code}</span><br>
       <small>Donne-le à tes copains : ils le récupèrent sur Brique et vous jouez ensemble dans « Mes jeux ». <b>Renvoie-le sur ta console</b> pour qu'elle connaisse ce code.</small></div>`;
     rafraichir();
@@ -3364,7 +3364,7 @@ idees.onchange = async e => {                            // animateur connecté 
   if (v === 'x' && !confirm('Supprimer cette idée ?')) return rafraichir();
   try { rendreIdees((await api('api/animateur/idee', v === 'x' ? { id, supprimer: true } : { id, statut: v }, session)).idees); } catch (err) { alert(err.message); }
 };
-let ouvrirScript;                                        // défini par le mode script : un jeu Berry publié
+let ouvrirScript, jouerCommun;                                      // défini par le mode script : un jeu Berry publié
 function jouerNiveau(n) {
   if (n.niv.script) return ouvrirScript(n);
   charger({ ...n.niv, id: n.id, code: n.code, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params); setGenre(params.jeu || 'plateforme');
@@ -3389,26 +3389,25 @@ document.addEventListener('click', e => {
   const id = e.target.dataset?.id; if (!id) return;
   const n = enLigne.find(n => n.id === id); if (n) jouerNiveau(n);
 });
-// ---------- Jeu commun : la plateforme de la première console (jeu-commun.be), un niveau par joueur ; « Prendre » le copie dans Créer sans quitter la page ----------
-// niveaux 0 à 9 dessinés à la main pour la console (../c3-tft-meatboy/hand_levels.txt) : la base du jeu commun, signée Brique
-const JC_BASE = [
-  ["....................","....................","....................","....................","....................","....................","....................","..........G.........","........#####.......","....................","....................","....................",".S..................","####R...............","#####..............."],
-  ["....................","....................","....................","....................","....................","................G...","..............#####.","....................","....................","...*......*.........","..###...............",".........##R##......","....................","....................","....................",".S..................","####R...............","#####..............."],
-  ["....................","....................","....................","....................","....................","..............G.....","............#####...","....................","....................",".........*......*...","...............###..","........##R##.......","....................","....................","....................",".S..................","####R...............","#####..............."],
-  ["....................","....................","....................","....................","....................","...........G........",".........#####......","....................","....................","........*......*....",".......###..........","..............##R##.","....................","....................","..........*.........","....................",".........##R##......","....................","....................","....................",".S..................","####R...............","#####..............."],
-  ["....................","....................","....................","....................","....................","..........G.........","........#####.......","....................","....................",".............*...*..","..........W.....##^.","............##R##...","....................","....................",".........*..........","....................","........##R##.......","....................","....................","....................",".S..................","####R...............","#####..............."],
-  ["....................","....................","....................","....................","....................","......G.............","....#####...........","....................","....................","..........*.........","....................",".........##R##......","....................","....................","........*......*....",".......##^.W........","..............##R##.","....................","....................","..........*.........","....................",".........##R##......","....................","....................","....................",".S..................","####R...............","#####..............."],
-  ["....................","....................","....................","....................","....................","......G.............","....#####...........","....................","....................",".........*..........","....................","........##R##.......","....................","....................",".............*...*..","..........W.....##^.","............##R##...","....................","....................",".........*..........","....................","........##R##.......","....................","....................","....................",".S..................","####R...............","#####..............."],
-  ["....................","....................","....................",".........G..........","....................","......*.............","....................","....................",".........R..........","....................","....................","....................","...R................","....................","...........*........","....................","........R...........","....................","....................","....................","....................","..............R.....","....................","............*.......","....................","....................",".........R..........","....................","....................","....................",".S..................","####R###############","####################"],
-  ["....................","....................","....................","...............G....","....................","....................","....................","...............R....","....................","............*.......","....................",".........R..........","....................","....................","....................","...R................","....................","......*.............","....................",".........R..........","....................","....................","....................","................R...","....................",".............*......","....................","..........R.........","....................","....................",".S..................","####R###############","####################"],
-  ["....................","....................","....................","....................","....................","................G...","..............#####.","....................","....................","..........*.........","....................",".........##R##......","....................","....................",".....*..............","....................","....##R##...........","....................","....................","...*......*.........","..##^...............",".........##R##......","....................","....................","...............*....","...........W........","..............##R##.","....................","....................","..........*.........","....................",".........##R##......","....................","....................","....................",".S..................","####R...............","#####..............."]];
+// ---------- Jeu commun : un seul jeu de plateforme (jeu-commun.be, de base dans la console), niveau après niveau ; « Prendre » copie un niveau dans Créer sans quitter la page ----------
+let JC_BASE = [];                                         // les niveaux d'origine (signés Brique) : lus dans jeu-commun.be, le même fichier que la console a de base
 const jcMoteur = fetch('jeu-commun.be').then(r => r.ok ? r.text() : Promise.reject());
-const jcNiv = rows => 'var NIV = [\n' + rows.map(r => JSON.stringify(r)).join(',\n') + ']\n';
 function jcRows(n) {                                     // la grille d'un niveau commun, quel que soit son format (Berry, fiche, générateur)
   if (n.niv.script) { const m = /var NIV = \[([\s\S]*?)\]/.exec(n.niv.script); return m ? JSON.parse('[' + m[1] + ']') : null; }
   const v = n.niv.fiche ? Fiche.apercu(n.niv) : n.niv;
   return v.params?.jeu === 'plateforme' || !v.params?.jeu ? v.rows : null;   // casse-briques, iso... ne vont pas dans la plateforme
 }
+jcMoteur.then(t => { JC_BASE = JSON.parse('[' + JSON.stringify(jcRows({ niv: { script: t } })) + /var NIVS = \[NIV([\s\S]*?)\]\nvar QUI/.exec(t)[1] + ']'); rendreCommun(); }).catch(() => {});
+const jcAscii = t => String(t).normalize('NFD').replace(/[^\x20-\x7e]|["\\]/g, '').slice(0, 40);   // l'écran de la console : ASCII
+const jcPropre = rows => rows.map(r => (String(r).replace(/[^.#CR^WI*SG]/g, '.') + '.'.repeat(20)).slice(0, 20));
+const jcJouable = n => { const r = jcRows(n)?.join('') || ''; return r.includes('S') && r.includes('G'); };   // sans départ ou sans drapeau, le jeu entier resterait bloqué
+function jcScript(moteur, niveaux) {                     // le moteur avec ces niveaux : un seul (« Prendre ») ou tous (le jeu entier)
+  const L = niveaux.map(n => '[' + jcPropre(jcRows(n)).map(r => JSON.stringify(r)).join(',') + ']');
+  const qui = niveaux.map(n => JSON.stringify(n.base ? 'Brique' : jcAscii(`${n.titre} par ${n.pseudo}`)));
+  return moteur.replace(/var NIV = \[[\s\S]*?# fin des niveaux\n/, () => `var NIV = ${L[0]}\nvar NIVS = [NIV${L.slice(1).map(l => ',\n' + l).join('')}]\nvar QUI = [${qui.join(', ')}]\n# fin des niveaux\n`);
+}
+// ponytail: chaque case de ligne est une chaine Berry (~52 Ko pour 11 niveaux, la console tient ~70 Ko) : vers 25 niveaux, une chaine par niveau
+const jcEntier = () => jcMoteur.then(m => jcScript(m, jcNiveaux().filter(jcJouable)));   // le jeu entier : niveaux d'origine puis ceux validés, dans l'ordre
 const jcBase = () => JC_BASE.map((rows, i) => ({ id: 'base' + i, titre: 'Niveau ' + (i + 1), pseudo: 'Brique', code: '', base: true, niv: { rows }, stats: { parties: 0 } }));
 const jcNiveaux = () => [...jcBase(), ...enLigne.filter(n => n.commun && jcRows(n)).sort((a, b) => a.cree - b.cree)];
 function rendreCommun() {
@@ -3422,7 +3421,7 @@ document.addEventListener('click', async e => {
   const id = e.target.dataset?.prendre; if (!id) return;
   const n = jcNiveaux().find(n => n.id === id); if (!n) return;
   try {
-    const script = n.niv.script || (await jcMoteur).replace(/var NIV = \[[\s\S]*?\]\n/, jcNiv(jcRows(n)));
+    const script = jcScript(await jcMoteur, [n]);
     ouvrirScript({ ...n, niv: { ...n.niv, script } }, true);
     ecrire('brique-pris', [...(lire('brique-pris') || []), id]); rendreCommun();
     jcMsg.innerHTML = `<span style="color:var(--ok)">✓ « ${esc(n.titre)} » de ${esc(n.pseudo)} est dans <a href="#" onclick="afficher('creer');return false" style="color:var(--acc)">Créer</a> : choisis-le dans « Mon jeu », change-le à ta façon, puis « 🧱 Ajouter au jeu commun ».</span>`;
@@ -4151,7 +4150,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const titre = prompt(commun ? 'Le nom de ton niveau ?' : 'Le nom de ton jeu ?', etat.titre || etat.nom || ''); if (titre === null) return;
     try {
       const { code, attente } = await api('api/niveaux', { ...ident(), titre, commun, script: etat.script, images: (etat.images || []).map(({ nom, l, h, n, pal, px }) => ({ nom, l, h, n, pal, px })) });
-      etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » ${commun ? 'est ajouté au jeu commun' : 'est publié'}, signé ${esc(pseudo())}${attente ? `<br>⏳ ${esc(attente)}` : ''}`, code); rafraichir();
+      etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » ${commun ? 'est envoyé au jeu commun' : 'est publié'}, signé ${esc(pseudo())}${attente ? `<br>⏳ ${esc(attente)}` : ''}`, code); rafraichir();
     } catch (e) { dire(e.message, false); }
   };
   scNoteOk.onclick = async () => {
@@ -4164,6 +4163,12 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     nouveau(n.titre || 'Jeu de ' + n.pseudo, { script: n.niv.script, images: structuredClone(n.niv.images || []).map(m => ({ ...m, taille: m.l === 160 && m.h === 120 ? 'fond' : Math.max(m.l, m.h) })), essais: [{ demande: `Jeu « ${n.titre} » de ${n.pseudo}${n.code ? ` (code ${n.code})` : ""}`, console: '', date: Date.now() }], erreur: '' });
     if (n.code) partage(`« ${esc(n.titre)} » de ${esc(n.pseudo)}`, n.code);
     if (!rester) { afficher('creer'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  };
+  jouerCommun = script => {                              // le jeu commun entier : toujours le chantier « Jeu commun », même nom que celui de base dans la console (il le remplace)
+    const i = chantiers.liste.findIndex(c => c.nom === 'Jeu commun');
+    if (i < 0) nouveau('Jeu commun', { ...vide(), script }); else { chantiers.liste[i].script = script; choisir(i); }
+    afficher('creer'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    dire('🧱 Le jeu commun entier est prêt : appuie sur « 📟 Envoyer sur la console ».', true);
   };
   scMettre.onclick = async () => {                       // envoie le programme affiché (de l'IA ou modifié à la main) ; pas encore de console : ce clic ouvre le choix du port
     if (!port && !(await auto())) {
@@ -4252,8 +4257,11 @@ document.querySelector('.sup-nav .on').onclick(); ficheAssImprimer.onclick = imp
 vProfs.onclick = () => afficher('profs'); profsAnim.onclick = () => afficher('anim');
 accVoirCommu.onclick = () => afficher('commu');
 accVoirDefi.onclick = accBlagueDefi.onclick = () => { afficher('commu'); document.querySelector('.c-defi').scrollIntoView(); };
-accAjouter.onclick = () => afficher('creer'); accCommun.onclick = () => ctaCommun.onclick();
-ctaCommun.onclick = () => { afficher('commu'); rendreCommun(); communSec.scrollIntoView({ behavior: 'smooth' }); };   // la liste des niveaux, sans quitter la page
+const voirNiveaux = () => { afficher('commu'); rendreCommun(); communSec.scrollIntoView({ behavior: 'smooth' }); };   // la liste des niveaux, sans quitter la page
+ctaCommun.onclick = accCommun.onclick = jcJouer.onclick = async () => {   // le jeu entier, niveau après niveau, prêt à partir sur la console
+  try { jouerCommun(await jcEntier()); } catch { voirNiveaux(); jcMsg.innerHTML = '<span style="color:var(--ko)">Le jeu commun ne se charge pas (serveur Brique éteint ?).</span>'; }
+};
+accAjouter.onclick = voirNiveaux;
 document.querySelector('.pied').onclick = e => {      // pied de page : mêmes vues que le menu
   const a = e.target.closest('a[data-vue],a[data-clic]'); if (!a) return;
   if (a.dataset.clic) return document.getElementById(a.dataset.clic).click();

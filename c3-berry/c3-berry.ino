@@ -24,7 +24,7 @@
 #include "photo.h"                               // image de demarrage 320x240
 #include "jeu_commun.h"                          // JEU_COMMUN : le jeu commun Brique, de base dans Jouer (genere par publier.py depuis ../brique/jeu-commun.be)
 
-#define BERRY_VERSION "b8"                    // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
+#define BERRY_VERSION "b9"                    // la page Brique la demande ("VERSION") ; a incrementer a chaque firmware publie
 #define TFT_SCLK 4
 #define TFT_MOSI 6
 #define TFT_CS   7

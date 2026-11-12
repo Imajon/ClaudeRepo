@@ -2242,7 +2242,7 @@ void drawInvaders() {
       fb.setCursor(70, 140 - sTop); fb.print("P3 = retour a l'accueil");
     } else {
       fb.setTextSize(1); fb.setTextColor(tft.color565(150, 160, 180));
-      fb.setCursor(60, 222 - sTop); fb.print("P3 = tirer   (maintenir = quitter)");
+      fb.setCursor(60, 222 - sTop); fb.print("P3 = tirer   G+D maintenus = quitter");
     }
     dBlitPlain(sTop);
   }
@@ -2255,7 +2255,7 @@ bool invadersStep(bool bLeft, bool br, bool bj, bool eJ) {
 
   if (invOver || bqMiniWin) { if (eJ) return false; drawInvaders(); return true; }
   static float invHoldT = 0;
-  if (bj) { invHoldT += dt; if (invHoldT > 1.5f) return false; } else invHoldT = 0;   // maintenir P3 1,5s = quitter (comme le casse-brique)
+  if (bLeft && br) { invHoldT += dt; if (invHoldT > 1.0f) { invHoldT = 0; return false; } } else invHoldT = 0;   // G + D 1 s = quitter (P3 maintenu = tir continu, ne doit plus quitter)
 
   float sspd = 220.0f * dt;
   if (bLeft) invShipX -= sspd;

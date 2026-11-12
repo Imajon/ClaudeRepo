@@ -117,7 +117,7 @@ struct __attribute__((packed)) LbMsg { uint8_t type; uint8_t n; LbEnt e[LB_MAX];
 
 
 #define SAVE_FORMAT 1       // format de la sauvegarde NVS : ne change que si la structure des donnees sauvegardees devient incompatible
-#define FW_VERSION "v56.0"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
+#define FW_VERSION "v56.1"  // affiche a l'ecran titre pour reperer la version flashee -- a incrementer a chaque changement notable
 const char* rstReason = "?";  // raison du dernier reset (affichee a l'ecran titre)
 RTC_NOINIT_ATTR uint32_t dbgStage;  // dernier marqueur atteint (survit au reset)
 uint32_t lastStage = 0;

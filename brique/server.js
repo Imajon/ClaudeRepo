@@ -919,6 +919,7 @@ const serveur = http.createServer(async (req, res) => {
     if (Object.keys(db.textes).length > 2000) return repondre(res, 400, { erreur: 'trop de textes' });
     sauver(); return repondre(res, 200, { ok: true });
   }
+  if ((url === '/api/script' || url === '/api/quota') && !b.methode) b.methode = process.env.METHODE_SCRIPT || (process.env.ANTHROPIC_API_KEY ? 'sonnet' : 'mistral');   // Sonnet par defaut ; ?methode=mistral dans l'adresse = l'ancienne methode
   const modeleScript = b => b.methode === 'sonnet' ? process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5' : b.methode === 'devstral' ? process.env.MISTRAL_MODEL_DEVSTRAL || 'devstral-medium-latest'
     : b.auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-latest';   // le modele qui ecrit le programme (affiche dans Creer)
   if (url === '/api/script') {                        // mode script : la demande, le programme actuel, ce que la console a dit -> nouveau programme

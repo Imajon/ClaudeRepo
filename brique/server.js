@@ -759,7 +759,7 @@ Si tout est bon, reponds seulement OK. Sinon dis en une phrase ce qui ne va pas,
 const CONTEXTE = fs.readFileSync(path.join(__dirname, 'contexte-mistral.md'), 'utf8');
 async function anthropic(consigne, msgs, surMorceau) {   // API Messages en direct (pas de SDK), comme mistral()
   const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST', signal: AbortSignal.timeout(120000),
+    method: 'POST', signal: AbortSignal.timeout(300000),   // 16000 tokens en flux ~ 4-5 min : 2 min coupait les longs jeux
     headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5', max_tokens: 16000, system: consigne, messages: msgs, stream: !!surMorceau }),
   });

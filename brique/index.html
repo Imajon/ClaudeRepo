@@ -99,6 +99,7 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 /* la console sous toutes ses coutures : grandes photos sur fond blanc */
 .commu .c-console{grid-column:1/-1;background:#fff;border-radius:16px;padding:24px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .c-console figure{margin:0}
+#cgv h3{font-size:18px;margin:24px 0 6px;color:var(--txt);text-transform:none;letter-spacing:0}   /* CGV : titres de chapitre lisibles */
 .commu .acc-commu{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .acc-commu article{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:14px;background:var(--panel);box-shadow:var(--glow)}
 .acc-commu h3{margin:0;font-size:clamp(22px,2.4vw,30px);font-weight:800;line-height:1.15;color:var(--txt)}.acc-commu p{margin:0;color:var(--mute)}
@@ -692,6 +693,62 @@ body{overflow-x:clip}                                           /* la bande 100v
 </div>
 </main>
 
+<!-- ===== CGV : conditions générales de vente et d'utilisation (lien en pied de page et au paiement) ===== -->
+<main id="cgv" class="hide" data-version="1.1">
+<div class="shop"><div class="sh-hero page-hero"><p class="sh-sur">Conditions générales</p><h2 class="sh-titre">Conditions de vente et d'utilisation</h2></div></div>
+<div class="commu">
+  <section style="grid-column:1/-1;max-width:760px;width:100%;margin:0 auto;line-height:1.6">
+    <article>
+      <p class="aide">En vigueur au 12 novembre 2026. En passant commande, vous acceptez ces conditions.</p>
+
+      <h3>1. Qui vend</h3>
+      <p>Les consoles Brique sont vendues par la <b>Fondation Brique</b>, au tiers-lieu Le Cercle, 2B rue de l'Église, 18400 Lunery (Cher), France. Contact : par Instagram <a href="https://instagram.com/brique_console" target="_blank" rel="noopener">@brique_console</a>.</p>
+
+      <h3>2. Le produit</h3>
+      <p>Brique est un <b>kit électronique éducatif</b>, à souder et à programmer, vendu en kit ou pré-soudé. Comme les cartes Arduino ou Raspberry Pi, c'est un outil d'apprentissage et d'expérimentation : ce n'est pas un jouet fini.</p>
+      <ul>
+        <li>Il contient de <b>petites pièces</b> : ne convient pas aux enfants de moins de 3 ans (risque d'étouffement).</li>
+        <li>Âge conseillé : à partir de 9 ans, <b>sous la surveillance d'un adulte</b>.</li>
+        <li>Le circuit imprimé est nu : ne pas l'utiliser sur une surface métallique ou humide, ne pas le mouiller.</li>
+      </ul>
+
+      <h3>3. Utilisation sous la responsabilité d'un adulte</h3>
+      <p>L'assemblage et l'utilisation de la console doivent se faire <b>sous la supervision d'un parent ou d'un adulte responsable</b>, en particulier :</p>
+      <ul>
+        <li><b>La soudure</b> : le fer à souder chauffe à plus de 300 °C. Travailler sur un support stable, dans une pièce aérée, porter des lunettes de protection, se laver les mains après avoir touché l'étain, débrancher le fer après usage.</li>
+        <li><b>L'alimentation</b> : uniquement par le port USB-C, avec un ordinateur, un chargeur de téléphone ou une batterie externe conformes aux normes CE. Ne jamais brancher autre chose sur les broches de la carte.</li>
+        <li><b>Les écrans</b> : certains jeux comportent des clignotements. En cas d'antécédents d'épilepsie photosensible, demander l'avis d'un médecin avant de jouer. Faire des pauses régulières.</li>
+        <li><b>L'IA et le site</b> : la création de jeux par IA se fait en ligne ; un adulte accompagne l'enfant. Aucune donnée personnelle de l'enfant n'est demandée (pseudo et code de groupe seulement).</li>
+      </ul>
+
+      <h3>4. Prix et paiement</h3>
+      <p>Les prix sont indiqués en euros, toutes taxes comprises, hors frais de livraison (point relais Mondial Relay, 4,90 €). Le paiement se fait par carte sur la page sécurisée de Stripe ; la commande est ferme une fois le paiement accepté.</p>
+
+      <h3>5. Livraison</h3>
+      <p>Livraison uniquement en point relais Mondial Relay, en France. Vérifiez le colis à son retrait ; en cas de pièce manquante ou abîmée, prévenez-nous dans les 7 jours avec une photo.</p>
+
+      <h3>6. Droit de rétractation</h3>
+      <p>Vous disposez de <b>14 jours</b> après le retrait du colis pour changer d'avis, sans avoir à vous justifier. Le kit est renvoyé complet, à vos frais, et remboursé sous 14 jours après réception. Un kit soudé, assemblé ou modifié a perdu de sa valeur : le remboursement peut être réduit d'autant.</p>
+
+      <h3>7. Garanties</h3>
+      <p>Vous bénéficiez de la garantie légale de conformité (2 ans, articles L217-3 et suivants du Code de la consommation) et de la garantie des vices cachés (articles 1641 et suivants du Code civil). Ces garanties couvrent les composants livrés ; elles ne couvrent pas les dommages dus à l'assemblage (soudure ratée, surchauffe, composant monté à l'envers), à une mauvaise alimentation, à l'eau ou à une modification du circuit.</p>
+
+      <h3>8. Logiciels et jeux</h3>
+      <p>Le site, le firmware de la console et les jeux sont fournis <b>en l'état</b>, sans garantie de fonctionnement continu. Les jeux écrits par l'IA ou partagés par la communauté peuvent contenir des erreurs : ils ne peuvent pas abîmer la console, qui se remet à zéro par une mise à jour depuis le site. Les contenus publiés dans la Communauté restent sous la responsabilité de leurs auteurs ; nous pouvons retirer ceux qui ne conviennent pas à un public d'enfants.</p>
+
+      <h3>9. Responsabilité</h3>
+      <p>La Fondation Brique ne saurait être tenue responsable des dommages, blessures ou pertes liés à l'assemblage ou à l'utilisation de la console qui ne respecteraient pas ces conditions et les consignes de sécurité ci-dessus, notamment en l'absence de supervision d'un adulte, ni des dommages indirects (perte de données, matériel branché sur la console). Cette limite ne s'applique pas aux dommages corporels causés par un défaut du produit, ni à ce que la loi interdit d'exclure.</p>
+
+      <h3>10. Vos données</h3>
+      <p>Nous gardons le moins possible : voir <a href="#" onclick="afficher('boutique');setTimeout(()=>donnees.scrollIntoView());return false">Vos données</a>.</p>
+
+      <h3>11. Litiges</h3>
+      <p>Ces conditions relèvent du droit français. En cas de désaccord, écrivez-nous d'abord : on trouve presque toujours une solution. À défaut, vous pouvez recourir gratuitement à un médiateur de la consommation, puis aux tribunaux compétents.</p>
+    </article>
+  </section>
+</div>
+</main>
+
 <!-- ===== PARTIS PRIS : les pages secondaires de l'accueil (IA française, 3 boutons, défi) ===== -->
 <main id="partis" class="hide" data-version="1.2">
 <div class="shop">
@@ -919,7 +976,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== PANIER : compte, point relais, paiement ===== -->
-<main id="vuePanier" class="shop hide" data-version="1.1">
+<main id="vuePanier" class="shop hide" data-version="1.2">
   <div id="panierBloc" class="sh-bloc sh-panier">
     <h3 class="sh-h">Mon panier.</h3>
     <ol id="cmdEtapes" class="cmd-etapes"><li class="on">1. Panier</li><li>2. Livraison</li><li>3. Paiement</li></ol>
@@ -943,6 +1000,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <div class="sh-etape"><b>3. Paiement</b>
       <p class="aide">Sur la page sécurisée de Stripe : vous y donnez votre carte, le nom pour retirer le colis et un téléphone pour l'avis d'arrivée. Rien de tout cela ne passe par notre serveur.</p>
+      <p class="aide">En payant, vous acceptez nos <a href="#" onclick="afficher('cgv');return false">conditions de vente</a>. Console à utiliser sous la surveillance d'un adulte.</p>
       <button id="cmdPayer" class="sh-btn" disabled>Payer</button>
     </div>
     </div>
@@ -1900,6 +1958,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <li><a data-vue="propos">À propos de nous</a></li>
       <li><a data-vue="partis" data-ancre="ia-francaise">Notre IA française</a></li>
       <li><a data-vue="boutique" data-ancre="donnees">Vos données</a></li>
+      <li><a data-vue="cgv">Conditions de vente</a></li>
       <li><a href="https://instagram.com/brique_console" target="_blank" rel="noopener">📷 Instagram @brique_console</a></li>
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
@@ -4246,7 +4305,7 @@ let vue = 'accueil';
 function afficher(v) {
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
-  accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); propos.classList.toggle('hide', v !== 'propos'); vApropos.classList.toggle('on', v === 'propos'); vAccueil.classList.toggle('on', v === 'accueil');
+  accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); propos.classList.toggle('hide', v !== 'propos'); cgv.classList.toggle('hide', v !== 'cgv'); vApropos.classList.toggle('on', v === 'propos'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');
   atelier.classList.add('hide'); vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché, à retirer quand le mode script aura sa communauté
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
@@ -4289,7 +4348,7 @@ document.querySelector('.pied').onclick = e => {      // pied de page : mêmes v
 piedSite.textContent = location.host;
 if (siteVersion.textContent === '__VERSION__') siteVersion.textContent = 'hors ligne';   // page ouverte sans le serveur (fichier, GitHub Pages)
 majMoi();
-if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
+if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos', 'cgv'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 new IntersectionObserver(([e], obs) => {      // vidéo du kit : se lance (et se colore) une fois arrivée à l'écran

@@ -761,7 +761,7 @@ async function anthropic(consigne, msgs, surMorceau) {   // API Messages en dire
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST', signal: AbortSignal.timeout(300000),   // 16000 tokens en flux ~ 4-5 min : 2 min coupait les longs jeux
     headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5', max_tokens: 16000, system: consigne, messages: msgs, stream: !!surMorceau }),
+    body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5', max_tokens: 16000, output_config: { effort: process.env.ANTHROPIC_EFFORT || 'medium' }, system: consigne, messages: msgs, stream: !!surMorceau }),
   });
   if (!r.ok) throw new Error('Anthropic ' + r.status + ' ' + (await r.text()).slice(0, 200));
   if (!surMorceau) { const j = await r.json(); compter((j.usage?.input_tokens || 0) + (j.usage?.output_tokens || 0)); return j.content.filter(c => c.type === 'text').map(c => c.text).join(''); }

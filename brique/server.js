@@ -200,13 +200,17 @@ const LOCAL = PUBLIC_URL.startsWith('http://localhost');
 const SECRET = process.env.BOUTIQUE_SECRET || (LOCAL ? 'dev-local' : null);   // en ligne : obligatoire (sinon les comptes seraient devinables)
 const ADMINS = (process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
 const compteDe = email => crypto.createHmac('sha256', SECRET).update(email).digest('hex');
-function devis(p) {                                      // { kit, presoude } -> lignes [libelle, quantite, centimes] + total, ou null
+// pieces detachees : [libelle, centimes] ; meme liste que PIECES dans index.html
+const PIECES = { esp: ['Module ESP32-C3 Super Mini', 500], ecran: ['Écran couleur', 900], bouton: ['Bouton poussoir', 100] };   // ponytail: prix a confirmer
+function devis(p) {                                      // { kit, presoude, esp, ecran, bouton } -> lignes [libelle, quantite, centimes] + total, ou null
   const kit = entier(p?.kit, 999) ? p.kit : 0, pre = entier(p?.presoude, 999) ? p.presoude : 0, n = kit + pre;
-  if (!n || n > 999) return null;
-  const pu = PALIERS.find(([m]) => n >= m)[1];
+  const pieces = Object.fromEntries(Object.keys(PIECES).map(k => [k, entier(p?.[k], 999) ? p[k] : 0]));
+  if (n > 999 || !n && !Object.values(pieces).some(Boolean)) return null;
+  const pu = n && PALIERS.find(([m]) => n >= m)[1];
   const lignes = [kit && ['Console Brique, kit à souder', kit, Math.round(pu * 100)], pre && ['Console Brique, pré-soudée', pre, Math.round((pu + PRESOUDE) * 100)],
+                  ...Object.entries(PIECES).map(([k, [nom, c]]) => pieces[k] && [nom, pieces[k], c]),
                   ['Livraison en point relais', 1, PORT_RELAIS]].filter(Boolean);
-  return { kit, presoude: pre, lignes, total: lignes.reduce((s, [, q, c]) => s + q * c, 0) };
+  return { kit, presoude: pre, pieces, lignes, total: lignes.reduce((s, [, q, c]) => s + q * c, 0) };
 }
 async function stripe(chemin, corps) {                   // API Stripe en direct (pas de SDK) ; corps = champs du formulaire
   const r = await fetch('https://api.stripe.com/v1/' + chemin, { method: corps ? 'POST' : 'GET', signal: AbortSignal.timeout(10000),
@@ -218,7 +222,7 @@ async function verifierPaiement(c) {                     // sans webhook : on de
   const s = await stripe('checkout/sessions/' + c.stripe);
   if (s.payment_status === 'paid' && s.client_reference_id === c.id) { c.statut = 'payee'; c.paiement = s.payment_intent; c.payee = Date.now(); sauver(); }
 }
-const vueCommande = c => ({ id: c.id, cree: c.cree, kit: c.kit, presoude: c.presoude, total: c.total, relais: c.relais, statut: c.statut, expediee: c.expediee });
+const vueCommande = c => ({ id: c.id, cree: c.cree, kit: c.kit, presoude: c.presoude, pieces: c.pieces, total: c.total, relais: c.relais, statut: c.statut, expediee: c.expediee });
 function purgerBoutique() {                              // durees de conservation annoncees sur la page
   const now = Date.now();
   db.commandes = db.commandes.filter(c => c.statut !== 'attente' || now - c.cree < 7 * JOUR);   // paiement jamais fait
@@ -838,9 +842,9 @@ async function iaFiche(texte, avant) {
 }
 
 const repondre = (res, code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(obj)); };
-function lireJSON(req) {
+function lireJSON(req, max = 131072) {
   return new Promise((ok, ko) => {
-    let s = ''; req.on('data', c => { s += c; if (s.length > 131072) { ko(new Error('trop gros')); req.destroy(); } });
+    let s = ''; req.on('data', c => { s += c; if (s.length > max) { ko(new Error('trop gros')); req.destroy(); } });
     req.on('end', () => { try { ok(JSON.parse(s || '{}')); } catch (e) { ko(e); } });
   });
 }
@@ -902,7 +906,7 @@ const serveur = http.createServer(async (req, res) => {
 
   if (req.method !== 'POST' || !url.startsWith('/api/')) return repondre(res, 404, { erreur: 'introuvable' });
   if (tropDeRequetes(ipDe(req))) return repondre(res, 429, { erreur: 'Doucement ! Réessaie dans une minute.' });
-  let b; try { b = await lireJSON(req); } catch { return repondre(res, 400, { erreur: 'requête illisible' }); }
+  let b; try { b = await lireJSON(req, url === '/api/voix' ? 2e6 : 131072); } catch { return repondre(res, 400, { erreur: 'requête illisible' }); }   // voix : ~1 min de son en base64
 
   if (url === '/api/edition/connexion' || url === '/api/edition/textes') {   // mode edition des textes de la page (?edition) : code EDIT_CODE
     const pas = codeEdition(b.code); if (pas) return repondre(res, pas.statut, pas);
@@ -934,6 +938,20 @@ const serveur = http.createServer(async (req, res) => {
     }
     try { return repondre(res, 200, { ...await faire(args), modele: modeleScript(b) }); }
     catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
+  }
+  if (url === '/api/voix') {                          // bouton micro de Créer : le son -> le texte (Voxtral), le son n'est gardé nulle part
+    if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
+    if (typeof b.audio !== 'string' || !b.audio) return repondre(res, 400, { erreur: 'pas de son' });
+    const pas = quotaIA(req, b); if (pas) return repondre(res, 429, { erreur: pas });
+    const f = new FormData();
+    f.append('model', process.env.MISTRAL_MODEL_VOIX || 'voxtral-mini-latest'); f.append('language', 'fr');
+    f.append('file', new Blob([Buffer.from(b.audio, 'base64')], { type: String(b.type || 'audio/webm').split(';')[0] }), 'voix.webm');
+    try {
+      const r = await fetch('https://api.mistral.ai/v1/audio/transcriptions', { method: 'POST', signal: AbortSignal.timeout(30000), headers: { Authorization: 'Bearer ' + process.env.MISTRAL_API_KEY }, body: f });
+      if (!r.ok) throw new Error('Voxtral ' + r.status + ' ' + (await r.text()).slice(0, 200));
+      const j = await r.json(); compter(j.usage?.total_tokens);
+      return repondre(res, 200, { texte: String(j.text || '').trim() });
+    } catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'Je n\'ai pas réussi à t\'écouter : réessaie, ou écris.' }); }
   }
   if (url === '/api/quota') return repondre(res, 200, { ...etatQuota(req, b), modele: modeleScript(b) });   // jauge de tokens de la page
   if (url === '/api/ia') {                            // compte (groupe ou animateur) ; sans compte : quelques essais par jour
@@ -1059,7 +1077,7 @@ const serveur = http.createServer(async (req, res) => {
       const d = devis(b.panier), r = b.relais;
       if (!d) return repondre(res, 400, { erreur: 'Panier vide.' });
       if (!/^\d{6}$/.test(r?.id || '') || r.pays !== 'FR') return repondre(res, 400, { erreur: 'Choisissez un point relais.' });
-      const c = { id: aleatoire(8), compte: client.id, cree: Date.now(), kit: d.kit, presoude: d.presoude, total: d.total, statut: 'attente',
+      const c = { id: aleatoire(8), compte: client.id, cree: Date.now(), kit: d.kit, presoude: d.presoude, pieces: d.pieces, total: d.total, statut: 'attente',
                   relais: { id: r.id, nom: propre(r.nom, 60), cp: propre(r.cp, 10), ville: propre(r.ville, 60) } };
       if (process.env.STRIPE_SECRET_KEY) {
         const champs = { mode: 'payment', locale: 'fr', client_reference_id: c.id, 'metadata[relais]': r.id,

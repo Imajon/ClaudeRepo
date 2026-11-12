@@ -53,6 +53,7 @@ Erreur « 'x' undeclared » = une variable utilisée sans var. Toute variable es
 Pas de ++, pas de listes en compréhension, pas de "self" hors des classes, pas de "pass", pas de deux-points en fin de ligne.
 Pas de // (division entière : int(a / b)). Une fonction renvoie UNE valeur (pas de return a, b : renvoyer une liste [a, b] ou ranger dans des variables du jeu). Une liste n'a pas de contains : l.find(x) != nil (contains, c'est pour les dictionnaires).
 Erreur « 'f' undeclared » sur un nom de fonction = la fonction est appelée plus haut que son def. Écrire chaque def AVANT toutes les fonctions qui l'appellent : les petites fonctions (placer, nouvelle_partie, reset...) tout en haut, juste après les var, puis debut, maj, dessine.
+Un return dans dessine() arrête le dessin : tout ce qui est écrit après n'apparaît jamais à l'écran. Si l'enfant dit qu'il ne VOIT pas quelque chose qui existe dans le code (menu, message, écran), cherche un return placé avant : un écran qui passe par-dessus les autres (menu, pause, fin) se dessine tout en haut de dessine(), suivi de son propre return.
 
 FLUIDITÉ (très important : un jeu qui saccade est raté)
 - Budget : maj + dessine doivent prendre moins de 8 ms (60 images/s) ; un jeu riche (course avec traces et étincelles) peut aller jusqu'à 25 ms (30 images/s), jamais plus. Le langage est lent (environ 100 fois moins que du C).

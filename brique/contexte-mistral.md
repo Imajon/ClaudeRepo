@@ -91,7 +91,7 @@ PISTE, CIRCUIT, ROUTE, COULOIR, RIVIÈRE (une bande avec deux bords)
 TA RÉPONSE
 1. Le programme Berry COMPLET (jamais un morceau) dans un seul bloc de code, première ligne # Nom du jeu.
 2. Juste après, 2 ou 3 phrases simples pour l'enfant : ce que fait le jeu et quels boutons utiliser.
-Si l'enfant demande un changement : repars du programme précédent, garde ce qui marche, ne change que ce qui est demandé, et renvoie à nouveau le programme complet.
+Si l'enfant demande un changement : repars du programme précédent, garde ce qui marche, ne change que ce qui est demandé (en remplacements si la demande le précise, sinon le programme complet).
 Si la console affiche une erreur (« 'x' undeclared », « 'real' value is not callable »...), corrige-la d'abord grâce aux explications ci-dessus.
 
 AVANT D'ENVOYER, relis ton programme :

@@ -574,7 +574,7 @@ const JEUX_BRIQUE = fs.readdirSync(path.join(__dirname, 'exemples')).filter(f =>
   const script = fs.readFileSync(path.join(__dirname, 'exemples', f), 'utf8'), [l1, l2] = script.split('\n');
   return { f, titre: l1.replace(/^#\s*/, '').trim(), desc: (l2.match(/exemple:\s*([^|]*)/) || [, ''])[1].trim(), script };
 });
-const Exemples = require('./exemples.js').systemes;    // systemes/*.be : l'IA recoit les 3 systemes de jeu les plus proches de la demande (pas pour une correction d'erreur) ; mieux que 2 jeux entiers (node bench-exemples.js)
+const Reparer = require('./reparer.js'), Exemples = require('./exemples.js').systemes;    // systemes/*.be : l'IA recoit les 3 systemes de jeu les plus proches de la demande (pas pour une correction d'erreur) ; mieux que 2 jeux entiers (node bench-exemples.js)
 async function iaScript(texte, script, erreur, avant, auto, test, surMorceau, images, points, chaud, plan) {   // plan = plan du jeu (planifier), premier jeu seulement ;   // points = la demande en liste (lister) ; chaud = temperature de l'ecriture   // test = ce que le verificateur a vu en jouant le programme ; auto = correction d'une erreur de la console : le modele rapide suffit
   const r = decoupe(await mistral(CONSIGNE_SCRIPT + (auto ? '' : Exemples.texte(Exemples.choisir(texte, avant, script?.split('\n')[0]))), { programme_actuel: script || '(aucun : c\'est le premier jeu)', la_console_a_dit: erreur ? avecLignes(erreur, script) : 'rien de special', test_automatique: test || '(pas de programme)',
     demandes_precedentes: avant, ...(points?.length ? { points_a_faire: points } : {}), ...(plan ? { plan_du_jeu: plan } : {}), images_du_jeu: images?.length ? images : '(aucune : le jeu dessine avec rect, disque...)', demande: texte }, auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-2512', 180000, surMorceau, true, auto ? 0.2 : chaud ?? 0.4));   // ecriture plus libre (0.4), correction d'erreur precise (0.2)
@@ -584,10 +584,7 @@ function finScript(r) {                                 // reponse decoupee -> p
   const t = v => typeof v === 'string' ? v.trim() : '';
   let nouveau = t(r.script);
   if (nouveau.length < 20 || nouveau.length > 20000) throw new Error('programme vide ou trop long');
-  for (const m of ['math', 'string'])                   // oubli frequent de l'IA : "math.sin" sans "import math" -> erreur sur la console ; on ajoute l'import (apres la ligne du nom du jeu)
-    if (new RegExp(`\\b${m}\\.`).test(nouveau) && !new RegExp(`^\\s*import\\s+${m}\\b`, 'm').test(nouveau))
-      nouveau = nouveau.startsWith('#') ? nouveau.replace(/^(.*\n?)/, `$1import ${m}\n`) : `import ${m}\n` + nouveau;
-  nouveau = nouveau.replace(/(\bfor\s+\w+\s*:\s*)(.+?)\s*\.\.\s*(.+?)\s+step\s+(\S+)/g, '$1range($2, $3, $4)');   // "for i: 0 .. 360 step 10" n'existe pas en Berry (malgre la consigne) -> range(debut, fin, pas)
+  nouveau = Reparer.texte(nouveau);                      // oublis frequents de l'IA (import math, and/or, max sans math., for ... step) corriges sans la rappeler
   if (GROS_MOTS.test(nouveau) || GROS_MOTS.test(t(r.explication))) return { refus: 'Je ne peux pas mettre ça dans un jeu.' };
   return { script: nouveau, explication: t(r.explication).slice(0, 400), limite: t(r.limite).slice(0, 300), question: t(r.question).slice(0, 200), astuce: t(r.astuce).slice(0, 300) };
 }
@@ -616,6 +613,15 @@ function verifier(script) {                              // null = pas de verifi
     p.stdin.end(script);
   });
 }
+async function verifie(r) {                              // verifier + reparer les "redefinition of 'i'" (2e var) sans rappeler l'IA ; r.script peut changer
+  let v = await verifier(r.script);
+  for (let k = 0; k < 6 && v && !v.ok; k++) {
+    const s = Reparer.redefinition(r.script, v.erreur), nom = (/redefinition of '(\w+)'/.exec(v.erreur) || [])[1]; if (!s) break;
+    const v2 = await verifier(s); if (!v2 || new RegExp(`'${nom}' undeclared`).test(v2.erreur || '')) break;   // mauvais var enleve : on laisse l'IA corriger
+    r.script = s; v = v2;
+  }
+  return v;
+}
 function probleme(v) {                                   // ce qui irait de travers sur la console, '' si rien
   if (!v) return '';
   if (!v.ok) return (v.erreur || 'erreur').replace(/\s+/g, ' ').trim();
@@ -630,13 +636,13 @@ const CORRIGE_SRV = 'Corrige seulement l\'erreur signalee, sans rien changer d\'
 async function ecrire(args, test, m, surMorceau) {     // l'IA ecrit, le verificateur joue, codestral corrige (2 fois au plus) ; args[6] = points, args[7] = temperature, args[8] = plan du jeu
   let r = await iaScript(...args.slice(0, 5), test, surMorceau, args[5], args[6], args[7], args[8]), v = null, pb = '', n = 0;
   m.ia ??= Date.now() - m.date;
-  while (r.script && (pb = probleme(v = await verifier(r.script))) && n < 2) {
+  while (r.script && (pb = probleme(v = await verifie(r))) && n < 2) {
     if (!n) m.premier ??= pb.slice(0, 120);
     n++; surMorceau?.('\x01');                           // la page repart de zero pour afficher la correction
     try { r = { ...await iaScript(CORRIGE_SRV, r.script, pb, args[3], true, v?.suivi, surMorceau, args[5]), explication: r.explication, astuce: r.astuce, question: r.question, limite: r.limite }; }
     catch (e) { console.error(e.message); break; }
   }
-  if (r.script && n === 2) pb = probleme(v = await verifier(r.script));
+  if (r.script && n === 2) pb = probleme(v = await verifie(r));
   return { r, v, pb, n };
 }
 // ---------- liste de points : la demande decoupee en choses verifiables ; l'ecriture les recoit, la relecture les coche une par une ----------
@@ -827,7 +833,7 @@ async function methodeContexte(nom, args, surMorceau) {
   };
   let r = await lire(script), v = null, pb = '', n = 0;
   m.ia = Date.now() - t0;
-  while (!r.refus && (pb = probleme(v = await verifier(r.script))) && n < 1) {   // 1 correction (chaque tour renvoie toute la conversation)
+  while (!r.refus && (pb = probleme(v = await verifie(r))) && n < 1) {   // 1 correction (chaque tour renvoie toute la conversation)
     n++; surMorceau?.('\x01');                           // la page repart de zero pour afficher la correction
     msgs.push({ role: 'user', content: `La console a fait tourner ton programme. PROBLEME : ${v && !v.ok ? avecLignes(pb, r.script) : pb}${v?.suivi ? '\nCe qu\'elle a vu :\n' + v.suivi : ''}\nTrouve la vraie cause et corrige-la sans rien changer d'autre au jeu.\nVoici le programme tel qu'il est maintenant :\n\`\`\`\n${r.script}\n\`\`\`` + EN_REMPLACEMENTS });
     try { r = { ...await lire(r.script), explication: r.explication }; } catch (e) { console.error(e.message); break; }
@@ -952,7 +958,7 @@ const serveur = http.createServer(async (req, res) => {
     if (Object.keys(db.textes).length > 2000) return repondre(res, 400, { erreur: 'trop de textes' });
     sauver(); return repondre(res, 200, { ok: true });
   }
-  if ((url === '/api/script' || url === '/api/quota') && !b.methode) b.methode = process.env.METHODE_SCRIPT || 'mistral';   // Mistral par defaut ; ?methode=sonnet (ou devstral, claude) dans l'adresse pour comparer
+  if ((url === '/api/script' || url === '/api/quota') && !b.methode) b.methode = process.env.METHODE_SCRIPT || (typeof b.script === 'string' && b.script.trim() ? 'large' : 'mistral');   // creer = methode complete (banc nov. 2026 : 10/10), modifier = Large 3 en remplacements (gros jeu 6/10 contre 1/10, moitie des tokens) ; ?methode=sonnet (devstral, claude...) pour comparer
   const modeleScript = b => b.methode === 'sonnet' ? process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5' : b.methode === 'devstral' ? process.env.MISTRAL_MODEL_DEVSTRAL || 'devstral-medium-latest'
     : b.methode === 'medium' ? process.env.MISTRAL_MODEL_MEDIUM || 'mistral-medium-latest' : b.auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-2512';   // le modele qui ecrit le programme (affiche dans Creer)
   if (url === '/api/script') {                        // mode script : la demande, le programme actuel, ce que la console a dit -> nouveau programme

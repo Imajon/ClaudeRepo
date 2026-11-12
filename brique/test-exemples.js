@@ -6,7 +6,7 @@ const VERIF = path.join(__dirname, 'verif', process.platform === 'win32' ? 'veri
 if (fs.existsSync(VERIF)) for (const e of [...EXEMPLES, ...require('./exemples.js').systemes.EXEMPLES]) {
   const v = JSON.parse(execFileSync(VERIF, [], { input: e.code }));
   assert(v.ok, `${e.f} : ${v.erreur}`);
-  if (e.f !== '1-drift.be') assert(v.ops <= 1200 && v.memoire <= 70000,   // 1-drift.be (copie de c3-berry/jeux/drift-fidele.be) : ~100 Ko, deja verifie sur la console
+  if (e.f !== '1-drift.be') assert(v.ops <= 1200 && v.memoire <= 70000,   // 1-drift.be : pic 65 a 75 Ko selon le circuit (48 a 58 Ko vivants), l'ancienne version (versions/1-drift-avant-reduction.be) tournait sur la console avec 68 Ko vivants
     `${e.f} : trop lourd (${v.ops} dessins, ${v.memoire} octets)`);
 } else console.log('verif non compile : exemples non joues');
 

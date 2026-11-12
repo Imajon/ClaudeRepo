@@ -7,7 +7,7 @@
 const fs = require('fs'), path = require('path'), { spawn } = require('child_process');
 const SERIE = process.argv[5] || 'script', B = path.join(__dirname, 'bench'), DATA = path.join(B, SERIE + '-data.json'), PORT = 18000 + Math.floor(Math.random() * 1000);
 const lire = f => fs.readFileSync(path.join(__dirname, f), 'utf8');
-const DRIFT = lire('exemples/1-drift.be');               // gros jeu (341 l.) : en ligne, Mistral a echoue 12 fois sur 12 en le modifiant (nov. 2026)
+const DRIFT = lire('exemples/1-drift.be');               // gros jeu (238 l., 341 avant la reduction) : en ligne, Mistral a echoue 12 fois sur 12 en le modifiant (nov. 2026)
 const CAS = [                                            // c = creation, m = modif de Drift, o = modif d'autres jeux, x = multi (deux consoles)
   ['c1', '', 'un oiseau qui vole entre des tuyaux, P3 pour battre des ailes'],
   ['c2', '', 'un casse-briques avec 3 vies'],

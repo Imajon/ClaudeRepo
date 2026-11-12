@@ -326,7 +326,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 @keyframes tourne{to{transform:rotate(360deg)}}
 .occupe .cosmo{display:none;flex-basis:100%;max-width:200px;margin:0 auto;image-rendering:pixelated}.occupe.ia .cosmo{display:block}   /* le cosmonaute de la console, pendant que l'IA travaille */
 @media (prefers-reduced-motion:reduce){.occupe .rond{animation-duration:3s}}
-#scMettre:disabled{opacity:.45;cursor:default;filter:grayscale(1)}   /* déjà sur la console : grisé jusqu'au prochain programme */
+#scMettre:disabled{opacity:.45;cursor:default;filter:grayscale(1)}   /* grisé : pas de programme, ou l'IA écrit */
 #vueScript .agent{display:flex;flex-direction:column;height:calc(100vh - 150px);min-height:520px}   /* agent classique : l'historique défile au-dessus du champ, collé en bas */
 #scHist{flex:1;min-height:0;max-height:none;margin:6px 0 0;padding-right:4px;flex-direction:column-reverse}   /* comme un chat : ancré en bas (le DOM est à l'envers : le plus récent en premier), se lit de bas en haut */
 #scHist .q{font-style:normal;background:var(--acc);color:var(--onacc);border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:85%;margin:0 0 0 auto;width:fit-content}   /* ma demande : bulle à droite */
@@ -4071,9 +4071,9 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   };
   scImgs.onclick = e => { const i = e.target.dataset.suppr; if (i !== undefined) { sources.delete(etat.images[i]); etat.images.splice(i, 1); imagesChangees(); } };
   rendreImages();
-  function majMettre() {                                 // grisé : pas de programme, l'IA écrit, ou ce programme est déjà sur la console
+  function majMettre() {                                 // grisé : pas de programme ou l'IA écrit (renvoyer le même reste possible : console redémarrée, plantée ou changée)
     scJeux.disabled = scNouveau.disabled = scRenommer.disabled = scZero.disabled = iaEnCours;   // l'IA écrit dans ce jeu : on n'en change pas
-    scMettre.disabled = iaEnCours || !scCode.value.trim() || (scCode.value === etat.script && etat.surConsole === etat.essais.length);
+    scMettre.disabled = iaEnCours || !scCode.value.trim();
   }
   majIA = majIAScript; function majIAScript() {                                     // modèle + ce que l'IA reçoit : les 6 dernières demandes (le serveur coupe au-delà) et le programme (20 000 caractères au plus)
     const n = demandes().length, c = (etat.script || '').length;
@@ -4241,7 +4241,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
       }); }
     catch (e) { mettreCode(etat.script); if (e.name === 'AbortError') { scCompris.textContent = '✋ Demande annulée : modifie ton texte, puis renvoie-la.'; scDemande.focus(); } else scCompris.innerHTML = `<span style="color:var(--ko)">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : e.message || 'L\'IA ne répond pas : réessaie.')}</span>`; }
     arret = null; scAnnuler.classList.add('hide');
-    scGo.disabled = false; scGo.textContent = '✨ Envoyer à l\'IA'; iaEnCours = false; occupe();
+    scGo.disabled = false; scGo.textContent = '✨ Envoyer à l\'IA'; iaEnCours = false; majMettre(); occupe();   // sinon le bouton reste grisé après une erreur, un refus ou une annulation
     if (!r) return false;
     if (r.modele) modeleIA = r.modele;
     if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return false; }
@@ -4329,7 +4329,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
       catch (e) { await fermer(); return dire(e.name === 'NotFoundError' ? 'Aucune console choisie.' : 'Câble débranché ou port occupé (ferme l\'IDE Arduino, l\'autre onglet ou la fenêtre d\'installation).', false); }
     }
     garderMain();                                        // modifié à la main : nouvelle version
-    scMettre.disabled = true; const pb = await envoyer(etat.script); majMettre();
+    scMettre.disabled = true; let pb;
+    try { pb = await envoyer(etat.script); } catch { pb = 'Câble débranché pendant l\'envoi : rebranche la console et réessaie.'; await fermer(); } finally { majMettre(); }   // sinon le bouton restait grisé pour de bon
     if (pb) { const e = etat.essais.at(-1); if (e) { e.console = pb; e.consoleOk = false; } sauver(); rendre(); }
     else await corriger();
   };

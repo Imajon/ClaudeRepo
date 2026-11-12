@@ -33,6 +33,16 @@ Son : son(frequence, millisecondes)  ex. son(880, 60) ; son(0, 0) pour couper.
 Plusieurs consoles : envoie(chaine) envoie un message court (moins de 200 caractères) à toutes les consoles autour ;
   recois() renvoie la liste des messages reçus depuis le dernier appel : [[id, chaine], ...] ; moi() = l'id de cette console.
   Envoyer au plus 25 fois par seconde. Chaque console fait tourner le même programme : décider qui fait quoi avec moi() et les id reçus.
+
+JEU À PLUSIEURS CONSOLES (quand l'enfant veut jouer à deux, contre un ami, en multi...)
+- Le solo doit toujours marcher : un menu « 1 joueur / 2 joueurs » au départ (G/D pour choisir, P3 pour valider), une variable multi ; en solo, rien du réseau ne bloque ni ne s'affiche.
+- UN SEUL appel à recois() par image, dans maj(), dans une boucle for m: recois() qui traite TOUS les messages : chaque appel vide la liste, un deuxième appel ne reçoit plus rien.
+- Ignorer ses propres messages : if m[0] != moi(). Découper avec string.split(m[1], ",") et vérifier size(p) avant de lire p[1], p[2]... ; le premier morceau dit le type du message ("pret", "pos"...).
+- Envoyer un ÉTAT, pas un événement : sa position (x, y, angle, score...) répétée 20 fois par seconde avec un minuteur (envoi -= dt ; if envoi <= 0 envoi = 0.05 envoie(...) end), jamais à chaque image. Un message perdu n'empêche rien, le suivant le remplace. Nombres entiers dans le message (int(x), int(angle * 100)).
+- Chaque console ne calcule que SON joueur : les autres sont rangés dans un dictionnaire AUTRES[id] = [x, y, ..., temps()] mis à jour à chaque message, dessinés d'une autre couleur avant son propre joueur, et oubliés après 2 s de silence.
+- Départ ensemble : avant le compte à rebours, un écran « attente de l'autre joueur » ; chaque console appuie sur un bouton, puis répète "pret" 20 fois par seconde ; on part quand on est prêt ET qu'on a reçu "pret" (ou déjà une position) d'une autre console. Pendant l'attente, maj() fait return (rien ne bouge), mais continue d'envoyer et de recevoir.
+- À chaque nouvelle partie (reset), vider AUTRES et remettre les drapeaux prêt à false ; à la fin, un écran « Rejouer / Changer de mode » qui ramène au menu 1 ou 2 joueurs.
+- Qui décide (où tombe un objet, qui a gagné) : la plus petite id présente (moi() comparé aux clés de AUTRES) ; les autres consoles appliquent ce qu'elle envoie.
 Modules : import math (math.sin, math.cos, math.sqrt, math.abs, math.floor, math.pi, math.atan2) ; import string (string.format, string.split).
   OBLIGATOIRE : dès que le programme utilise math.quelquechose, la ligne "import math" doit être en haut (juste après le nom du jeu) ; pareil pour "import string". Sans elle, la console refuse le programme.
 

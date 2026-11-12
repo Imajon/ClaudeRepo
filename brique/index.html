@@ -63,7 +63,14 @@ h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 /* ----- accueil communauté ----- */
 .commu{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;padding:16px;max-width:1400px;margin:0 auto}
 .commu>section{grid-column:span 4;min-width:0}
-.commu .c-stats,.commu .c-hero{grid-column:1/-1}
+.commu .c-stats,.commu .c-hero,.commu .c-recap{grid-column:1/-1}
+.commu>section{scroll-margin-top:72px}
+.c-recap{display:flex;flex-wrap:wrap;gap:10px}
+.c-recap button{flex:1 1 auto;font:inherit;font-size:15px;border:0;border-radius:12px;padding:8px 14px;background:var(--soft);color:var(--txt);box-shadow:var(--glow);cursor:pointer;text-align:left}
+.c-recap button:hover{outline:2px solid var(--acc)}
+.c-recap .gros{flex:1 1 220px;display:flex;flex-direction:column;gap:2px;padding:12px 16px}
+.c-recap .gros i{font:700 30px/1.1 var(--mono);font-style:normal;color:var(--acc2);text-shadow:var(--brille)}
+.c-recap .gros small{color:var(--mute)}
 .commu .c-class,.commu .c-new{grid-column:span 6}.commu .c-defi,.commu #exSec{grid-column:1/-1}           /* classement et nouveaux niveaux : même taille, même hauteur, se replient ensemble */
 .commu .c-class .liste,.commu .c-new .cartes{max-height:520px;overflow:auto}
 .commu #communSec{grid-column:span 8}.commu #communSec .liste{max-height:640px;overflow:auto}   /* le jeu commun : une grande place */
@@ -529,6 +536,9 @@ body{overflow-x:clip}                                           /* la bande 100v
     <button id="vSupport">🧰 Support</button>
     <button id="vApropos">👋 À propos</button>
   </nav>
+  <details id="remarque" class="compte"><summary title="Une remarque sur le site ? Elle arrive à l'équipe Brique">💬 Remarque</summary>   <!-- tout visiteur : rangée dans les notes (admin), relevée par l'Établi -->
+    <div class="compte-menu" style="min-width:280px;padding:10px"><textarea id="remTxt" rows="4" maxlength="500" style="width:100%" placeholder="Un bug, une idée, un texte pas clair… sur cette page. Pas de nom ni de mail."></textarea>
+      <button id="remOk" class="sec" style="margin-top:6px">Envoyer</button> <small id="remMsg"></small></div></details>
   <a href="https://instagram.com/brique_console" target="_blank" rel="noopener" title="Brique sur Instagram" aria-label="Brique sur Instagram" style="display:flex;align-items:center;padding:6px;color:var(--txt)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
   <details id="compte" class="compte"><summary id="compteTete">👤 Mon compte</summary><div id="compteMenu" class="compte-menu"></div></details>   <!-- en haut à droite, comme un site classique : créateur (pseudo) et client (commandes) -->
   <button id="vPanier" class="sec">🧺 Panier<b id="panierNb"></b></button>
@@ -807,11 +817,21 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== COMMUNAUTÉ : créations, classement, joueurs ===== -->
-<main id="commu" class="commu hide" data-version="1.3">
+<main id="commu" class="commu hide" data-version="1.4">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Communauté · jeux, parties, classement</p>
     <h2 class="sh-titre">Ici tu crées,<br>tu partages, tu découvres.</h2>
   </div>
+  <!-- sommaire : chaque partie de la page en bref, un clic y descend -->
+  <nav id="recap" class="c-recap" aria-label="Sommaire de la Communauté">
+    <button class="gros" data-aller="classSec"><b>🎮 Jeux de la communauté</b><i id="rJeux">–</i><small id="rJeuxDer">&nbsp;</small></button>
+    <button class="gros" data-aller="communSec"><b>🧱 Niveaux du jeu commun</b><i id="rNiv">–</i><small id="rNivDer">&nbsp;</small></button>
+    <button class="gros" data-aller="exSec"><b>🧩 Jeux de Brique</b><i id="rEx">–</i><small id="rExMeca">&nbsp;</small></button>
+    <button data-aller="nouvSec">🆕 Nouveautés</button>
+    <button data-aller="tendSec">🔥 Plébiscités</button>
+    <button data-aller="defiSec">🎯 Défi <b id="rDefi">–</b></button>
+    <button data-aller="ideesSec">💡 Idées <b id="rIdees">–</b></button>
+  </nav>
   <!-- bandeau du haut : les chiffres et qui joue en ce moment, sur toute la largeur -->
   <section class="c-stats">
     <div id="atelierBan" class="atelierBan hide"></div>
@@ -830,12 +850,12 @@ body{overflow-x:clip}                                           /* la bande 100v
       <div id="codeMsg" class="envoi" style="margin:0;flex-basis:100%"></div>
     </div>
   </section>
-  <section class="c-class"><h2>🏆 Classement des jeux</h2><div id="classement" class="liste"></div></section>
-  <section class="c-new"><h2>🆕 Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
-  <section><h2>🔥 Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
+  <section id="classSec" class="c-class"><h2>🏆 Classement des jeux</h2><div id="classement" class="liste"></div></section>
+  <section id="nouvSec" class="c-new"><h2>🆕 Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
+  <section id="tendSec"><h2>🔥 Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
   <section id="communSec"><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu de plateforme, déjà dans ta console : on grimpe jusqu'au drapeau, puis le niveau suivant, jusqu'au dernier. Chacun y ajoute un niveau signé de son pseudo : prends un niveau, change-le à ta façon et ajoute-le à la suite. Une personne de Brique le regarde avant qu'il rejoigne le jeu.</p><div class="actions" style="justify-content:flex-start;margin:0 0 8px"><button id="jcJouer" class="sec">🎮 Mettre le jeu entier à jour sur ma console</button></div><div id="jcMsg" class="envoi" style="margin:0 0 8px"></div><div id="commun" class="liste"></div></section>
   <section id="exSec"><h2>🧩 Les jeux de Brique</h2><p class="aide" style="margin-top:0">Des jeux complets écrits par l'équipe Brique. Prends-en un : il arrive dans Créer, tu peux l'envoyer sur ta console ou le changer à ta façon.</p><div id="exMsg" class="envoi" style="margin:0 0 8px"></div><div id="exemples" class="liste"></div></section>
-  <section class="c-defi">
+  <section id="defiSec" class="c-defi">
     <h2>🎯 Le défi : explorer toute la console</h2>
     <p style="margin:0 0 4px">Soyons honnêtes : un ESP32-C3 à 3 € ne vaut pas une Switch. Ni même une PS Vita. Ni même la calculette de ta sœur. 🤏 Sauras-tu en atteindre les limites pour autant ?</p>
     <p class="aide" style="margin-top:0">Chaque jeu partagé qui utilise une nouvelle mécanique dévoile une case. Les autres restent secrètes, à toi de les trouver !</p>
@@ -849,7 +869,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div class="barre defi-barre"><i id="defiBarre2" style="width:0"></i></div>
     <div id="defiVus" class="defi-vus"></div>
   </section>
-  <section class="c-idees">
+  <section id="ideesSec" class="c-idees">
     <h2>💡 Idées des joueurs</h2>
     <p class="aide" style="margin-top:0">Ce que vous voulez dans le jeu et que la console ne sait pas encore faire. Les plus demandées arriveront dans les prochaines mises à jour !</p>
     <div class="icRow" style="margin-bottom:10px"><input id="ideeIn" class="pseudo" maxlength="60" placeholder="Mon idée : ex. des ennemis qui volent"><button id="ideeBtn" class="sec">💡 Proposer</button></div>
@@ -3327,7 +3347,13 @@ async function rafraichir() {
   rendreCommun();
   rendreIdees(c.idees);
   rendreDefi(jeux);
+  const dernier = l => l.length ? 'dernier ' + new Date(Math.max(...l.map(n => n.cree))).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'aucun pour l\'instant';
+  const nivs = niv.filter(n => !n.base);
+  rJeux.textContent = jeux.length; rJeuxDer.textContent = dernier(jeux);
+  rNiv.textContent = nivs.length; rNivDer.textContent = dernier(nivs);
+  rDefi.textContent = defiPc.textContent; rIdees.textContent = c.idees.length;
 }
+document.getElementById('recap').onclick = e => document.getElementById(e.target.closest('[data-aller]')?.dataset.aller)?.scrollIntoView({ behavior: 'smooth' });
 // ---------- Possibilités de la console : défi « % exploré » (communauté) : une case reste masquée tant qu'aucun jeu partagé ne l'explore ----------
 // [id, nom, description, mots qui la reconnaissent dans un titre ou une liste (sans accents), 1 = déjà dans la console]
 const POSS = [
@@ -3508,6 +3534,8 @@ document.addEventListener('click', async e => {
 let EXEMPLES = [];
 fetch('api/exemples').then(r => r.ok ? r.json() : Promise.reject()).then(l => {
   EXEMPLES = l;
+  const meca = new Set(l.flatMap(x => possDans(x.titre + ' ' + x.desc)));   // les mécaniques que les exemples montrent, sur toutes celles de la console
+  rEx.textContent = l.length; rExMeca.textContent = `${meca.size} mécanique${meca.size > 1 ? 's' : ''} de jeu sur ${POSS_TOUT.length} montrée${meca.size > 1 ? 's' : ''}`;
   exemples.innerHTML = l.map((x, i) => `<div class="rang"><span class="pos">${i + 1}</span><div class="qui"><div><b>${esc(x.titre)}</b> <small>par Brique</small></div><small>${esc(x.desc)}</small></div><button class="jouer" data-exemple="${i}">📥 Prendre</button></div>`).join('');
 }).catch(() => exSec.classList.add('hide'));
 exemples.onclick = e => {
@@ -3546,7 +3574,7 @@ async function rendreAnim(donnees) {
   if (q) {   // l'outil de lecture de l'Établi ne lit que le 1er <main> (même masqué) : on y glisse le relevé, caché
     let qm = document.getElementById('quotasTxt');
     if (!qm) { qm = Object.assign(document.createElement('span'), { id: 'quotasTxt', hidden: true }); document.querySelector('main').prepend(qm); }
-    qm.textContent = `QUOTAS⟦${JSON.stringify(q)}⟧`;
+    qm.textContent = `QUOTAS⟦${JSON.stringify(q)}⟧ NOTES⟦${JSON.stringify(d.notes || [])}⟧`;   // les notes et remarques aussi, pour l'Établi
   }
   const notes = d.notes ? `<section><h2>📝 Notes des comptes (${d.notes.length})</h2><div class="liste">${d.notes.map(n => `<div class="rang"><div class="qui"><div>${esc(n.texte)}</div>
     <small>${esc(n.qui)}${n.jeu ? ` · jeu « ${esc(n.jeu)} »` : ''} · ${depuis(n.cree)}</small></div><button class="jouer" data-note="${esc(n.id)}" title="Traitée : l'effacer">✓ Lu</button></div>`).join('') || '<span class="vide">Aucune note.</span>'}</div></section>` : '';
@@ -4272,6 +4300,10 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
       const { code, attente } = await api('api/niveaux', { ...ident(), titre, commun, script: etat.script, images: (etat.images || []).map(({ nom, l, h, n, pal, px }) => ({ nom, l, h, n, pal, px })) });
       etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » ${commun ? 'est envoyé au jeu commun' : 'est publié'}, signé ${esc(pseudo())}${attente ? `<br>⏳ ${esc(attente)}` : ''}`, code); rafraichir();
     } catch (e) { dire(e.message, false); }
+  };
+  remOk.onclick = async () => {   // 💬 Remarque (menu du haut) : même rangement que la note de Créer, la vue ouverte en guise de « jeu »
+    try { await api('api/note', { ...ident(), texte: remTxt.value, jeu: 'site · ' + (document.querySelector('nav.mode button.on')?.textContent.trim() || '?') }, session || client); remTxt.value = ''; remMsg.textContent = '✓ Merci !'; setTimeout(() => { remarque.open = false; remMsg.textContent = ''; }, 1500); }
+    catch (e) { remMsg.textContent = e.message; }
   };
   scNoteOk.onclick = async () => {
     try { await api('api/note', { ...ident(), texte: scNoteTxt.value, jeu: etat.titre || etat.nom }, session || client); scNoteTxt.value = ''; scNote.open = false; dire('📝 Merci, ta note est envoyée !', true); }

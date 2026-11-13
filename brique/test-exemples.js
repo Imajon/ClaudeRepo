@@ -22,7 +22,4 @@ assert(['piste.be', 'derapage.be'].every(f => sys('un drift dans des épingles a
 assert(sys('une course en spirale').includes('piste.be'), 'spirale : piste');
 assert(sys('les ennemis doivent disparaitre la ou le tir les touche, mes soldats forment une foule').includes('foule.be'), 'foule : foule');
 assert(choisir('un jeu de saut avec des plateformes et un labyrinthe et du ski').length === 2, '2 exemples au plus');
-const S = require('./exemples.js').systemes, trois = t => S.completer(S.choisir(t)).map(e => e.f);
-assert(new Set(trois('un jeu de cuisine')).size === 3, 'sans mot-cle : 3 systemes differents quand meme');
-assert(trois('un jeu ou on tire sur des aliens').slice(0, 2).join() === 'formation.be,tirs.be' && new Set(trois('un jeu ou on tire sur des aliens')).size === 3, 'les proches d\'abord, puis complete a 3');
 console.log(`ok : ${EXEMPLES.length} exemples, ${require('./exemples.js').systemes.EXEMPLES.length} systemes`);

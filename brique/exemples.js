@@ -15,9 +15,8 @@ function lot(dossier, n, entete) {
     const s = sansAccent(textes.flat().filter(t => typeof t === 'string').join(' '));
     return EXEMPLES.map(e => ({ e, n: e.re.filter(r => r.test(s)).length })).filter(x => x.n).sort((a, b) => b.n - a.n).slice(0, n).map(x => x.e);
   }
-  const completer = ch => [...ch, ...EXEMPLES.filter(e => !ch.includes(e)).sort(() => Math.random() - 0.5)].slice(0, n);   // toujours n differents : peu ou pas de mots-cles -> au hasard
   const texte = ex => ex.length ? entete + ex.map(e => `--- ${e.titre}\n${e.code}\n`).join('\n') : '';
-  return { EXEMPLES, choisir, completer, texte };
+  return { EXEMPLES, choisir, texte };
 }
 
 module.exports = lot('exemples', 2, '\nEXEMPLES COMPLETS proches de la demande (ils tournent sans erreur). Ne les recopie pas : prends seulement la technique utile a la demande, et garde le plus petit jeu possible au debut.\n\n');

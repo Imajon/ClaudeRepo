@@ -3902,7 +3902,7 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   const majJeux = () => scJeux.innerHTML = chantiers.liste.map((c, i) => `<option value="${i}"${i === chantiers.cur ? ' selected' : ''}>${esc(c.nom)}</option>`).join('');
   function garderMain() {                                // le programme modifié à la main devient la version en cours (avant envoi, IA ou changement de chantier)
     if (iaEnCours || scCode.value === etat.script) return;
-    etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '', date: Date.now() }); sauver(); rendre();
+    etat.script = scCode.value; etat.essais.push({ demande: '(programme modifié à la main)', console: '', date: Date.now(), lignes: etat.script.split('\n').length }); sauver(); rendre();
   }
   function choisir(i) {                                  // change de chantier ; un programme modifié à la main n'est pas perdu
     garderMain();
@@ -4090,7 +4090,7 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
     const carte = scCodeCarte; carte.remove();             // sinon innerHTML l'efface avec scCode dedans
     scHist.innerHTML = !etat.essais.length ? '<p class="vide">Ce que tu demandes, ce que l\'IA a fait et ce que la console en dit apparaîtront ici.</p>'
       : etat.essais.flatMap((e, i) => [...(i && i === etat.depuis ? ['<div class="q auto">🔄 L\'IA repart du programme ci-dessus (elle oublie les demandes d\'avant)</div>'] : []), `<div class="q${e.auto || e.demande.startsWith('(') ? ' auto' : ''}">${esc(e.demande)}</div>`, `<div class="it ${i === etat.essais.length - 1 ? 'cur' : ''}">
-      <span class="n">Version v${i + 1}${i + 1 === etat.surConsole ? ' · 📟 sur la console' : ''}${e.date ? ' · ' + new Date(e.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span>
+      <span class="n">Version v${i + 1}${i + 1 === etat.surConsole ? ' · 📟 sur la console' : ''}${e.lignes ? ' · ' + e.lignes + ' lignes' : ''}${e.date ? ' · ' + new Date(e.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span>
       ${e.explication ? `<div class="r">🤖 ${esc(e.explication)}</div>` : ''}${e.astuce ? `<div class="r">💡 ${esc(e.astuce)}</div>` : ''}${e.limite ? `<div class="r">⚠️ ${esc(e.limite)}</div>` : ''}${e.question ? `<div class="r">❓ ${esc(e.question)}</div>` : ''}
       ${e.console ? `<div class="c ${e.consoleOk ? 'ok' : 'ko'}">📟 ${esc(e.console)}</div>` : ''}</div>`]).reverse().join('');   // à l'envers dans le DOM, column-reverse le remet : le plus récent en bas, juste au-dessus du champ
     scHist.prepend(carte); scHist.scrollTop = 0;   // le code (s'il est demandé) suit le dernier message ; en column-reverse, 0 = tout en bas
@@ -4249,7 +4249,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return false; }
     scCompris.innerHTML = `Programme écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s${r.corrections ? ` (testé : ${r.corrections} erreur${r.corrections > 1 ? 's' : ''} corrigée${r.corrections > 1 ? 's' : ''} avant l'envoi)` : ''}. ${esc(r.explication || '')}${r.astuce ? `<br>💡 ${esc(r.astuce)}` : ''}${r.question ? `<br>❓ ${esc(r.question)}` : ''}`;
     etat.script = r.script; mettreCode(r.script); if (!auto) scDemande.value = '';
-    etat.essais.push({ demande: auto ? CORRIGE : texte, auto, explication: r.explication, astuce: r.astuce, limite: r.limite, question: r.question, console: '', date: Date.now() });
+    etat.essais.push({ demande: auto ? CORRIGE : texte, auto, explication: r.explication, astuce: r.astuce, limite: r.limite, question: r.question, console: '', date: Date.now(), lignes: etat.script.split('\n').length });
     sauver(); rendre();
     const pb = await envoyer(r.script); if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); return false; }
     return true;

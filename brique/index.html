@@ -1733,6 +1733,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <details id="rjAdulte" style="margin-top:12px;border-top:1px solid var(--line);padding-top:8px"><summary>Adulte (animateur, parent, commande) : connexion par e-mail</summary>
     <p class="aide">Pas de mot de passe : tu reçois un lien de connexion par mail. Il ouvre ton espace animateur et tes commandes.</p>
     <div class="icRow"><input id="rjMail" class="pseudo" type="email" autocomplete="email" placeholder="ton.adresse@exemple.fr"><button id="rjLienBtn" class="sec">📧 Recevoir mon lien</button></div>
+    <div id="rjMailMsg" class="envoi"></div>
   </details>
 </dialog>
 
@@ -3060,7 +3061,7 @@ rejoindreBtn.onclick = () => ouvrirConnexion('co');
 rjOnglets.onclick = e => { const o = e.target.closest('[data-onglet]')?.dataset.onglet; if (o) ouvrirConnexion(o); };
 rjAnnuler.onclick = () => dlgRejoindre.close();
 const connecte = r => { moi = r; ecrire('brique-moi', moi); majMoi(); rjMdp.value = rjMdp2.value = ''; dlgRejoindre.close(); rafraichir(); };
-const rjDire = (t, ok) => rjMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
+const rjDire = (t, ok, el = rjMsg) => el.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
 rjForm.onsubmit = async e => {
   e.preventDefault();
   const id = { pseudo: rjPseudo.value.trim(), mdp: rjMdp.value };
@@ -3072,8 +3073,8 @@ rjForm.onsubmit = async e => {
 };
 rjOubli.onclick = e => { e.preventDefault(); rjDire('Demande à ton animateur : depuis son espace, il te donne un mot de passe provisoire. Sans groupe, il ne peut pas être retrouvé : crée un nouveau compte.'); };
 rjLienBtn.onclick = async () => {
-  try { await api('api/client/lien', { email: rjMail.value }); rjDire('📧 Lien envoyé ! Ouvre-le depuis ta boîte mail (pense aux indésirables).', true); }
-  catch (err) { rjDire(err.message); }
+  try { await api('api/client/lien', { email: rjMail.value }); rjDire('📧 Lien envoyé ! Ouvre-le depuis ta boîte mail (pense aux indésirables).', true, rjMailMsg); }
+  catch (err) { rjDire(err.message, false, rjMailMsg); }
 };
 async function api(url, corps, session) {
   const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;

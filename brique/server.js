@@ -1174,9 +1174,9 @@ const serveur = http.createServer(async (req, res) => {
   }
   if (url === '/api/deconnexion') { if (b.jeton) delete db.sessions[empreinte(b.jeton)]; sauver(); return repondre(res, 200, { ok: true }); }
 
-  if (url === '/api/note') {                          // observation laissée depuis Créer (compte connecté) ou 💬 Remarque du menu (tout visiteur) ; lue par l'admin du site
+  if (url === '/api/note') {                          // observation laissée depuis Créer (compte connecté) ou 💬 Remarque du menu (connecté aussi) ; lue par l'admin du site
     const s = db.sessions[empreinte(req.headers['x-session'] || '')], ad = s?.exp > Date.now() && (s.email || (s.compte && 'client'));
-    const qui = joueurDe(b)?.pseudo || ad || 'visiteur';   // ponytail: anonyme autorisé, freiné par tropDeRequetes + 500 notes max ; captcha si spam
+    const qui = joueurDe(b)?.pseudo || ad; if (!qui) return repondre(res, 401, { erreur: 'Connecte-toi pour laisser une remarque.' });
     const texte = propre(b.texte, 500); if (!texte) return repondre(res, 400, { erreur: 'Écris ton observation.' });
     (db.notes ||= []).push({ id: aleatoire(5), qui, texte, jeu: propre(b.jeu, 40), cree: Date.now() }); db.notes = db.notes.slice(-500); sauver();
     return repondre(res, 200, { ok: true });

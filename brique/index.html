@@ -536,7 +536,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <button id="vSupport">🧰 Support</button>
     <button id="vApropos">👋 À propos</button>
   </nav>
-  <details id="remarque" class="compte"><summary title="Une remarque sur le site ? Elle arrive à l'équipe Brique">💬 Remarque</summary>   <!-- tout visiteur : rangée dans les notes (admin), relevée par l'Établi -->
+  <details id="remarque" class="compte hide"><summary title="Une remarque sur le site ? Elle arrive à l'équipe Brique">💬 Remarque</summary>   <!-- comptes connectés seulement : rangée dans les notes (admin), relevée par l'Établi -->
     <div class="compte-menu" style="min-width:280px;padding:10px"><textarea id="remTxt" rows="4" maxlength="500" style="width:100%" placeholder="Un bug, une idée, un texte pas clair… sur cette page. Pas de nom ni de mail."></textarea>
       <button id="remOk" class="sec" style="margin-top:6px">Envoyer</button> <small id="remMsg"></small></div></details>
   <a href="https://instagram.com/brique_console" target="_blank" rel="noopener" title="Brique sur Instagram" aria-label="Brique sur Instagram" style="display:flex;align-items:center;padding:6px;color:var(--txt)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
@@ -3011,6 +3011,7 @@ function majMoi() {
 const adulte = () => lire('brique-client') || lire('brique-session');
 function majCompte() {
   scNote.classList.toggle('hide', !EN_LIGNE || !(moi || adulte()));   // la note : tout compte connecté
+  remarque.classList.toggle('hide', !EN_LIGNE || !(moi || adulte()));   // 💬 Remarque du menu : pareil, jamais en public
   compteTete.innerHTML = moi ? `${avatar(moi.pseudo)} <span class="compte-nom">${esc(moi.pseudo)}</span>` : `👤 <span class="compte-nom">${adulte() ? 'Mon compte' : 'Se connecter'}</span>`;
   compteMenu.innerHTML = (moi ? `<small>${esc(moi.pseudo)} · ${esc(moi.groupe || '')}</small><a data-c="groupe">👥 Rejoindre un groupe</a>` : '')
     + (lire('brique-client') ? '<a data-c="cmd">📦 Mes commandes</a>' : '<a data-c="cmd">🧺 Panier et commandes</a>')

@@ -1,5 +1,5 @@
 # Formation
-# exemple: SYSTEME formation d'ennemis (une grille qui se deplace en bloc, descend a chaque bord, accelere quand il en reste peu, ennemis qui ripostent avec des bombes) | mots: envahisseurs, invaders, formation, armee, aliens, extraterrestres, descendent, riposte, ennemis qui tirent, tirent, bombe, bombes, defendre, vague
+# exemple: SYSTEME formation d'ennemis (une grille qui se deplace en bloc, descend a chaque bord, accelere quand il en reste peu, ennemis qui ripostent avec des bombes) | mots: envahisseurs, invaders, formation, armee, aliens, extraterrestres, descendent, riposte, ennemis qui tirent, tirent, bombe, bombes, defendre, vague, invader, army, coming down, shoot back, enemies that shoot, bomb, defend, wave
 var CO = 8 var LI = 3 var VIV = []
 var fx = 20.0 var fy = 30.0 var dir = 1 var reste = 0
 var x = 152.0 var tx = 0.0 var ty = -1.0            # mon tir, un seul a la fois (ty < 0 = pas de tir)

@@ -1,5 +1,5 @@
 # Radio
-# exemple: SYSTEME plusieurs consoles (chaque console envoie sa position, dessine les autres, oublie celles qui se taisent, la plus petite id decide pour tout le monde) | mots: deux consoles, plusieurs consoles, multijoueur, a deux, a plusieurs, ensemble, radio, copain, ami, contre un ami, equipe, joueurs
+# exemple: SYSTEME plusieurs consoles (chaque console envoie sa position, dessine les autres, oublie celles qui se taisent, la plus petite id decide pour tout le monde) | mots: deux consoles, plusieurs consoles, multijoueur, a deux, a plusieurs, ensemble, radio, copain, ami, contre un ami, equipe, joueurs, two consoles, several consoles, multiplayer, two players, together, friend, team, players
 import string
 var x = 150.0 var envoi = 0.0
 var AUTRES = {}                                     # id -> [x, temps du dernier message]

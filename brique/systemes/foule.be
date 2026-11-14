@@ -1,5 +1,5 @@
 # Foule
-# exemple: SYSTEME foule et groupes de soldats (plusieurs groupes, chacun garde un masque de bits = quels soldats sont encore vivants : le tir retire CELUI qu'il touche, pas le dernier, et le dessin lit le masque, jamais un compteur ; foule en desordre autour du joueur, pas une grille) | mots: foule, soldat, soldats, troupe, armee, groupe, horde, gens, disparai, la ou, carre de, en ligne
+# exemple: SYSTEME foule et groupes de soldats (plusieurs groupes, chacun garde un masque de bits = quels soldats sont encore vivants : le tir retire CELUI qu'il touche, pas le dernier, et le dessin lit le masque, jamais un compteur ; foule en desordre autour du joueur, pas une grille) | mots: foule, soldat, soldats, troupe, armee, groupe, horde, gens, disparai, la ou, carre de, en ligne, crowd, soldier, troop, army, group, people
 import math
 var NF = 40                                         # soldats du joueur affiches au plus (au-dela, seul le nombre grossit)
 var FX = [] var FY = [] var FR = []                 # foule : decalage autour du joueur + rang (0 = au centre)

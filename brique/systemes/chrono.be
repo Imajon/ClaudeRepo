@@ -1,5 +1,5 @@
 # Chrono cache
-# exemple: SYSTEME chrono cache (le temps s'affiche 1 s puis disparait, il faut appuyer pile a la seconde cible, ecart en centiemes) | mots: chrono cache, chrono, bonne seconde, pile, compter dans sa tete, cible, secondes, arreter le temps, deviner le temps
+# exemple: SYSTEME chrono cache (le temps s'affiche 1 s puis disparait, il faut appuyer pile a la seconde cible, ecart en centiemes) | mots: chrono cache, chrono, bonne seconde, pile, compter dans sa tete, cible, secondes, arreter le temps, deviner le temps, hidden timer, timer, stopwatch, right second, count in your head, target, stop the clock, guess the time
 import string
 var CIBLE = 5.0 var t = 0.0 var marche = false var fini = false var ecart = 0.0
 

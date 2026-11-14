@@ -303,6 +303,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .sc-barre .moi{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tok{white-space:nowrap;font-size:.85em}.tok meter{width:60px;vertical-align:middle}.sc-barre .moi b{color:var(--acc2)}
 .sc-barre .sec{padding:5px 10px;font-size:14px}
+.sc-barre .mode{margin-left:0;padding:2px}.sc-barre .mode button{padding:4px 10px;font-size:14px}.sc-barre .mode button:disabled{cursor:default}
+#scChoix{margin-top:8px}#scChoix b{display:block;margin-bottom:6px}   /* aide en boutons (tranche guidée) : 3 propositions fabriquées par l'IA */
 .sc-jeux{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-right:auto}.sc-jeux select{margin:0;width:auto;max-width:260px;padding:5px 8px;font-size:15px}
 #vueScript .agent>.theme{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;font-size:16px}
 #vueScript .agent>h2{padding-right:40px}
@@ -540,12 +542,9 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div class="compte-menu" style="min-width:280px;padding:10px"><textarea id="remTxt" rows="4" maxlength="500" style="width:100%" placeholder="Un bug, une idée, un texte pas clair… sur cette page. Pas de nom ni de mail."></textarea>
       <button id="remOk" class="sec" style="margin-top:6px">Envoyer</button> <small id="remMsg"></small></div></details>
   <a href="https://instagram.com/brique_console" target="_blank" rel="noopener" title="Brique sur Instagram" aria-label="Brique sur Instagram" style="display:flex;align-items:center;padding:6px;color:var(--txt)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+  <a id="langue" href="en" title="English version" onclick="location.href=this.href+location.hash;return false" style="padding:6px;color:var(--txt);font:700 13px var(--mono);text-decoration:none">EN</a>   <!-- version anglaise : /en, traduite par en.js (qui change ce lien en FR) -->
   <details id="compte" class="compte"><summary id="compteTete">👤 Mon compte</summary><div id="compteMenu" class="compte-menu"></div></details>   <!-- en haut à droite, comme un site classique : créateur (pseudo) et client (commandes) -->
   <button id="vPanier" class="sec">🧺 Panier<b id="panierNb"></b></button>
-  <div id="niveauScolaire" class="mode hide">
-    <button id="mGuide" class="on">CM1 · CM2 — guidé</button>
-    <button id="mLibre">6ᵉ · 4ᵉ — libre</button>
-  </div>
 </header>
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
@@ -1800,7 +1799,7 @@ body{overflow-x:clip}                                           /* la bande 100v
         <div>plateformes (ou pas)</div><div>pics, pics cachés, ennemis, étoiles</div><div>une porte au bout</div><div>difficulté</div>
       </div>
       <div data-jeu="iso" class="cat" style="margin-bottom:10px">
-        <div>taille : 6 à 12 cases</div><div>relief : plat, collines, montagnes</div><div>trous</div><div>pics, pics qui sortent, pics cachés</div>
+        <div>taille : 6 à 12 cases</div><div>relief : plat, collines, montagnes</div><div>des trous</div><div>pics, pics qui sortent, pics cachés</div>
         <div>étoiles</div><div>un drapeau au fond</div><div>difficulté</div><div>vies, chrono</div>
       </div>
       <div data-jeu="fiche" style="margin-bottom:10px">
@@ -1901,9 +1900,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.15">
+<main id="vueScript" class="hide" data-version="1.16">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
+    <span id="niveauScolaire" class="mode" title="Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mGuide">CM1 · CM2 — guidé</button><button id="mLibre">6ᵉ · 4ᵉ — libre</button></span>   <!-- tranche d'âge : choisie ici, ou par l'animateur pour son groupe -->
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
@@ -1921,9 +1921,10 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <div id="scCompris" class="compris">Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».</div>
     <div id="scIA" style="font-size:.8rem;color:var(--mute);margin-top:4px"></div>
+    <div id="scChoix" class="hide"></div>           <!-- tranche guidée : la question de l'IA et ses 3 boutons ; un clic écrit la phrase dans le champ -->
     <div class="agent-ligne">                    <!-- le champ, en bas ; ses boutons empilés à droite -->
       <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:76px;font-size:17px"></textarea>
-      <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button><button id="scMicro" class="sec" title="Appuie, parle, réappuie : ton texte s'écrit dans le champ">🎙 Parler</button><button id="scVoirCode" class="sec">&lt;/&gt; Voir le code</button></div>
+      <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button><button id="scAide" class="sec hide" title="L'IA te propose 3 idées : celle que tu choisis s'écrit dans le champ">💡 Aide-moi</button><button id="scMicro" class="sec" title="Appuie, parle, réappuie : ton texte s'écrit dans le champ">🎙 Parler</button><button id="scVoirCode" class="sec">&lt;/&gt; Voir le code</button></div>
     </div>
   </section>
   <section class="console">
@@ -2141,14 +2142,17 @@ for (const k in CHOIX) {
     box.appendChild(b);
   }
 }
+let majAide = () => {};                                 // mode script : le bouton « 💡 Aide-moi » suit la tranche d'âge (défini plus bas)
 function setMode(m) {
-  mode = m;
+  mode = m; majAide();
   mGuide.classList.toggle('on', m === 'guide'); mLibre.classList.toggle('on', m === 'libre');
   guide.classList.toggle('hide', m !== 'guide'); catalogue.classList.toggle('hide', m !== 'libre');
   demande.placeholder = m === 'guide' ? 'Une phrase en plus (pas obligé) : « très haut », « avec des ressorts »…'
                                      : 'Décris ton niveau : thème, héros, pièges, hauteur, difficulté…';
 }
-mGuide.onclick = () => setMode('guide'); mLibre.onclick = () => setMode('libre'); setMode('libre');
+const garderMode = m => { setMode(m); try { localStorage.setItem('brique-age', m); } catch {} };   // le choix de l'enfant reste d'une visite à l'autre
+mGuide.onclick = () => garderMode('guide'); mLibre.onclick = () => garderMode('libre');
+setMode((() => { try { return localStorage.getItem('brique-age'); } catch {} })() === 'guide' ? 'guide' : 'libre');
 
 // ---------- "IA" simulée : texte -> paramètres ----------
 // ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
@@ -3324,7 +3328,8 @@ async function rafraichir() {
   try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); if (!EN_LIGNE) { EN_LIGNE = true; majTokens(); majCompte(); } }
   catch { EN_LIGNE = false; [vAnim, moiBox, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'anim') afficher('accueil'); return; }   // serveur injoignable (Render endormi, fichier) : la Communauté reste, vide
   enLigne = c.niveaux; modeAtelier(c.atelier);
-  if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant : la tranche d'âge choisie par son animateur
+  if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant d'un groupe : la tranche d'âge choisie par son animateur, il ne peut pas la changer
+  mGuide.disabled = mLibre.disabled = !session && !!c.age; niveauScolaire.title = mGuide.disabled ? 'Choisi par ton animateur' : "Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots.";
   nJeux.textContent = accJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = accAujourdhui.textContent = c.chiffres.aujourdhui;
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
   const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
@@ -3907,7 +3912,7 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   function choisir(i) {                                  // change de chantier ; un programme modifié à la main n'est pas perdu
     garderMain();
     chantiers.cur = i; etat = chantiers.liste[i]; mettreCode(etat.script); scPartage.innerHTML = ''; rendreImages(); scCompris.textContent = 'Écris ce que tu veux créer, puis appuie sur « Envoyer à l\'IA ».';
-    sauver(); majJeux(); rendre();
+    sauver(); majJeux(); rendre(); majAide();
   }
   const nouveau = (nom, e = vide()) => { chantiers.liste.push({ ...e, nom: unique(nom) }); choisir(chantiers.liste.length - 1); };
   scJeux.onchange = () => choisir(+scJeux.value);
@@ -4248,7 +4253,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     if (r.modele) modeleIA = r.modele;
     if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return false; }
     scCompris.innerHTML = `Programme écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s${r.corrections ? ` (testé : ${r.corrections} erreur${r.corrections > 1 ? 's' : ''} corrigée${r.corrections > 1 ? 's' : ''} avant l'envoi)` : ''}. ${esc(r.explication || '')}${r.astuce ? `<br>💡 ${esc(r.astuce)}` : ''}${r.question ? `<br>❓ ${esc(r.question)}` : ''}`;
-    etat.script = r.script; mettreCode(r.script); if (!auto) scDemande.value = '';
+    etat.script = r.script; mettreCode(r.script); if (!auto) scDemande.value = ''; majAide();
     etat.essais.push({ demande: auto ? CORRIGE : texte, auto, explication: r.explication, astuce: r.astuce, limite: r.limite, question: r.question, console: '', date: Date.now(), lignes: etat.script.split('\n').length });
     sauver(); rendre();
     const pb = await envoyer(r.script); if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); return false; }
@@ -4265,6 +4270,32 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     for (let n = 0; n < 2 && etat.erreur && etat.essais.at(-1)?.demande !== '(programme modifié à la main)'; n++) if (!(await ecrireJeu('', true))) return;
   }
   scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
+  // aide en boutons (tranche guidée) : l'IA fabrique 3 boutons à partir des mots de l'enfant (le jeu qu'il aime) ou de son programme (idées de suite).
+  // Un clic écrit la phrase dans le champ : l'enfant la relit, la change, l'envoie. Aucun catalogue : les boutons viennent de lui.
+  majAide = () => {                                      // appelé quand la tranche d'âge, le chantier ou le programme change : les anciennes propositions ne valent plus
+    const g = mode === 'guide';
+    scAide.classList.toggle('hide', !g); scChoix.classList.add('hide');
+    scDemande.placeholder = !g ? "Qu'est-ce que tu veux créer ?" : etat.script ? "Qu'est-ce que tu veux ajouter ou changer ? Pas d'idée : appuie sur « 💡 Aide-moi »." : 'À quel jeu tu aimes jouer ? Écris son nom (ou ton idée), puis appuie sur « 💡 Aide-moi ».';
+  };
+  scAide.onclick = async () => {
+    const texte = scDemande.value.trim();
+    if (!texte && !etat.script) { scCompris.textContent = "Écris d'abord le nom d'un jeu que tu aimes, ou ton idée."; return scDemande.focus(); }
+    garderMain(); scAide.disabled = true; scAide.textContent = '⏳ Je cherche…';
+    try {
+      const r = await api('api/choix', { ...ident(), texte, script: etat.script });
+      if (!r.choix?.length) throw new Error("Je n'ai pas trouvé d'idée : écris-en un peu plus.");
+      scChoix.innerHTML = `<b>${esc(r.question || 'Choisis ce qui te plaît :')}</b><div class="chips">${r.choix.map(c => `<button class="chip" data-phrase="${esc(c.phrase)}">${esc(c.bouton)}</button>`).join('')}</div>`;
+      scChoix.classList.remove('hide'); scCompris.textContent = "Choisis un bouton : sa phrase s'écrit dans le champ.";
+    } catch (e) { scCompris.textContent = e.message === 'IA non configuree' ? "L'IA n'est pas branchée sur ce serveur." : e.message || "L'IA ne répond pas : réessaie."; }
+    finally { scAide.disabled = false; scAide.textContent = '💡 Aide-moi'; majTokens(); }
+  };
+  scChoix.onclick = e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    scChoix.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b));
+    scDemande.value = b.dataset.phrase; scDemande.focus();
+    scCompris.textContent = "Relis la phrase, change-la si tu veux, puis appuie sur « Envoyer à l'IA ».";
+  };
+  majAide();
   // micro : appuyer pour parler, réappuyer pour finir (60 s au plus) ; le son part au serveur (Voxtral), le texte s'ajoute au champ
   let micro = null;
   scMicro.onclick = async () => {

@@ -1,5 +1,5 @@
 # Saut charge
-# exemple: SYSTEME saut charge et double saut (au sol, tenir P3 remplit une jauge et le saut part au relache, plus haut si la jauge est pleine ; en l'air, un appui donne un deuxieme saut) | mots: saut charge, charger, jauge de saut, double saut, deuxieme saut, sauter deux fois, ressort, grenouille, kangourou, bondir, plus haut
+# exemple: SYSTEME saut charge et double saut (au sol, tenir P3 remplit une jauge et le saut part au relache, plus haut si la jauge est pleine ; en l'air, un appui donne un deuxieme saut) | mots: saut charge, charger, jauge de saut, double saut, deuxieme saut, sauter deux fois, ressort, grenouille, kangourou, bondir, plus haut, charged jump, charge, jump gauge, double jump, second jump, jump twice, spring, frog, kangaroo, leap, higher
 var SOL = 200
 var px = 60.0 var py = 200.0 var vy = 0.0 var sol = true var charge = 0.0 var sauts = 0
 

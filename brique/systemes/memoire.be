@@ -1,5 +1,5 @@
 # Memoire
-# exemple: SYSTEME memoire de sequence (la console montre une suite de couleurs, une par bouton, puis on la repete ; elle s'allonge d'une couleur a chaque reussite) | mots: memoire, se souvenir, retenir, sequence, suite, repeter, couleurs, simon, dans l'ordre, de plus en plus longue, paires, cartes
+# exemple: SYSTEME memoire de sequence (la console montre une suite de couleurs, une par bouton, puis on la repete ; elle s'allonge d'une couleur a chaque reussite) | mots: memoire, se souvenir, retenir, sequence, suite, repeter, couleurs, simon, dans l'ordre, de plus en plus longue, paires, cartes, memory, remember, repeat, colours, colors, in order, longer and longer, pairs, cards
 var SEQ = [] var etat = 0 var i = 0 var t = 0.0     # etat 0 = la console montre, 1 = a toi, 2 = rate
 var allume = -1 var joue = -1
 var TOUCHE = [] var COUL = [] var NOTE = [330, 440, 554]

@@ -1,5 +1,5 @@
 # Defile
-# exemple: SYSTEME monde sans fin (obstacles recycles : celui qui sort a gauche revient a droite, vitesse qui monte, distance parcourue) | mots: sans fin, infini, runner, courir, defile, defilement, distance, obstacle, obstacles, tuyau, flappy, oiseau, voler, plus vite
+# exemple: SYSTEME monde sans fin (obstacles recycles : celui qui sort a gauche revient a droite, vitesse qui monte, distance parcourue) | mots: sans fin, infini, runner, courir, defile, defilement, distance, obstacle, obstacles, tuyau, flappy, oiseau, voler, plus vite, endless, infinite, run, scrolling, bird, fly, faster
 var N = 4
 var OX = [] var OH = []                             # x de chaque obstacle, hauteur du trou
 var vit = 90.0 var dist = 0.0

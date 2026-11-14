@@ -1,5 +1,5 @@
 # Reaction
-# exemple: SYSTEME reaction (le signal arrive a un moment au hasard, appuyer le plus vite possible, faux depart si on appuie trop tot, temps en millisecondes) | mots: reaction, reflexe, reflexes, signal, le plus vite, rapide, faux depart, duel, cowboy, degainer, top depart, feu vert, attendre
+# exemple: SYSTEME reaction (le signal arrive a un moment au hasard, appuyer le plus vite possible, faux depart si on appuie trop tot, temps en millisecondes) | mots: reaction, reflexe, reflexes, signal, le plus vite, rapide, faux depart, duel, cowboy, degainer, top depart, feu vert, attendre, reflex, fastest, quick, false start, quick draw, green light, wait
 var etat = 0                                        # 0 = attendre le signal, 1 = signal : appuie !, 2 = resultat
 var attente = 0.0 var t = 0.0 var msg = "" var meilleur = 0
 

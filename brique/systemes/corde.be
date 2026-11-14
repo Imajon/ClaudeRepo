@@ -1,5 +1,5 @@
 # Tir a la corde
-# exemple: SYSTEME duel a deux consoles en martelant (chaque console compte ses appuis et les envoie, la corde penche vers celui qui appuie le plus, manche numerotee pour que les deux consoles restent d'accord) | mots: tir a la corde, marteler, appuyer vite, le plus vite, deux consoles, a deux, duel, contre un ami, bras de fer, course a deux, clic
+# exemple: SYSTEME duel a deux consoles en martelant (chaque console compte ses appuis et les envoie, la corde penche vers celui qui appuie le plus, manche numerotee pour que les deux consoles restent d'accord) | mots: tir a la corde, marteler, appuyer vite, le plus vite, deux consoles, a deux, duel, contre un ami, bras de fer, course a deux, clic, tug of war, mash, press fast, fastest, two consoles, two players, against a friend, arm wrestling
 import string
 var mes = 0 var autre = 0 var manche = 1 var envoi = 0.0 var fin = 0.0 var gagne = false var vu = -10.0
 

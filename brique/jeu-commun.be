@@ -2,6 +2,8 @@
 # Un seul grand jeu de plateforme (on grimpe, saut mural, ressorts) : les niveaux s'enchainent (NIVS), chacun signe par son auteur (QUI).
 # NIV = le niveau que tu changes. Le niveau : 20 cases de large, autant de lignes que tu veux (on part du bas, on monte jusqu'au drapeau)
 # # bloc | C fragile | ^ pic | W scie | R ressort | I glace | * etoile | S depart | G drapeau | . vide
+# Case (c, r) : colonne c de 0 a 19, ligne r de NIV (0 en haut, H - 1 = la ligne du bas) ; en pixels x = c * T, y = r * T (T = 16). Le heros : px, py, 10 x 14 pixels.
+# Le bas du niveau est toujours en bas de l'ecran. Nouvelle sorte de case : une lettre de plus, placee dans NIV, son effet dans plein() ou maj(), son dessin dans dessine().
 import string
 var NIV = [
 "....................",
@@ -33,7 +35,7 @@ var QUI = ["Brique", "Brique", "Brique", "Brique", "Brique", "Brique", "Brique",
 # fin des niveaux
 var T = 16 var H = 0
 var SX = 0.0 var SY = 0.0
-var CASSE = {}                                  # plateformes fragiles : case -> temps ou elle disparait
+var CASSE = {}                                  # cases qui disparaissent (fragile, trou...) : r * 20 + c -> temps ou elle disparait ; r = H - 1 pour la ligne du bas
 var EX = [] var EY = [] var PRIS = []
 var px = 0.0 var py = 0.0 var vx = 0.0 var vy = 0.0 var sol = false var mur = 0 var elan = 0.0
 var lv = 0 var camy = 0 var pts = 0 var gagne = false var morts = 0 var t0 = 0.0 var chrono = 0.0
@@ -43,7 +45,7 @@ def case(c, r)
   if c < 0 || c >= 20 return "#" end                # les bords de l'ecran sont des murs
   if r < 0 || r >= H return "." end
   var k = NIV[r][c]
-  if k == "C" && CASSE.contains(r * 20 + c) && temps() > CASSE[r * 20 + c] return "." end
+  if k != "." && CASSE.contains(r * 20 + c) && temps() > CASSE[r * 20 + c] return "." end
   return k
 end
 def plein(c, r) var k = case(c, r) return k == "#" || k == "C" || k == "R" || k == "I" end
@@ -128,8 +130,8 @@ def maj(dt)
     if lv + 1 < size(NIVS) charge(lv + 1) son(1320, 150) else gagne = true son(1320, 300) end
   end
   camy = int(py) - 140
-  if camy > H * T - 240 camy = H * T - 240 end
   if camy < 0 camy = 0 end
+  if camy > H * T - 240 camy = H * T - 240 end      # niveau moins haut que l'ecran : camy < 0, le sol reste en bas
 end
 
 def dessine()
@@ -137,6 +139,7 @@ def dessine()
   var b = 0 while b < 6 rect(0, b * 40 + 20, 320, 20, CIEL2) b += 1 end
   camera(0, camy)
   var r = camy / T var rf = r + 16
+  if r < 0 r = 0 end
   if rf > H rf = H end
   while r < rf
     var c = 0

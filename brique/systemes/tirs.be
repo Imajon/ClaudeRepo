@@ -1,5 +1,5 @@
 # Tirs
-# exemple: SYSTEME tirs et ennemis (listes de taille fixe reutilisees, apparition de plus en plus rapide, collision par distance au carre) | mots: tir, tirer, ennemi, ennemis, meteorite, balle, laser, apparait, vague, esquive, eviter, tombe, monstre, zombie, vaisseau, cible, espace
+# exemple: SYSTEME tirs et ennemis (listes de taille fixe reutilisees, apparition de plus en plus rapide, collision par distance au carre) | mots: tir, tirer, ennemi, ennemis, meteorite, balle, laser, apparait, vague, esquive, eviter, tombe, monstre, zombie, vaisseau, cible, espace, shoot, shot, enemy, enemies, meteor, bullet, spawn, wave, dodge, avoid, falling, monster, spaceship, target, space
 var NB = 6 var NE = 8
 var BX = [] var BY = [] var EX = [] var EY = [] var EA = []
 var x = 152.0 var rythme = 1.0 var prochain = 1.0

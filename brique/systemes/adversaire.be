@@ -1,5 +1,5 @@
 # Adversaire
-# exemple: SYSTEME adversaire joue par la console (il decide toutes les 0,25 a 0,6 s selon la distance : approcher, attaquer, se proteger, reculer ; un coup touche une seule fois pendant une courte fenetre ; recul et etourdissement) | mots: adversaire, ordinateur, contre la console, ennemi intelligent, boss, duel, combat, bagarre, poing, frapper, coup, garde, ninja, robot, karate, poursuit, fantome
+# exemple: SYSTEME adversaire joue par la console (il decide toutes les 0,25 a 0,6 s selon la distance : approcher, attaquer, se proteger, reculer ; un coup touche une seule fois pendant une courte fenetre ; recul et etourdissement) | mots: adversaire, ordinateur, contre la console, ennemi intelligent, boss, duel, combat, bagarre, poing, frapper, coup, garde, ninja, robot, karate, poursuit, fantome, opponent, computer, against the console, smart enemy, fight, brawl, punch, hit, guard, chase, ghost
 import math
 var X = [90.0, 230.0] var VIE = [5, 5] var COUP = [0.0, 0.0] var TOUCHE = [false, false] var SONNE = [0.0, 0.0] var GARDE = [false, false]
 var pense = 0.0 var envie = 0 var tenu = 0.0

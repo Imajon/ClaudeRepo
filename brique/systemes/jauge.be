@@ -1,5 +1,5 @@
 # Jauge
-# exemple: SYSTEME jauge qui oscille (un curseur va et vient, P3 l'arrete, plus il est pres du centre de la zone verte plus on marque, la zone retrecit et le curseur accelere) | mots: jauge, curseur, oscille, zone, zone verte, viser, precision, force, puissance, golf, lancer, bon moment, arreter, barre, fronde
+# exemple: SYSTEME jauge qui oscille (un curseur va et vient, P3 l'arrete, plus il est pres du centre de la zone verte plus on marque, la zone retrecit et le curseur accelere) | mots: jauge, curseur, oscille, zone, zone verte, viser, precision, force, puissance, golf, lancer, bon moment, arreter, barre, fronde, gauge, meter, cursor, swing, green zone, aiming, strength, throw, right moment, slingshot
 var pos = 0.0 var vit = 1.2 var dir = 1 var zone = 0.3 var arret = 0.0 var pts = 0 var dernier = 0
 
 def maj(dt)

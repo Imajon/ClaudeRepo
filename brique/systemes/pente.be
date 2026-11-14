@@ -1,5 +1,5 @@
 # Pente
-# exemple: SYSTEME pente (sol fabrique au fur et a mesure dans un anneau, pente, saut, figures en l'air, atterrissage) | mots: glisse, ski, snow, skate, surf, pente, descente, neige, figure, salto, rampe, colline, tremplin, moto, bosse
+# exemple: SYSTEME pente (sol fabrique au fur et a mesure dans un anneau, pente, saut, figures en l'air, atterrissage) | mots: glisse, ski, snow, skate, surf, pente, descente, neige, figure, salto, rampe, colline, tremplin, moto, bosse, slide, slope, downhill, trick, flip, ramp, hill, motorbike, bump
 import math
 import string
 var NB = 64 var PAS = 16

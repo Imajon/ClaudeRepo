@@ -1,5 +1,5 @@
 # Objet partage
-# exemple: SYSTEME objet partage entre consoles (sa place vient d'un compteur commun : toutes les consoles le voient au meme endroit ; celui qui l'attrape augmente le compteur et le dit aux autres) | mots: partage, partager, meme objet, tous les joueurs, deux consoles, plusieurs consoles, a deux, course au tresor, premier qui attrape, fruit, piece, ensemble
+# exemple: SYSTEME objet partage entre consoles (sa place vient d'un compteur commun : toutes les consoles le voient au meme endroit ; celui qui l'attrape augmente le compteur et le dit aux autres) | mots: partage, partager, meme objet, tous les joueurs, deux consoles, plusieurs consoles, a deux, course au tresor, premier qui attrape, fruit, piece, ensemble, shared, share, same object, all players, two consoles, several consoles, two players, treasure hunt, first to catch, together
 import string
 var k = 0 var ox = 0 var oy = 0 var x = 150.0 var y = 120.0 var pts = 0
 

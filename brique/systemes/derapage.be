@@ -1,5 +1,5 @@
 # Derapage
-# exemple: SYSTEME derapage et murs solides (vitesse decoupee avant / cote, adherence qui baisse avec la vitesse, traces au sol, sous-pas de 2 px, rebond amorti sur des segments, etincelles) | mots: derape, derapage, drift, glisse, glace, rallye, kart, voiture, rebond, mur, bord, pilote, crash
+# exemple: SYSTEME derapage et murs solides (vitesse decoupee avant / cote, adherence qui baisse avec la vitesse, traces au sol, sous-pas de 2 px, rebond amorti sur des segments, etincelles) | mots: derape, derapage, drift, glisse, glace, rallye, kart, voiture, rebond, mur, bord, pilote, crash, skid, slide, ice, rally, wall, driver
 import math
 # Murs = segments x1, y1, x2, y2 (4 nombres chacun). Avec une piste : les murs sont ses bords LX/LY et RX/RY, en ne testant que les troncons proches du joueur.
 var MURS = [10, 10, 310, 10,  310, 10, 310, 230,  310, 230, 10, 230,  10, 230, 10, 10,  110, 70, 210, 170,  220, 60, 260, 60]

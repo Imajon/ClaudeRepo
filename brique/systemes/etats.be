@@ -1,5 +1,5 @@
 # Etats
-# exemple: SYSTEME etats de partie (vies, perdu, P3 pour rejouer, chrono, gagne, niveau suivant plus dur) | mots: perdu, vies, vie, rejouer, game over, recommencer, chrono, temps, gagne, gagner, niveau suivant, plus dur, record, manche
+# exemple: SYSTEME etats de partie (vies, perdu, P3 pour rejouer, chrono, gagne, niveau suivant plus dur) | mots: perdu, vies, vie, rejouer, game over, recommencer, chrono, temps, gagne, gagner, niveau suivant, plus dur, record, manche, lost, lose, lives, life, play again, restart, timer, win, next level, harder, round
 import string
 var etat = 0                                        # 0 = on joue, 1 = perdu, 2 = gagne
 var vies = 3 var niveau = 1 var chrono = 0.0 var attente = 0.0 var pts = 0

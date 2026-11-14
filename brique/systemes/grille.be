@@ -1,5 +1,5 @@
 # Grille
-# exemple: SYSTEME niveau en texte (murs et objets dans une grille de lettres, murs voisins fusionnes en un rectangle, collision de boite, glisser le long des murs, ramasser, camera qui suit dans un monde plus grand que l'ecran) | mots: niveau, mur, murs, labyrinthe, carte, case, decor, camera, monde, grand, cle, porte, sortie, piece, ramasser, tresor
+# exemple: SYSTEME niveau en texte (murs et objets dans une grille de lettres, murs voisins fusionnes en un rectangle, collision de boite, glisser le long des murs, ramasser, camera qui suit dans un monde plus grand que l'ecran) | mots: niveau, mur, murs, labyrinthe, carte, case, decor, camera, monde, grand, cle, porte, sortie, piece, ramasser, tresor, level, wall, maze, map, tile, scenery, world, key, door, exit, collect, treasure
 var NIV = [
 "##############################",
 "#............#...............#",

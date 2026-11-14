@@ -1,5 +1,5 @@
 # Balle
-# exemple: SYSTEME balle qui rebondit (murs, raquette qui renvoie selon l'endroit touche, briques a casser) | mots: balle, rebond, rebondit, raquette, pong, tennis, casse-briques, briques, ping-pong, foot, ballon, palet, renvoyer
+# exemple: SYSTEME balle qui rebondit (murs, raquette qui renvoie selon l'endroit touche, briques a casser) | mots: balle, rebond, rebondit, raquette, pong, tennis, casse-briques, briques, ping-pong, foot, ballon, palet, renvoyer, ball, bounce, paddle, racket, brick, breakout, football, soccer, puck
 var bx = 160.0 var by = 120.0 var vx = 90.0 var vy = -140.0 var rx = 130.0
 var BR = []                                         # 2 rangees de 8 briques : true = encore la
 

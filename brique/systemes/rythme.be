@@ -1,5 +1,5 @@
 # Rythme
-# exemple: SYSTEME rythme (des notes descendent dans 3 couloirs, un par bouton, au tempo ; appuyer quand la note passe sur la ligne : parfait, bien, rate ; serie) | mots: rythme, musique, note, notes, tempo, danse, mesure, guitare, piano, batterie, battement, en rythme, chanson
+# exemple: SYSTEME rythme (des notes descendent dans 3 couloirs, un par bouton, au tempo ; appuyer quand la note passe sur la ligne : parfait, bien, rate ; serie) | mots: rythme, musique, note, notes, tempo, danse, mesure, guitare, piano, batterie, battement, en rythme, chanson, rhythm, music, dance, beat, guitar, drum, song
 var NB = 12
 var NC = [] var NT = [] var NA = []                 # couloir (0 = G, 1 = P3, 2 = D), instant ou la note touche la ligne, active
 var t = 0.0 var prochaine = 1.5 var tempo = 0.5 var pts = 0 var serie = 0 var msg = ""

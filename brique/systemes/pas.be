@@ -1,5 +1,5 @@
 # Pas a pas
-# exemple: SYSTEME deplacement case par case (grille, un pas a intervalle regulier, G et D tournent d'un quart de tour, glissement doux d'une case a l'autre, bords qui bouclent) | mots: case, cases, grille, pas, serpent, snake, plateau, damier, pacman, quart de tour, tour par tour
+# exemple: SYSTEME deplacement case par case (grille, un pas a intervalle regulier, G et D tournent d'un quart de tour, glissement doux d'une case a l'autre, bords qui bouclent) | mots: case, cases, grille, pas, serpent, snake, plateau, damier, pacman, quart de tour, tour par tour, tile, grid, step, board, checkerboard, quarter turn, turn-based
 var C = 16 var W = 20 var H = 15
 var DX = [1, 0, -1, 0] var DY = [0, 1, 0, -1]     # droite, bas, gauche, haut
 var gx = 5 var gy = 5 var ax = 5 var ay = 5 var dir = 0 var pas = 0.0

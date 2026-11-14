@@ -1,5 +1,5 @@
 # Tourner
-# exemple: SYSTEME tourner et avancer (G et D tournent, P3 accelere dans la direction, elan, tir dans la direction en lachant P3) | mots: tourner, avancer, tank, vaisseau, direction, angle, rotation, dessus, bateau, asteroide, viser, pivoter
+# exemple: SYSTEME tourner et avancer (G et D tournent, P3 accelere dans la direction, elan, tir dans la direction en lachant P3) | mots: tourner, avancer, tank, vaisseau, direction, angle, rotation, dessus, bateau, asteroide, viser, pivoter, turn, move forward, spaceship, top-down, boat, asteroid, aiming, steer
 import math
 var x = 160.0 var y = 120.0 var ang = 0.0 var vit = 0.0
 var bx = 0.0 var by = 0.0 var bvx = 0.0 var bvy = 0.0 var bvie = 0.0

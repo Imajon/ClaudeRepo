@@ -1,5 +1,5 @@
 # Question
-# exemple: SYSTEME question a 3 reponses (une reponse par bouton G, P3, D, la bonne placee au hasard, temps limite, la difficulte monte quand on reussit et baisse quand on rate) | mots: quiz, question, questions, reponse, reponses, calcul, calcul rapide, maths, vrai ou faux, devinette, ecole, tables, addition, multiplication
+# exemple: SYSTEME question a 3 reponses (une reponse par bouton G, P3, D, la bonne placee au hasard, temps limite, la difficulte monte quand on reussit et baisse quand on rate) | mots: quiz, question, questions, reponse, reponses, calcul, calcul rapide, maths, vrai ou faux, devinette, ecole, tables, addition, multiplication, answer, sum, true or false, riddle, school, times table
 import string
 var a = 0 var b = 0 var REP = [0, 0, 0] var bonne = 0 var niveau = 1 var t = 0.0 var pts = 0 var msg = "" var pause = 0.0
 var TOUCHE = []

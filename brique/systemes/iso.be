@@ -1,5 +1,5 @@
 # Iso
-# exemple: SYSTEME isometrique (grille, cubes, deplacement case par case, ordre de dessin) | mots: iso, isometrique, 3d, cube, case, grille, carte, bloc, relief
+# exemple: SYSTEME isometrique (grille, cubes, deplacement case par case, ordre de dessin) | mots: iso, isometrique, 3d, cube, case, grille, carte, bloc, relief, isometric, tile, grid, map, block
 var CARTE = [
 "........",
 "..#.....",

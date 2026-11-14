@@ -1,5 +1,5 @@
 # Piste
-# exemple: SYSTEME piste decrite a la tortue (avance / virage au lieu de coordonnees, circuit ouvert ou en boucle, bords precalcules, ne dessiner que ce qui est a l'ecran, camera, rester sur la piste, arrivee au chrono) | mots: course, circuit, chrono, arrivee, voiture, piste, route, kart, moto, virage, epingle, spirale, zigzag, tours, riviere, couloir, slalom
+# exemple: SYSTEME piste decrite a la tortue (avance / virage au lieu de coordonnees, circuit ouvert ou en boucle, bords precalcules, ne dessiner que ce qui est a l'ecran, camera, rester sur la piste, arrivee au chrono) | mots: course, circuit, chrono, arrivee, voiture, piste, route, kart, moto, virage, epingle, spirale, zigzag, tours, riviere, couloir, slalom, race, racing, track, timer, finish line, road, bend, hairpin, spiral, river
 import math
 import string
 # La piste se DECRIT comme une tortue : ne jamais deviner de coordonnees. ["a", longueur] = tout droit ; ["v", degres, rayon] = virage (+ a droite, - a gauche).

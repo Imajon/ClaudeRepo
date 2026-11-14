@@ -1,5 +1,5 @@
 # Saut
-# exemple: SYSTEME saut (gravite, saut plus haut si P3 tenu, atterrir sur des plateformes par le dessus) | mots: saut, sauter, gravite, tomber, plateforme, plateformes, rebondir, sol, mario
+# exemple: SYSTEME saut (gravite, saut plus haut si P3 tenu, atterrir sur des plateformes par le dessus) | mots: saut, sauter, gravite, tomber, plateforme, plateformes, rebondir, sol, mario, jump, gravity, falling, platform, bounce, floor
 var PLX = [0, 120, 220] var PLY = [200, 160, 120] var PLW = [320, 70, 70]   # plateformes : x, y du dessus, largeur
 var px = 40.0 var py = 200.0 var vy = 0.0 var sol = true                   # py = les pieds
 

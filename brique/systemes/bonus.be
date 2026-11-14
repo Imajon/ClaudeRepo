@@ -1,5 +1,5 @@
 # Bonus
-# exemple: SYSTEME briques a plusieurs coups et bonus (chaque brique a ses points de vie, l'acier ne casse jamais ; une capsule tombe parfois, l'attraper change une regle pendant quelques secondes) | mots: bonus, capsule, pouvoir, power-up, briques, casse-briques, resistant, plusieurs coups, acier, indestructible, raquette geante, multi, pendant quelques secondes
+# exemple: SYSTEME briques a plusieurs coups et bonus (chaque brique a ses points de vie, l'acier ne casse jamais ; une capsule tombe parfois, l'attraper change une regle pendant quelques secondes) | mots: bonus, capsule, pouvoir, power-up, briques, casse-briques, resistant, plusieurs coups, acier, indestructible, raquette geante, multi, pendant quelques secondes, brick, breakout, tough, several hits, steel, giant paddle, for a few seconds
 var BR = []                                         # vie de chaque brique : 0 = cassee, 9 = acier (jamais)
 var bx = 160.0 var by = 150.0 var vx = 90.0 var vy = -140.0 var rx = 130.0 var rl = 60
 var cx = 0.0 var cy = -1.0 var geant = 0.0           # capsule (cy < 0 = aucune), temps restant du bonus

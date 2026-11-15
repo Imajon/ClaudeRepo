@@ -336,11 +336,16 @@ uint32_t sonFin = 0;
 bool netOn = false; uint8_t myMac[6]; const uint8_t BCAST[6] = { 255, 255, 255, 255, 255, 255 };
 struct Msg { uint16_t de; uint8_t n; char d[200]; };
 volatile int msgTete = 0, msgQueue = 0; Msg msgs[8];
+volatile uint32_t dTxOk=0,dTxKo=0,dRx=0,dPromi=0; int dErr[4]={0};
+void dSent(const wifi_tx_info_t *i, esp_now_send_status_t st){ if(st==ESP_NOW_SEND_SUCCESS) dTxOk++; else dTxKo++; }
+void dPromiCb(void *b, wifi_promiscuous_pkt_type_t t){ dPromi++; }
 void onRecv(const esp_now_recv_info_t *info, const uint8_t *d, int n) {
+  dRx++;
   if (n <= 0 || n > 199) return;
   Msg &m = msgs[msgTete & 7]; m.de = ((uint16_t)info->src_addr[4] << 8) | info->src_addr[5]; m.n = n; memcpy(m.d, d, n); m.d[n] = 0; msgTete++;
   if (msgTete - msgQueue > 8) msgQueue = msgTete - 8;   // les plus anciens sont perdus
 }
+uint8_t dCh=0; wifi_second_chan_t dCh2;
 bool reseau() {                                  // ESP-NOW au minimum (meme reglage que la console) ; allume au premier envoi / reception
   if (netOn) return true;
   esp_event_loop_create_default();
@@ -351,8 +356,8 @@ bool reseau() {                                  // ESP-NOW au minimum (meme reg
   esp_wifi_set_storage(WIFI_STORAGE_RAM); esp_wifi_set_mode(WIFI_MODE_STA);
   if (esp_wifi_start() != ESP_OK) { esp_wifi_deinit(); return false; }
   esp_wifi_set_max_tx_power(60); esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE); esp_wifi_get_mac(WIFI_IF_STA, myMac);
-  if (esp_now_init() != ESP_OK) return false;
-  esp_now_register_recv_cb(onRecv);
+  dErr[0]=esp_wifi_get_channel(&dCh,&dCh2); dErr[1]=esp_now_init(); if (dErr[1] != ESP_OK) return false;
+  esp_now_register_recv_cb(onRecv); esp_now_register_send_cb(dSent);
   esp_now_peer_info_t p = {}; memcpy(p.peer_addr, BCAST, 6); p.channel = 1; p.encrypt = false; esp_now_add_peer(&p);
   netOn = true; return true;
 }
@@ -480,6 +485,8 @@ void ecoute() {
       ligne[nLigne] = 0; nLigne = 0;
       if (!strcmp(ligne, "VERSION")) Serial.println("BERRY VERSION " BERRY_VERSION);
       if (!strncmp(ligne, "STAT ", 5)) stats = ligne[5] == '1';
+      if (!strncmp(ligne, "PROMI ", 6)) { reseau(); wifi_promiscuous_filter_t f = { WIFI_PROMIS_FILTER_MASK_ALL }; esp_wifi_set_promiscuous_filter(&f); esp_wifi_set_promiscuous_rx_cb(dPromiCb); esp_wifi_set_promiscuous(ligne[6] == '1'); }
+      if (!strncmp(ligne, "PWR ", 4)) { reseau(); esp_wifi_set_max_tx_power(atoi(ligne + 4)); }
       if (!strncmp(ligne, "BTN ", 4)) { btSim = 0; for (int k = 0; k < 3 && ligne[4 + k]; k++) btSim |= (ligne[4 + k] == '1') << k; }   // test : boutons tenus G D P3, ex. "BTN 011"
       if (!strncmp(ligne, "SCRIPT ", 7)) {
         attendu = atoi(ligne + 7); nRecu = 0;
@@ -598,6 +605,7 @@ void loop() {
   if (now - statT >= 1000) {
     if (stats) Serial.printf("STAT %u img/s  script %u us  rendu %u us  pire %u ms  lentes %u  gc %u x (max %u us)  appels %d%s  tas %u  reseau %d\n", (unsigned)nImg, (unsigned)(usScript / max(1u, (unsigned)nImg)), (unsigned)(usRendu / max(1u, (unsigned)nImg)),
                   (unsigned)pire, (unsigned)lentes, (unsigned)gcN, (unsigned)gcMax, nOps, tropOps ? " (trop !)" : "", (unsigned)ESP.getFreeHeap(), netOn);
+    if (stats) { int8_t pw=0; esp_wifi_get_max_tx_power(&pw); Serial.printf("RDIAG txok %u txko %u rx %u promi %u ch %u pwr %d init %d\n",(unsigned)dTxOk,(unsigned)dTxKo,(unsigned)dRx,(unsigned)dPromi,dCh,pw,dErr[1]); }
     statT = now; nImg = usScript = usRendu = pire = lentes = gcN = gcMax = gcUs = 0;
   }
 }

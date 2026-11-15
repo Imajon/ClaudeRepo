@@ -13,7 +13,7 @@ Esquisse de départ de la languette : `../polygon-ajoure-C-accroche.svg` (`../ma
 - **Pastilles de l'ESP32-C3** allongées de 1 mm vers l'extérieur (soudure à la main), sauf la rangée du bas (trop près de la coupe USB-C).
 - Les ajours qui gênaient les pastilles GND sont retirés (3 restent).
 
-- **QR code** cuivre au dos, 35,4 mm → https://studioeya.com.
+- **QR code** cuivre au dos, 35,4 mm → https://brique.tierslieulecercle.fr.
 - **LED optionnelles** en haut (GAUCHE, DROITE, SAUT), CMS 1206 : +3V3 → R → LED → fil du bouton. Bouton appuyé = LED allumée.
   R : LED rouge/jaune/verte 470 Ω (≈ 3 mA) ; bleue/blanche 68 Ω. Trait sérigraphié = cathode.
 - BL de l'écran (J3 broche 8) relié au +3V3.

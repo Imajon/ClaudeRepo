@@ -23,7 +23,7 @@ GPIO9 (BOOT) et 5V ne sont pas utilisés.
 ## État
 - **Routé** : 118 segments, 16 vias, 2 couches. **DRC : 0 violation, 0 non connecté** (`drc.rpt`).
 - Cuivre des lettres (blanc du SVG) à 0,35 mm du bord ; règle cuivre/bord du projet = 0,25 mm (JLCPCB min 0,2).
-- QR code cuivre 14 mm (URL à remplacer dans `make_polygon_ajoure.py`).
+- QR code cuivre 14 mm → https://brique.tierslieulecercle.fr.
 
 ## À vérifier avant de commander
 - Le SuperMini est posé au dos, **vu de devant sa rangée GPIO0…5V est à DROITE** (x=64,12), USB-C vers le bas. Vérifie sur ta carte réelle : pastilles 2,4 x 1,3 mm, entraxe des rangées 15,24 mm.

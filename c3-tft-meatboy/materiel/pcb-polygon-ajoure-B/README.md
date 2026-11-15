@@ -9,7 +9,7 @@ en **cuivre nu** (F.Cu + ouverture F.Mask, sans net). Coupées autour des pistes
 (crochet de rayon), 3 attaches de 2 mm sur les pointes du haut (pointes tronquées de 0,55 mm), bord cuivre nu + stries.
 
 - **C3 SuperMini** au dos, en bas au centre ; pointe du bas coupée à plat (y = 73 mm) : l'USB-C arrive au bord de la carte.
-- **QR code** cuivre au dos, **35,4 mm** (plaque 38 mm, de y = 10 à 48, au maximum entre le bord haut et le module) → https://studioeya.com (miroir, se lit de derrière). Pas d'étiquette (plus de place).
+- **QR code** cuivre au dos, **35,4 mm** (plaque 38 mm, de y = 10 à 48, au maximum entre le bord haut et le module) → https://brique.tierslieulecercle.fr (miroir, se lit de derrière). Pas d'étiquette (plus de place).
 - **4 pastilles de fil** IO21/IO20 (gauche), IO0/IO8 (droite).
 - **LED optionnelles** en haut (une par pointe : GAUCHE, DROITE, SAUT), CMS 1206 : +3V3 → R → LED → fil du bouton.
   Bouton appuyé = LED allumée, sans changer le code. Sans LED ni R, rien ne change.

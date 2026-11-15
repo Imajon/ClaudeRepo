@@ -1,8 +1,12 @@
 ** Drc report for c3-tft-meatboy-polygon-tab.kicad_pcb **
-** Created on 2026-10-14T18:19:27 **
-** Report includes: Errors **
+** Created on 2026-11-08T10:13:49 **
+** Report includes: Errors, Warnings **
 
-** Found 0 DRC violations **
+** Found 1 DRC violations **
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(23.7500 mm, 64.2000 mm): PCB text 'GAUCHE' on F.Silkscreen
+    @(20.0000 mm, 66.0000 mm): NPTH pad of MTG3
 
 ** Found 0 unconnected pads **
 

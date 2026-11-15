@@ -1561,5 +1561,14 @@
  "un paysage de neige": "a snowy landscape",
  "✏️ Ce que tu aimes…": "✏️ What you like…",
  "🔄 D'autres bulles": "🔄 More bubbles",
- "⏳ Je cherche des bulles pour toi…": "⏳ Looking for bubbles for you…"
+ "⏳ Je cherche des bulles pour toi…": "⏳ Looking for bubbles for you…",
+ "Touche une bulle, puis appuie sur « Fabriquer mon jeu ».": "Tap a bubble, then press “Make my game”.",
+ "Touche d'autres bulles, ou appuie sur « Fabriquer mon jeu ».": "Tap more bubbles, or press “Make my game”.",
+ "✨ Des idées pour toi": "✨ Ideas for you",
+ "L'IA n'est pas branchée sur ce serveur : choisis parmi les bulles.": "The AI is not connected on this server: pick from the bubbles.",
+ "L'IA ne répond pas : touche une bulle.": "The AI is not answering: tap a bubble.",
+ "⏳ Je cherche ton image…": "⏳ Looking for your picture…",
+ "Je n'ai pas trouvé l'image (internet ?) : touche une autre bulle.": "I could not find the picture (internet?): tap another bubble.",
+ "✅ Ton jeu est prêt !": "✅ Your game is ready!",
+ "✨ Fabriquer mon jeu": "✨ Make my game"
 }

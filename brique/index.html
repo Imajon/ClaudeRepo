@@ -354,7 +354,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #scHist .vide{margin:auto;text-align:center}
 .code-carte{background:var(--panel2);border-radius:12px;padding:8px;border-left:4px solid var(--acc)}
 .code-tete{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:14px}.code-tete .sec{padding:2px 8px}
-#vueScript .agent .compris{margin-top:8px}
+#vueScript .agent .compris{margin-top:8px;flex:none}   /* sans flex:none, son min-height le laisse rétrécir à 40 px : le texte de l'IA déborde sur la ligne « Modèle » */
 .agent-ligne{margin-top:8px}
 #vueScript .console{align-items:stretch}
 .sc-console img{max-width:240px}
@@ -565,7 +565,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
-<main id="accueil" data-version="1.21">
+<main id="accueil" data-version="1.22">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -640,7 +640,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section id="creer-jeux" class="chap">
     <div class="chap-tete"><span class="ref">Créer ses propres jeux</span><h2>Tu décris. L'IA construit.<br>Tu joues avec tes copains.</h2>
       <p>Pas besoin de savoir coder : tu racontes ton jeu, il arrive sur ta console, et tes copains y jouent avec toi.</p></div>
-    <div class="bEtapes">
+    <div class="etapes">
       <article class="etape">
         <div class="ia-demo" aria-hidden="true">
           <div class="bulle">« <span id="iaTxt">un volcan très haut avec des scies</span><i class="demo-caret"></i> »</div>
@@ -2016,6 +2016,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <div class="pied-bas"><span>© 2026 Brique · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="sectionVersion" title="Version de cette section (data-version de sa balise main)"></span><span id="consoleVersions"></span></span><span><button class="sec theme" title="Mode sombre / mode clair">🌙</button> <a id="piedSite" href="/">brique.studioeya.com</a></span></div>
 </footer>
 
+<script src="jeux-bulles.js"></script>
 <script src="fiche.js"></script>   <!-- la fiche de jeu (FICHE-JEU.md) : même code que server.js -->
 <script id="textesSite" type="application/json">__TEXTES__</script>   <!-- textes modifiés en mode édition (remplis par server.js) -->
 <script>
@@ -4017,16 +4018,17 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   const imagesChangees = () => { etat.surConsole = -1; sauver(); rendreImages(); majMettre(); };   // à renvoyer sur la console (et à retester avant de publier)
   const imgDire = (t, ok) => { scImgDrop.querySelector('.msg')?.remove(); if (t) scImgDrop.insertAdjacentHTML('beforeend', `<div class="msg" style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</div>`); };
   const place = sauf => IMG_BUDGET - (etat.images || []).filter(m => m !== sauf).reduce((s, m) => s + imgOctets(m), 0);
-  async function ajouterImage(blob, nom) {
+  async function ajouterImage(blob, nom, tailles, role) {   // true = ajoutée ; tailles : celles à essayer (la plus grande qui rentre) ; role : perso, bon ou mal (les bulles)
     if ((etat.images || []).length >= 16) return imgDire('16 images au plus par jeu.');
     imgDire('🎨 Je la transforme en pixel art…', true);
     let cadres; try { cadres = await imgCadres(blob); } catch { return imgDire('Je n\'arrive pas à lire cette image : essaie un PNG, un JPG ou un GIF.'); }
     const taille = cadres[0].width > cadres[0].height * 1.2 && Math.max(cadres[0].width, cadres[0].height) >= 300 ? 'fond' : 48;   // grande image en largeur : sans doute un décor
-    let m; for (const t of [taille, 48, 32, 24, 16]) if (typeof (m = imgConvertir(cadres, t, place())) !== 'string') break;   // la plus grande taille qui rentre encore
+    let m; for (const t of tailles || [taille, 48, 32, 24, 16]) if (typeof (m = imgConvertir(cadres, t, place())) !== 'string') break;   // la plus grande taille qui rentre encore
     if (typeof m === 'string') return imgDire(m);
     m.nom = (nom || '').replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim().slice(0, 20) || 'image ' + ((etat.images || []).length + 1);
+    if (role) m.role = role;
     (etat.images ||= []).push(m); sources.set(m, cadres);
-    imgDire(cadres.length > m.n ? `Pas assez de place pour les ${cadres.length} images du GIF : j'en garde ${m.n}.` : '', true); imagesChangees();
+    imgDire(cadres.length > m.n ? `Pas assez de place pour les ${cadres.length} images du GIF : j'en garde ${m.n}.` : '', true); imagesChangees(); return true;
   }
   async function depuisLien(url) {
     try { const r = await fetch(url); if (!r.ok) throw 0; await ajouterImage(await r.blob(), decodeURIComponent(url.split('/').pop().split('?')[0])); }
@@ -4278,6 +4280,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     return true;
   }
   scGo.onclick = async () => {
+    if (mode === 'petits') return fabriquerBulles();
     const texte = scDemande.value.trim(); if (!texte) { if (mode === 'petits') scCompris.textContent = AIDE_BULLES; return scDemande.focus(); }
     if (texte.length < 50 && /\b(montre|affiche|voir|vois|ouvre|donne)\b.*\b(code|programme)\b/i.test(texte)) { scDemande.value = ''; return voirCode(true); }   // « montre-moi le code » : pas besoin de l'IA
     garderMain();                                        // l'IA part du programme affiché, modifications à la main comprises
@@ -4290,64 +4293,83 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
   // aide en boutons (tranche guidée) : l'IA fabrique 3 boutons à partir des mots de l'enfant (le jeu qu'il aime) ou de son programme (idées de suite).
   // Un clic écrit la phrase dans le champ : l'enfant la relit, la change, l'envoie. Aucun catalogue : les boutons viennent de lui.
-  // bulles (tranche 6-9 ans) : l'enfant ne fait que toucher des bulles, en 4 étapes qui se suivent : le jeu, ce qu'il dirige (son apparence), la vue (de côté, de dessus, de derrière : comment le jeu évolue à l'écran), le monde (son apparence).
-  // Un choix par étape (en toucher un autre le remplace) ; si aucune bulle ne lui plaît, il écrit ce qu'il aime dans le champ : l'IA refait des bulles de l'étape tournées vers ses goûts (qui restent pour les étapes suivantes). Les choix, dans l'ordre des étapes, forment la demande ;
-  // « Fabriquer » (le bouton d'envoi) l'envoie à l'IA. Les bulles de départ sont écrites ici (démarrage instantané, et repli si l'IA ne répond pas) ; les suivantes viennent de l'IA (api/bulles), adaptées aux choix déjà faits.
-  const AXES = [
-    { id: 'jeu', h: 210, icone: '🎮', nom: 'Le jeu', q: 'Quel jeu veux-tu fabriquer ?', qm: "Qu'est-ce qu'on change dans ton jeu ?", c: d => d, m: d => d,
-      mots: [['🏎 une course', 'Je veux un jeu de course : je dirige une voiture et je ne dois pas toucher les murs.'], ['👾 des monstres', "Je veux un jeu où j'attrape des monstres qui tombent du haut de l'écran."], ["🚀 l'espace", "Je veux un jeu dans l'espace : mon vaisseau tire sur des astéroïdes."],
-        ['🐸 sauter', 'Je veux un jeu où mon personnage saute par-dessus des obstacles.'], ['🍎 des fruits', 'Je veux un jeu où je ramasse des fruits sans toucher les bombes.'], ['🧱 des briques', 'Je veux un jeu où une balle casse des briques.']],
-      motsM: [['👾 des ennemis', 'Ajoute des ennemis.'], ['🏃 plus vite', 'Mets le jeu plus rapide.'], ['⭐ des bonus', 'Ajoute des bonus à ramasser.'], ['❤️ des vies', 'Ajoute des vies.'], ['🔢 les points', 'Ajoute un score.'], ['⏱ un chrono', 'Ajoute un chronomètre.']] },
-    { id: 'perso', h: 28, icone: '🐱', nom: 'Mon personnage', q: 'Comment est ton personnage ?', qm: 'Comment change ton personnage ?', c: d => `Mon personnage est ${d}.`, m: d => `Change mon personnage en ${d}.`,
-      mots: [['🐱 un chat', 'un chat'], ['🤖 un robot', 'un robot'], ['🐉 un dragon', 'un dragon'], ['🚀 une fusée', 'une fusée'], ['👻 un fantôme', 'un fantôme'], ['🧙 un magicien', 'un magicien']] },
-    { id: 'vue', h: 285, icone: '👀', nom: 'La vue', q: 'Comment on voit le jeu ?', qm: 'Comment change la vue du jeu ?', c: d => `On voit le jeu ${d}.`, m: d => `Change la vue : on voit le jeu ${d}.`,
-      mots: [['👀 de côté', 'de côté, avec le décor qui défile'], ['🔝 de dessus', 'de dessus, comme une carte'], ['🏎 de derrière', 'de derrière, avec la route qui vient vers nous'], ['⬇️ ça descend', 'de face, avec tout qui descend du haut de l’écran'], ['🖼 écran fixe', 'sur un seul écran qui ne bouge pas'], ['🔭 de loin', 'de loin, pour tout voir d’un coup']] },
-    { id: 'monde', h: 150, icone: '🌍', nom: 'Le monde', q: 'Comment est le monde autour ?', qm: 'Comment change le monde autour ?', c: d => `Le décor : ${d}.`, m: d => `Change le décor : ${d}.`,
-      mots: [['🌳 une forêt', 'une forêt'], ['🏙 la ville la nuit', 'une ville la nuit'], ['🌌 l’espace', 'l’espace'], ['🌊 sous l’eau', 'sous l’eau'], ['🏜 un désert', 'un désert'], ['❄️ la neige', 'un paysage de neige']] }];
-  const AIDE_BULLES = "Touche une bulle, puis appuie sur « Fabriquer avec l'IA ».", AIDE_ECRIRE = "Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».", AIDE_SUITE = "Touche d'autres bulles, ou appuie sur « Fabriquer avec l'IA ».";
+  // bulles (tranche 6-9 ans) : l'enfant ne fait que toucher des bulles, étape par étape (jeu, personnage, couleur, monde, ce qu'il attrape, ce qu'il évite, gros bouton).
+  // Le jeu est assemblé ICI, sans IA, par jeux-bulles.js (pièces Berry testées : il marche à tous les coups). L'IA ne sert qu'à personnaliser : pour le personnage et les objets, elle devine l'univers où va l'enfant
+  // (un dragon plutôt qu'un cosmonaute) et propose des bulles ; une bulle de l'IA = une icône trouvée sur Iconify, mise en pixel art dans les images du jeu (m.role = perso, bon ou mal). Si aucune bulle ne lui plaît, il écrit ce qu'il aime.
+  const AXES = JeuxBulles.ETAPES, T = s => document.documentElement.lang === 'en' ? JeuxBulles.EN[s] || s : s;   // T : les bulles toutes faites, en anglais sur la page /en
+  const AIDE_BULLES = "Touche une bulle, puis appuie sur « Fabriquer mon jeu ».", AIDE_ECRIRE = "Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».", AIDE_SUITE = "Touche d'autres bulles, ou appuie sur « Fabriquer mon jeu ».";
   const ATTENTE = "⏳ Je cherche des bulles pour toi…";
-  let recette = {}, props = {}, frais = {}, courant = 'jeu', cherche = false, gouts = [], vu = '';   // recette : { étape: { bouton, phrase } } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
+  let recette = {}, props = {}, frais = {}, courant = 'jeu', cherche = false, gouts = [], vu = '';   // recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
   const axeDe = id => AXES.find(x => x.id === id);
-  const defauts = a => (etat.script && a.motsM || a.mots).map(([bouton, d]) => ({ bouton, phrase: (etat.script ? a.m : a.c)(d) }));   // les bulles de départ d'une étape
-  const raz = () => { recette = {}; props = {}; frais = {}; courant = 'jeu'; gouts = []; vu = ''; };
+  const ids = () => Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.id]));
+  const etapes = () => AXES.filter(x => !JeuxBulles.saute(x.id, ids()));   // la couleur n'a pas de sens pour une image
+  const raz = () => { recette = structuredClone(etat.recette || {}); props = {}; frais = {}; courant = 'jeu'; gouts = []; vu = ''; };
+  const retirerImage = role => { const k = (etat.images || []).findIndex(m => m.role === role); if (k >= 0) { sources.delete(etat.images[k]); etat.images.splice(k, 1); imagesChangees(); } };
   function rendreBulles() {
     scBulles.classList.toggle('hide', mode !== 'petits'); if (mode !== 'petits') return;
     scBulles.classList.toggle('attend', cherche);
-    const a = axeDe(courant), liste = cherche ? [] : props[courant] || defauts(a), cle = courant + '|' + liste.map(b => b.bouton).join(), anime = !cherche && cle !== vu;
-    if (!cherche) vu = cle;                              // pendant la recherche on n'affiche rien : les nouvelles bulles arrivent ensuite, en fondu, l'une après l'autre (et seulement si la liste change)
-    scBulles.innerHTML = `<div class="etapes">${AXES.map(x => `<button class="bEtape${x.id === courant ? ' on' : ''}${recette[x.id] ? ' fait' : ''}" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${x.icone} ${x.nom}<small>${recette[x.id] ? esc(recette[x.id].bouton) : '…'}</small></button>`).join('')}</div>`
-      + `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><h4 class="grand">${a.icone} ${etat.script ? a.qm : a.q}</h4><div class="bulles">${cherche ? `<span class="attente">${ATTENTE}</span>` : liste.map((b, i) => `<button class="bulle${recette[courant]?.bouton === b.bouton ? ' prise' : ''}" style="--i:${i}" data-l="bulle" data-i="${i}">${esc(b.bouton)}</button>`).join('')}</div>`
-      + `<div class="libre"><input type="text" maxlength="100" placeholder="✏️ Ce que tu aimes…"><button class="bulle autre" data-l="libre">🔄 D'autres bulles</button></div></div>`;
-    scDemande.value = AXES.map(x => recette[x.id]?.phrase).filter(Boolean).join(' ');   // le champ (caché) porte la recette : « Fabriquer » est le bouton d'envoi habituel
+    const a = axeDe(courant), ia = cherche ? [] : props[courant] || [], cle = courant + '|' + ia.map(b => b.bouton).join(), anime = !cherche && cle !== vu;
+    if (!cherche) vu = cle;                              // les bulles de l'IA arrivent en fondu, l'une après l'autre (et seulement si la liste change)
+    const bulle = (b, i) => `<button class="bulle${recette[courant]?.bouton === b.bouton ? ' prise' : ''}" style="--i:${i}" data-l="bulle" data-i="${i}">${esc(T(b.bouton))}</button>`;
+    scBulles.innerHTML = `<div class="bEtapes">${etapes().map(x => `<button class="bEtape${x.id === courant ? ' on' : ''}${recette[x.id] ? ' fait' : ''}" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${x.icone} ${T(x.nom)}<small>${recette[x.id] ? esc(T(recette[x.id].bouton)) : '…'}</small></button>`).join('')}</div>`
+      + `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><h4 class="grand">${a.icone} ${T(a.q)}</h4><div class="bulles">${a.bulles.map(bulle).join('')}</div>`
+      + (a.ia ? `<h4>✨ Des idées pour toi</h4><div class="bulles">${cherche ? `<span class="attente">${ATTENTE}</span>` : ia.map((b, i) => bulle(b, a.bulles.length + i)).join('')}</div>`
+        + `<div class="libre"><input type="text" maxlength="100" placeholder="✏️ Ce que tu aimes…"><button class="bulle autre" data-l="libre">🔄 D'autres bulles</button></div>` : '') + '</div>';
+    scDemande.value = etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ');   // le champ (caché) dit ce qui est choisi
   }
-  async function charger(id, encore) {                   // les bulles de l'IA pour cette étape, adaptées à la recette et à ses goûts ; sans choix, programme ni goût, les bulles de départ suffisent ; encore : il en demande d'autres (on évite celles qu'il vient de voir)
-    if (!encore && (frais[id] || !(etat.script || Object.keys(recette).length || gouts.length))) return rendreBulles();
-    const deja = encore ? (props[id] || defauts(axeDe(id))).map(b => b.bouton) : [];
+  async function charger(id, encore) {                   // les idées de l'IA pour cette étape (personnage, ce qu'on attrape, ce qu'on évite), tournées vers l'univers de l'enfant ; sans choix ni goût, pas d'appel
+    if (!axeDe(id).ia || (!encore && (frais[id] || !(Object.keys(recette).length || gouts.length)))) return rendreBulles();
+    const deja = encore ? (props[id] || []).map(b => b.bouton) : [];
     cherche = true; rendreBulles(); scCompris.textContent = ATTENTE;
     try {
-      const r = await api('api/bulles', { ...ident(), axe: id, recette: Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.phrase])), script: etat.script, gouts, deja });
+      const r = await api('api/bulles', { ...ident(), axe: id, choix: Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.bouton])), gouts, deja });
       if (!r.bulles?.length) throw new Error("Je n'ai pas trouvé d'idée : touche une autre bulle.");
-      props[id] = r.bulles; frais[id] = true; scCompris.textContent = AIDE_SUITE;
-    } catch (err) { scCompris.textContent = err.message === 'IA non configuree' ? "L'IA n'est pas branchée sur ce serveur." : err.message || "L'IA ne répond pas : touche encore une bulle."; }
+      props[id] = r.bulles.map(b => ({ ...b, id: 'img' })); frais[id] = true; scCompris.textContent = AIDE_SUITE;
+    } catch (err) { scCompris.textContent = err.message === 'IA non configuree' ? "L'IA n'est pas branchée sur ce serveur : choisis parmi les bulles." : err.message || "L'IA ne répond pas : touche une bulle."; }
     finally { cherche = false; rendreBulles(); majTokens(); }
   }
-  const suivante = () => { const k = AXES.findIndex(x => x.id === courant); return [...AXES.slice(k + 1), ...AXES.slice(0, k)].find(x => !recette[x.id])?.id || courant; };   // l'étape d'après qui n'a pas encore de choix
+  async function prendreIcone(role, b) {                 // le mot de l'IA -> l'icône Iconify -> pixel art dans les images du jeu ; false = pas trouvée
+    cherche = true; rendreBulles(); scCompris.textContent = '⏳ Je cherche ton image…';
+    try {
+      const r = await (await fetch('https://api.iconify.design/search?limit=4&prefixes=noto,twemoji,fluent-emoji-flat,openmoji&query=' + encodeURIComponent(b.mot))).json();
+      if (!r.icons?.length) throw 0;
+      const img = new Image(); img.crossOrigin = 'anonymous'; img.src = `https://api.iconify.design/${r.icons[0].replace(':', '/')}.svg?width=96&height=96`; await img.decode();
+      const cv = document.createElement('canvas'); cv.width = cv.height = 96; cv.getContext('2d').drawImage(img, 0, 0, 96, 96);
+      retirerImage(role);
+      if (!await ajouterImage(await new Promise(ok => cv.toBlob(ok, 'image/png')), b.mot, role === 'perso' ? [24, 16] : [16], role)) throw 0;
+      return true;
+    } catch { scCompris.textContent = "Je n'ai pas trouvé l'image (internet ?) : touche une autre bulle."; return false; }
+    finally { cherche = false; rendreBulles(); }
+  }
+  const suivante = () => { const l = etapes(), k = l.findIndex(x => x.id === courant); return [...l.slice(k + 1), ...l.slice(0, k)].find(x => !recette[x.id])?.id || courant; };   // l'étape d'après qui n'a pas encore de choix
   scBulles.onclick = async e => {
     const el = e.target.closest('[data-l]'); if (!el || cherche) return;
     const l = el.dataset.l, a = axeDe(courant);
     if (l === 'axe') { courant = el.dataset.i; return charger(courant); }
-    if (l === 'libre') {                                 // pas de bulle à son goût : ce qu'il aime (champ vide : d'autres au hasard) -> de nouvelles bulles pour cette étape
+    if (l === 'libre') {                                 // pas de bulle à son goût : ce qu'il aime (champ vide : d'autres au hasard) -> de nouvelles idées pour cette étape
       const t = scBulles.querySelector('input').value.trim().replace(/\s+/g, ' ');
       if (t) gouts.push(t); return charger(courant, true);
     }
-    const b = (props[courant] || defauts(a))[+el.dataset.i], pris = b;
-    if (recette[courant]?.bouton === b.bouton) { delete recette[courant]; frais = {}; return rendreBulles(); }   // retoucher la bulle prise l'enlève
-    recette[courant] = pris; frais = {};
+    const b = [...a.bulles, ...(props[courant] || [])][+el.dataset.i];
+    if (recette[courant]?.bouton === b.bouton) { delete recette[courant]; if (a.ia) retirerImage(courant); frais = {}; return rendreBulles(); }   // retoucher la bulle prise l'enlève
+    if (b.id === 'img') { if (!await prendreIcone(courant, b)) return; } else if (a.ia) retirerImage(courant);
+    recette[courant] = b; frais = {};
     const avant = courant; courant = suivante();
     if (courant === avant) return rendreBulles(); scCompris.textContent = AIDE_SUITE; charger(courant);
   };
   scBulles.onkeydown = e => { if (e.key === 'Enter' && e.target.matches('input')) scBulles.querySelector('[data-l=libre]').click(); };
-  const libGo = () => mode === 'petits' ? "✨ Fabriquer avec l'IA" :"✨ Envoyer à l'IA";   // le bouton d'envoi, vu par un enfant qui ne lit pas encore bien
+  async function fabriquerBulles() {                     // « Fabriquer » : le programme est assemblé ici (pièces testées), sans IA, puis envoyé à la console
+    const imgs = {}; (etat.images || []).forEach((m, i) => { if (m.role) imgs[m.role] = i + 1; });
+    const r = { ...ids(), imgs }, script = JeuxBulles.assembler(r);
+    scGo.disabled = true; etat.recette = structuredClone(recette);
+    etat.script = script; mettreCode(script);
+    scCompris.textContent = '✅ Ton jeu est prêt ! ' + T(JeuxBulles.aide(r));
+    etat.essais.push({ demande: scDemande.value || '(bulles)', auto: false, explication: '', console: '', date: Date.now(), lignes: script.split('\n').length });
+    majAide(true); sauver(); rendre();
+    const pb = await envoyer(script); scGo.disabled = false;
+    if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
+  }
+  const libGo = () => mode === 'petits' ? '✨ Fabriquer mon jeu' : "✨ Envoyer à l'IA";   // le bouton d'envoi, vu par un enfant qui ne lit pas encore bien
   majAide = garder => {                                  // appelé quand la tranche d'âge, le chantier ou le programme change : les anciennes propositions ne valent plus ; garder : on vient d'écrire le jeu, l'explication de l'IA reste affichée
     const g = mode === 'guide';
     scAide.classList.toggle('hide', !g); scChoix.classList.add('hide');

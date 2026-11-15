@@ -305,6 +305,11 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .sc-barre .sec{padding:5px 10px;font-size:14px}
 .sc-barre .mode{margin-left:0;padding:2px}.sc-barre .mode button{padding:4px 10px;font-size:14px}.sc-barre .mode button:disabled{cursor:default}
 #scChoix{margin-top:8px}#scChoix b{display:block;margin-bottom:6px}   /* aide en boutons (tranche guidée) : 3 propositions fabriquées par l'IA */
+#scBulles{margin-top:8px}#scBulles h4{margin:12px 0 6px;font-size:14px;color:var(--mute)}.bulles{display:flex;flex-wrap:wrap;gap:10px}   /* tranche 6-9 ans : de grosses bulles, un emoji pour ceux qui lisent peu */
+.bulle{border:3px solid var(--acc);background:var(--panel2);color:var(--txt);border-radius:999px;padding:10px 20px;font:inherit;font-size:20px;cursor:pointer;transition:transform .1s}.bulle:hover{transform:scale(1.06)}
+.bulle.axe{border-style:dashed}.bulle.prise{background:var(--acc);color:var(--onacc);font-size:16px;padding:6px 14px}.bulle.autre{border-color:var(--line);font-size:15px;padding:6px 14px}
+#scBulles.attend .bulles{opacity:.4;pointer-events:none}
+#vueScript.petits .agent-ligne textarea,#vueScript.petits #scAide,#vueScript.petits #scMicro,#vueScript.petits #scVoirCode{display:none}#vueScript.petits .agent-btns{width:auto}#vueScript.petits .agent-btns .big{padding:14px 24px;font-size:20px}
 .sc-jeux{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-right:auto}.sc-jeux select{margin:0;width:auto;max-width:260px;padding:5px 8px;font-size:15px}
 #vueScript .agent>.theme{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;font-size:16px}
 #vueScript .agent>h2{padding-right:40px}
@@ -1900,10 +1905,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.16">
+<main id="vueScript" class="hide" data-version="1.17">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
-    <span id="niveauScolaire" class="mode" title="Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mGuide">CM1 · CM2 — guidé</button><button id="mLibre">6ᵉ · 4ᵉ — libre</button></span>   <!-- tranche d'âge : choisie ici, ou par l'animateur pour son groupe -->
+    <span id="niveauScolaire" class="mode" title="Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mPetits">6 · 9 ans — bulles</button><button id="mGuide">CM1 · CM2 — guidé</button><button id="mLibre">6ᵉ · 4ᵉ — libre</button></span>   <!-- tranche d'âge : choisie ici, ou par l'animateur pour son groupe -->
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
@@ -1921,6 +1926,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <div id="scCompris" class="compris">Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».</div>
     <div id="scIA" style="font-size:.8rem;color:var(--mute);margin-top:4px"></div>
+    <div id="scBulles" class="hide"></div>          <!-- tranche 6-9 ans : la recette (les bulles prises), puis les bulles à toucher ; rien à écrire -->
     <div id="scChoix" class="hide"></div>           <!-- tranche guidée : la question de l'IA et ses 3 boutons ; un clic écrit la phrase dans le champ -->
     <div class="agent-ligne">                    <!-- le champ, en bas ; ses boutons empilés à droite -->
       <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:76px;font-size:17px"></textarea>
@@ -2144,15 +2150,15 @@ for (const k in CHOIX) {
 }
 let majAide = () => {};                                 // mode script : le bouton « 💡 Aide-moi » suit la tranche d'âge (défini plus bas)
 function setMode(m) {
-  mode = m; majAide();
-  mGuide.classList.toggle('on', m === 'guide'); mLibre.classList.toggle('on', m === 'libre');
-  guide.classList.toggle('hide', m !== 'guide'); catalogue.classList.toggle('hide', m !== 'libre');
-  demande.placeholder = m === 'guide' ? 'Une phrase en plus (pas obligé) : « très haut », « avec des ressorts »…'
+  mode = m; vueScript.classList.toggle('petits', m === 'petits'); majAide();
+  mPetits.classList.toggle('on', m === 'petits'); mGuide.classList.toggle('on', m === 'guide'); mLibre.classList.toggle('on', m === 'libre');
+  guide.classList.toggle('hide', m === 'libre'); catalogue.classList.toggle('hide', m !== 'libre');   // le générateur de niveau : les 6-9 ans prennent les mêmes boutons que les CM1-CM2
+  demande.placeholder = m !== 'libre' ? 'Une phrase en plus (pas obligé) : « très haut », « avec des ressorts »…'
                                      : 'Décris ton niveau : thème, héros, pièges, hauteur, difficulté…';
 }
 const garderMode = m => { setMode(m); try { localStorage.setItem('brique-age', m); } catch {} };   // le choix de l'enfant reste d'une visite à l'autre
-mGuide.onclick = () => garderMode('guide'); mLibre.onclick = () => garderMode('libre');
-setMode((() => { try { return localStorage.getItem('brique-age'); } catch {} })() === 'guide' ? 'guide' : 'libre');
+mPetits.onclick = () => garderMode('petits'); mGuide.onclick = () => garderMode('guide'); mLibre.onclick = () => garderMode('libre');
+setMode((a => ['petits', 'guide'].includes(a) ? a : 'libre')((() => { try { return localStorage.getItem('brique-age'); } catch {} })()));
 
 // ---------- "IA" simulée : texte -> paramètres ----------
 // ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
@@ -2618,18 +2624,18 @@ go.onclick = async () => {
   let texte = demande.value.trim(), base = params ?? structuredClone(DEFAUT), avant = [];
   base.jeu = genre;
   const lab = k => CHOIX[k].find(c => c[0] === choix[k])[1];
-  if (mode === 'guide' && genre === 'plateforme') {
+  if (mode !== 'libre' && genre === 'plateforme') {
     base.theme = choix.theme; base.hero = choix.hero; base.forme = choix.forme;
     for (const k of ['pic', 'scie', 'fragile', 'cache']) base.briques[k] = choix.danger === k;
     base.hauteur = 15 * +choix.ecrans;
     avant = [lab('theme'), lab('hero'), lab('forme'), lab('danger'), lab('ecrans') + ' de haut'];
-  } else if (mode === 'guide' && genre === 'cote') {
+  } else if (mode !== 'libre' && genre === 'cote') {
     base.ecransL = +choix.ecransL; base.ecransH = +choix.ecransH; base.plafond = choix.plafond === 'oui'; base.trous = +choix.trous; base.plateformes = choix.plateformes === 'oui';
     avant = [lab('ecransL') + ' de large', lab('ecransH') + ' de haut', 'plafond : ' + lab('plafond'), 'trous cachés : ' + lab('trous'), 'plateformes : ' + lab('plateformes')];
-  } else if (mode === 'guide' && genre === 'iso') {
+  } else if (mode !== 'libre' && genre === 'iso') {
     base.taille = +choix.taille; base.relief = choix.relief; base.trous = +choix.vide;
     avant = [lab('taille'), 'relief : ' + lab('relief'), 'trous : ' + lab('vide')];
-  } else if (mode === 'guide') {
+  } else if (mode !== 'libre') {
     base.motif = choix.motif; base.acier = choix.acier === 'oui'; base.vagues = +choix.vagues;
     avant = [GENRES.find(g => g[0] === genre)[1], lab('motif'), genre === 'briques' ? 'acier : ' + lab('acier') : lab('vagues')];
   }
@@ -3329,7 +3335,7 @@ async function rafraichir() {
   catch { EN_LIGNE = false; [vAnim, moiBox, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'anim') afficher('accueil'); return; }   // serveur injoignable (Render endormi, fichier) : la Communauté reste, vide
   enLigne = c.niveaux; modeAtelier(c.atelier);
   if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant d'un groupe : la tranche d'âge choisie par son animateur, il ne peut pas la changer
-  mGuide.disabled = mLibre.disabled = !session && !!c.age; niveauScolaire.title = mGuide.disabled ? 'Choisi par ton animateur' : "Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots.";
+  mPetits.disabled = mGuide.disabled = mLibre.disabled = !session && !!c.age; niveauScolaire.title = mGuide.disabled ? 'Choisi par ton animateur' : "Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots.";
   nJeux.textContent = accJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = accAujourdhui.textContent = c.chiffres.aujourdhui;
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
   const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
@@ -3591,8 +3597,8 @@ async function rendreAnim(donnees) {
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
     <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <small style="color:var(--mute)" title="tokens IA : aujourd'hui / depuis le début du forfait">⚡${kTok(j.jour || 0)} · ${kTok(j.tokens || 0)}</small> <a href="#" data-mdp="${esc(j.pseudo)}" title="Mot de passe oublié : lui en donner un provisoire" style="color:var(--mute)">🔑</a> <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
     <h3>🎂 Tranche d'âge — c'est toi qui la choisis, les enfants ne peuvent pas la changer</h3>
-    <div class="chips" data-age="${esc(g.code)}"><button class="chip ${g.age === 'guide' ? 'on' : ''}" data-agev="guide">CM1 · CM2 — guidé</button><button class="chip ${g.age === 'guide' ? '' : 'on'}" data-agev="libre">6ᵉ · 4ᵉ — libre</button></div>
-    <p class="aide" style="margin:4px 0 0">Guidé : on choisit avec des boutons, plus une phrase. Libre : on décrit tout son jeu avec ses mots.</p>
+    <div class="chips" data-age="${esc(g.code)}"><button class="chip ${g.age === 'petits' ? 'on' : ''}" data-agev="petits">6 · 9 ans — bulles</button><button class="chip ${g.age === 'guide' ? 'on' : ''}" data-agev="guide">CM1 · CM2 — guidé</button><button class="chip ${g.age === 'guide' || g.age === 'petits' ? '' : 'on'}" data-agev="libre">6ᵉ · 4ᵉ — libre</button></div>
+    <p class="aide" style="margin:4px 0 0">Bulles : on touche des bulles, sans rien écrire. Guidé : on choisit avec des boutons, plus une phrase. Libre : on décrit tout son jeu avec ses mots.</p>
     <h3>📚 Mode atelier</h3>
     <div class="icRow"><input class="pseudo" data-matiere="${esc(g.code)}" maxlength="40" placeholder="Matière du jour (ex. Maths : fractions)" value="${esc(g.matiere)}">
       <label class="chip" style="white-space:nowrap"><input type="checkbox" data-prive="${esc(g.code)}" ${g.prive ? 'checked' : ''}> Interface confinée au groupe</label></div>
@@ -4248,19 +4254,19 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
       }); }
     catch (e) { mettreCode(etat.script); if (e.name === 'AbortError') { scCompris.textContent = '✋ Demande annulée : modifie ton texte, puis renvoie-la.'; scDemande.focus(); } else scCompris.innerHTML = `<span style="color:var(--ko)">${esc(e.message === 'IA non configuree' ? 'L\'IA n\'est pas branchée sur ce serveur.' : e.message || 'L\'IA ne répond pas : réessaie.')}</span>`; }
     arret = null; scAnnuler.classList.add('hide');
-    scGo.disabled = false; scGo.textContent = '✨ Envoyer à l\'IA'; iaEnCours = false; majMettre(); occupe();   // sinon le bouton reste grisé après une erreur, un refus ou une annulation
+    scGo.disabled = false; scGo.textContent = libGo(); iaEnCours = false; majMettre(); occupe();   // sinon le bouton reste grisé après une erreur, un refus ou une annulation
     if (!r) return false;
     if (r.modele) modeleIA = r.modele;
     if (r.refus) { scCompris.innerHTML = `<span style="color:var(--ko)">${esc(r.refus)}</span>`; return false; }
     scCompris.innerHTML = `Programme écrit en ${((performance.now() - t0) / 1000).toFixed(1)} s${r.corrections ? ` (testé : ${r.corrections} erreur${r.corrections > 1 ? 's' : ''} corrigée${r.corrections > 1 ? 's' : ''} avant l'envoi)` : ''}. ${esc(r.explication || '')}${r.astuce ? `<br>💡 ${esc(r.astuce)}` : ''}${r.question ? `<br>❓ ${esc(r.question)}` : ''}`;
-    etat.script = r.script; mettreCode(r.script); if (!auto) scDemande.value = ''; majAide();
+    etat.script = r.script; mettreCode(r.script); if (!auto) scDemande.value = ''; majAide(true);
     etat.essais.push({ demande: auto ? CORRIGE : texte, auto, explication: r.explication, astuce: r.astuce, limite: r.limite, question: r.question, console: '', date: Date.now(), lignes: etat.script.split('\n').length });
     sauver(); rendre();
     const pb = await envoyer(r.script); if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); return false; }
     return true;
   }
   scGo.onclick = async () => {
-    const texte = scDemande.value.trim(); if (!texte) return scDemande.focus();
+    const texte = scDemande.value.trim(); if (!texte) { if (mode === 'petits') scCompris.textContent = AIDE_BULLES; return scDemande.focus(); }
     if (texte.length < 50 && /\b(montre|affiche|voir|vois|ouvre|donne)\b.*\b(code|programme)\b/i.test(texte)) { scDemande.value = ''; return voirCode(true); }   // « montre-moi le code » : pas besoin de l'IA
     garderMain();                                        // l'IA part du programme affiché, modifications à la main comprises
     seance = []; const tic = setInterval(majSeance, 250);   // les secondes défilent
@@ -4272,9 +4278,51 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
   // aide en boutons (tranche guidée) : l'IA fabrique 3 boutons à partir des mots de l'enfant (le jeu qu'il aime) ou de son programme (idées de suite).
   // Un clic écrit la phrase dans le champ : l'enfant la relit, la change, l'envoie. Aucun catalogue : les boutons viennent de lui.
-  majAide = () => {                                      // appelé quand la tranche d'âge, le chantier ou le programme change : les anciennes propositions ne valent plus
+  // bulles (tranche 6-9 ans) : l'enfant ne fait que toucher des bulles. Chaque clic en fabrique d'autres : de la même idée (ce qu'on peut y ajouter) et du même axe
+  // (d'autres façons de changer le même sujet : plus lent, plus rapide…). Les bulles touchées forment la recette ; « Fabriquer » (le bouton d'envoi) en envoie les phrases à l'IA.
+  // Seules les premières bulles sont écrites ici (démarrage instantané) ; toutes les suivantes viennent de l'IA (api/bulles).
+  const DEPART_JEU = [['🏎 une course', 'Je veux un jeu de course : je dirige une voiture et je ne dois pas toucher les murs.'], ['👾 des monstres', "Je veux un jeu où j'attrape des monstres qui tombent du haut de l'écran."], ['🚀 l\'espace', "Je veux un jeu dans l'espace : mon vaisseau tire sur des astéroïdes."],
+    ['🐸 sauter', 'Je veux un jeu où mon personnage saute par-dessus des obstacles.'], ['🍎 des fruits', 'Je veux un jeu où je ramasse des fruits sans toucher les bombes.'], ['🧱 des briques', 'Je veux un jeu où une balle casse des briques.']].map(([bouton, phrase]) => ({ bouton, phrase }));
+  const DEPART_SUITE = [['🎨 les couleurs', 'Change les couleurs du jeu.'], ['👾 les ennemis', 'Ajoute des ennemis.'], ['🏃 la vitesse', 'Change la vitesse du jeu.'], ['⭐ des bonus', 'Ajoute des bonus à ramasser.'], ['❤️ des vies', 'Ajoute des vies.'], ['🔢 les points', 'Ajoute un score.']].map(([bouton, phrase]) => ({ bouton, phrase }));
+  const AIDE_BULLES = 'Touche une bulle, puis appuie sur « Fabriquer ».', AIDE_ECRIRE = "Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».", MAX_BULLES = 5;
+  let recette = [], idees = [], memeAxe = [], axe = '', cherche = false;          // recette : les bulles prises { bouton, phrase, axe } ; idees / memeAxe : les bulles proposées ; axe : le sujet de la dernière bulle touchée
+  const racines = () => etat.script || recette.length ? DEPART_SUITE : DEPART_JEU;   // un jeu en cours (ou déjà choisi) : on change des choses ; sinon on choisit le jeu
+  const rangee = (liste, l) => `<div class="bulles">${liste.map((b, i) => `<button class="bulle${l === 'axe' ? ' axe' : ''}" data-l="${l}" data-i="${i}">${esc(b.bouton)}</button>`).join('')}</div>`;
+  function rendreBulles() {
+    scBulles.classList.toggle('hide', mode !== 'petits'); if (mode !== 'petits') return;
+    const racine = !idees.length && !memeAxe.length;
+    scBulles.classList.toggle('attend', cherche);
+    scBulles.innerHTML = (recette.length ? `<h4>Ma recette (touche pour enlever) :</h4><div class="bulles">${recette.map((r, i) => `<button class="bulle prise" data-l="retire" data-i="${i}">${esc(r.bouton)} ✕</button>`).join('')}</div>` : '')
+      + (racine ? `<h4>${recette.length ? 'Et aussi ?' : etat.script ? "Qu'est-ce qu'on change dans ton jeu ?" : 'Quel jeu on fabrique ?'}</h4>${rangee(racines(), 'depart')}`
+        : `<h4>Dans la même idée</h4>${rangee(idees, 'idee')}<h4>Autres façons de changer : ${esc(axe || 'ça')}</h4>${rangee(memeAxe, 'axe')}<div class="bulles" style="margin-top:12px"><button class="bulle autre" data-l="racine">🔄 Autre chose</button></div>`);
+    scDemande.value = recette.map(r => r.phrase).join(' ');   // le champ (caché) porte la recette : « Fabriquer » est le bouton d'envoi habituel
+  }
+  scBulles.onclick = async e => {
+    const el = e.target.closest('.bulle'); if (!el || cherche) return;
+    const l = el.dataset.l, i = +el.dataset.i;
+    if (l === 'retire') { recette.splice(i, 1); if (!recette.length) { idees = []; memeAxe = []; axe = ''; } return rendreBulles(); }
+    if (l === 'racine') { idees = []; memeAxe = []; axe = ''; return rendreBulles(); }
+    if (recette.length >= MAX_BULLES && l !== 'axe') { scCompris.textContent = "Ça fait déjà beaucoup d'idées : appuie sur « Fabriquer » !"; return; }
+    const b = (l === 'depart' ? racines() : l === 'idee' ? idees : memeAxe)[i], dAxe = l === 'axe' ? axe : '';
+    if (l === 'axe') recette = recette.filter(r => r.axe !== axe);   // un seul choix par axe : « plus rapide » prend la place de « plus lent »
+    const pris = { ...b, axe: dAxe }; recette.push(pris);
+    cherche = true; rendreBulles(); scCompris.textContent = "⏳ Je cherche d'autres bulles…";
+    try {
+      const r = await api('api/bulles', { ...ident(), recette: recette.map(x => x.phrase), clic: { bouton: b.bouton, axe: dAxe }, script: etat.script });
+      if (!r.idee?.length && !r.meme_axe?.length) throw new Error("Je n'ai pas trouvé d'idée : touche une autre bulle.");
+      pris.axe = axe = r.axe || dAxe; idees = r.idee || []; memeAxe = r.meme_axe || [];
+      scCompris.textContent = recette.length >= MAX_BULLES ? "Ça fait déjà beaucoup d'idées : appuie sur « Fabriquer » !" : "Touche d'autres bulles, ou appuie sur « Fabriquer ».";
+    } catch (err) { scCompris.textContent = err.message === 'IA non configuree' ? "L'IA n'est pas branchée sur ce serveur." : err.message || "L'IA ne répond pas : touche encore une bulle."; }
+    finally { cherche = false; rendreBulles(); majTokens(); }
+  };
+  const libGo = () => mode === 'petits' ? '✨ Fabriquer' : "✨ Envoyer à l'IA";   // le bouton d'envoi, vu par un enfant qui ne lit pas encore bien
+  majAide = garder => {                                  // appelé quand la tranche d'âge, le chantier ou le programme change : les anciennes propositions ne valent plus ; garder : on vient d'écrire le jeu, l'explication de l'IA reste affichée
     const g = mode === 'guide';
     scAide.classList.toggle('hide', !g); scChoix.classList.add('hide');
+    if (recette.length || mode === 'petits') scDemande.value = '';
+    recette = []; idees = []; memeAxe = []; axe = ''; rendreBulles();
+    if (!iaEnCours) scGo.textContent = libGo();
+    if (!garder) { if (mode === 'petits') scCompris.textContent = AIDE_BULLES; else if (/Fabriquer|bulle/.test(scCompris.textContent)) scCompris.textContent = AIDE_ECRIRE; }   // on quitte les bulles : leur consigne ne vaut plus
     scDemande.placeholder = !g ? "Qu'est-ce que tu veux créer ?" : etat.script ? "Qu'est-ce que tu veux ajouter ou changer ? Pas d'idée : appuie sur « 💡 Aide-moi »." : 'À quel jeu tu aimes jouer ? Écris son nom (ou ton idée), puis appuie sur « 💡 Aide-moi ».';
   };
   scAide.onclick = async () => {

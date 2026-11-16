@@ -975,7 +975,7 @@ var JID = "${id}" var JT = -9.0 var JOX = 0 var JOY = 0 var JLS = 0.0
 def maj(dt)
   maj0(dt)
   var t = temps() var p = nil
-  if t - JLS > 0.1 JLS = t envoie(JID + "," + str(${m.x}) + "," + str(${m.y})) end
+  if t - JLS > 0.04 JLS = t envoie(JID + "," + str(${m.x}) + "," + str(${m.y})) end
   for e: recois()
     if e[0] != moi()
       p = string.split(e[1], ",")

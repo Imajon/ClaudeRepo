@@ -4408,7 +4408,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     etat.script = script; mettreCode(script);
     scCompris.textContent = '✅ Ton jeu est prêt !';
     etat.essais.push({ demande: scDemande.value || '(bulles)', auto: false, explication: '', console: '', date: Date.now(), lignes: script.split('\n').length });
-    majAide(true); fait = true; courant = ''; idees = false; menu = false; rendreBulles(); sauver(); rendre();   // pour l'améliorer : la bulle « Modifier ma présentation »
+    majAide(true); fait = true; courant = 'perso'; idees = true; menu = false; rendreBulles(); charger('perso'); sauver(); rendre();   // pour l'améliorer : des idées de personnage dans l'univers de son jeu (champ « Ce que tu aimes » dessous) ; ensuite, la bulle « Modifier ma présentation »
     const pb = await envoyer(script); scGo.disabled = fabrique === sig();
     if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
   }

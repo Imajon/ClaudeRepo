@@ -4320,24 +4320,28 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const AXES = JeuxBulles.ETAPES, T = s => document.documentElement.lang === 'en' ? JeuxBulles.EN[s] || s : s;   // T : les bulles toutes faites, en anglais sur la page /en
   const AIDE_BULLES = "Touche une bulle, puis appuie sur « Fabriquer mon jeu ».", AIDE_ECRIRE = "Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».", AIDE_SUITE = "Touche d'autres bulles, ou appuie sur « Fabriquer mon jeu ».";
   const ATTENTE = "⏳ Je cherche des bulles pour toi…";
-  let fait = false, recette = {}, props = {}, frais = {}, courant = 'jeu', cherche = false, gouts = [], vu = '';   // recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
+  let fait = false, recette = {}, props = {}, frais = {}, courant = 'jeu', cherche = false, gouts = [], vu = '', idees = false;   // recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
   const axeDe = id => AXES.find(x => x.id === id);
+  const base = a => a.bulles.filter(b => !b.plus || recette[a.id]?.id === b.id), extra = a => idees ? [...a.bulles.filter(b => b.plus && recette[a.id]?.id !== b.id), ...(a.ia && !cherche ? props[a.id] || [] : [])] : [];   // base : visibles tout de suite ; extra : après « Des idées pour toi »
+  const toutes = a => [...base(a), ...extra(a)];
   const ids = () => Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.id]));
   const etapes = () => AXES.filter(x => !JeuxBulles.saute(x.id, ids()));   // la couleur n'a pas de sens pour une image
-  const raz = () => { recette = structuredClone(etat.recette || {}); props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); courant = fait ? '' : 'jeu'; gouts = []; vu = ''; };
+  const raz = () => { recette = structuredClone(etat.recette || {}); props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); courant = fait ? '' : 'jeu'; gouts = []; vu = ''; idees = false; };
   const retirerImage = role => { const k = (etat.images || []).findIndex(m => m.role === role); if (k >= 0) { sources.delete(etat.images[k]); etat.images.splice(k, 1); imagesChangees(); } };
   function rendreBulles() {
     scBulles.classList.toggle('hide', mode !== 'petits'); if (mode !== 'petits') return;
     scBulles.classList.toggle('attend', cherche);
-    const ia = cherche ? [] : props[courant] || [], cle = courant + '|' + ia.map(b => b.bouton).join(), anime = !cherche && cle !== vu;
+    const cle = courant + '|' + (idees ? 1 : 0) + '|' + (props[courant] || []).map(b => b.bouton).join(), anime = !cherche && cle !== vu;
     if (!cherche) vu = cle;                              // les bulles de l'IA arrivent en fondu, l'une après l'autre (et seulement si la liste change)
     const bulle = (b, i) => `<button class="bulle${recette[courant]?.bouton === b.bouton ? ' prise' : ''}" style="--i:${i}" data-l="bulle" data-i="${i}">${esc(T(b.bouton))}</button>`;
     // les bulles arrivent au fil des réponses : seules les étapes déjà répondues (question + réponse FONDUES en une forme) et l'étape en cours (question + choix) sont là
     const paire = x => { const c = `<span class="pq">${x.icone} ${T(x.q)}</span><span class="pr">${esc(T(recette[x.id].bouton))}</span>`;   // 2 calques identiques : le fond passe au filtre « goutte », le texte reste net par-dessus
       return `<button class="bPaire" style="--h:${x.h}" data-l="axe" data-i="${x.id}"><span class="pf" aria-hidden="true">${c}</span><span class="pt">${c}</span></button>`; };
-    const ouvert = a => `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${T(a.q)}</div><div class="bulles">${a.bulles.map(bulle).join('')}</div>`
-      + (a.ia ? `<h4>✨ Des idées pour toi</h4><div class="bulles">${cherche ? `<span class="attente">${ATTENTE}</span>` : ia.map((b, i) => bulle(b, a.bulles.length + i)).join('')}</div>`
-        + `<div class="libre"><input type="text" maxlength="100" placeholder="✏️ Ce que tu aimes…"><button class="bulle autre" data-l="libre">🔄 D'autres bulles</button></div>` : '') + '</div>';
+    const ouvert = a => { const b0 = base(a), ex = extra(a), plus = a.ia || a.bulles.some(b => b.plus);
+      return `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${T(a.q)}</div><div class="bulles">${b0.map(bulle).join('')}</div>`
+      + (plus && !idees ? `<div class="libre"><button class="bulle autre" data-l="idees">✨ Des idées pour toi</button></div>` : '')   // optionnel : pas d'idées tant qu'il ne les demande pas
+      + (plus && idees ? `<h4>✨ Des idées pour toi</h4><div class="bulles">${cherche ? `<span class="attente">${ATTENTE}</span>` : ex.map((b, i) => bulle(b, b0.length + i)).join('')}</div>`
+        + (a.ia ? `<div class="libre"><input type="text" maxlength="100" placeholder="✏️ Ce que tu aimes…"><button class="bulle autre" data-l="libre">🔄 D'autres bulles</button></div>` : '') : '') + '</div>'; };
     const venir = etapes().filter(x => x.id !== courant && !recette[x.id]);   // l'ensemble de la structure : ce qui est répondu (en gouttes), ce qui se fait (ouvert), ce qui reste (pastilles)
     scBulles.innerHTML = (fait ? `<div class="fait">✅ Ton jeu est prêt ! Tu peux changer ce que tu veux : touche une bulle, puis « Fabriquer mon jeu ».</div>` : '')
       + etapes().map(x => x.id === courant ? ouvert(x) : recette[x.id] ? paire(x) : '').join('')
@@ -4372,17 +4376,18 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   scBulles.onclick = async e => {
     const el = e.target.closest('[data-l]'); if (!el || cherche) return;
     const l = el.dataset.l, a = axeDe(courant);   // courant = '' quand tout est répondu : il ne reste que les paires fondues
-    if (l === 'axe') { courant = el.dataset.i; return charger(courant); }
+    if (l === 'axe') { courant = el.dataset.i; idees = false; return rendreBulles(); }
+    if (l === 'idees') { idees = true; return charger(courant); }   // charger : pour une étape avec l'IA, va chercher les idées ; sinon, affiche juste les autres structures
     if (l === 'libre') {                                 // pas de bulle à son goût : ce qu'il aime (champ vide : d'autres au hasard) -> de nouvelles idées pour cette étape
       const t = scBulles.querySelector('input').value.trim().replace(/\s+/g, ' ');
       if (t) gouts.push(t); return charger(courant, true);
     }
-    const b = [...a.bulles, ...(props[courant] || [])][+el.dataset.i];
+    const b = toutes(a)[+el.dataset.i];
     if (recette[courant]?.bouton === b.bouton) { delete recette[courant]; if (a.ia) retirerImage(courant); frais = {}; return rendreBulles(); }   // retoucher la bulle prise l'enlève
     if (b.id === 'img') { if (!await prendreIcone(courant, b)) return; } else if (a.ia) retirerImage(courant);
     recette[courant] = b; frais = {};
-    const avant = courant; courant = suivante();
-    if (courant === avant) { courant = ''; return rendreBulles(); } scCompris.textContent = AIDE_SUITE; charger(courant);
+    const avant = courant; courant = suivante(); idees = false;
+    if (courant === avant) { courant = ''; return rendreBulles(); } scCompris.textContent = AIDE_SUITE; rendreBulles();
   };
   scBulles.onkeydown = e => { if (e.key === 'Enter' && e.target.matches('input')) scBulles.querySelector('[data-l=libre]').click(); };
   async function fabriquerBulles() {                     // « Fabriquer » : le programme est assemblé ici (pièces testées), sans IA, puis envoyé à la console

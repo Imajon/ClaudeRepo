@@ -208,15 +208,18 @@ const ADMINS = (process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(s =
 const compteDe = email => crypto.createHmac('sha256', SECRET).update(email).digest('hex');
 // pieces detachees : [libelle, centimes] ; meme liste que PIECES dans index.html
 const PIECES = { esp: ['Module ESP32-C3 Super Mini', 500], ecran: ['Écran couleur', 900], bouton: ['Bouton poussoir', 100] };   // ponytail: prix a confirmer
-function devis(p) {                                      // { kit, presoude, esp, ecran, bouton } -> lignes [libelle, quantite, centimes] + total, ou null
-  const kit = entier(p?.kit, 999) ? p.kit : 0, pre = entier(p?.presoude, 999) ? p.presoude : 0, n = kit + pre;
+const ACCES = ['Accès à l’interface Brique, 3 mois', 900];   // centimes ; accès sans console : pas de livraison ; meme prix dans index.html
+function devis(p) {                                      // { kit, presoude, acces, esp, ecran, bouton } -> lignes [libelle, quantite, centimes] + total, ou null
+  const kit = entier(p?.kit, 999) ? p.kit : 0, pre = entier(p?.presoude, 999) ? p.presoude : 0, acces = entier(p?.acces, 999) ? p.acces : 0, n = kit + pre;
   const pieces = Object.fromEntries(Object.keys(PIECES).map(k => [k, entier(p?.[k], 999) ? p[k] : 0]));
-  if (n > 999 || !n && !Object.values(pieces).some(Boolean)) return null;
+  const colis = n || Object.values(pieces).some(Boolean);
+  if (n > 999 || !colis && !acces) return null;
   const pu = n && PALIERS.find(([m]) => n >= m)[1];
   const lignes = [kit && ['Console Brique, kit à souder', kit, Math.round(pu * 100)], pre && ['Console Brique, pré-soudée', pre, Math.round((pu + PRESOUDE) * 100)],
+                  acces && [ACCES[0], acces, ACCES[1]],
                   ...Object.entries(PIECES).map(([k, [nom, c]]) => pieces[k] && [nom, pieces[k], c]),
-                  ['Livraison en point relais', 1, PORT_RELAIS]].filter(Boolean);
-  return { kit, presoude: pre, pieces, lignes, total: lignes.reduce((s, [, q, c]) => s + q * c, 0) };
+                  colis && ['Livraison en point relais', 1, PORT_RELAIS]].filter(Boolean);
+  return { kit, presoude: pre, acces, colis: !!colis, pieces, lignes, total: lignes.reduce((s, [, q, c]) => s + q * c, 0) };
 }
 async function stripe(chemin, corps) {                   // API Stripe en direct (pas de SDK) ; corps = champs du formulaire
   const r = await fetch('https://api.stripe.com/v1/' + chemin, { method: corps ? 'POST' : 'GET', signal: AbortSignal.timeout(10000),
@@ -228,7 +231,7 @@ async function verifierPaiement(c) {                     // sans webhook : on de
   const s = await stripe('checkout/sessions/' + c.stripe);
   if (s.payment_status === 'paid' && s.client_reference_id === c.id) { c.statut = 'payee'; c.paiement = s.payment_intent; c.payee = Date.now(); sauver(); }
 }
-const vueCommande = c => ({ id: c.id, cree: c.cree, kit: c.kit, presoude: c.presoude, pieces: c.pieces, total: c.total, relais: c.relais, statut: c.statut, expediee: c.expediee });
+const vueCommande = c => ({ id: c.id, cree: c.cree, kit: c.kit, presoude: c.presoude, acces: c.acces, pieces: c.pieces, total: c.total, relais: c.relais, statut: c.statut, expediee: c.expediee });
 function purgerBoutique() {                              // durees de conservation annoncees sur la page
   const now = Date.now();
   db.commandes = db.commandes.filter(c => c.statut !== 'attente' || now - c.cree < 7 * JOUR);   // paiement jamais fait
@@ -1186,15 +1189,16 @@ const serveur = http.createServer(async (req, res) => {
     if (url === '/api/client/commande') {             // panier + relais -> session de paiement Stripe ; le prix est recalcule ici
       const d = devis(b.panier), r = b.relais;
       if (!d) return repondre(res, 400, { erreur: 'Panier vide.' });
-      if (!/^\d{6}$/.test(r?.id || '') || r.pays !== 'FR') return repondre(res, 400, { erreur: 'Choisissez un point relais.' });
-      const c = { id: aleatoire(8), compte: client.id, cree: Date.now(), kit: d.kit, presoude: d.presoude, pieces: d.pieces, total: d.total, statut: 'attente',
-                  relais: { id: r.id, nom: propre(r.nom, 60), cp: propre(r.cp, 10), ville: propre(r.ville, 60) } };
+      if (d.colis && (!/^\d{6}$/.test(r?.id || '') || r.pays !== 'FR')) return repondre(res, 400, { erreur: 'Choisissez un point relais.' });
+      const c = { id: aleatoire(8), compte: client.id, cree: Date.now(), kit: d.kit, presoude: d.presoude, acces: d.acces, pieces: d.pieces, total: d.total, statut: 'attente',
+                  relais: d.colis ? { id: r.id, nom: propre(r.nom, 60), cp: propre(r.cp, 10), ville: propre(r.ville, 60) } : null };
       if (process.env.STRIPE_SECRET_KEY) {
-        const champs = { mode: 'payment', locale: anglais() ? 'en' : 'fr', client_reference_id: c.id, 'metadata[relais]': r.id,
+        const champs = { mode: 'payment', locale: anglais() ? 'en' : 'fr', client_reference_id: c.id, ...(d.colis && { 'metadata[relais]': r.id }),
           success_url: `${PUBLIC_URL}${racine()}?paye={CHECKOUT_SESSION_ID}`, cancel_url: `${PUBLIC_URL}${racine()}?boutique=annule`,
-          'phone_number_collection[enabled]': 'true',                 // le relais previent par SMS ; reste chez Stripe
-          'custom_fields[0][key]': 'nom', 'custom_fields[0][type]': 'text', 'custom_fields[0][label][type]': 'custom',
-          'custom_fields[0][label][custom]': tr('Nom pour retirer le colis') };
+          ...(d.colis && {
+            'phone_number_collection[enabled]': 'true',               // le relais previent par SMS ; reste chez Stripe
+            'custom_fields[0][key]': 'nom', 'custom_fields[0][type]': 'text', 'custom_fields[0][label][type]': 'custom',
+            'custom_fields[0][label][custom]': tr('Nom pour retirer le colis') }) };
         d.lignes.forEach(([nom, q, cts], i) => Object.assign(champs, { [`line_items[${i}][quantity]`]: q, [`line_items[${i}][price_data][currency]`]: 'eur',
           [`line_items[${i}][price_data][unit_amount]`]: cts, [`line_items[${i}][price_data][product_data][name]`]: tr(nom) }));
         try { const s = await stripe('checkout/sessions', champs); c.stripe = s.id; db.commandes.push(c); sauver(); return repondre(res, 200, { url: s.url }); }

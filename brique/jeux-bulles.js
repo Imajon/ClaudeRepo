@@ -971,7 +971,7 @@ end
     const AB = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; let id = ''; for (let i = 0; i < 6; i++) { id += AB[h & 31]; h = (h >>> 5) | (h << 27) >>> 0; }
     return code.replace(/^def (maj|dessine)\(/gm, (_, f) => 'def ' + f + '0(') + `
 import string
-var JID = "${id}" var JT = -9.0 var JOX = 0 var JOY = 0 var JDX = 0.0 var JDY = 0.0 var JLS = 0.0
+var JID = "${id}" var JT = -9.0 var JOX = 0 var JOY = 0 var JDX = 0.0 var JDY = 0.0 var JLS = 0.0 var JA = 0.0
 def maj(dt)
   maj0(dt)
   var t = temps() var p = nil
@@ -980,11 +980,12 @@ def maj(dt)
     if e[0] != moi()
       p = string.split(e[1], ",")
       if size(p) == 3 && p[0] == JID
-        if t - JT > 1.0 JDX = int(p[1]) * 1.0 JDY = int(p[2]) * 1.0 end
+        if t - JT > 1.0 JDX = int(p[1]) * 1.0 JDY = int(p[2]) * 1.0 JA = 2.0 son(880, 90) end
         JT = t JOX = int(p[1]) JOY = int(p[2])
       end
     end
   end
+  if JA > 0 JA -= dt end
   if t - JT < 1.0
     var ex = JOX - JDX var ey = JOY - JDY var k = dt * 14.0
     if k > 1.0 k = 1.0 end
@@ -995,6 +996,7 @@ end
 def dessine()
   dessine0()
   ${m.d ? 'if temps() - JT < 1.0 ' + m.d + ' end' : ''}
+  if JA > 0 texte(47, 31, "Joueur 2 connecte !", NO, 2) texte(46, 30, "Joueur 2 connecte !", BL, 2) end
 end
 `;
   }

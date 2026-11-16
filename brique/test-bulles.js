@@ -35,6 +35,15 @@ for (const [i, jeu] of jeux.entries()) for (const [k, fin] of cartels.entries())
   const code = J.assembler({ jeu, fin, niv: nv, monde: mondes[(i + k) % mondes.length] });
   for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${fin} ${nv} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 70000, `${jeu} ${fin} ${nv} : trop lourd (${v.ops}, ${v.memoire})`); n++; }
 }
+// plateforme a niveaux : plateformes differentes x plus de pieges (combinables), vitesse inchangee
+for (const jeu of ['plat-but', 'plat-attrape', 'plat-evite', 'plat-course']) for (const nv of ['trois', 'cinq']) for (const plan of ['non', 'oui']) for (const piege of ['non', 'oui']) {
+  const code = J.assembler({ jeu, niv: nv, plan, piege });
+  assert(code.includes('def charge()') && code.includes('majJ(dt)'), `${jeu} ${nv} : niveaux de plateforme`);
+  for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${nv} ${plan} ${piege} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 70000, `${jeu} ${nv} ${plan} ${piege} : trop lourd (${v.ops}, ${v.memoire})`); n++; }
+}
+assert(J.saute('plan', { jeu: 'plat-but', niv: 'trois' }) === false && J.saute('plan', { jeu: 'plat-but', niv: 'un' }) && J.saute('piege', { jeu: 'attrape', niv: 'cinq' }), 'plan/piege : seulement plateforme a plusieurs niveaux');
+assert(J.assembler({ jeu: 'plat-but', niv: 'trois', plan: 'oui' }) !== J.assembler({ jeu: 'plat-but', niv: 'trois', plan: 'non' }), 'plan change le code');
+assert(J.assembler({ jeu: 'plat-but', niv: 'trois', piege: 'oui' }) !== J.assembler({ jeu: 'plat-but', niv: 'trois' }), 'piege change le code');
 assert(J.assembler({ jeu: 'attrape', fin: 'over' }).includes('"GAME OVER"') && !J.assembler({ jeu: 'attrape', fin: 'over' }).includes('"PERDU !"'), 'le cartel change de mot');
 assert(J.assembler({ jeu: 'plat-but', niv: 'trois' }).includes('majJ(') && !J.assembler({ jeu: 'quiz', niv: 'trois' }).includes('majJ('), 'niveaux : pas pour les jeux solo');
 console.log(`ok :${n} programmes joues, au plus ${pire.ops} dessins, ${pire.memoire} octets`);

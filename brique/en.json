@@ -1584,5 +1584,21 @@
   "accès interface": "interface access",
   "Bonjour{1}, quel jeu va-t-on faire aujourd'hui ?": "Hello{1}, what game are we making today?",
   "🔌 Connecter ma console": "🔌 Connect my console",
-  "Que veux-tu faire maintenant ?": "What do you want to do now?"
+  "Que veux-tu faire maintenant ?": "What do you want to do now?",
+  "🎯 Je place mon niveau": "🎯 I place my level",
+  "⭐ + une étoile": "⭐ + a star",
+  "Tire une plateforme pour la déplacer, son rond blanc pour l'agrandir. Cela change le premier niveau.": "Drag a platform to move it, its white dot to make it longer. This changes the first level.",
+  "⚠ Le héros ne peut pas atteindre ce qui est entouré de rouge : rapproche-le (un saut monte de 40 et passe 60 de vide).": "⚠ The hero can’t reach what is circled in red: move it closer (a jump climbs 40 and clears a 60 gap).",
+  "✅ Tout est atteignable. Tire une plateforme, une étoile ou un monstre pour le placer.": "✅ Everything can be reached. Drag a platform, a star or a monster to place it.",
+  "8 étoiles au plus.": "8 stars at most.",
+  "8 monstres au plus.": "8 monsters at most.",
+  "Touche d'abord une étoile ou un monstre, puis « Enlever ».": "First touch a star or a monster, then “Remove”.",
+  "Garde au moins une étoile.": "Keep at least one star.",
+  "🎯 Niveau placé ! Appuie sur « Fabriquer mon jeu » pour l'envoyer sur la console.": "🎯 Level placed! Press “Make my game” to send it to the console.",
+  "👾 + un monstre": "👾 + a monster",
+  "🗑 Enlever": "🗑 Remove",
+  "↩ Annuler": "↩ Undo",
+  "🔄 Comme avant": "🔄 Back to how it was",
+  "✅ C'est bon": "✅ Done",
+  "Placer à la main": "Place things by hand"
 }

@@ -54,3 +54,17 @@ console.log(`ok :${n} programmes joues, au plus ${pire.ops} dessins, ${pire.memo
   for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok && v.ops <= 600, `${jeu} ${figure} ${obst} : ${v.erreur || v.ops}`); }
 } assert(!J.assembler({ jeu: 'attrape', figure: 'moto' }).includes('def vehicule(x, y)\n  if V == 0') || J.assembler({ jeu: 'attrape' }).includes('var V = -1'), 'pas de vehicule hors course'); }
 console.log('ok : vues x vehicules');
+// plateforme placee a la main (r.edit) : memes donnees que le jeu = meme programme ; moins d'etoiles, plus de monstres, plusieurs niveaux
+for (const jeu of ['plat-but', 'plat-attrape', 'plat-evite', 'plat-course']) {
+  const d = J.platDefaut({ jeu }); assert(d && d.pl.length === 7, `${jeu} : platDefaut`);
+  assert(J.assembler({ jeu, edit: { pl: d.pl, st: d.st, hz: d.hz } }) === J.assembler({ jeu }), `${jeu} : edit = defaut, meme programme`);
+  const edits = [{ pl: d.pl, st: d.st.slice(0, 3), hz: [] }, { pl: d.pl.map(p => [p[0] + 10, p[1] - 4, p[2] + 10]), st: [[100, 192]], hz: [200, 250, 300, 350, 400, 450, 500, 550] }, { pl: d.pl, st: d.st, hz: [9999, -5] }];
+  for (const nv of ['un', 'trois', 'n4']) for (const edit of edits) for (const plan of ['non', 'oui']) {
+    const code = J.assembler({ jeu, niv: nv, plan, piege: 'oui', edit });
+    for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${nv} ${plan} edit : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 70000, `${jeu} ${nv} edit : trop lourd (${v.ops}, ${v.memoire})`); }
+  }
+}
+assert(J.assembler({ jeu: 'plat-but', niv: 'n6', edit: { pl: J.platDefaut({ jeu: 'plat-but' }).pl, st: [[100, 192]], hz: [] } }) === J.assembler({ jeu: 'plat-but', niv: 'n6' }), '5 niveaux et plus : placement ignore');
+assert(J.platDefaut({ jeu: 'attrape' }) === null, 'platDefaut : seulement les plateformes');
+assert(J.assembler({ jeu: 'attrape', edit: { pl: [], st: [], hz: [] } }) === J.assembler({ jeu: 'attrape' }), 'edit sans effet hors plateforme');
+console.log('ok : plateforme placee a la main');

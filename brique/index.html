@@ -1935,7 +1935,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.19">
+<main id="vueScript" class="hide" data-version="1.20">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mPetits">🫧 Bulles</button><button id="mGuide">💡 Guidé</button><button id="mLibre">✍️ Libre</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
@@ -2003,6 +2003,17 @@ body{overflow-x:clip}                                           /* la bande 100v
       <canvas id="pxGrille" width="384" height="384" style="width:min(384px,86vw);touch-action:none;cursor:crosshair;background:repeating-conic-gradient(#bbb 0 25%,#eee 0 50%) 0 0/16px 16px;display:block;margin:auto"></canvas>
       <div id="pxPal" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:10px 0"></div>
       <div style="text-align:right"><button id="pxFermer" class="sec">Fermer</button> <button id="pxAjouter">➕ Ajouter à mon jeu</button></div>
+    </dialog>
+    <dialog id="dlgPlacer" style="max-width:min(900px,96vw);width:96vw">   <!-- placer à la main : le niveau 1 des jeux de plateforme -->
+      <h3 style="margin-top:0">🎯 Je place mon niveau</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button id="plEtoile" class="sec">⭐ + une étoile</button><button id="plMonstre" class="sec">👾 + un monstre</button>
+        <button id="plEnlever" class="sec">🗑 Enlever</button><button id="plAnnuler" class="sec">↩ Annuler</button><button id="plRaz" class="sec">🔄 Comme avant</button>
+      </div>
+      <canvas id="plCv" width="1000" height="240" style="width:100%;touch-action:none;cursor:grab;display:block;border-radius:8px"></canvas>
+      <p id="plAide" class="aide"></p>
+      <p class="aide">Tire une plateforme pour la déplacer, son rond blanc pour l'agrandir. Cela change le premier niveau.</p>
+      <div style="text-align:right"><button id="plFermer" class="sec">Fermer</button> <button id="plOk">✅ C'est bon</button></div>
     </dialog>
     <div id="scImgs" class="sc-imgs"></div>
     <div id="scJauge" class="sc-jauge" title="La place des images dans la console"><span></span></div>
@@ -4330,7 +4341,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const toutes = a => [...base(a), ...extra(a)];
   const ids = () => Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.id]));
   const etapes = () => AXES.filter(x => !JeuxBulles.saute(x.id, ids()) && (fait || !x.v2));   // les étapes « v2 » (cartel de fin, niveaux) n'arrivent qu'après le premier jeu   // la couleur n'a pas de sens pour une image
-  const sig = () => JSON.stringify(Object.entries(recette).map(([k, v]) => [k, v.bouton]));
+  const sig = () => JSON.stringify([Object.entries(recette).map(([k, v]) => [k, v.bouton]), etat.edit || 0]);   // etat.edit : le niveau 1 placé à la main
   const raz = () => { recette = structuredClone(etat.recette || {}); if (recette.jeu && !recette.genre) recette.genre = JeuxBulles.genreDe(recette.jeu.id);   /* anciennes recettes : sans genre */ props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); fabrique = fait ? sig() : ''; courant = fait ? '' : 'genre'; gouts = []; vu = ''; idees = false; menu = false; };
   const retirerImage = role => { const k = (etat.images || []).findIndex(m => m.role === role); if (k >= 0) { sources.delete(etat.images[k]); etat.images.splice(k, 1); imagesChangees(); } };
   function rendreBulles() {
@@ -4352,7 +4363,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
       + etapes().map(x => x.id === courant ? ouvert(x) : recette[x.id] ? paire(x) : '').join('').replace(/(<button class="bPaire"[\s\S]*?<\/button>)+/g, '<div class="rangPaires">$&</div>')   // les réponses se suivent sur UNE ligne
       + (venir.length ? `<div class="aVenir">Ensuite : ${venir.map(x => `<button class="pastille" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}</div>` : '')
       + (fait && !courant ? (   // après le premier jeu : tout de suite « Que veux-tu faire maintenant ? » et les bulles de ce qu'on peut changer (personnage, fond, gros bouton...)
-        `<div class="bZone" style="--h:200"><div class="bQ">✏️ ${T('Que veux-tu faire maintenant ?')}</div><div class="bulles">${etapes().map(x => `<button class="bulle${recette[x.id] ? ' prise' : ''}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}</div></div>`) : '');
+        `<div class="bZone" style="--h:200"><div class="bQ">✏️ ${T('Que veux-tu faire maintenant ?')}</div><div class="bulles">${etapes().map(x => `<button class="bulle${recette[x.id] ? ' prise' : ''}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}${/^plat-/.test(recette.jeu?.id) && JeuxBulles.nbNiv(recette.niv?.id) <= 4 ? `<button class="bulle" data-l="placer">🎯 ${T('Placer à la main')}</button>` : ''}</div></div>`) : '');
     scDemande.value = etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ');   // le champ (caché) dit ce qui est choisi
   }
   async function charger(id, encore) {                   // les idées de l'IA pour cette étape (personnage, ce qu'on attrape, ce qu'on évite), tournées vers l'univers de l'enfant ; sans choix ni goût, pas d'appel
@@ -4392,6 +4403,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const l = el.dataset.l, a = axeDe(courant);   // courant = '' quand tout est répondu : il ne reste que les paires fondues
     if (l === 'menu') { menu = true; return rendreBulles(); }
     if (l === 'axe') { courant = el.dataset.i; idees = false; return ouvrirAuto(); }
+    if (l === 'placer') return plOuvrir();
     if (l === 'idees') { idees = true; return charger(courant); }   // charger : pour une étape avec l'IA, va chercher les idées ; sinon, affiche juste les autres structures
     if (l === 'libre') {                                 // pas de bulle à son goût : ce qu'il aime (champ vide : d'autres au hasard) -> de nouvelles idées pour cette étape
       const t = scBulles.querySelector('input').value.trim().replace(/\s+/g, ' ');
@@ -4410,7 +4422,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   scBulles.onkeydown = e => { if (e.key === 'Enter' && e.target.matches('input')) scBulles.querySelector('[data-l=libre]').click(); };
   async function fabriquerBulles() {                     // « Fabriquer » : le programme est assemblé ici (pièces testées), sans IA, puis envoyé à la console
     const imgs = {}; (etat.images || []).forEach((m, i) => { if (m.role) imgs[m.role] = i + 1; });
-    const r = { ...ids(), imgs }, script = JeuxBulles.assembler(r);
+    const r = { ...ids(), imgs, ...(etat.edit && { edit: etat.edit }) }, script = JeuxBulles.assembler(r);
     fabrique = sig(); scGo.disabled = true; etat.recette = structuredClone(recette);
     etat.script = script; mettreCode(script);
     scCompris.textContent = '✅ Ton jeu est prêt !';
@@ -4418,6 +4430,70 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     majAide(true); fait = true; courant = ''; idees = false; menu = false; rendreBulles(); sauver(); rendre();   // la question « Que veux-tu faire maintenant ? » s'affiche avec ses bulles
     const pb = await envoyer(script); scGo.disabled = fabrique === sig();
     if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
+  }
+  // ---------- Placer à la main (jeux de plateforme) : l'enfant déplace les plateformes, les étoiles et les monstres du niveau 1 ; le résultat part dans le jeu (etat.edit -> JeuxBulles.assembler) ----------
+  let pD = null, pSel = null, pPile = [];   // pD : { pl: [[x, haut, largeur] x 7], st: [[x, y]], hz: [x] } en cours ; pSel : ce qui est pris { k: 'p' plateforme | 'c' son coin | 's' étoile | 'm' monstre, i }
+  const snap = (v, n) => Math.round(v / n) * n, borne = (v, a, b) => Math.max(a, Math.min(b, v)), plDit = t => plAide.textContent = t;
+  function pAtteint(d) {   // ce que le héros peut rejoindre : le sol, puis chaque plateforme depuis une autre (trou <= 60, montée <= 40, comme les structures du jeu), puis les étoiles près d'un endroit atteint
+    const S = [{ a: -999, b: 9999, t: 208 }, ...d.pl.map(p => ({ a: p[0], b: p[0] + p[2], t: p[1] }))], ok = new Set([0]);
+    for (let ch = true; ch;) { ch = false; S.forEach((s, j) => { if (!ok.has(j) && [...ok].some(i => Math.max(s.a - S[i].b, S[i].a - s.b) <= 60 && S[i].t - s.t <= 40)) { ok.add(j); ch = true; } }); }
+    return { pl: d.pl.map((_, j) => ok.has(j + 1)), st: d.st.map(([x, y]) => [...ok].some(i => x >= S[i].a - 16 && x <= S[i].b + 16 && y > S[i].t - 68 && y < S[i].t + 8)) };
+  }
+  function pDessine() {
+    const c = plCv.getContext('2d'), at = pAtteint(pD), mal = '#d9534f';
+    c.fillStyle = '#dff3fb'; c.fillRect(0, 0, 1000, 240); c.fillStyle = '#6aa84f'; c.fillRect(0, 208, 1000, 32);
+    c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1; for (let x = 100; x < 1000; x += 100) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, 208); c.stroke(); }   // repères tous les 100
+    pD.pl.forEach(([x, t, w], j) => {
+      c.fillStyle = at.pl[j] ? '#5b8f3f' : mal; c.fillRect(x, t, w, 8); c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(x, t, w, 3);
+      c.fillStyle = '#fff'; c.strokeStyle = '#333'; c.lineWidth = 2; c.beginPath(); c.arc(x + w, t + 4, 7, 0, 7); c.fill(); c.stroke();   // la poignée : on tire pour agrandir
+    });
+    c.font = '24px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('🏃', 20, 194); c.fillText('🏁', 940, 190);
+    pD.st.forEach(([x, y], j) => { c.fillText('⭐', x, y); if (!at.st[j]) { c.strokeStyle = mal; c.lineWidth = 3; c.beginPath(); c.arc(x, y, 15, 0, 7); c.stroke(); } });
+    pD.hz.forEach(x => c.fillText('👾', x, 196));
+    if (pSel) { const { k, i } = pSel, [x, y, w, h] = k === 's' ? [pD.st[i][0] - 16, pD.st[i][1] - 16, 32, 32] : k === 'm' ? [pD.hz[i] - 16, 178, 32, 32] : [pD.pl[i][0] - 4, pD.pl[i][1] - 4, pD.pl[i][2] + 8, 16];
+      c.setLineDash([6, 4]); c.strokeStyle = '#e6a800'; c.lineWidth = 3; c.strokeRect(x, y, w, h); c.setLineDash([]); }
+    const n = at.pl.filter(o => !o).length + at.st.filter(o => !o).length;
+    plDit(n ? '⚠ Le héros ne peut pas atteindre ce qui est entouré de rouge : rapproche-le (un saut monte de 40 et passe 60 de vide).' : '✅ Tout est atteignable. Tire une plateforme, une étoile ou un monstre pour le placer.');
+  }
+  const pPos = e => { const r = plCv.getBoundingClientRect(); return [(e.clientX - r.left) * 1000 / r.width, (e.clientY - r.top) * 240 / r.height]; };
+  const pGarde = () => { pPile.push(JSON.stringify(pD)); if (pPile.length > 40) pPile.shift(); };
+  plCv.onpointerdown = e => {
+    const [x, y] = pPos(e); let s = null;
+    pD.st.forEach(([sx, sy], i) => { if (!s && Math.hypot(x - sx, y - sy) < 20) s = { k: 's', i }; });
+    pD.hz.forEach((hx, i) => { if (!s && Math.abs(x - hx) < 18 && y > 174) s = { k: 'm', i }; });
+    pD.pl.forEach(([px, t, w], i) => { if (s) return; if (Math.hypot(x - (px + w), y - (t + 4)) < 16) s = { k: 'c', i }; else if (x >= px - 4 && x <= px + w + 4 && Math.abs(y - (t + 4)) < 16) s = { k: 'p', i, dx: x - px, dy: y - t }; });
+    pSel = s; if (s) { pGarde(); plCv.setPointerCapture(e.pointerId); } pDessine();
+  };
+  plCv.onpointermove = e => {
+    if (!pSel || !e.buttons) return;
+    const [x, y] = pPos(e), { k, i } = pSel;
+    if (k === 'p') pD.pl[i] = [borne(snap(x - pSel.dx, 10), 0, 1000 - pD.pl[i][2]), borne(snap(y - pSel.dy, 4), 72, 192), pD.pl[i][2]];
+    else if (k === 'c') pD.pl[i][2] = borne(snap(x - pD.pl[i][0], 10), 30, Math.min(140, 1000 - pD.pl[i][0]));
+    else if (k === 'm') pD.hz[i] = borne(snap(x, 10), 90, 900);
+    else { const sx = borne(x, 0, 990); let sy = borne(y, 20, 200), p = pD.pl.find(([px, t, w]) => sx >= px - 6 && sx <= px + w + 6 && Math.abs(sy - (t - 16)) < 22);   // aimant : une étoile lâchée près d'une plateforme ou du sol s'y pose
+      sy = p ? p[1] - 16 : Math.abs(sy - 192) < 20 ? 192 : sy; pD.st[i] = [Math.round(sx), Math.round(sy)]; }
+    pDessine();
+  };
+  plEtoile.onclick = () => { if (pD.st.length >= 8) return plDit('8 étoiles au plus.'); pGarde(); pD.st.push([500, 192]); pSel = { k: 's', i: pD.st.length - 1 }; pDessine(); };
+  plMonstre.onclick = () => { if (pD.hz.length >= 8) return plDit('8 monstres au plus.'); pGarde(); pD.hz.push(500); pSel = { k: 'm', i: pD.hz.length - 1 }; pDessine(); };
+  plEnlever.onclick = () => {
+    if (!pSel || !'sm'.includes(pSel.k)) return plDit("Touche d'abord une étoile ou un monstre, puis « Enlever ».");
+    if (pSel.k === 's' && pD.st.length < 2) return plDit('Garde au moins une étoile.');
+    pGarde(); (pSel.k === 's' ? pD.st : pD.hz).splice(pSel.i, 1); pSel = null; pDessine();
+  };
+  plAnnuler.onclick = () => { if (pPile.length) { pD = JSON.parse(pPile.pop()); pSel = null; pDessine(); } };
+  plRaz.onclick = () => { pGarde(); const { pl, st, hz } = JeuxBulles.platDefaut(ids()); pD = { pl, st, hz }; pSel = null; pDessine(); };
+  plFermer.onclick = () => dlgPlacer.close();
+  plOk.onclick = () => {
+    const { pl, st, hz } = JeuxBulles.platDefaut(ids());
+    if (JSON.stringify(pD) === JSON.stringify({ pl, st, hz })) delete etat.edit; else etat.edit = structuredClone(pD);   // comme avant : rien à garder
+    sauver(); dlgPlacer.close(); rendreBulles(); scCompris.textContent = "🎯 Niveau placé ! Appuie sur « Fabriquer mon jeu » pour l'envoyer sur la console.";
+  };
+  function plOuvrir() {
+    const d = JeuxBulles.platDefaut(ids()); if (!d) return;
+    pD = structuredClone(etat.edit?.pl?.length === 7 ? { pl: etat.edit.pl, st: etat.edit.st, hz: etat.edit.hz } : { pl: d.pl, st: d.st, hz: d.hz }); pSel = null; pPile = [];
+    dlgPlacer.showModal(); pDessine();
   }
   const libGo = () => mode === 'petits' ? '✨ Fabriquer mon jeu' : "✨ Envoyer à l'IA";   // le bouton d'envoi, vu par un enfant qui ne lit pas encore bien
   majAide = garder => {                                  // appelé quand la tranche d'âge, le chantier ou le programme change : les anciennes propositions ne valent plus ; garder : on vient d'écrire le jeu, l'explication de l'IA reste affichée

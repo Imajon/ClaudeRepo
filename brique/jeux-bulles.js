@@ -964,14 +964,14 @@ end
     return o;
   }
   // Multijoueur sans menu : le jeu envoie sa position (« identifiant,x,y ») et dessine un fantôme quand une autre console envoie le MÊME identifiant (= empreinte du programme : même recette = même jeu).
-  // Course : pas de fantôme, la barre du rival suit l'autre joueur. Questions et personnage : jeux solo, inchangés. ponytail: pas de rôle ni d'attente de départ, chacun joue sa partie ; à ajouter si on veut une vraie course synchronisée.
-  const MULTI = new Map([[chute, { x: 'int(PX)', y: 'int(PY)', d: 'perso(JOX, JOY) disque(JOX + 12, JOY - 6, 3, BL)' }], [plateforme, { x: 'int(PX)', y: 'int(PY)', d: 'camera(CAMX, 0) perso(JOX, JOY) disque(JOX + 12, JOY - 6, 3, BL) camera(0, 0)' }], [course, { x: 'int(P)', y: '0', r: 'RP = JOX * 1.0' }]]);
+  // Lissage : le fantôme rattrape la dernière position reçue (14 %/image-seconde), il saute directement si l'écart dépasse 80 px (réapparition, début de partie). Course : pas de fantôme, la barre du rival suit l'autre joueur. Questions et personnage : jeux solo, inchangés. ponytail: pas de rôle ni d'attente de départ, chacun joue sa partie ; à ajouter si on veut une vraie course synchronisée.
+  const MULTI = new Map([[chute, { x: 'int(PX)', y: 'int(PY)', d: 'perso(int(JDX), int(JDY)) disque(int(JDX) + 12, int(JDY) - 6, 3, BL)' }], [plateforme, { x: 'int(PX)', y: 'int(PY)', d: 'camera(CAMX, 0) perso(int(JDX), int(JDY)) disque(int(JDX) + 12, int(JDY) - 6, 3, BL) camera(0, 0)' }], [course, { x: 'int(P)', y: '0', r: 'RP = JDX' }]]);
   function multi(code, m) {
     let h = 0x811c9dc5; for (const ch of code) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
     const AB = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; let id = ''; for (let i = 0; i < 6; i++) { id += AB[h & 31]; h = (h >>> 5) | (h << 27) >>> 0; }
     return code.replace(/^def (maj|dessine)\(/gm, (_, f) => 'def ' + f + '0(') + `
 import string
-var JID = "${id}" var JT = -9.0 var JOX = 0 var JOY = 0 var JLS = 0.0
+var JID = "${id}" var JT = -9.0 var JOX = 0 var JOY = 0 var JDX = 0.0 var JDY = 0.0 var JLS = 0.0
 def maj(dt)
   maj0(dt)
   var t = temps() var p = nil
@@ -979,8 +979,16 @@ def maj(dt)
   for e: recois()
     if e[0] != moi()
       p = string.split(e[1], ",")
-      if size(p) == 3 && p[0] == JID JT = t JOX = int(p[1]) JOY = int(p[2]) end
+      if size(p) == 3 && p[0] == JID
+        if t - JT > 1.0 JDX = int(p[1]) * 1.0 JDY = int(p[2]) * 1.0 end
+        JT = t JOX = int(p[1]) JOY = int(p[2])
+      end
     end
+  end
+  if t - JT < 1.0
+    var ex = JOX - JDX var ey = JOY - JDY var k = dt * 14.0
+    if k > 1.0 k = 1.0 end
+    if ex > 80 || ex < -80 || ey > 80 || ey < -80 JDX = JOX * 1.0 JDY = JOY * 1.0 else JDX += ex * k JDY += ey * k end
   end
   ${m.r ? 'if t - JT < 1.0 ' + m.r + ' end' : ''}
 end

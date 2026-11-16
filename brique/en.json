@@ -1570,5 +1570,11 @@
  "⏳ Je cherche ton image…": "⏳ Looking for your picture…",
  "Je n'ai pas trouvé l'image (internet ?) : touche une autre bulle.": "I could not find the picture (internet?): tap another bubble.",
  "✅ Ton jeu est prêt !": "✅ Your game is ready!",
- "✨ Fabriquer mon jeu": "✨ Make my game"
+ "✨ Fabriquer mon jeu": "✨ Make my game",
+ "Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots.": "Your level of freedom. Bubbles: you touch bubbles, no writing. Guided: the AI offers buttons to help you say what you want. Free: you describe everything in your own words.",
+ "💡 Guidé": "💡 Guided",
+ "🎚 Degré de liberté — c'est toi qui le choisis, les enfants ne peuvent pas le changer": "🎚 Level of freedom — you choose it, the children cannot change it",
+ "🫧 Bulles": "🫧 Bubbles",
+ "✍️ Libre": "✍️ Free",
+ "🚀 Ici, on apprend à décrire ce qu'on veut et à améliorer son jeu par petites touches. Pour aller plus loin : demande ton code à ton propre agent IA, modifie-le avec lui, puis colle-le ici (« &lt;/&gt; Voir le code ») pour le mettre sur ta console.": "🚀 Here you learn to describe what you want and to improve your game bit by bit. To go further: ask your own AI agent for your code, edit it with them, then paste it here (“&lt;/&gt; View code”) to put it on your console."
 }

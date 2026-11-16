@@ -1917,10 +1917,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.17">
+<main id="vueScript" class="hide" data-version="1.18">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
-    <span id="niveauScolaire" class="mode" title="Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mPetits">6 · 9 ans — bulles</button><button id="mGuide">CM1 · CM2 — guidé</button><button id="mLibre">6ᵉ · 4ᵉ — libre</button></span>   <!-- tranche d'âge : choisie ici, ou par l'animateur pour son groupe -->
+    <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mPetits">🫧 Bulles</button><button id="mGuide">💡 Guidé</button><button id="mLibre">✍️ Libre</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
@@ -1938,8 +1938,9 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <div id="scCompris" class="compris">Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».</div>
     <div id="scIA" style="font-size:.8rem;color:var(--mute);margin-top:4px"></div>
-    <div id="scBulles" class="hide"></div>          <!-- tranche 6-9 ans : la recette (les bulles prises), puis les bulles à toucher ; rien à écrire -->
-    <div id="scChoix" class="hide"></div>           <!-- tranche guidée : la question de l'IA et ses 3 boutons ; un clic écrit la phrase dans le champ -->
+    <div id="scBulles" class="hide"></div>          <!-- degré « bulles » (défaut) : la recette (les bulles prises), puis les bulles à toucher ; rien à écrire -->
+    <p class="aide" style="margin:8px 0 0">🚀 Ici, on apprend à décrire ce qu'on veut et à améliorer son jeu par petites touches. Pour aller plus loin : demande ton code à ton propre agent IA, modifie-le avec lui, puis colle-le ici (« &lt;/&gt; Voir le code ») pour le mettre sur ta console.</p>
+    <div id="scChoix" class="hide"></div>          <!-- tranche guidée : la question de l'IA et ses 3 boutons ; un clic écrit la phrase dans le champ -->
     <div class="agent-ligne">                    <!-- le champ, en bas ; ses boutons empilés à droite -->
       <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:76px;font-size:17px"></textarea>
       <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button><button id="scAide" class="sec hide" title="L'IA te propose 3 idées : celle que tu choisis s'écrit dans le champ">💡 Aide-moi</button><button id="scMicro" class="sec" title="Appuie, parle, réappuie : ton texte s'écrit dans le champ">🎙 Parler</button><button id="scVoirCode" class="sec">&lt;/&gt; Voir le code</button></div>
@@ -2171,7 +2172,7 @@ function setMode(m) {
 }
 const garderMode = m => { setMode(m); try { localStorage.setItem('brique-age', m); } catch {} };   // le choix de l'enfant reste d'une visite à l'autre
 mPetits.onclick = () => garderMode('petits'); mGuide.onclick = () => garderMode('guide'); mLibre.onclick = () => garderMode('libre');
-setMode((a => ['petits', 'guide'].includes(a) ? a : 'libre')((() => { try { return localStorage.getItem('brique-age'); } catch {} })()));
+setMode((a => ['petits', 'guide', 'libre'].includes(a) ? a : 'petits')((() => { try { return localStorage.getItem('brique-age'); } catch {} })()));
 
 // ---------- "IA" simulée : texte -> paramètres ----------
 // ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
@@ -3348,7 +3349,7 @@ async function rafraichir() {
   catch { EN_LIGNE = false; [vAnim, moiBox, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'anim') afficher('accueil'); return; }   // serveur injoignable (Render endormi, fichier) : la Communauté reste, vide
   enLigne = c.niveaux; modeAtelier(c.atelier);
   if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant d'un groupe : la tranche d'âge choisie par son animateur, il ne peut pas la changer
-  mPetits.disabled = mGuide.disabled = mLibre.disabled = !session && !!c.age; niveauScolaire.title = mGuide.disabled ? 'Choisi par ton animateur' : "Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots.";
+  mPetits.disabled = mGuide.disabled = mLibre.disabled = !session && !!c.age; niveauScolaire.title = mGuide.disabled ? 'Choisi par ton animateur' : "Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots.";
   nJeux.textContent = accJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = accAujourdhui.textContent = c.chiffres.aujourdhui;
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
   const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
@@ -3609,8 +3610,8 @@ async function rendreAnim(donnees) {
     <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span> <a href="#" data-nouveaucode="${esc(g.code)}" title="Le code a circulé hors du groupe ? Les enfants déjà inscrits restent, l'ancien code ne marche plus" style="color:var(--mute)">↻ changer le code</a></p>
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
     <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <small style="color:var(--mute)" title="tokens IA : aujourd'hui / depuis le début du forfait">⚡${kTok(j.jour || 0)} · ${kTok(j.tokens || 0)}</small> <a href="#" data-mdp="${esc(j.pseudo)}" title="Mot de passe oublié : lui en donner un provisoire" style="color:var(--mute)">🔑</a> <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
-    <h3>🎂 Tranche d'âge — c'est toi qui la choisis, les enfants ne peuvent pas la changer</h3>
-    <div class="chips" data-age="${esc(g.code)}"><button class="chip ${g.age === 'petits' ? 'on' : ''}" data-agev="petits">6 · 9 ans — bulles</button><button class="chip ${g.age === 'guide' ? 'on' : ''}" data-agev="guide">CM1 · CM2 — guidé</button><button class="chip ${g.age === 'guide' || g.age === 'petits' ? '' : 'on'}" data-agev="libre">6ᵉ · 4ᵉ — libre</button></div>
+    <h3>🎚 Degré de liberté — c'est toi qui le choisis, les enfants ne peuvent pas le changer</h3>
+    <div class="chips" data-age="${esc(g.code)}"><button class="chip ${g.age === 'petits' ? 'on' : ''}" data-agev="petits">🫧 Bulles</button><button class="chip ${g.age === 'guide' ? 'on' : ''}" data-agev="guide">💡 Guidé</button><button class="chip ${g.age === 'guide' || g.age === 'petits' ? '' : 'on'}" data-agev="libre">✍️ Libre</button></div>
     <p class="aide" style="margin:4px 0 0">Bulles : on touche des bulles, sans rien écrire. Guidé : on choisit avec des boutons, plus une phrase. Libre : on décrit tout son jeu avec ses mots.</p>
     <h3>📚 Mode atelier</h3>
     <div class="icRow"><input class="pseudo" data-matiere="${esc(g.code)}" maxlength="40" placeholder="Matière du jour (ex. Maths : fractions)" value="${esc(g.matiere)}">

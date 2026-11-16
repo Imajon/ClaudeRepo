@@ -305,17 +305,24 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .sc-barre .sec{padding:5px 10px;font-size:14px}
 .sc-barre .mode{margin-left:0;padding:2px}.sc-barre .mode button{padding:4px 10px;font-size:14px}.sc-barre .mode button:disabled{cursor:default}
 #scChoix{margin-top:8px}#scChoix b{display:block;margin-bottom:6px}   /* aide en boutons (tranche guidée) : 3 propositions fabriquées par l'IA */
-#scBulles{margin-top:8px}#scBulles h4{margin:12px 0 6px;font-size:14px;color:var(--mute)}#scBulles h4.grand{font-size:26px;color:var(--txt)}.bulles{display:flex;flex-wrap:wrap;gap:10px}   /* tranche 6-9 ans : de grosses bulles, un emoji pour ceux qui lisent peu */
+#scBulles{margin-top:8px}#scBulles h4{margin:12px 0 6px;font-size:14px;color:var(--mute)}.bulles{display:flex;flex-wrap:wrap;gap:10px}   /* tranche 6-9 ans : de grosses bulles, un emoji pour ceux qui lisent peu */
 .bulle{border:3px solid var(--acc);background:var(--panel2);color:var(--txt);border-radius:999px;padding:10px 20px;font:inherit;font-size:20px;cursor:pointer;transition:transform .1s}.bulle:hover{transform:scale(1.06)}
 /* une couleur par étape (--h = sa teinte) : l'étape touchée, son cadre et ses bulles ont la même, pour voir d'où elles viennent */
-#scBulles .bEtapes{display:flex;flex-wrap:wrap;gap:8px}
-#scBulles .bEtape{--c:hsl(var(--h) 60% 44%);flex:1 1 130px;border:2px solid var(--c);background:hsl(var(--h) 70% 50% / .1);color:var(--txt);border-radius:14px;padding:8px 10px;font:inherit;font-size:16px;text-align:left;cursor:pointer;transition:background .25s}
-#scBulles .bEtape small{display:block;min-height:1.2em;margin-top:2px;font-size:13px;color:var(--mute)}
-#scBulles .bEtape.on{outline:3px solid var(--c);outline-offset:2px}#scBulles .bEtape.fait{background:var(--c);color:#fff}#scBulles .bEtape.fait small{color:inherit}
-#scBulles .bZone{--c:hsl(var(--h) 60% 44%);margin-top:14px;padding:2px 14px 14px;border:2px solid var(--c);border-radius:18px;background:hsl(var(--h) 70% 50% / .08)}
-#scBulles .bZone .bulles{min-height:54px;align-items:center}#scBulles .attente{color:var(--mute);font-size:16px}
-#scBulles .bZone .bulle{border-color:var(--c)}#scBulles .bZone .bulle:hover{background:hsl(var(--h) 70% 50% / .18)}
-#scBulles .bZone .bulle.prise{background:var(--c);color:#fff}#scBulles .bZone .bulle.autre{border-color:var(--line);font-size:15px;padding:6px 14px}
+/* l'étape en cours : sa question en grosse bulle pleine, ses choix en bulles distinctes dessous */
+#scBulles .bZone{--c:hsl(var(--h) 60% 44%);margin:14px 0}
+#scBulles .bQ{display:inline-block;max-width:100%;background:var(--c);color:#fff;border-radius:999px;padding:12px 24px;font-size:24px;margin-bottom:14px;box-shadow:0 4px 14px hsl(var(--h) 60% 30% / .35)}
+#scBulles .bZone .bulles{min-height:54px;align-items:center;padding-left:18px}#scBulles .attente{color:var(--mute);font-size:16px}
+#scBulles .bZone .bulle{border:0;background:hsl(var(--h) 70% 50% / .2);box-shadow:inset 0 0 0 3px var(--c),0 3px 8px #0003;padding:12px 24px;font-size:22px}#scBulles .bZone .bulle:hover{background:hsl(var(--h) 70% 50% / .4)}
+#scBulles .bZone .bulle.prise{background:var(--c);color:#fff}#scBulles .bZone .bulle.autre{box-shadow:inset 0 0 0 2px var(--line);font-size:15px;padding:6px 14px}
+/* une étape répondue : la question et la réponse sont fondues (filtre « goutte » sur le calque du fond), la réponse sort de la question comme une excroissance */
+#scBulles .bPaire{--c:hsl(var(--h) 60% 44%);position:relative;display:block;margin:6px 0;padding:0;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:inherit;max-width:100%}
+#scBulles .pf,#scBulles .pt{display:flex;align-items:flex-end;padding:0 0 18px}
+#scBulles .pt{position:absolute;inset:0}#scBulles .pf{filter:url(#gooey)}
+#scBulles .pq,#scBulles .pr{border-radius:999px;white-space:nowrap}
+#scBulles .pq{padding:12px 24px;font-size:22px;flex:none}#scBulles .pr{padding:8px 20px;font-size:20px;margin:0 0 -18px -20px;position:relative}
+#scBulles .pf .pq{background:var(--c);color:transparent}#scBulles .pf .pr{background:hsl(var(--h) 75% 62%);color:transparent}
+#scBulles .pt .pq{color:#fff}#scBulles .pt .pr{color:#111;font-weight:bold}
+#scBulles .bPaire:hover .pf{transform:scale(1.02)}#scBulles .bPaire:focus-visible{outline:3px solid var(--c);outline-offset:4px;border-radius:30px}
 #scBulles .libre{display:flex;gap:8px;align-items:center;margin-top:12px}#scBulles .libre input{flex:1;min-width:0;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:inherit;font-size:17px}#scBulles .libre input:focus{outline:none;border-color:var(--c)}
 @keyframes bFondu{from{opacity:0;transform:translateY(10px)}}   /* les bulles arrivent l'une après l'autre, dans le sens de la lecture (--i = leur rang) */
 #scBulles .bZone.fondu .bulles .bulle{animation:bFondu .5s ease backwards;animation-delay:calc(var(--i,0) * .12s)}
@@ -1917,7 +1924,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.18">
+<main id="vueScript" class="hide" data-version="1.19">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mPetits">🫧 Bulles</button><button id="mGuide">💡 Guidé</button><button id="mLibre">✍️ Libre</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
@@ -1938,7 +1945,8 @@ body{overflow-x:clip}                                           /* la bande 100v
     </div>
     <div id="scCompris" class="compris">Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».</div>
     <div id="scIA" style="font-size:.8rem;color:var(--mute);margin-top:4px"></div>
-    <div id="scBulles" class="hide"></div>          <!-- degré « bulles » (défaut) : la recette (les bulles prises), puis les bulles à toucher ; rien à écrire -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="gooey" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur in="SourceGraphic" stdDeviation="7"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter></svg>   <!-- filtre « goutte » : fond la bulle-question et sa réponse en une seule forme -->
+    <div id="scBulles" class="hide"></div>         <!-- degré « bulles » (défaut) : la recette (les bulles prises), puis les bulles à toucher ; rien à écrire -->
     <p class="aide" style="margin:8px 0 0">🚀 Ici, on apprend à décrire ce qu'on veut et à améliorer son jeu par petites touches. Pour aller plus loin : demande ton code à ton propre agent IA, modifie-le avec lui, puis colle-le ici (« &lt;/&gt; Voir le code ») pour le mettre sur ta console.</p>
     <div id="scChoix" class="hide"></div>          <!-- tranche guidée : la question de l'IA et ses 3 boutons ; un clic écrit la phrase dans le champ -->
     <div class="agent-ligne">                    <!-- le champ, en bas ; ses boutons empilés à droite -->
@@ -4309,13 +4317,16 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   function rendreBulles() {
     scBulles.classList.toggle('hide', mode !== 'petits'); if (mode !== 'petits') return;
     scBulles.classList.toggle('attend', cherche);
-    const a = axeDe(courant), ia = cherche ? [] : props[courant] || [], cle = courant + '|' + ia.map(b => b.bouton).join(), anime = !cherche && cle !== vu;
+    const ia = cherche ? [] : props[courant] || [], cle = courant + '|' + ia.map(b => b.bouton).join(), anime = !cherche && cle !== vu;
     if (!cherche) vu = cle;                              // les bulles de l'IA arrivent en fondu, l'une après l'autre (et seulement si la liste change)
     const bulle = (b, i) => `<button class="bulle${recette[courant]?.bouton === b.bouton ? ' prise' : ''}" style="--i:${i}" data-l="bulle" data-i="${i}">${esc(T(b.bouton))}</button>`;
-    scBulles.innerHTML = `<div class="bEtapes">${etapes().map(x => `<button class="bEtape${x.id === courant ? ' on' : ''}${recette[x.id] ? ' fait' : ''}" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${x.icone} ${T(x.nom)}<small>${recette[x.id] ? esc(T(recette[x.id].bouton)) : '…'}</small></button>`).join('')}</div>`
-      + `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><h4 class="grand">${a.icone} ${T(a.q)}</h4><div class="bulles">${a.bulles.map(bulle).join('')}</div>`
+    // les bulles arrivent au fil des réponses : seules les étapes déjà répondues (question + réponse FONDUES en une forme) et l'étape en cours (question + choix) sont là
+    const paire = x => { const c = `<span class="pq">${x.icone} ${T(x.q)}</span><span class="pr">${esc(T(recette[x.id].bouton))}</span>`;   // 2 calques identiques : le fond passe au filtre « goutte », le texte reste net par-dessus
+      return `<button class="bPaire" style="--h:${x.h}" data-l="axe" data-i="${x.id}"><span class="pf" aria-hidden="true">${c}</span><span class="pt">${c}</span></button>`; };
+    const ouvert = a => `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${T(a.q)}</div><div class="bulles">${a.bulles.map(bulle).join('')}</div>`
       + (a.ia ? `<h4>✨ Des idées pour toi</h4><div class="bulles">${cherche ? `<span class="attente">${ATTENTE}</span>` : ia.map((b, i) => bulle(b, a.bulles.length + i)).join('')}</div>`
         + `<div class="libre"><input type="text" maxlength="100" placeholder="✏️ Ce que tu aimes…"><button class="bulle autre" data-l="libre">🔄 D'autres bulles</button></div>` : '') + '</div>';
+    scBulles.innerHTML = etapes().map(x => x.id === courant ? ouvert(x) : recette[x.id] ? paire(x) : '').join('');
     scDemande.value = etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ');   // le champ (caché) dit ce qui est choisi
   }
   async function charger(id, encore) {                   // les idées de l'IA pour cette étape (personnage, ce qu'on attrape, ce qu'on évite), tournées vers l'univers de l'enfant ; sans choix ni goût, pas d'appel
@@ -4345,7 +4356,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const suivante = () => { const l = etapes(), k = l.findIndex(x => x.id === courant); return [...l.slice(k + 1), ...l.slice(0, k)].find(x => !recette[x.id])?.id || courant; };   // l'étape d'après qui n'a pas encore de choix
   scBulles.onclick = async e => {
     const el = e.target.closest('[data-l]'); if (!el || cherche) return;
-    const l = el.dataset.l, a = axeDe(courant);
+    const l = el.dataset.l, a = axeDe(courant);   // courant = '' quand tout est répondu : il ne reste que les paires fondues
     if (l === 'axe') { courant = el.dataset.i; return charger(courant); }
     if (l === 'libre') {                                 // pas de bulle à son goût : ce qu'il aime (champ vide : d'autres au hasard) -> de nouvelles idées pour cette étape
       const t = scBulles.querySelector('input').value.trim().replace(/\s+/g, ' ');
@@ -4356,7 +4367,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     if (b.id === 'img') { if (!await prendreIcone(courant, b)) return; } else if (a.ia) retirerImage(courant);
     recette[courant] = b; frais = {};
     const avant = courant; courant = suivante();
-    if (courant === avant) return rendreBulles(); scCompris.textContent = AIDE_SUITE; charger(courant);
+    if (courant === avant) { courant = ''; return rendreBulles(); } scCompris.textContent = AIDE_SUITE; charger(courant);
   };
   scBulles.onkeydown = e => { if (e.key === 'Enter' && e.target.matches('input')) scBulles.querySelector('[data-l=libre]').click(); };
   async function fabriquerBulles() {                     // « Fabriquer » : le programme est assemblé ici (pièces testées), sans IA, puis envoyé à la console

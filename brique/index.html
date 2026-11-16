@@ -4351,9 +4351,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     scBulles.innerHTML = (fait ? `<div class="fait">✅ Ton jeu est prêt !</div>` : '')
       + etapes().map(x => x.id === courant ? ouvert(x) : recette[x.id] ? paire(x) : '').join('').replace(/(<button class="bPaire"[\s\S]*?<\/button>)+/g, '<div class="rangPaires">$&</div>')   // les réponses se suivent sur UNE ligne
       + (venir.length ? `<div class="aVenir">Ensuite : ${venir.map(x => `<button class="pastille" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}</div>` : '')
-      + (fait && !courant ? (menu   // après le premier jeu : une bulle « Modifier », puis tout ce qu'on peut changer (personnage, fond, cartel de fin, niveaux...)
-        ? `<div class="bZone" style="--h:200"><div class="bQ">✏️ ${T('Que veux-tu changer ?')}</div><div class="bulles">${etapes().map(x => `<button class="bulle${recette[x.id] ? ' prise' : ''}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}</div></div>`
-        : `<div class="bulles"><button class="bulle" data-l="menu">✏️ ${T('Modifier ma présentation')}</button></div>`) : '');
+      + (fait && !courant ? (   // après le premier jeu : tout de suite « Que veux-tu faire maintenant ? » et les bulles de ce qu'on peut changer (personnage, fond, gros bouton...)
+        `<div class="bZone" style="--h:200"><div class="bQ">✏️ ${T('Que veux-tu faire maintenant ?')}</div><div class="bulles">${etapes().map(x => `<button class="bulle${recette[x.id] ? ' prise' : ''}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}</div></div>`) : '');
     scDemande.value = etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ');   // le champ (caché) dit ce qui est choisi
   }
   async function charger(id, encore) {                   // les idées de l'IA pour cette étape (personnage, ce qu'on attrape, ce qu'on évite), tournées vers l'univers de l'enfant ; sans choix ni goût, pas d'appel
@@ -4408,7 +4407,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     etat.script = script; mettreCode(script);
     scCompris.textContent = '✅ Ton jeu est prêt !';
     etat.essais.push({ demande: scDemande.value || '(bulles)', auto: false, explication: '', console: '', date: Date.now(), lignes: script.split('\n').length });
-    majAide(true); fait = true; courant = 'perso'; idees = true; menu = false; rendreBulles(); charger('perso'); sauver(); rendre();   // pour l'améliorer : des idées de personnage dans l'univers de son jeu (champ « Ce que tu aimes » dessous) ; ensuite, la bulle « Modifier ma présentation »
+    majAide(true); fait = true; courant = ''; idees = false; menu = false; rendreBulles(); sauver(); rendre();   // la question « Que veux-tu faire maintenant ? » s'affiche avec ses bulles
     const pb = await envoyer(script); scGo.disabled = fabrique === sig();
     if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
   }

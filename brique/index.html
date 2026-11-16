@@ -4369,12 +4369,17 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   async function prendreIcone(role, b) {                 // le mot de l'IA -> l'icône Iconify -> pixel art dans les images du jeu ; false = pas trouvée
     cherche = true; rendreBulles(); scCompris.textContent = '⏳ Je cherche ton image…';
     try {
-      const r = await (await fetch('https://api.iconify.design/search?limit=4&prefixes=noto,twemoji,fluent-emoji-flat,openmoji&query=' + encodeURIComponent(b.mot))).json();
-      if (!r.icons?.length) throw 0;
-      const img = new Image(); img.crossOrigin = 'anonymous'; img.src = `https://api.iconify.design/${r.icons[0].replace(':', '/')}.svg?width=96&height=96`; await img.decode();
-      const cv = document.createElement('canvas'); cv.width = cv.height = 96; cv.getContext('2d').drawImage(img, 0, 0, 96, 96);
-      retirerImage(role);
-      if (!await ajouterImage(await new Promise(ok => cv.toBlob(ok, 'image/png')), b.mot, role === 'perso' ? [24, 16] : [16], role)) throw 0;
+      const cherche1 = async p => (await (await fetch('https://api.iconify.design/search?limit=4' + p + '&query=' + encodeURIComponent(b.mot))).json()).icons || [];
+      const r = { icons: await cherche1('&prefixes=noto,twemoji,fluent-emoji-flat,openmoji') }; if (!r.icons.length) r.icons = await cherche1('');   // pas d'emoji de ce nom (ufo, squirrel...) : n'importe quelle icône
+      let ok = false;                                    // on essaie les icônes trouvées l'une après l'autre jusqu'à une qui passe
+      for (const ic of (r.icons || []).slice(0, 4)) try {
+        const img = new Image(); img.crossOrigin = 'anonymous'; img.src = `https://api.iconify.design/${ic.replace(':', '/')}.svg?width=96&height=96`; await img.decode();
+        const cv = document.createElement('canvas'); cv.width = cv.height = 96; cv.getContext('2d').drawImage(img, 0, 0, 96, 96);
+        retirerImage(role);
+        if (await ajouterImage(await new Promise(ok => cv.toBlob(ok, 'image/png')), b.mot, role === 'perso' ? [24, 16] : [16], role)) { ok = true; break; }
+        scCompris.textContent = scImgDrop.querySelector('.msg')?.textContent || ''; return false;   // l'image est lue mais ne rentre pas : on dit pourquoi
+      } catch (e) { console.warn('icône', ic, e); }
+      if (!ok) throw 0;
       return true;
     } catch { scCompris.textContent = "Je n'ai pas trouvé l'image (internet ?) : touche une autre bulle."; return false; }
     finally { cherche = false; rendreBulles(); }

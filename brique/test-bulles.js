@@ -29,4 +29,12 @@ for (const jeu of jeux.filter(j => !['attrape', 'esquive', 'pluie'].includes(j))
   const code = J.assembler({ jeu, obst, monde, perso: persos[i], couleur: couleurs[i] });
   for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${obst} ${monde} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 70000, `${jeu} ${obst} ${monde} : trop lourd (${v.ops}, ${v.memoire})`); pire = { ops: Math.max(pire.ops, v.ops), memoire: Math.max(pire.memoire, v.memoire) }; n++; }
 }
-console.log(`ok : ${n} programmes joues, au plus ${pire.ops} dessins, ${pire.memoire} octets`);
+// seconde version : chaque cartel x chaque nombre de niveaux x chaque jeu, avec l'ecran de fin (FIN = 1) et, pour les niveaux, un coup de P3 simule par la boucle normale
+const cartels = J.ETAPES.find(e => e.id === 'fin').bulles.map(b => b.id), niv = J.ETAPES.find(e => e.id === 'niv').bulles.map(b => b.id);
+for (const [i, jeu] of jeux.entries()) for (const [k, fin] of cartels.entries()) for (const nv of niv) {
+  const code = J.assembler({ jeu, fin, niv: nv, monde: mondes[(i + k) % mondes.length] });
+  for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${fin} ${nv} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 70000, `${jeu} ${fin} ${nv} : trop lourd (${v.ops}, ${v.memoire})`); n++; }
+}
+assert(J.assembler({ jeu: 'attrape', fin: 'over' }).includes('"GAME OVER"') && !J.assembler({ jeu: 'attrape', fin: 'over' }).includes('"PERDU !"'), 'le cartel change de mot');
+assert(J.assembler({ jeu: 'plat-but', niv: 'trois' }).includes('majJ(') && !J.assembler({ jeu: 'quiz', niv: 'trois' }).includes('majJ('), 'niveaux : pas pour les jeux solo');
+console.log(`ok :${n} programmes joues, au plus ${pire.ops} dessins, ${pire.memoire} octets`);

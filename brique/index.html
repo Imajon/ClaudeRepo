@@ -575,6 +575,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </header>
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
+<small id="vTmp" style="position:fixed;top:2px;left:4px;z-index:9999;font:10px var(--mono);opacity:.6;pointer-events:none"></small>   <!-- provisoire : version du site en haut à gauche -->
 <main id="accueil" data-version="1.22">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
@@ -4594,6 +4595,7 @@ document.querySelector('.pied').onclick = e => {      // pied de page : mêmes v
 };
 piedSite.textContent = location.host;
 if (siteVersion.textContent === '__VERSION__') siteVersion.textContent = 'hors ligne';   // page ouverte sans le serveur (fichier, GitHub Pages)
+vTmp.textContent = siteVersion.textContent.replace('site ', '');   // provisoire
 majMoi();
 if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos', 'cgv'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet

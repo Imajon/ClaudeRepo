@@ -341,7 +341,8 @@ ${r.mal === 'img' ? `  image(${im.mal}, x - 8, y - 8, 0, 1)` : mo.mal}
   end
 end
 
-def perso(x, y)
+def perso(x, y0)
+  var y = y0 + int(temps() * 5) % 2
 ${r.perso === 'img' ? `  image(${im.perso}, x, y, 0, 1)` : PERSOS[r.perso]}
 end
 
@@ -441,7 +442,7 @@ def dessine()
     i += 1
   end
   rect(int(PX) + 3, 207, 18, 3, SOL2)
-  if HT <= 0 || int(t * 12) % 2 == 0 perso(int(PX), int(PY)) end
+  if HT <= 0 || int(t * 12) % 2 == 0 perso(int(PX), int(PY)) parle(int(PX), int(PY), 0) end
 ${ac.dessin}
   i = 0
   while i < 4
@@ -520,7 +521,7 @@ def vehicule(x, y)
 end
 
 def perso(x, y0)
-  var y = y0
+  var y = y0 + int(temps() * 5) % 2
   if V >= 0 vehicule(x, y0 - 5) y = y0 - 8 end
 ${r.perso === 'img' ? `  image(${im.perso}, x, y, 0, 1)` : PERSOS[r.perso]}
 end
@@ -691,7 +692,7 @@ ${c.rival ? `  if RX > CAMX - 30 && RX < CAMX + 340
     C1 = s
   end` : ''}
   rect(int(PX) + 3, 207, 18, 3, SOL2)
-  if HT <= 0 || int(t * 12) % 2 == 0 perso(int(PX), int(PY)) end
+  if HT <= 0 || int(t * 12) % 2 == 0 perso(int(PX), int(PY)) parle(int(PX), int(PY), CAMX) end
   camera(0, 0)
   ${c.fin === 'etoiles' ? 'texte(9, 9, str(PTS) + "/8", NO, 3) texte(8, 8, str(PTS) + "/8", BL, 3)' : 'texte(9, 9, str(PTS), NO, 3) texte(8, 8, str(PTS), BL, 3)'}
 ${drap ? `  barre(int(PX * 100 / ${c.long}), ${c.rival ? `int(RX * 100 / ${c.long})` : -1})` : ''}
@@ -860,7 +861,7 @@ ${route}
   end
   ${pos.px}
   if bouton(P3) && EN > 0 rect(x + 8, ${pos.py} + 24, 8, 4 + int(temps() * 20) % 4 * 2, A4) end
-  if HT <= 0 || int(temps() * 12) % 2 == 0 perso(x, ${pos.py}) end
+  if HT <= 0 || int(temps() * 12) % 2 == 0 perso(x, ${pos.py}) parle(x, ${pos.py}, 0) end
   texte(9, 9, str(PTS), NO, 3) texte(8, 8, str(PTS), BL, 3)
   barre(int(P / 24.0), int(RP / 24.0))
   rect(8, 232, int(EN * 60), 4, BL)
@@ -1134,9 +1135,23 @@ ${chuteJeu ? '' : `  if FIN == 1 && NV < ${nn}
 end
 `;
   }
+  // le personnage invite l'enfant a modifier son jeu : une bulle 2,5 s toutes les 4 s (cx : decalage de camera, pour rester dans l'ecran)
+  const PAROLE = `def parle(x, y, cx)
+  var t = temps() var k = int(t / 4) var u = t - k * 4 var s = ["Change mon decor !", "Et si j'etais bleu ?", "Invente ton jeu !", "Ton jeu est nul !"][k % 4] var w = size(s) * 6 + 8 var c = BL var d = NO var b = x + 12 - w / 2
+  if u > 2.5 return end
+  if k % 4 == 3
+    x = int(cx + 30 + u * 60) y = 70 + int(t * 6) % 2 * 3 b = x - 20 c = NO d = BL
+    rect(x, y, 14, 14, rgb(255, int(t * 200) % 255, 255 - int(t * 90) % 255)) rect(x + 3, y + 4, 3, 3, BL) rect(x + 9, y + 4, 3, 3, BL)
+  end
+  if b < cx + 2 b = cx + 2 elif b + w > cx + 318 b = cx + 318 - w end
+  rect(b, y - 24, w, 14, c) tri(x + 8, y - 10, x + 16, y - 10, x + 12, y - 5, c) texte(b + 4, y - 21, s, d, 1)
+end
+`;
   function assembler(r) {
     const c = recetteComplete(r), f = SYSTEMES[c.jeu], nn = SOLO[c.jeu] ? 1 : nbNiv(c.niv);
     let code = cartel(f(c), c); if (nn > 1) code = niveaux(code, nn, f === chute, f === plateforme && /^plat-/.test(c.jeu));
+    if (nn > 4) code = code.replace(/ parle\(.*?, (0|CAMX)\)/g, '');   // 5 et 6 niveaux : la memoire de la console est deja pleine, pas de bulle
+    if (/ parle\(/.test(code)) code = code.replace(/\ndef perso\(/, '\n' + PAROLE + '\ndef perso(');   // pas de bulle dans les questions ni le personnage a soigner : leur ecran est deja plein
     return MULTI.has(f) ? multi(code, MULTI.get(f), !!COURSE[c.jeu]) : code;
   }
   const AIDE = { saut: 'il saute', tir: 'il tire', bouclier: 'il se protege avec un bouclier', turbo: 'il va plus vite', aimant: 'il attire les bons objets' };

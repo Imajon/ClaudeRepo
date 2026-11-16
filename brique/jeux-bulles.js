@@ -476,12 +476,15 @@ end
     'plat-course': { nom: 'Course ', hz: [330, 560, 760], vh: 0, fin: 'drapeau', rival: 85 }
   };
   const PLATS = [[150, 168, 70], [270, 128, 70], [390, 168, 70], [500, 128, 80], [620, 168, 70], [730, 128, 70], [830, 168, 60]];   // x, haut, largeur : chacune se saute depuis la précédente
-  // les plateformes de chaque niveau (7 par niveau, toutes atteignables : montée <= 40 px, trou <= 60 px) ; le niveau k prend la disposition k % 5
+  // les plateformes de chaque niveau (7 par niveau, toutes atteignables : montée <= 40 px, trou <= 60 px) ; le niveau k prend la disposition (k + 1) % 8
   const PLANS = [PLATS,
     [[140, 168, 70], [250, 148, 60], [360, 128, 70], [470, 108, 60], [580, 128, 70], [700, 148, 60], [810, 168, 60]],
     [[150, 168, 70], [260, 148, 70], [370, 128, 70], [480, 148, 70], [590, 128, 70], [700, 108, 70], [810, 128, 70]],
     [[150, 168, 60], [265, 128, 60], [380, 108, 60], [490, 128, 60], [600, 148, 60], [715, 128, 60], [830, 168, 60]],
-    [[150, 168, 80], [270, 148, 50], [370, 168, 50], [480, 148, 50], [580, 128, 60], [690, 148, 60], [800, 168, 60]]];
+    [[150, 168, 80], [270, 148, 50], [370, 168, 50], [480, 148, 50], [580, 128, 60], [690, 148, 60], [800, 168, 60]],
+    [[140, 168, 80], [260, 148, 60], [375, 168, 60], [490, 148, 70], [610, 128, 60], [720, 148, 60], [830, 168, 60]],
+    [[150, 168, 60], [255, 128, 60], [360, 168, 60], [465, 128, 60], [570, 168, 60], [675, 128, 60], [780, 168, 60]],
+    [[140, 168, 70], [250, 168, 50], [350, 148, 50], [450, 128, 50], [550, 108, 50], [650, 128, 60], [770, 168, 60]]];   // banque de structures : en ajouter une = une ligne (7 plateformes x, haut, largeur, gap <= 60, montee <= 40)
   const PIEGES_PLUS = [445, 655, 870, 260, 380, 500, 620, 740, 860, 150];   // monstres ajoutés (2 de plus par niveau) à ceux du jeu
   const GAGNE ='FIN = 1 PTS += 10 if T < 40 PTS += int(40 - T) end score(PTS) son(1318, 300)';
 
@@ -561,8 +564,8 @@ end
     const c = cote ? { nom: 'Course cote ', long: 1400, pl: false, hz: o ? [300, 480, 660, 840, 1020, 1200] : [], vh: 0, fin: 'drapeau', rival: 180, auto: true, saut: o }
       : { ...PLATEFORMES[r.jeu], long: 1000, pl: true, auto: false, saut: true };
     // plusieurs niveaux : les données de chaque niveau sont à plat (niveau k = tranche k) et charge() les recopie au début du niveau
-    const nn = c.pl ? nbNiv(r.niv) : 1, multi = nn > 1, plans = liste0(nn, k => r.plan === 'oui' ? PLANS[k % PLANS.length] : PLATS);
-    const pool = [...c.hz, ...PIEGES_PLUS], hzK = liste0(nn, k => pool.slice(0, c.hz.length + (r.piege === 'oui' ? 2 * k : 0))), NH = Math.max(...hzK.map(h => h.length));
+    const nn = c.pl ? nbNiv(r.niv) : 1, multi = nn > 1, plans = liste0(nn, k => r.plan === 'oui' ? PLANS[(k + 1) % PLANS.length] : PLATS);
+    const pool = [...c.hz, ...PIEGES_PLUS], DEC = [35, -35, 60, -60, 20, -20], hzK = liste0(nn, k => pool.slice(0, c.hz.length + (r.piege === 'oui' ? 2 * k : 0)).map(x => r.plan === 'oui' ? x + DEC[k % 6] : x)), NH = Math.max(...hzK.map(h => h.length));
     const hzPad = k => Array.from({ length: NH }, (_, i) => i < hzK[k].length ? hzK[k][i] : -999);
     if (multi) c.hz = hzPad(0);
     const pl = c.pl ? plans[0] : [], st =c.pl ? [...pl.map(p => [p[0] + p[2] / 2, p[1] - 16]), [70, 192]] : [], FL = c.long - 60, MAXX = c.long - 30, drap = c.fin === 'drapeau';

@@ -331,7 +331,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 @media (prefers-reduced-motion:reduce){#scBulles .bZone.fondu .bulles .bulle{animation:none}}
 #scBulles.attend .bulles,#scBulles.attend .libre{pointer-events:none}#scBulles.attend .libre{opacity:.4}
 #vueScript.petits #scIA,#vueScript.petits .agent>p.aide,#vueScript.petits .hist .vide,#vueScript.petits .compris:empty{display:none}
-#vueScript.petits #scAide,#vueScript.petits #scMicro,#vueScript.petits #scVoirCode{display:none}#vueScript.petits .agent-btns{width:auto}#vueScript.petits .agent-btns .big{padding:14px 24px;font-size:20px}
+#vueScript.petits .agent-ligne textarea,#vueScript.petits #scAide,#vueScript.petits #scMicro,#vueScript.petits #scVoirCode{display:none}#vueScript.petits .agent-btns{width:auto}#vueScript.petits .agent-btns .big{padding:14px 24px;font-size:20px}
 .sc-jeux{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-right:auto}.sc-jeux select{margin:0;width:auto;max-width:260px;padding:5px 8px;font-size:15px}
 #vueScript .agent>.theme{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;font-size:16px}
 #vueScript .agent>h2{padding-right:40px}
@@ -4305,7 +4305,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     return true;
   }
   scGo.onclick = async () => {
-    if (mode === 'petits' && !scDemande.value.trim()) return fabriquerBulles();   // champ vide : on assemble les bulles ; sinon la bulle qui n'existe pas part à l'IA
+    if (mode === 'petits') return fabriquerBulles();
     const texte = scDemande.value.trim(); if (!texte) { if (mode === 'petits') scCompris.textContent = salut(); return scDemande.focus(); }
     if (texte.length < 50 && /\b(montre|affiche|voir|vois|ouvre|donne)\b.*\b(code|programme)\b/i.test(texte)) { scDemande.value = ''; return voirCode(true); }   // « montre-moi le code » : pas besoin de l'IA
     garderMain();                                        // l'IA part du programme affiché, modifications à la main comprises
@@ -4315,7 +4315,6 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   async function corriger() {                            // erreur au chargement ou dans les premières secondes d'un programme de l'IA : elle la corrige seule (2 essais au plus)
     for (let n = 0; n < 2 && etat.erreur && etat.essais.at(-1)?.demande !== '(programme modifié à la main)'; n++) if (!(await ecrireJeu('', true))) return;
   }
-  scDemande.addEventListener('input', () => { if (mode === 'petits' && !iaEnCours) { scGo.textContent = libGo(); scGo.disabled = fabrique === sig() && !scDemande.value.trim(); } });
   scDemande.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) scGo.click(); };
   // aide en boutons (tranche guidée) : l'IA fabrique 3 boutons à partir des mots de l'enfant (le jeu qu'il aime) ou de son programme (idées de suite).
   // Un clic écrit la phrase dans le champ : l'enfant la relit, la change, l'envoie. Aucun catalogue : les boutons viennent de lui.
@@ -4336,7 +4335,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const retirerImage = role => { const k = (etat.images || []).findIndex(m => m.role === role); if (k >= 0) { sources.delete(etat.images[k]); etat.images.splice(k, 1); imagesChangees(); } };
   function rendreBulles() {
     scBulles.classList.toggle('hide', mode !== 'petits'); if (mode !== 'petits') return;
-    scBulles.classList.toggle('attend', cherche); if (!iaEnCours) scGo.disabled = fabrique === sig() && !scDemande.value.trim();
+    scBulles.classList.toggle('attend', cherche); if (!iaEnCours) scGo.disabled = fabrique === sig();
     const cle = courant + '|' + (idees ? 1 : 0) + '|' + (props[courant] || []).map(b => b.bouton).join(), anime = !cherche && cle !== vu;
     if (!cherche) vu = cle;                              // les bulles de l'IA arrivent en fondu, l'une après l'autre (et seulement si la liste change)
     const bulle = (b, i) => `<button class="bulle${recette[courant]?.bouton === b.bouton ? ' prise' : ''}" style="--i:${i}" data-l="bulle" data-i="${i}">${esc(T(b.bouton))}</button>`;
@@ -4354,6 +4353,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
       + (venir.length ? `<div class="aVenir">Ensuite : ${venir.map(x => `<button class="pastille" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}</div>` : '')
       + (fait && !courant ? (   // après le premier jeu : tout de suite « Que veux-tu faire maintenant ? » et les bulles de ce qu'on peut changer (personnage, fond, gros bouton...)
         `<div class="bZone" style="--h:200"><div class="bQ">✏️ ${T('Que veux-tu faire maintenant ?')}</div><div class="bulles">${etapes().map(x => `<button class="bulle${recette[x.id] ? ' prise' : ''}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}</div></div>`) : '');
+    scDemande.value = etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ');   // le champ (caché) dit ce qui est choisi
   }
   async function charger(id, encore) {                   // les idées de l'IA pour cette étape (personnage, ce qu'on attrape, ce qu'on évite), tournées vers l'univers de l'enfant ; sans choix ni goût, pas d'appel
     if (!axeDe(id).ia || (!encore && (frais[id] || !(Object.keys(recette).length || gouts.length)))) return rendreBulles();
@@ -4412,12 +4412,12 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     fabrique = sig(); scGo.disabled = true; etat.recette = structuredClone(recette);
     etat.script = script; mettreCode(script);
     scCompris.textContent = '✅ Ton jeu est prêt !';
-    etat.essais.push({ demande: etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ') || '(bulles)', auto: false, explication: '', console: '', date: Date.now(), lignes: script.split('\n').length });
+    etat.essais.push({ demande: scDemande.value || '(bulles)', auto: false, explication: '', console: '', date: Date.now(), lignes: script.split('\n').length });
     majAide(true); fait = true; courant = ''; idees = false; menu = false; rendreBulles(); sauver(); rendre();   // la question « Que veux-tu faire maintenant ? » s'affiche avec ses bulles
-    const pb = await envoyer(script); scGo.disabled = fabrique === sig() && !scDemande.value.trim();
+    const pb = await envoyer(script); scGo.disabled = fabrique === sig();
     if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
   }
-  const libGo = () => mode === 'petits' && !scDemande.value.trim() ? '✨ Fabriquer mon jeu' : "✨ Envoyer à l'IA";   // le bouton d'envoi, vu par un enfant qui ne lit pas encore bien
+  const libGo = () => mode === 'petits' ? '✨ Fabriquer mon jeu' : "✨ Envoyer à l'IA";   // le bouton d'envoi, vu par un enfant qui ne lit pas encore bien
   majAide = garder => {                                  // appelé quand la tranche d'âge, le chantier ou le programme change : les anciennes propositions ne valent plus ; garder : on vient d'écrire le jeu, l'explication de l'IA reste affichée
     const g = mode === 'guide';
     scAide.classList.toggle('hide', !g); scChoix.classList.add('hide');
@@ -4425,7 +4425,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     raz(); rendreBulles();
     if (!iaEnCours) scGo.textContent = libGo();
     if (!garder) { if (mode === 'petits') scCompris.textContent = salut(); else if (/Fabriquer|bulle/.test(scCompris.textContent)) scCompris.textContent = AIDE_ECRIRE; }   // on quitte les bulles : leur consigne ne vaut plus
-    scDemande.placeholder = mode === 'petits' ? "✏️ Une bulle qui n'existe pas ? Écris ton idée, puis « Envoyer à l'IA »" : !g ? "Qu'est-ce que tu veux créer ?" : etat.script ? "Qu'est-ce que tu veux ajouter ou changer ? Pas d'idée : appuie sur « 💡 Aide-moi »." : 'À quel jeu tu aimes jouer ? Écris son nom (ou ton idée), puis appuie sur « 💡 Aide-moi ».';
+    scDemande.placeholder = !g ? "Qu'est-ce que tu veux créer ?" : etat.script ? "Qu'est-ce que tu veux ajouter ou changer ? Pas d'idée : appuie sur « 💡 Aide-moi »." : 'À quel jeu tu aimes jouer ? Écris son nom (ou ton idée), puis appuie sur « 💡 Aide-moi ».';
   };
   scAide.onclick = async () => {
     const texte = scDemande.value.trim();

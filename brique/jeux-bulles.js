@@ -9,20 +9,20 @@
 
   // ---------- les bulles (étape -> choix) ; id = ce que le générateur comprend, bouton = ce que l'enfant voit ----------
   const ETAPES = [
-    { id: 'jeu', h: 210, icone: '🎮', nom: 'Le jeu', q: 'Quel jeu veux-tu ?', bulles: [
-      { id: 'attrape', bouton: '🍎 Attraper' }, { id: 'esquive', bouton: '💨 Esquiver' }, { id: 'pluie', bouton: '🌧 Ne rien rater' },
-      { id: 'plat-but', bouton: '🏁 Plateforme : arriver au drapeau' }, { id: 'plat-attrape', bouton: '⭐ Plateforme : tout attraper' }, { id: 'plat-evite', bouton: '👾 Plateforme : éviter les monstres' }, { id: 'plat-course', bouton: '⏱ Plateforme : course' },
-      { id: 'cote', bouton: '🏃 Course de côté' }, { id: 'derriere', bouton: '🚗 Course vue de derrière' }, { id: 'dessus', bouton: '🛰 Course vue de dessus' }] },
+    { id: 'jeu', h: 210, icone: '🎮', nom: 'Le jeu', q: 'Que fais-tu dans ton jeu ?', bulles: [
+      { id: 'attrape', bouton: '🍎 J’attrape ce qui tombe' }, { id: 'esquive', bouton: '💨 J’évite ce qui tombe' }, { id: 'pluie', bouton: '🌧 J’attrape tout, rien ne doit tomber' },
+      { id: 'plat-but', bouton: '🏁 Je cours et je saute jusqu’au drapeau' }, { id: 'plat-attrape', bouton: '⭐ Je saute pour ramasser toutes les étoiles' }, { id: 'plat-evite', bouton: '👾 Je saute par-dessus les monstres' }, { id: 'plat-course', bouton: '⏱ Je cours plus vite que mon rival' },
+      { id: 'cote', bouton: '🏃 Je cours en sautant les obstacles' }, { id: 'derriere', bouton: '🚗 Je conduis et je change de voie' }, { id: 'dessus', bouton: '🛰 Je pilote ma voiture sur la piste' }] },
     { id: 'obst', h: 55, icone: '🚧', nom: 'Les obstacles', q: 'Des obstacles sur la route ?', bulles: [{ id: 'avec', bouton: '🚧 Avec obstacles' }, { id: 'sans', bouton: '🛣 Sans obstacles' }] },
-    { id: 'perso', h: 28, icone: '🐱', nom: 'Mon personnage', q: 'Qui es-tu ?', ia: true, bulles: [
-      { id: 'chat', bouton: '🐱 Un chat' }, { id: 'robot', bouton: '🤖 Un robot' }, { id: 'dragon', bouton: '🐉 Un dragon' }, { id: 'fusee', bouton: '🚀 Une fusée' },
-      { id: 'fantome', bouton: '👻 Un fantôme' }, { id: 'magicien', bouton: '🧙 Un magicien' }, { id: 'grenouille', bouton: '🐸 Une grenouille' }, { id: 'hibou', bouton: '🦉 Un hibou' }] },
+    { id: 'perso', h: 28, icone: '🐱', nom: 'Mon personnage', q: 'Qui joues-tu ?', ia: true, bulles: [
+      { id: 'chat', bouton: '🐱 Je joue un chat' }, { id: 'robot', bouton: '🤖 Je joue un robot' }, { id: 'dragon', bouton: '🐉 Je joue un dragon' }, { id: 'fusee', bouton: '🚀 Je joue une fusée' },
+      { id: 'fantome', bouton: '👻 Je joue un fantôme' }, { id: 'magicien', bouton: '🧙 Je joue un magicien' }, { id: 'grenouille', bouton: '🐸 Je joue une grenouille' }, { id: 'hibou', bouton: '🦉 Je joue un hibou' }] },
     { id: 'couleur', h: 330, icone: '🎨', nom: 'Sa couleur', q: 'De quelle couleur ?', bulles: [
       { id: 'rouge', bouton: '🔴 Rouge' }, { id: 'orange', bouton: '🟠 Orange' }, { id: 'jaune', bouton: '🟡 Jaune' }, { id: 'vert', bouton: '🟢 Vert' },
       { id: 'bleu', bouton: '🔵 Bleu' }, { id: 'violet', bouton: '🟣 Violet' }, { id: 'rose', bouton: '🩷 Rose' }, { id: 'blanc', bouton: '⚪ Blanc' }] },
     { id: 'monde', h: 150, icone: '🌍', nom: 'Le monde', q: 'Où es-tu ?', bulles: [
-      { id: 'foret', bouton: '🌳 Une forêt' }, { id: 'ville', bouton: '🏙 La ville la nuit' }, { id: 'espace', bouton: '🌌 L’espace' },
-      { id: 'eau', bouton: '🌊 Sous l’eau' }, { id: 'desert', bouton: '🏜 Un désert' }, { id: 'neige', bouton: '❄️ La neige' }] },
+      { id: 'foret', bouton: '🌳 Je joue une forêt' }, { id: 'ville', bouton: '🏙 La ville la nuit' }, { id: 'espace', bouton: '🌌 L’espace' },
+      { id: 'eau', bouton: '🌊 Sous l’eau' }, { id: 'desert', bouton: '🏜 Je joue un désert' }, { id: 'neige', bouton: '❄️ La neige' }] },
     { id: 'bon', h: 100, icone: '🎁', nom: 'Ce que j’attrape', q: 'Que veux-tu attraper ?', ia: true, bulles: [{ id: 'monde', bouton: '🎁 Ceux du monde' }] },
     { id: 'mal', h: 0, icone: '💣', nom: 'Ce que j’évite', q: 'Que veux-tu éviter ?', ia: true, bulles: [{ id: 'monde', bouton: '💣 Ceux du monde' }] },
     { id: 'action', h: 265, icone: '⚡', nom: 'Le gros bouton', q: 'Que fait le gros bouton ?', bulles: [
@@ -31,7 +31,7 @@
   const DEFAUT = { jeu: 'attrape', obst: 'avec', perso: 'chat', couleur: 'orange', monde: 'foret', bon: 'monde', mal: 'monde', action: 'saut' };
 // L'IA propose d'autres idées pour perso, bon et mal : chacune devient une image (icône de la page, numéro dans r.imgs) et son choix vaut 'img'. Sans image trouvée, retour au dessin du monde.
 const COURSES = { cote: 1, derriere: 1, dessus: 1 }, NOUVEAUX = { 'plat-but': 1, 'plat-attrape': 1, 'plat-evite': 1, 'plat-course': 1, ...COURSES };   // les nouveaux jeux : le gros bouton a son rôle fixe (sauter, turbo), les obstacles ne comptent que pour les courses
-const saute = (id, r) => { r = r || {}; return (id === 'couleur' && r.perso === 'img') || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && !!NOUVEAUX[r.jeu]); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
+const saute = (id, r) => { r = r || {}; return id === 'couleur' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && !!NOUVEAUX[r.jeu]); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
 
   const COULEURS = { rouge: [225, 60, 55], orange: [240, 140, 40], jaune: [245, 205, 50], vert: [80, 190, 90], bleu: [70, 130, 230], violet: [150, 90, 210], rose: [240, 120, 175], blanc: [240, 240, 245] };
   // jeu : part de mauvais objets (%), un bon objet qui touche le sol coûte une vie ?, un mauvais objet évité rapporte un point ?

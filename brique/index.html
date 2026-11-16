@@ -310,19 +310,20 @@ textarea:focus{outline:none;border-color:var(--acc)}
 /* une couleur par étape (--h = sa teinte) : l'étape touchée, son cadre et ses bulles ont la même, pour voir d'où elles viennent */
 /* l'étape en cours : sa question en grosse bulle pleine, ses choix en bulles distinctes dessous */
 #scBulles .bZone{--c:hsl(var(--h) 60% 44%);margin:14px 0}
-#scBulles .bQ{display:inline-block;max-width:100%;background:var(--c);color:#fff;border-radius:999px;padding:12px 24px;font-size:24px;margin-bottom:14px;box-shadow:0 4px 14px hsl(var(--h) 60% 30% / .35)}
+#scBulles .bQ{display:inline-block;max-width:100%;background:var(--c);color:#fff;border-radius:999px;padding:8px 18px;font-size:19px;margin-bottom:10px;box-shadow:0 4px 10px hsl(var(--h) 60% 30% / .35)}
 #scBulles .bZone .bulles{min-height:54px;align-items:center;padding-left:18px}#scBulles .attente{color:var(--mute);font-size:16px}
-#scBulles .bZone .bulle{border:0;background:hsl(var(--h) 70% 50% / .2);box-shadow:inset 0 0 0 3px var(--c),0 3px 8px #0003;padding:12px 24px;font-size:22px}#scBulles .bZone .bulle:hover{background:hsl(var(--h) 70% 50% / .4)}
+#scBulles .bZone .bulle{border:0;background:hsl(var(--h) 70% 50% / .2);box-shadow:inset 0 0 0 3px var(--c),0 3px 8px #0003;padding:7px 16px;font-size:17px}#scBulles .bZone .bulle:hover{background:hsl(var(--h) 70% 50% / .4)}
 #scBulles .bZone .bulle.prise{background:var(--c);color:#fff}#scBulles .bZone .bulle.autre{box-shadow:inset 0 0 0 2px var(--line);font-size:15px;padding:6px 14px}
 /* une étape répondue : la question et la réponse sont fondues (filtre « goutte » sur le calque du fond), la réponse sort de la question comme une excroissance */
-#scBulles .bPaire{--c:hsl(var(--h) 60% 44%);position:relative;display:block;margin:6px 0;padding:0;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:inherit;max-width:100%}
-#scBulles .pf,#scBulles .pt{display:flex;align-items:flex-end;padding:0 0 18px}
+#scBulles .bPaire{--c:hsl(var(--h) 60% 44%);position:relative;display:block;margin:2px 0;padding:0;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:inherit;max-width:100%}
+#scBulles .pf,#scBulles .pt{display:flex;align-items:flex-end;padding:0 0 12px}
 #scBulles .pt{position:absolute;inset:0}#scBulles .pf{filter:url(#gooey)}
 #scBulles .pq,#scBulles .pr{border-radius:999px;white-space:nowrap}
-#scBulles .pq{padding:12px 24px;font-size:22px;flex:none}#scBulles .pr{padding:8px 20px;font-size:20px;margin:0 0 -18px -20px;position:relative}
+#scBulles .pq{padding:6px 14px;font-size:15px;flex:none}#scBulles .pr{padding:4px 14px;font-size:15px;margin:0 0 -12px -14px;position:relative}
 #scBulles .pf .pq{background:var(--c);color:transparent}#scBulles .pf .pr{background:hsl(var(--h) 75% 62%);color:transparent}
 #scBulles .pt .pq{color:#fff}#scBulles .pt .pr{color:#111;font-weight:bold}
 #scBulles .bPaire:hover .pf{transform:scale(1.02)}#scBulles .bPaire:focus-visible{outline:3px solid var(--c);outline-offset:4px;border-radius:30px}
+#scBulles .aVenir{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:14px;color:var(--mute)}#scBulles .aVenir .pastille{border:2px dashed hsl(var(--h) 50% 50%);background:none;color:var(--mute);border-radius:999px;padding:3px 12px;font:inherit;font-size:14px;cursor:pointer}#scBulles .aVenir .pastille:hover{background:hsl(var(--h) 70% 50% / .2)}#scBulles .fait{font-size:18px;margin:8px 0 2px}
 #scBulles .libre{display:flex;gap:8px;align-items:center;margin-top:12px}#scBulles .libre input{flex:1;min-width:0;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:inherit;font-size:17px}#scBulles .libre input:focus{outline:none;border-color:var(--c)}
 @keyframes bFondu{from{opacity:0;transform:translateY(10px)}}   /* les bulles arrivent l'une après l'autre, dans le sens de la lecture (--i = leur rang) */
 #scBulles .bZone.fondu .bulles .bulle{animation:bFondu .5s ease backwards;animation-delay:calc(var(--i,0) * .12s)}
@@ -901,7 +902,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
-<main id="boutique" class="shop hide" data-version="1.6">
+<main id="boutique" class="shop hide" data-version="1.7">
   <div class="sh-hero">
     <h2 class="sh-titre">Un kit simple, à deux,<br>ou un support pédagogique clé en main.</h2>
   </div>
@@ -943,6 +944,13 @@ body{overflow-x:clip}                                           /* la bande 100v
       <figure><img src="images/ecran.jpg" alt="L'écran couleur de la console" width="900" height="900" loading="lazy"><figcaption>Écran couleur<span class="sh-detail" data-prix="ecran"></span><button class="sec" data-piece="ecran">Ajouter au panier</button></figcaption></figure>
       <figure><img src="images/boutons.jpg" alt="Des boutons poussoirs" width="900" height="750" loading="lazy"><figcaption>Bouton poussoir<span class="sh-detail" data-prix="bouton"></span><button class="sec" data-piece="bouton">Ajouter au panier</button></figcaption></figure>
     </div>
+  </div>
+
+  <div class="sh-bloc">
+    <h3 class="sh-h">Tu as déjà ta propre brique ?</h3>
+    <p class="sh-sous">Console montée ou achetée ailleurs : prends seulement l'accès à l'interface (créer, tester et envoyer tes jeux), sans matériel ni livraison.</p>
+    <p id="btAccesPrix" class="sh-total"></p>
+    <button id="btAcces" class="sh-btn">Ajouter au panier</button>
   </div>
 
   <div class="sh-bloc hide">                     <!-- acheter = faire grandir un lieu ; masqué pour le moment : retirer « hide » pour le remettre -->
@@ -1029,7 +1037,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== PANIER : compte, point relais, paiement ===== -->
-<main id="vuePanier" class="shop hide" data-version="1.2">
+<main id="vuePanier" class="shop hide" data-version="1.3">
   <div id="panierBloc" class="sh-bloc sh-panier">
     <h3 class="sh-h">Mon panier.</h3>
     <ol id="cmdEtapes" class="cmd-etapes"><li class="on">1. Panier</li><li>2. Livraison</li><li>3. Paiement</li></ol>
@@ -1046,7 +1054,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       </div>
       <p id="cliConnecte" class="aide hide">✅ Connecté · <a href="#" id="cliSortir">se déconnecter</a> · <a href="#" id="cliSupprimer">supprimer mon compte</a></p>
     </div>
-    <div class="sh-etape"><b>2. Livraison · mon point relais</b>
+    <div id="cmdLivraison" class="sh-etape"><b>2. Livraison · mon point relais</b>
       <p id="relaisChoisi" class="aide">Livraison uniquement en point relais Mondial Relay (4,90 €).</p>
       <button id="relaisBtn" class="sec">📍 Choisir mon point relais</button>
       <div id="mrZone"></div><input id="mrRetour" type="hidden">
@@ -3716,35 +3724,39 @@ document.querySelectorAll('.sh-pm').forEach(b => b.onclick = () => { btQte.value
 const PIECES = { esp: ['Module ESP32-C3', 5], ecran: ['Écran couleur', 9], bouton: ['Bouton poussoir', 1] };   // ponytail: prix a confirmer
 btPieces.querySelectorAll('[data-prix]').forEach(s => s.textContent = prix(PIECES[s.dataset.prix][1]));
 btPieces.onclick = e => { const k = e.target.dataset.piece; if (!k) return; panier[k] = Math.min(999, panier[k] + 1); suite = false; majPanier(); afficher('panier'); };
-const resumeCommande = c => [c.kit && c.kit + ' kit', c.presoude && c.presoude + ' pré-soudée',
+const ACCES = ['Accès à l’interface Brique, 3 mois', 9];   // ponytail: prix a confirmer ; sans console, donc sans livraison (meme prix dans server.js)
+btAccesPrix.textContent = prix(ACCES[1]) + ' · accès pendant 3 mois';
+btAcces.onclick = () => { panier.acces = Math.min(999, panier.acces + 1); suite = false; majPanier(); afficher('panier'); };
+const resumeCommande = c => [c.kit && c.kit + ' kit', c.presoude && c.presoude + ' pré-soudée', c.acces && c.acces + ' accès interface',
   ...Object.entries(PIECES).map(([k, [nom]]) => c.pieces?.[k] && c.pieces[k] + ' × ' + nom)].filter(Boolean).join(' + ');
 // ---------- Panier -> compte (lien mail) -> point relais -> paiement Stripe ----------
-const panierVide = () => Object.fromEntries(['kit', 'presoude', ...Object.keys(PIECES)].map(k => [k, 0]));
+const panierVide = () => Object.fromEntries(['kit', 'presoude', 'acces', ...Object.keys(PIECES)].map(k => [k, 0]));
 const panierLu = lire('brique-panier') || {};
 let panier = Object.fromEntries(Object.keys(panierVide()).map(k => [k, +panierLu[k] || 0])), relais = null, client = lire('brique-client'), suite = false;   // suite : panier validé, on passe livraison puis paiement
 function majPanier() {
   ecrire('brique-panier', panier);
   const n = panier.kit + panier.presoude, pu = n && PALIERS.find(([m]) => n >= m)[1];
   const lignes = [['kit', 'Console kit à souder', pu], ['presoude', 'Console pré-soudée', pu + PRESOUDE_SUPPLEMENT],
-    ...Object.entries(PIECES).map(([k, [nom, p]]) => [k, nom, p])].filter(([k]) => panier[k]);
-  const nb = lignes.reduce((s, [k]) => s + panier[k], 0);
+    ['acces', ACCES[0], ACCES[1]], ...Object.entries(PIECES).map(([k, [nom, p]]) => [k, nom, p])].filter(([k]) => panier[k]);
+  const nb = lignes.reduce((s, [k]) => s + panier[k], 0), colis = lignes.some(([k]) => k !== 'acces');   // colis : sinon accès seul, ni livraison ni point relais
   panierNb.textContent = nb || '';
-  const sousTotal = lignes.reduce((s, [k, , p]) => s + panier[k] * p, 0), total = nb ? sousTotal + PORT_RELAIS : 0;
+  const port = colis ? PORT_RELAIS : 0, sousTotal = lignes.reduce((s, [k, , p]) => s + panier[k] * p, 0), total = nb ? sousTotal + port : 0;
   panierLignes.innerHTML = nb ? lignes.map(([k, nom, p]) => `<div class="rang"><div class="qui"><b>${nom}</b><br><small>${prix(p)} pièce</small></div>
     <span class="cmd-qte"><button data-k="${k}" data-d="-1" aria-label="Une de moins">−</button><b>${panier[k]}</b><button data-k="${k}" data-d="1" aria-label="Une de plus">+</button></span>
     <span>${prix(panier[k] * p)}</span><button class="jouer" data-retirer="${k}" aria-label="Retirer">🗑</button></div>`).join('')
     + (n ? `<div class="rang"><div class="qui"><b>Accès à l'interface Brique pendant 3 mois</b><br><small>La console peut aussi se programmer sans l'interface, avec n'importe quelle IA.</small></div><span class="cmd-inclus">Inclus</span></div>` : '')
     + `<div class="rang"><div class="qui">Sous-total (${nb} article${nb > 1 ? 's' : ''})</div><span>${prix(sousTotal)}</span></div>
-    <div class="rang"><div class="qui">Livraison en point relais</div><span>${prix(PORT_RELAIS)}</span></div>
+    ${colis ? `<div class="rang"><div class="qui">Livraison en point relais</div><span>${prix(PORT_RELAIS)}</span></div>` : ''}
     <div class="rang cmd-total"><div class="qui">Total TTC</div><span>${prix(total)}</span></div>` : '<p class="vide">Votre panier est vide.</p>';
   if (!nb) suite = false;
   panierSuite.classList.toggle('hide', !nb || suite); cmdValider.classList.toggle('hide', !nb || suite); cmdSuite.classList.toggle('hide', !suite);
-  const etape = !suite ? 0 : client && relais ? 2 : 1;
+  cmdLivraison.classList.toggle('hide', !colis);
+  const etape = !suite ? 0 : client && (relais || !colis) ? 2 : 1;
   cmdEtapes.querySelectorAll('li').forEach((li, i) => li.classList.toggle('on', i === etape));
   cliConnexion.classList.toggle('hide', !!client); cliConnecte.classList.toggle('hide', !client); majCompte();
   relaisChoisi.innerHTML = relais ? `📍 <b>${esc(relais.nom)}</b>, ${esc(relais.cp)} ${esc(relais.ville)} (n° ${esc(relais.id)})` : 'Livraison uniquement en point relais Mondial Relay (4,90 €).';
   cmdPayer.textContent = nb ? `Payer ${prix(total)}` : 'Payer';
-  cmdPayer.disabled = !(nb && client && relais);
+  cmdPayer.disabled = !(nb && client && (relais || !colis));
 }
 const cmdDire = (t, ok) => cmdMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
 btCommander.onclick = () => {
@@ -3789,7 +3801,7 @@ relaisBtn.onclick = async () => {                       // la carte Mondial Rela
 };
 cmdPayer.onclick = async () => {
   cmdPayer.disabled = true;
-  try { location.href = (await api('api/client/commande', { panier, relais }, client)).url; }
+  try { location.href = (await api('api/client/commande', { panier, relais: Object.keys(panier).some(k => k !== 'acces' && panier[k]) ? relais : null }, client)).url; }
   catch (e) { cmdDire(e.message); if (e.code === 401) sortirClient(); else cmdPayer.disabled = false; }
 };
 async function retourBoutique() {                       // retour de Stripe (?paye=… / ?boutique=annule) ; le lien du mail passe par connexionParLien
@@ -4308,11 +4320,11 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const AXES = JeuxBulles.ETAPES, T = s => document.documentElement.lang === 'en' ? JeuxBulles.EN[s] || s : s;   // T : les bulles toutes faites, en anglais sur la page /en
   const AIDE_BULLES = "Touche une bulle, puis appuie sur « Fabriquer mon jeu ».", AIDE_ECRIRE = "Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».", AIDE_SUITE = "Touche d'autres bulles, ou appuie sur « Fabriquer mon jeu ».";
   const ATTENTE = "⏳ Je cherche des bulles pour toi…";
-  let recette = {}, props = {}, frais = {}, courant = 'jeu', cherche = false, gouts = [], vu = '';   // recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
+  let fait = false, recette = {}, props = {}, frais = {}, courant = 'jeu', cherche = false, gouts = [], vu = '';   // recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
   const axeDe = id => AXES.find(x => x.id === id);
   const ids = () => Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.id]));
   const etapes = () => AXES.filter(x => !JeuxBulles.saute(x.id, ids()));   // la couleur n'a pas de sens pour une image
-  const raz = () => { recette = structuredClone(etat.recette || {}); props = {}; frais = {}; courant = 'jeu'; gouts = []; vu = ''; };
+  const raz = () => { recette = structuredClone(etat.recette || {}); props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); courant = fait ? '' : 'jeu'; gouts = []; vu = ''; };
   const retirerImage = role => { const k = (etat.images || []).findIndex(m => m.role === role); if (k >= 0) { sources.delete(etat.images[k]); etat.images.splice(k, 1); imagesChangees(); } };
   function rendreBulles() {
     scBulles.classList.toggle('hide', mode !== 'petits'); if (mode !== 'petits') return;
@@ -4326,7 +4338,10 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const ouvert = a => `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${T(a.q)}</div><div class="bulles">${a.bulles.map(bulle).join('')}</div>`
       + (a.ia ? `<h4>✨ Des idées pour toi</h4><div class="bulles">${cherche ? `<span class="attente">${ATTENTE}</span>` : ia.map((b, i) => bulle(b, a.bulles.length + i)).join('')}</div>`
         + `<div class="libre"><input type="text" maxlength="100" placeholder="✏️ Ce que tu aimes…"><button class="bulle autre" data-l="libre">🔄 D'autres bulles</button></div>` : '') + '</div>';
-    scBulles.innerHTML = etapes().map(x => x.id === courant ? ouvert(x) : recette[x.id] ? paire(x) : '').join('');
+    const venir = etapes().filter(x => x.id !== courant && !recette[x.id]);   // l'ensemble de la structure : ce qui est répondu (en gouttes), ce qui se fait (ouvert), ce qui reste (pastilles)
+    scBulles.innerHTML = (fait ? `<div class="fait">✅ Ton jeu est prêt ! Tu peux changer ce que tu veux : touche une bulle, puis « Fabriquer mon jeu ».</div>` : '')
+      + etapes().map(x => x.id === courant ? ouvert(x) : recette[x.id] ? paire(x) : '').join('')
+      + (venir.length ? `<div class="aVenir">${fait ? 'Tu peux aussi choisir :' : 'Ensuite :'} ${venir.map(x => `<button class="pastille" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}</div>` : '');
     scDemande.value = etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ');   // le champ (caché) dit ce qui est choisi
   }
   async function charger(id, encore) {                   // les idées de l'IA pour cette étape (personnage, ce qu'on attrape, ce qu'on évite), tournées vers l'univers de l'enfant ; sans choix ni goût, pas d'appel
@@ -4377,7 +4392,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     etat.script = script; mettreCode(script);
     scCompris.textContent = '✅ Ton jeu est prêt ! ' + T(JeuxBulles.aide(r));
     etat.essais.push({ demande: scDemande.value || '(bulles)', auto: false, explication: '', console: '', date: Date.now(), lignes: script.split('\n').length });
-    majAide(true); sauver(); rendre();
+    majAide(true); courant = ''; fait = true; rendreBulles(); sauver(); rendre();
     const pb = await envoyer(script); scGo.disabled = false;
     if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
   }
@@ -4398,8 +4413,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     try {
       const r = await api('api/choix', { ...ident(), texte, script: etat.script });
       if (!r.choix?.length) throw new Error("Je n'ai pas trouvé d'idée : écris-en un peu plus.");
-      scChoix.innerHTML = `<b>${esc(r.question || 'Choisis ce qui te plaît :')}</b><div class="chips">${r.choix.map(c => `<button class="chip" data-phrase="${esc(c.phrase)}">${esc(c.bouton)}</button>`).join('')}</div>`;
-      scChoix.classList.remove('hide'); scCompris.textContent = "Choisis un bouton : sa phrase s'écrit dans le champ.";
+      scChoix.innerHTML = `<b>${esc(r.question || 'Qu’est-ce que tu préfères ?')}</b><p>${esc('Par exemple : ' + r.choix.map(c => c.bouton).join(', ') + '… ou ton idée.')}</p>`;   // une phrase avec des directions, pas de boutons : il répond par ses mots
+      scChoix.classList.remove('hide'); scCompris.textContent = "Réponds avec tes mots dans le champ, puis appuie sur « Envoyer à l'IA »."; scDemande.value = ''; scDemande.focus();
     } catch (e) { scCompris.textContent = e.message === 'IA non configuree' ? "L'IA n'est pas branchée sur ce serveur." : e.message || "L'IA ne répond pas : réessaie."; }
     finally { scAide.disabled = false; scAide.textContent = '💡 Aide-moi'; majTokens(); }
   };

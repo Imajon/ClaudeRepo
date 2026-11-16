@@ -4215,7 +4215,7 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   scInstallBtn.addEventListener('click', () => { if (port) fermer(); }, true);   // l'installation a besoin du port
   async function envoyer(prog) {                         // "SCRIPT <octets>" puis le programme ; la console répond OK ou ERR
     if (!port && !(await auto())) {
-      dire('Ta console n'est pas connectée : branche-la en USB, puis connecte-la ici pour envoyer ton jeu.', false, true);
+      dire('Ta console n’est pas connectée : branche-la en USB, puis connecte-la ici pour envoyer ton jeu.', false, true);
       return 'Pas encore sur la console : appuie sur « 📟 Envoyer sur la console ».';
     }
     occupe('📟 J\'envoie ton jeu sur la console…');

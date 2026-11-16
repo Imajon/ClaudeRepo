@@ -23,4 +23,10 @@ for (const [i, perso] of persos.entries()) for (const [j, monde] of mondes.entri
 for (const jeu of jeux) for (const action of actions) { const v = JSON.parse(execFileSync(VERIF, [], { input: J.assembler({ jeu, action, perso: 'img', bon: 'img', mal: 'img', imgs: { perso: 1, bon: 2, mal: 3 } }) })); assert(v.ok, `images ${jeu} ${action} : ${v.erreur}`); n++; }
 // les 3 jeux avec chaque couleur
 for (const jeu of jeux) for (const couleur of couleurs) { const v = JSON.parse(execFileSync(VERIF, [], { input: J.assembler({ jeu, couleur }) })); assert(v.ok, `${jeu} ${couleur} : ${v.erreur}`); n++; }
+// les nouveaux jeux : chaque monde x avec / sans obstacles, puis l'ecran de fin (FIN forcee a 1 : panneau + rejouer)
+const mondes2 = choix[3];
+for (const jeu of jeux.filter(j => !['attrape', 'esquive', 'pluie'].includes(j))) for (const obst of ['avec', 'sans']) for (const [i, monde] of mondes2.entries()) {
+  const code = J.assembler({ jeu, obst, monde, perso: persos[i], couleur: couleurs[i] });
+  for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${obst} ${monde} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 70000, `${jeu} ${obst} ${monde} : trop lourd (${v.ops}, ${v.memoire})`); pire = { ops: Math.max(pire.ops, v.ops), memoire: Math.max(pire.memoire, v.memoire) }; n++; }
+}
 console.log(`ok : ${n} programmes joues, au plus ${pire.ops} dessins, ${pire.memoire} octets`);

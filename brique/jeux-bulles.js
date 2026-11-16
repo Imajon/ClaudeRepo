@@ -14,7 +14,8 @@
       // les autres structures : cachées au début, elles arrivent avec « Des idées pour toi » (plus: true)
       { id: 'esquive', bouton: '💨 J’évite ce qui tombe', plus: true }, { id: 'pluie', bouton: '🌧 J’attrape tout, rien ne doit tomber', plus: true },
       { id: 'plat-but', bouton: '🏁 Je cours et je saute jusqu’au drapeau', plus: true }, { id: 'plat-attrape', bouton: '⭐ Je saute pour ramasser toutes les étoiles', plus: true }, { id: 'plat-evite', bouton: '👾 Je saute par-dessus les monstres', plus: true }, { id: 'plat-course', bouton: '⏱ Je cours plus vite que mon rival', plus: true },
-      { id: 'cote', bouton: '🏃 Je cours en sautant les obstacles', plus: true }, { id: 'derriere', bouton: '🚗 Je conduis et je change de voie', plus: true }, { id: 'dessus', bouton: '🛰 Je pilote ma voiture sur la piste', plus: true }] },
+      { id: 'cote', bouton: '🏃 Je cours en sautant les obstacles', plus: true }, { id: 'derriere', bouton: '🚗 Je conduis et je change de voie', plus: true }, { id: 'dessus', bouton: '🛰 Je pilote ma voiture sur la piste', plus: true }, { id: 'iso', bouton: '🧊 Je roule en 3D en diagonale', plus: true }] },
+    { id: 'figure', h: 20, icone: '🏍', nom: 'Mon véhicule', q: 'Sur quoi roules-tu ?', bulles: [{ id: 'auto', bouton: '🚗 En voiture' }, { id: 'moto', bouton: '🏍 En moto de motocross' }, { id: 'surf', bouton: '🏄 Sur une planche de surf' }] },
     { id: 'obst', h: 55, icone: '🚧', nom: 'Les obstacles', q: 'Des obstacles sur la route ?', bulles: [{ id: 'avec', bouton: '🚧 Avec obstacles' }, { id: 'sans', bouton: '🛣 Sans obstacles' }] },
     { id: 'perso', h: 28, icone: '🐱', nom: 'Mon personnage', q: 'Qui joues-tu ?', ia: true, bulles: [
       { id: 'chat', bouton: '🐱 Je joue un chat' }, { id: 'robot', bouton: '🤖 Je joue un robot' }, { id: 'dragon', bouton: '🐉 Je joue un dragon' }, { id: 'fusee', bouton: '🚀 Je joue une fusée' },
@@ -35,14 +36,15 @@
     { id: 'niv', v2: true, h: 190, icone: '🪜', nom: 'Les niveaux', q: 'Combien de niveaux ?', bulles: [
       { id: 'un', bouton: '1️⃣ Un seul niveau' }, { id: 'trois', bouton: '🪜 3 niveaux, de plus en plus vite' }, { id: 'cinq', bouton: '🏔 5 niveaux, de plus en plus vite' }] }
   ];
-  const DEFAUT = { jeu: 'attrape', obst: 'avec', perso: 'chat', couleur: 'orange', monde: 'foret', bon: 'monde', mal: 'monde', action: 'saut', fin: 'perdu', niv: 'un' };
+  const DEFAUT = { jeu: 'attrape', obst: 'avec', perso: 'chat', couleur: 'orange', monde: 'foret', bon: 'monde', mal: 'monde', action: 'saut', figure: 'auto', fin: 'perdu', niv: 'un' };
   const CARTELS = { perdu: ['PERDU !'], oups: ['OUPS !', [255, 120, 100]], over: ['GAME OVER', [255, 70, 70]], encore: ['ENCORE !', [255, 225, 90]], rate: ['RATE !', [255, 150, 50]], erreur: ['ERREUR', [110, 230, 130]] };   // texte (sans accent : la console n'en dessine pas) et couleur ; 9 lettres au plus, le cartel fait 200 px
   const NIVEAUX = { un: 1, trois: 3, cinq: 5 };
 // L'IA propose d'autres idées pour perso, bon et mal : chacune devient une image (icône de la page, numéro dans r.imgs) et son choix vaut 'img'. Sans image trouvée, retour au dessin du monde.
-const COURSES = { cote: 1, derriere: 1, dessus: 1 }, NOUVEAUX = { 'plat-but': 1, 'plat-attrape': 1, 'plat-evite': 1, 'plat-course': 1, ...COURSES };   // les nouveaux jeux : le gros bouton a son rôle fixe (sauter, turbo), les obstacles ne comptent que pour les courses
+const COURSES = { cote: 1, derriere: 1, dessus: 1, iso: 1 }, NOUVEAUX = { 'plat-but': 1, 'plat-attrape': 1, 'plat-evite': 1, 'plat-course': 1, ...COURSES };   // les nouveaux jeux : le gros bouton a son rôle fixe (sauter, turbo), les obstacles ne comptent que pour les courses
 const SOLO = { quiz: 1, soigne: 1 };   // ces deux jeux n'ont ni obstacles, ni objets, ni gros bouton à choisir
-const saute = (id, r) => { r = r || {}; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; return id === 'couleur' || id === 'bon' || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && !!NOUVEAUX[r.jeu]); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
+const saute = (id, r) => { r = r || {}; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || id === 'bon' || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && !!NOUVEAUX[r.jeu]); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
 
+  const FIG = {"auto":["rect(x - 3, y + 16, 30, 9, C2) rect(x - 3, y + 16, 30, 3, C3) disque(x + 3, y + 25, 4, NO) disque(x + 21, y + 25, 4, NO)","rect(x - 2, y + 16, 28, 10, C2) rect(x - 2, y + 16, 28, 3, C3) rect(x, y + 25, 6, 4, NO) rect(x + 18, y + 25, 6, 4, NO)"],"moto":["disque(x + 2, y + 24, 5, NO) disque(x + 22, y + 24, 5, NO) rect(x + 2, y + 17, 20, 4, C2) rect(x + 18, y + 12, 3, 6, NO)","rect(x + 9, y + 18, 6, 10, NO) rect(x + 4, y + 17, 16, 3, C2)"],"surf":["rect(x - 3, y + 21, 30, 3, C2) tri(x + 27, y + 21, x + 27, y + 24, x + 32, y + 22, C2) rect(x - 4, y + 25, 32, 2, A3)","rect(x + 5, y + 20, 14, 5, C2) rect(x + 3, y + 25, 18, 2, A3)"]};   // le véhicule sous le personnage dans les courses : [vue de côté, vue de derrière / dessus]
   const COULEURS = { rouge: [225, 60, 55], orange: [240, 140, 40], jaune: [245, 205, 50], vert: [80, 190, 90], bleu: [70, 130, 230], violet: [150, 90, 210], rose: [240, 120, 175], blanc: [240, 240, 245] };
   // jeu : part de mauvais objets (%), un bon objet qui touche le sol coûte une vie ?, un mauvais objet évité rapporte un point ?
   const MODES = { attrape: { pb: 40, manque: false, esquive: false, nom: '' }, esquive: { pb: 100, manque: false, esquive: true, nom: 'Esquive ' }, pluie: { pb: 20, manque: true, esquive: false, nom: 'Pluie de tresors ', lent: 0.4 } };
@@ -462,13 +464,13 @@ end
   const PLATS = [[150, 168, 70], [270, 128, 70], [390, 168, 70], [500, 128, 80], [620, 168, 70], [730, 128, 70], [830, 168, 60]];   // x, haut, largeur : chacune se saute depuis la précédente
   const GAGNE = 'FIN = 1 PTS += 10 if T < 40 PTS += int(40 - T) end score(PTS) son(1318, 300)';
 
-  function base(r) {   // ce que les nouveaux systèmes partagent : couleurs, décor du monde, personnage, objets, cœurs, fin de partie
-    const mo = MONDES[r.monde], col = COULEURS[r.couleur], im = r.imgs || {};
+  function base(r, v) {   // ce que les nouveaux systèmes partagent : couleurs, décor du monde, personnage, objets, cœurs, fin de partie
+    const mo = MONDES[r.monde], col = COULEURS[r.couleur], im = r.imgs || {}; r = { ...r, figure: FIG[r.figure] ? r.figure : 'auto' };
     const dx = liste(mo.n, i => Math.round(14 + i * 292 / Math.max(1, mo.n - 1) + (i * 37) % 17 - 8)), dy = liste(mo.n, i => (i * 53 + 17) % 180), dz = liste(mo.n, i => (i * 7) % 14);
     return {
       tete: `var C1 = 0 var C2 = 0 var C3 = 0 var BL = 0 var NO = 0 var SOL = 0 var SOL2 = 0 var RO = 0 var A1 = 0 var A2 = 0 var A3 = 0 var A4 = 0 var BAND = []
 var DX = ${dx} var DY = ${dy} var DZ = ${dz}
-var PTS = 0 var VIES = 3 var FIN = 0 var HT = 0.0 var T = 0.0`,
+var PTS = 0 var VIES = 3 var FIN = 0 var HT = 0.0 var T = 0.0 var V = ${v === undefined ? -1 : v}`,
       defs: `def couleurs()
   C1 = rgb(${col.join(', ')}) C2 = rgb(${fonce(col).join(', ')}) C3 = rgb(${clair(col).join(', ')}) BL = rgb(255, 255, 255) NO = rgb(30, 30, 45) RO = rgb(70, 70, 80)
   SOL = ${rgb(mo.sol[0])} SOL2 = ${rgb(mo.sol[1])}
@@ -489,7 +491,17 @@ ${r.mal === 'img' ? `  image(${im.mal}, x - 8, y - 8, 0, 1)` : mo.mal}
   end
 end
 
-def perso(x, y)
+def vehicule(x, y)
+  if V == 0
+    ${FIG[r.figure][0]}
+  else
+    ${FIG[r.figure][1]}
+  end
+end
+
+def perso(x, y0)
+  var y = y0
+  if V >= 0 vehicule(x, y0 - 5) y = y0 - 8 end
 ${r.perso === 'img' ? `  image(${im.perso}, x, y, 0, 1)` : PERSOS[r.perso]}
 end
 
@@ -524,7 +536,7 @@ end
 
   // plateforme : on court et on saute sur un monde qui défile ; de côté : la piste est plate, on avance tout seul (G ralentit, D accélère)
   function plateforme(r) {
-    const b = base(r), o = r.obst === 'avec', cote = r.jeu === 'cote';
+    const cote = r.jeu === 'cote', b = base(r, cote ? 0 : -1), o = r.obst === 'avec';
     const c = cote ? { nom: 'Course cote ', long: 1400, pl: false, hz: o ? [300, 480, 660, 840, 1020, 1200] : [], vh: 0, fin: 'drapeau', rival: 180, auto: true, saut: o }
       : { ...PLATEFORMES[r.jeu], long: 1000, pl: true, auto: false, saut: true };
     const pl = c.pl ? PLATS : [], st = c.pl ? [...pl.map(p => [p[0] + p[2] / 2, p[1] - 16]), [70, 192]] : [], FL = c.long - 60, MAXX = c.long - 30, drap = c.fin === 'drapeau';
@@ -652,8 +664,29 @@ end
 
   // course de derrière (route en perspective) ou de dessus (route vue d'en haut) : on avance tout seul, G et D pour changer de voie, P3 = turbo ; les bons objets donnent un coup de vitesse, les mauvais (avec obstacles) font ralentir
   function course(r) {
-    const b = base(r), o = r.obst === 'avec', haut = r.jeu === 'dessus', rival = 118;
-    const route = haut
+    const b = base(r, 1), o = r.obst === 'avec', iso = r.jeu === 'iso', haut = r.jeu === 'dessus', rival = 118;
+    const P = (s, l) => [Math.round(290 - 240 * s + 56 * l), Math.round(40 + 170 * s + 36 * l)], pt = (s, l) => P(s, l).join(', '), isoRoute = `  fond(SOL)
+  tri(${pt(-0.1, -1.1)}, ${pt(-0.1, 1.1)}, ${pt(1.2, 1.1)}, RO) tri(${pt(-0.1, -1.1)}, ${pt(1.2, 1.1)}, ${pt(1.2, -1.1)}, RO)
+  ligne(${pt(-0.1, -1.1)}, ${pt(1.2, -1.1)}, A4) ligne(${pt(-0.1, 1.1)}, ${pt(1.2, 1.1)}, A4)
+  i = 0
+  while i < 8
+    s = real((DY[i] * 2 + int(P * 0.6)) % 240) / 240.0 * 1.3 - 0.05
+    q = real(i % 2 * 2 - 1) * (1.5 + real(DZ[i] % 4) * 0.15)
+    x = 290 - int(240.0 * s) + int(56.0 * q)
+    y = 40 + int(170.0 * s) + int(36.0 * q)
+    disque(x, y, 7, A2) disque(x - 2, y - 2, 3, A3)
+    i += 1
+  end
+  q = P / 100.0
+  i = 0
+  while i < 6
+    s = (real(i) + q - real(int(q))) / 6.0 * 1.3 - 0.05
+    x = 290 - int(240.0 * s)
+    y = 40 + int(170.0 * s)
+    ligne(x, y, x - 14, y + 10, BL)
+    i += 1
+  end`;
+    const route = iso ? isoRoute : haut
       ? `  fond(SOL)
   rect(60, 0, 200, 240, RO)
   ph = P * 0.6
@@ -693,9 +726,10 @@ end
     rect(160 + rh, y, 4 + int(s * 10), 2 + int(s * 12), c)
     i += 1
   end`;
-    const pos = haut ? { ox: 'x = 160 + int(OL[i] * 85)', oy: 'y = -10 + int((1.0 - OZ[i]) * 244)', px: 'x = 160 + int(PLX * 85) - 12', py: 188 }
+    const pos = iso ? { ox: 'x = 290 - int(240.0 * s) + int(OL[i] * 56.0)', oy: 'y = 40 + int(170.0 * s) + int(OL[i] * 36.0)', px: 'x = 62 + int(PLX * 56.0)\n  y = 170 + int(PLX * 36.0)', py: 'y' }
+      : haut ? { ox: 'x = 160 + int(OL[i] * 85)', oy: 'y = -10 + int((1.0 - OZ[i]) * 244)', px: 'x = 160 + int(PLX * 85) - 12', py: 188 }
       : { ox: 'x = 160 + int(OL[i] * (20 + s * 90))', oy: 'y = 96 + int(s * 104)', px: 'x = 160 + int(PLX * 97) - 12', py: 176 };
-    return `${nomJeu(haut ? 'Course dessus ' : 'Course derriere ', r)}${b.tete}
+    return `${nomJeu(iso ? 'Course iso ' : haut ? 'Course dessus ' : 'Course derriere ', r)}${b.tete}
 var P = 0.0 var RP = 0.0 var PLX = 0.0 var EN = 1.0 var BO = 0.0 var SP = 0.5
 var OZ = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] var OL = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] var OK = [0, 0, 0, 0, 0, 0] var OV = [false, false, false, false, false, false]
 ${b.defs}
@@ -786,7 +820,7 @@ ${route}
     i += 1
   end
   ${pos.px}
-  if bouton(P3) && EN > 0 rect(x + 8, ${pos.py + 24}, 8, 4 + int(temps() * 20) % 4 * 2, A4) end
+  if bouton(P3) && EN > 0 rect(x + 8, ${pos.py} + 24, 8, 4 + int(temps() * 20) % 4 * 2, A4) end
   if HT <= 0 || int(temps() * 12) % 2 == 0 perso(x, ${pos.py}) end
   texte(9, 9, str(PTS), NO, 3) texte(8, 8, str(PTS), BL, 3)
   barre(int(P / 24.0), int(RP / 24.0))
@@ -962,7 +996,7 @@ end
 `;
   }
 
-  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, derriere: course, dessus: course };   // jeu -> son système
+  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, derriere: course, dessus: course, iso: course };   // jeu -> son système
 
   function recetteComplete(r) {   // une étape sans choix (ou un choix inconnu) prend sa valeur par défaut : le jeu marche toujours
     const o = {};
@@ -972,7 +1006,7 @@ end
   }
   // Multijoueur sans menu : le jeu envoie sa position (« identifiant,x,y ») et dessine un fantôme quand une autre console envoie le MÊME identifiant (= empreinte du programme : même recette = même jeu).
   // Lissage : le fantôme rattrape la dernière position reçue (14 %/image-seconde), il saute directement si l'écart dépasse 80 px (réapparition, début de partie). Course : pas de fantôme, la barre du rival suit l'autre joueur. Questions et personnage : jeux solo, inchangés. ponytail: pas de rôle ni d'attente de départ, chacun joue sa partie ; à ajouter si on veut une vraie course synchronisée.
-  const COURSE = { cote: 1, 'plat-course': 1, derriere: 1, dessus: 1 };   // les vraies courses : départ synchronisé (attente de l'autre, puis 3-2-1)
+  const COURSE = { cote: 1, 'plat-course': 1, derriere: 1, dessus: 1, iso: 1 };   // les vraies courses : départ synchronisé (attente de l'autre, puis 3-2-1)
   const MULTI = new Map([[chute, { x: 'int(PX)', y: 'int(PY)', d: 'perso(int(JDX), int(JDY)) disque(int(JDX) + 12, int(JDY) - 6, 3, BL)' }], [plateforme, { x: 'int(PX)', y: 'int(PY)', d: 'camera(CAMX, 0) perso(int(JDX), int(JDY)) disque(int(JDX) + 12, int(JDY) - 6, 3, BL) camera(0, 0)' }], [course, { x: 'int(P)', y: '0', r: 'RP = JDX' }]]);
   function multi(code, m, race, rival) {
     let h = 0x811c9dc5; for (const ch of code) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
@@ -1066,10 +1100,10 @@ end
   }
   const AIDE = { saut: 'il saute', tir: 'il tire', bouclier: 'il se protege avec un bouclier', turbo: 'il va plus vite', aimant: 'il attire les bons objets' };
 const AIDE_JEU = { 'plat-but': 'G et D pour courir, le gros bouton : il saute. Arrive au drapeau !', 'plat-attrape': 'G et D pour courir, le gros bouton : il saute. Attrape toutes les etoiles !', 'plat-evite': 'G et D pour courir, le gros bouton : il saute. Evite les monstres et arrive au drapeau !', 'plat-course': 'G et D pour courir, le gros bouton : il saute. Arrive au drapeau avant le rival !',
-  cote: 'Il court tout seul : D va plus vite, G ralentit, le gros bouton : turbo. Arrive avant le rival !', 'cote-obst': 'Il court tout seul : D va plus vite, G ralentit, le gros bouton : il saute. Saute les obstacles et arrive avant le rival !', derriere: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !', dessus: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !' };
-const AIDE_OBST = { derriere: ' Evite les mauvais objets.', dessus: ' Evite les mauvais objets.' };
+  cote: 'Il court tout seul : D va plus vite, G ralentit, le gros bouton : turbo. Arrive avant le rival !', 'cote-obst': 'Il court tout seul : D va plus vite, G ralentit, le gros bouton : il saute. Saute les obstacles et arrive avant le rival !', derriere: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !', dessus: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !', iso: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !' };
+const AIDE_OBST = { derriere: ' Evite les mauvais objets.', dessus: ' Evite les mauvais objets.', iso: ' Evite les mauvais objets.' };
 AIDE_JEU.quiz = 'Lis la question, puis choisis ta reponse : G (la 1re), le gros bouton (la 2e) ou D (la 3e). 3 vies !'; AIDE_JEU.soigne = 'G : il mange, le gros bouton : il joue, D : il dort. Garde ses 3 jauges pleines pendant 45 secondes !';
 M.aide = r => { const c = recetteComplete(r); if (SOLO[c.jeu]) return AIDE_JEU[c.jeu]; if (NOUVEAUX[c.jeu]) return AIDE_JEU[c.jeu === 'cote' && c.obst === 'avec' ? 'cote-obst' : c.jeu] + (c.obst === 'avec' ? AIDE_OBST[c.jeu] || '' : ''); const a = c.action; return 'G et D pour bouger, le gros bouton : ' + AIDE[a] + '.'; };
-M.EN = {"Modifier ma présentation":"Change my game’s look","Que veux-tu changer ?":"What do you want to change?","Quand je perds":"When I lose","Que dit le cartel quand tu perds ?":"What does the sign say when you lose?","😵 PERDU !":"😵 YOU LOST!","😬 OUPS !":"😬 OOPS!","💀 GAME OVER":"💀 GAME OVER","😸 ENCORE !":"😸 AGAIN!","🔥 RATÉ !":"🔥 MISSED!","🤖 ERREUR":"🤖 ERROR","Les niveaux":"The levels","Combien de niveaux ?":"How many levels?","1️⃣ Un seul niveau":"1️⃣ A single level","🪜 3 niveaux, de plus en plus vite":"🪜 3 levels, faster and faster","🏔 5 niveaux, de plus en plus vite":"🏔 5 levels, faster and faster","❓ Je réponds à des questions":"❓ I answer questions","🐣 Je m’occupe d’un personnage":"🐣 I take care of a character","Lis la question, puis choisis ta reponse : G (la 1re), le gros bouton (la 2e) ou D (la 3e). 3 vies !":"Read the question, then pick your answer: L (1st), big button (2nd) or R (3rd). 3 lives!","G : il mange, le gros bouton : il joue, D : il dort. Garde ses 3 jauges pleines pendant 45 secondes !":"L: it eats, big button: it plays, R: it sleeps. Keep its 3 gauges full for 45 seconds!","🏁 Plateforme : arriver au drapeau":"🏁 Platformer: reach the flag","⭐ Plateforme : tout attraper":"⭐ Platformer: catch everything","👾 Plateforme : éviter les monstres":"👾 Platformer: dodge the monsters","⏱ Plateforme : course":"⏱ Platformer: race","🏃 Course de côté":"🏃 Side-view race","🚗 Course vue de derrière":"🚗 Race seen from behind","🛰 Course vue de dessus":"🛰 Race seen from above","Les obstacles":"The obstacles","Des obstacles sur la route ?":"Any obstacles on the road?","🚧 Avec obstacles":"🚧 With obstacles","🛣 Sans obstacles":"🛣 No obstacles","G et D pour courir, le gros bouton : il saute. Arrive au drapeau !":"L and R to run, big button: it jumps. Reach the flag!","G et D pour courir, le gros bouton : il saute. Attrape toutes les etoiles !":"L and R to run, big button: it jumps. Catch all the stars!","G et D pour courir, le gros bouton : il saute. Evite les monstres et arrive au drapeau !":"L and R to run, big button: it jumps. Dodge the monsters and reach the flag!","G et D pour courir, le gros bouton : il saute. Arrive au drapeau avant le rival !":"L and R to run, big button: it jumps. Reach the flag before the rival!","Il court tout seul : D va plus vite, G ralentit, le gros bouton : il saute. Saute les obstacles et arrive avant le rival !":"It runs by itself: R goes faster, L slows down, big button: it jumps. Jump over the obstacles and get there before the rival!","Il court tout seul : D va plus vite, G ralentit, le gros bouton : turbo. Arrive avant le rival !":"It runs by itself: R goes faster, L slows down, big button: turbo. Get there before the rival!","G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !":"L and R to change lane, big button: turbo. Pick up the good things and get there before the rival!","G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival ! Evite les mauvais objets.":"L and R to change lane, big button: turbo. Pick up the good things and get there before the rival! Avoid the bad things.","Le jeu":"The game","Quel jeu veux-tu ?":"Which game?","🍎 Attraper":"🍎 Catch","💨 Esquiver":"💨 Dodge","🌧 Ne rien rater":"🌧 Miss nothing","Mon personnage":"My character","Qui es-tu ?":"Who are you?","🐱 Un chat":"🐱 A cat","🤖 Un robot":"🤖 A robot","🐉 Un dragon":"🐉 A dragon","🚀 Une fusée":"🚀 A rocket","👻 Un fantôme":"👻 A ghost","🧙 Un magicien":"🧙 A wizard","🐸 Une grenouille":"🐸 A frog","🦉 Un hibou":"🦉 An owl","Sa couleur":"Its colour","De quelle couleur ?":"Which colour?","🔴 Rouge":"🔴 Red","🟠 Orange":"🟠 Orange","🟡 Jaune":"🟡 Yellow","🟢 Vert":"🟢 Green","🔵 Bleu":"🔵 Blue","🟣 Violet":"🟣 Purple","🩷 Rose":"🩷 Pink","⚪ Blanc":"⚪ White","Le monde":"The world","Où es-tu ?":"Where are you?","🌳 Une forêt":"🌳 A forest","🏙 La ville la nuit":"🏙 The city at night","🌌 L’espace":"🌌 Space","🌊 Sous l’eau":"🌊 Underwater","🏜 Un désert":"🏜 A desert","❄️ La neige":"❄️ Snow","Ce que j’attrape":"What I catch","Que veux-tu attraper ?":"What do you want to catch?","🎁 Ceux du monde":"🎁 The ones from this world","Ce que j’évite":"What I avoid","Que veux-tu éviter ?":"What do you want to avoid?","💣 Ceux du monde":"💣 The ones from this world","Le gros bouton":"The big button","Que fait le gros bouton ?":"What does the big button do?","🦘 Sauter":"🦘 Jump","💥 Tirer":"💥 Shoot","🛡 Bouclier":"🛡 Shield","💨 Turbo":"💨 Turbo","🧲 Aimant":"🧲 Magnet","G et D pour bouger, le gros bouton : il saute.":"L and R to move, big button: it jumps.","G et D pour bouger, le gros bouton : il tire.":"L and R to move, big button: it shoots.","G et D pour bouger, le gros bouton : il se protege avec un bouclier.":"L and R to move, big button: it protects itself with a shield.","G et D pour bouger, le gros bouton : il va plus vite.":"L and R to move, big button: it goes faster.","G et D pour bouger, le gros bouton : il attire les bons objets.":"L and R to move, big button: it attracts the good things."};   // la page anglaise (lang="en") traduit les bulles avec ce dictionnaire
+M.EN = {"🧊 Je roule en 3D en diagonale":"🧊 I ride in diagonal 3D","Mon véhicule":"My vehicle","Sur quoi roules-tu ?":"What are you riding?","🚗 En voiture":"🚗 In a car","🏍 En moto de motocross":"🏍 On a motocross bike","🏄 Sur une planche de surf":"🏄 On a surfboard","Modifier ma présentation":"Change my game’s look","Que veux-tu changer ?":"What do you want to change?","Quand je perds":"When I lose","Que dit le cartel quand tu perds ?":"What does the sign say when you lose?","😵 PERDU !":"😵 YOU LOST!","😬 OUPS !":"😬 OOPS!","💀 GAME OVER":"💀 GAME OVER","😸 ENCORE !":"😸 AGAIN!","🔥 RATÉ !":"🔥 MISSED!","🤖 ERREUR":"🤖 ERROR","Les niveaux":"The levels","Combien de niveaux ?":"How many levels?","1️⃣ Un seul niveau":"1️⃣ A single level","🪜 3 niveaux, de plus en plus vite":"🪜 3 levels, faster and faster","🏔 5 niveaux, de plus en plus vite":"🏔 5 levels, faster and faster","❓ Je réponds à des questions":"❓ I answer questions","🐣 Je m’occupe d’un personnage":"🐣 I take care of a character","Lis la question, puis choisis ta reponse : G (la 1re), le gros bouton (la 2e) ou D (la 3e). 3 vies !":"Read the question, then pick your answer: L (1st), big button (2nd) or R (3rd). 3 lives!","G : il mange, le gros bouton : il joue, D : il dort. Garde ses 3 jauges pleines pendant 45 secondes !":"L: it eats, big button: it plays, R: it sleeps. Keep its 3 gauges full for 45 seconds!","🏁 Plateforme : arriver au drapeau":"🏁 Platformer: reach the flag","⭐ Plateforme : tout attraper":"⭐ Platformer: catch everything","👾 Plateforme : éviter les monstres":"👾 Platformer: dodge the monsters","⏱ Plateforme : course":"⏱ Platformer: race","🏃 Course de côté":"🏃 Side-view race","🚗 Course vue de derrière":"🚗 Race seen from behind","🛰 Course vue de dessus":"🛰 Race seen from above","Les obstacles":"The obstacles","Des obstacles sur la route ?":"Any obstacles on the road?","🚧 Avec obstacles":"🚧 With obstacles","🛣 Sans obstacles":"🛣 No obstacles","G et D pour courir, le gros bouton : il saute. Arrive au drapeau !":"L and R to run, big button: it jumps. Reach the flag!","G et D pour courir, le gros bouton : il saute. Attrape toutes les etoiles !":"L and R to run, big button: it jumps. Catch all the stars!","G et D pour courir, le gros bouton : il saute. Evite les monstres et arrive au drapeau !":"L and R to run, big button: it jumps. Dodge the monsters and reach the flag!","G et D pour courir, le gros bouton : il saute. Arrive au drapeau avant le rival !":"L and R to run, big button: it jumps. Reach the flag before the rival!","Il court tout seul : D va plus vite, G ralentit, le gros bouton : il saute. Saute les obstacles et arrive avant le rival !":"It runs by itself: R goes faster, L slows down, big button: it jumps. Jump over the obstacles and get there before the rival!","Il court tout seul : D va plus vite, G ralentit, le gros bouton : turbo. Arrive avant le rival !":"It runs by itself: R goes faster, L slows down, big button: turbo. Get there before the rival!","G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !":"L and R to change lane, big button: turbo. Pick up the good things and get there before the rival!","G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival ! Evite les mauvais objets.":"L and R to change lane, big button: turbo. Pick up the good things and get there before the rival! Avoid the bad things.","Le jeu":"The game","Quel jeu veux-tu ?":"Which game?","🍎 Attraper":"🍎 Catch","💨 Esquiver":"💨 Dodge","🌧 Ne rien rater":"🌧 Miss nothing","Mon personnage":"My character","Qui es-tu ?":"Who are you?","🐱 Un chat":"🐱 A cat","🤖 Un robot":"🤖 A robot","🐉 Un dragon":"🐉 A dragon","🚀 Une fusée":"🚀 A rocket","👻 Un fantôme":"👻 A ghost","🧙 Un magicien":"🧙 A wizard","🐸 Une grenouille":"🐸 A frog","🦉 Un hibou":"🦉 An owl","Sa couleur":"Its colour","De quelle couleur ?":"Which colour?","🔴 Rouge":"🔴 Red","🟠 Orange":"🟠 Orange","🟡 Jaune":"🟡 Yellow","🟢 Vert":"🟢 Green","🔵 Bleu":"🔵 Blue","🟣 Violet":"🟣 Purple","🩷 Rose":"🩷 Pink","⚪ Blanc":"⚪ White","Le monde":"The world","Où es-tu ?":"Where are you?","🌳 Une forêt":"🌳 A forest","🏙 La ville la nuit":"🏙 The city at night","🌌 L’espace":"🌌 Space","🌊 Sous l’eau":"🌊 Underwater","🏜 Un désert":"🏜 A desert","❄️ La neige":"❄️ Snow","Ce que j’attrape":"What I catch","Que veux-tu attraper ?":"What do you want to catch?","🎁 Ceux du monde":"🎁 The ones from this world","Ce que j’évite":"What I avoid","Que veux-tu éviter ?":"What do you want to avoid?","💣 Ceux du monde":"💣 The ones from this world","Le gros bouton":"The big button","Que fait le gros bouton ?":"What does the big button do?","🦘 Sauter":"🦘 Jump","💥 Tirer":"💥 Shoot","🛡 Bouclier":"🛡 Shield","💨 Turbo":"💨 Turbo","🧲 Aimant":"🧲 Magnet","G et D pour bouger, le gros bouton : il saute.":"L and R to move, big button: it jumps.","G et D pour bouger, le gros bouton : il tire.":"L and R to move, big button: it shoots.","G et D pour bouger, le gros bouton : il se protege avec un bouclier.":"L and R to move, big button: it protects itself with a shield.","G et D pour bouger, le gros bouton : il va plus vite.":"L and R to move, big button: it goes faster.","G et D pour bouger, le gros bouton : il attire les bons objets.":"L and R to move, big button: it attracts the good things."};   // la page anglaise (lang="en") traduit les bulles avec ce dictionnaire
 M.ETAPES = ETAPES; M.saute = saute; M.DEFAUT = DEFAUT; M.recetteComplete = recetteComplete; M.assembler = assembler;
 })(typeof module === 'object' ? module.exports : (window.JeuxBulles = {}));

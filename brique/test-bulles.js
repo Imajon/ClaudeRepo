@@ -38,3 +38,10 @@ for (const [i, jeu] of jeux.entries()) for (const [k, fin] of cartels.entries())
 assert(J.assembler({ jeu: 'attrape', fin: 'over' }).includes('"GAME OVER"') && !J.assembler({ jeu: 'attrape', fin: 'over' }).includes('"PERDU !"'), 'le cartel change de mot');
 assert(J.assembler({ jeu: 'plat-but', niv: 'trois' }).includes('majJ(') && !J.assembler({ jeu: 'quiz', niv: 'trois' }).includes('majJ('), 'niveaux : pas pour les jeux solo');
 console.log(`ok :${n} programmes joues, au plus ${pire.ops} dessins, ${pire.memoire} octets`);
+// les vues de course x les vehicules (auto, moto, surf), avec l'ecran de fin
+{ let m = 0; for (const jeu of ['cote', 'derriere', 'dessus', 'iso']) for (const figure of ['auto', 'moto', 'surf']) for (const obst of ['avec', 'sans']) {
+  const code = J.assembler({ jeu, figure, obst, monde: mondes[m++ % mondes.length], perso: persos[m % persos.length] });
+  assert(code.includes('def vehicule') && code.includes('var V = ' + (jeu === 'cote' ? 0 : 1)), `${jeu} : vehicule`);
+  for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok && v.ops <= 600, `${jeu} ${figure} ${obst} : ${v.erreur || v.ops}`); }
+} assert(!J.assembler({ jeu: 'attrape', figure: 'moto' }).includes('def vehicule(x, y)\n  if V == 0') || J.assembler({ jeu: 'attrape' }).includes('var V = -1'), 'pas de vehicule hors course'); }
+console.log('ok : vues x vehicules');

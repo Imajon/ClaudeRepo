@@ -10,7 +10,7 @@
   // ---------- les bulles (étape -> choix) ; id = ce que le générateur comprend, bouton = ce que l'enfant voit ----------
   const ETAPES = [
     { id: 'jeu', h: 210, icone: '🎮', nom: 'Le jeu', q: 'Que fais-tu dans ton jeu ?', bulles: [
-      { id: 'attrape', bouton: '🍎 J’attrape ce qui tombe' }, { id: 'quiz', bouton: '❓ Je réponds à des questions' }, { id: 'soigne', bouton: '🐣 Je m’occupe d’un personnage' },
+      { id: 'attrape', bouton: '🎮 Je contrôle un personnage' }, { id: 'quiz', bouton: '❓ Je réponds à des questions' }, { id: 'soigne', bouton: '🐣 Je m’occupe d’un personnage' },
       // les autres structures : cachées au début, elles arrivent avec « Des idées pour toi » (plus: true)
       { id: 'esquive', bouton: '💨 J’évite ce qui tombe', plus: true }, { id: 'pluie', bouton: '🌧 J’attrape tout, rien ne doit tomber', plus: true },
       { id: 'plat-but', bouton: '🏁 Je cours et je saute jusqu’au drapeau', plus: true }, { id: 'plat-attrape', bouton: '⭐ Je saute pour ramasser toutes les étoiles', plus: true }, { id: 'plat-evite', bouton: '👾 Je saute par-dessus les monstres', plus: true }, { id: 'plat-course', bouton: '⏱ Je cours plus vite que mon rival', plus: true },

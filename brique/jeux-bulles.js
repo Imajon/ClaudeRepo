@@ -965,23 +965,26 @@ end
   }
   // Multijoueur sans menu : le jeu envoie sa position (« identifiant,x,y ») et dessine un fantôme quand une autre console envoie le MÊME identifiant (= empreinte du programme : même recette = même jeu).
   // Lissage : le fantôme rattrape la dernière position reçue (14 %/image-seconde), il saute directement si l'écart dépasse 80 px (réapparition, début de partie). Course : pas de fantôme, la barre du rival suit l'autre joueur. Questions et personnage : jeux solo, inchangés. ponytail: pas de rôle ni d'attente de départ, chacun joue sa partie ; à ajouter si on veut une vraie course synchronisée.
+  const COURSE = { cote: 1, 'plat-course': 1, derriere: 1, dessus: 1 };   // les vraies courses : départ synchronisé (attente de l'autre, puis 3-2-1)
   const MULTI = new Map([[chute, { x: 'int(PX)', y: 'int(PY)', d: 'perso(int(JDX), int(JDY)) disque(int(JDX) + 12, int(JDY) - 6, 3, BL)' }], [plateforme, { x: 'int(PX)', y: 'int(PY)', d: 'camera(CAMX, 0) perso(int(JDX), int(JDY)) disque(int(JDX) + 12, int(JDY) - 6, 3, BL) camera(0, 0)' }], [course, { x: 'int(P)', y: '0', r: 'RP = JDX' }]]);
-  function multi(code, m) {
+  function multi(code, m, race, rival) {
     let h = 0x811c9dc5; for (const ch of code) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
     const AB = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; let id = ''; for (let i = 0; i < 6; i++) { id += AB[h & 31]; h = (h >>> 5) | (h << 27) >>> 0; }
-    return code.replace(/^def (maj|dessine)\(/gm, (_, f) => 'def ' + f + '0(') + `
-import string
-var JID = "${id}" var JT = -9.0 var JOX = 0 var JOY = 0 var JDX = 0.0 var JDY = 0.0 var JLS = 0.0 var JA = 0.0
-def maj(dt)
-  maj0(dt)
+    const rv = race && m.d ? 'RX = JDX' : m.r;   // course de plateforme : le rival simulé laisse la place à l'autre joueur (barre et arrivée comptent pour lui)
+    let c = code.replace(/^def (maj|dessine)\(/gm, (_, f) => 'def ' + f + '0(');
+    if (race && m.d) c = c.replace('if RX > CAMX - 30 &&', 'if temps() - JT > 1.0 && RX > CAMX - 30 &&');
+    const decl = `import string
+var JID = "${id}" var JT = -9.0 var JOX = 0 var JOY = 0 var JOW = 0 var JDX = 0.0 var JDY = 0.0 var JLS = 0.0 var JA = 0.0 var JW = ${race ? 1 : 0} var JC = -1.0
+`;
+    return c.replace('\n', '\n' + decl) + `def maj(dt)
   var t = temps() var p = nil
-  if t - JLS > 0.04 JLS = t envoie(JID + "," + str(${m.x}) + "," + str(${m.y})) end
+  if t - JLS > 0.04 JLS = t envoie(JID + "," + str(${m.x}) + "," + str(${m.y}) + "," + str(JW)) end
   for e: recois()
     if e[0] != moi()
       p = string.split(e[1], ",")
-      if size(p) == 3 && p[0] == JID
+      if size(p) == 4 && p[0] == JID
         if t - JT > 1.0 JDX = int(p[1]) * 1.0 JDY = int(p[2]) * 1.0 JA = 2.0 son(880, 90) end
-        JT = t JOX = int(p[1]) JOY = int(p[2])
+        JT = t JOX = int(p[1]) JOY = int(p[2]) JOW = int(p[3])
       end
     end
   end
@@ -991,18 +994,33 @@ def maj(dt)
     if k > 1.0 k = 1.0 end
     if ex > 80 || ex < -80 || ey > 80 || ey < -80 JDX = JOX * 1.0 JDY = JOY * 1.0 else JDX += ex * k JDY += ey * k end
   end
-  ${m.r ? 'if t - JT < 1.0 ' + m.r + ' end' : ''}
+  if JW == 1
+    if JC < 0
+      if t - JT < 1.0 && JOW == 1 JC = 3.0 son(660, 80) elif appui(P3) JW = 0 end
+    else
+      JC -= dt
+      if JC <= 0 JW = 0 son(1047, 220) end
+    end
+    return
+  end
+  ${race ? 'var f0 = FIN maj0(dt)\n  if f0 > 0 && FIN == 0 JW = 1 JC = -1.0 end' : 'maj0(dt)'}
+  ${rv ? 'if t - JT < 1.0 ' + rv + ' end' : ''}
 end
 def dessine()
   dessine0()
   ${m.d ? 'if temps() - JT < 1.0 ' + m.d + ' end' : ''}
-  if JA > 0 texte(47, 31, "Joueur 2 connecte !", NO, 2) texte(46, 30, "Joueur 2 connecte !", BL, 2) end
+  if JW == 1
+    if JC < 0
+      texte(29, 101, "Attends l'autre joueur", NO, 2) texte(28, 100, "Attends l'autre joueur", BL, 2)
+      texte(101, 131, "P3 : jouer seul", NO, 1) texte(100, 130, "P3 : jouer seul", BL, 1)
+    else texte(141, 91, str(int(JC) + 1), NO, 6) texte(140, 90, str(int(JC) + 1), BL, 6) end
+  elif JA > 0 texte(47, 31, "Joueur 2 connecte !", NO, 2) texte(46, 30, "Joueur 2 connecte !", BL, 2) end
 end
 `;
   }
   function assembler(r) {
     const c = recetteComplete(r), f = SYSTEMES[c.jeu], code = f(c);
-    return MULTI.has(f) ? multi(code, MULTI.get(f)) : code;
+    return MULTI.has(f) ? multi(code, MULTI.get(f), !!COURSE[c.jeu]) : code;
   }
   const AIDE = { saut: 'il saute', tir: 'il tire', bouclier: 'il se protege avec un bouclier', turbo: 'il va plus vite', aimant: 'il attire les bons objets' };
 const AIDE_JEU = { 'plat-but': 'G et D pour courir, le gros bouton : il saute. Arrive au drapeau !', 'plat-attrape': 'G et D pour courir, le gros bouton : il saute. Attrape toutes les etoiles !', 'plat-evite': 'G et D pour courir, le gros bouton : il saute. Evite les monstres et arrive au drapeau !', 'plat-course': 'G et D pour courir, le gros bouton : il saute. Arrive au drapeau avant le rival !',

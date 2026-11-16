@@ -315,7 +315,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #scBulles .bZone .bulle{border:0;background:hsl(var(--h) 70% 50% / .2);box-shadow:inset 0 0 0 3px var(--c),0 3px 8px #0003;padding:7px 16px;font-size:17px}#scBulles .bZone .bulle:hover{background:hsl(var(--h) 70% 50% / .4)}
 #scBulles .bZone .bulle.prise{background:var(--c);color:#fff}#scBulles .bZone .bulle.autre{box-shadow:inset 0 0 0 2px var(--line);font-size:15px;padding:6px 14px}
 /* une étape répondue : la question et la réponse sont fondues (filtre « goutte » sur le calque du fond), la réponse sort de la question comme une excroissance */
-#scBulles .rangPaires{display:flex;flex-wrap:nowrap;align-items:flex-end;gap:10px;overflow-x:auto;margin:2px 0}#scBulles .rangPaires .bPaire{flex:none}
+#scBulles .rangPaires{display:flex;flex-wrap:nowrap;align-items:flex-end;gap:8px;overflow:hidden;margin:2px 0}#scBulles .rangPaires .bPaire{flex:0 1 auto;min-width:0}#scBulles .pf,#scBulles .pt{min-width:0}#scBulles .pr{overflow:hidden;text-overflow:ellipsis;min-width:0}   /* le récapitulatif tient sur UNE ligne, sans défiler */
 #scBulles .bPaire{--c:hsl(var(--h) 60% 44%);position:relative;display:block;margin:0;padding:0;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:inherit;max-width:100%}
 #scBulles .pf,#scBulles .pt{display:flex;align-items:flex-end;padding:0 0 12px}
 #scBulles .pt{position:absolute;inset:0}#scBulles .pf{filter:url(#gooey)}
@@ -325,7 +325,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #scBulles .pt .pq{color:#fff}#scBulles .pt .pr{color:#111;font-weight:bold}
 #scBulles .bPaire:hover .pf{transform:scale(1.02)}#scBulles .bPaire:focus-visible{outline:3px solid var(--c);outline-offset:4px;border-radius:30px}
 #scBulles .aVenir{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:14px;color:var(--mute)}#scBulles .aVenir .pastille{width:auto;height:auto;border:2px dashed hsl(var(--h) 50% 50%);background:none;color:var(--mute);border-radius:999px;padding:3px 12px;font:inherit;font-size:14px;cursor:pointer}#scBulles .aVenir .pastille:hover{background:hsl(var(--h) 70% 50% / .2)}#scBulles .fait{font-size:18px;margin:8px 0 2px}
-#scBulles .libre{display:flex;gap:8px;align-items:center;margin-top:12px}#scBulles .libre input{flex:1;min-width:0;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:inherit;font-size:17px}#scBulles .libre input:focus{outline:none;border-color:var(--c)}
+#scBulles .libre{display:flex;gap:8px;align-items:center;margin-top:6px}#scBulles .libre input{flex:1;min-width:0;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:4px 10px;font:inherit;font-size:15px}#scBulles .libre input:focus{outline:none;border-color:var(--c)}
 @keyframes bFondu{from{opacity:0;transform:translateY(10px)}}   /* les bulles arrivent l'une après l'autre, dans le sens de la lecture (--i = leur rang) */
 #scBulles .bZone.fondu .bulles .bulle{animation:bFondu .5s ease backwards;animation-delay:calc(var(--i,0) * .12s)}
 @media (prefers-reduced-motion:reduce){#scBulles .bZone.fondu .bulles .bulle{animation:none}}
@@ -4323,22 +4323,23 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const AXES = JeuxBulles.ETAPES, T = s => document.documentElement.lang === 'en' ? JeuxBulles.EN[s] || s : s;   // T : les bulles toutes faites, en anglais sur la page /en
   const salut = () => `Bonjour${pseudo() ? ' ' + pseudo() : ''}, quel jeu va-t-on faire aujourd'hui ?`, AIDE_ECRIRE = "Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».", AIDE_SUITE = "";
   const ATTENTE = "⏳ Je cherche des bulles pour toi…";
-  let fait = false, recette = {}, props = {}, frais = {}, courant = 'jeu', cherche = false, gouts = [], vu = '', idees = false;   // recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
+  let fait = false, recette = {}, props = {}, frais = {}, courant = 'jeu', cherche = false, gouts = [], vu = '', idees = false, fabrique = '';   // fabrique : la recette du dernier jeu fabriqué (le bouton reste grisé tant qu'elle n'a pas changé) ; recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
   const axeDe = id => AXES.find(x => x.id === id);
   const base = a => a.bulles.filter(b => !b.plus || recette[a.id]?.id === b.id), extra = a => idees ? [...a.bulles.filter(b => b.plus && recette[a.id]?.id !== b.id), ...(a.ia && !cherche ? props[a.id] || [] : [])] : [];   // base : visibles tout de suite ; extra : après « Des idées pour toi »
   const toutes = a => [...base(a), ...extra(a)];
   const ids = () => Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.id]));
   const etapes = () => AXES.filter(x => !JeuxBulles.saute(x.id, ids()));   // la couleur n'a pas de sens pour une image
-  const raz = () => { recette = structuredClone(etat.recette || {}); props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); courant = fait ? '' : 'jeu'; gouts = []; vu = ''; idees = false; };
+  const sig = () => JSON.stringify(Object.entries(recette).map(([k, v]) => [k, v.bouton]));
+  const raz = () => { recette = structuredClone(etat.recette || {}); props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); fabrique = fait ? sig() : ''; courant = fait ? '' : 'jeu'; gouts = []; vu = ''; idees = false; };
   const retirerImage = role => { const k = (etat.images || []).findIndex(m => m.role === role); if (k >= 0) { sources.delete(etat.images[k]); etat.images.splice(k, 1); imagesChangees(); } };
   function rendreBulles() {
     scBulles.classList.toggle('hide', mode !== 'petits'); if (mode !== 'petits') return;
-    scBulles.classList.toggle('attend', cherche);
+    scBulles.classList.toggle('attend', cherche); if (!iaEnCours) scGo.disabled = fabrique === sig();
     const cle = courant + '|' + (idees ? 1 : 0) + '|' + (props[courant] || []).map(b => b.bouton).join(), anime = !cherche && cle !== vu;
     if (!cherche) vu = cle;                              // les bulles de l'IA arrivent en fondu, l'une après l'autre (et seulement si la liste change)
     const bulle = (b, i) => `<button class="bulle${recette[courant]?.bouton === b.bouton ? ' prise' : ''}" style="--i:${i}" data-l="bulle" data-i="${i}">${esc(T(b.bouton))}</button>`;
     // les bulles arrivent au fil des réponses : seules les étapes déjà répondues (question + réponse FONDUES en une forme) et l'étape en cours (question + choix) sont là
-    const paire = x => { const c = `<span class="pq">${x.icone} ${T(x.q)}</span><span class="pr">${esc(T(recette[x.id].bouton))}</span>`;   // 2 calques identiques : le fond passe au filtre « goutte », le texte reste net par-dessus
+    const paire = x => { const c = `<span class="pq">${x.icone}</span><span class="pr">${esc(T(recette[x.id].bouton))}</span>`;   // 2 calques identiques : le fond passe au filtre « goutte », le texte reste net par-dessus
       return `<button class="bPaire" style="--h:${x.h}" data-l="axe" data-i="${x.id}"><span class="pf" aria-hidden="true">${c}</span><span class="pt">${c}</span></button>`; };
     const ouvert = a => { const b0 = base(a), ex = extra(a), plus = a.ia || a.bulles.some(b => b.plus);
       return `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${T(a.q)}</div><div class="bulles">${b0.map(bulle).join('')}</div>`
@@ -4397,12 +4398,12 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   async function fabriquerBulles() {                     // « Fabriquer » : le programme est assemblé ici (pièces testées), sans IA, puis envoyé à la console
     const imgs = {}; (etat.images || []).forEach((m, i) => { if (m.role) imgs[m.role] = i + 1; });
     const r = { ...ids(), imgs }, script = JeuxBulles.assembler(r);
-    scGo.disabled = true; etat.recette = structuredClone(recette);
+    fabrique = sig(); scGo.disabled = true; etat.recette = structuredClone(recette);
     etat.script = script; mettreCode(script);
     scCompris.textContent = '✅ Ton jeu est prêt !';
     etat.essais.push({ demande: scDemande.value || '(bulles)', auto: false, explication: '', console: '', date: Date.now(), lignes: script.split('\n').length });
-    majAide(true); courant = ''; fait = true; rendreBulles(); sauver(); rendre();
-    const pb = await envoyer(script); scGo.disabled = false;
+    majAide(true); fait = true; courant = 'perso'; idees = true; rendreBulles(); charger('perso'); sauver(); rendre();   // pour l'améliorer : des idées de personnage dans l'univers de son jeu, avec le champ « Ce que tu aimes » juste dessous
+    const pb = await envoyer(script); scGo.disabled = fabrique === sig();
     if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
   }
   const libGo = () => mode === 'petits' ? '✨ Fabriquer mon jeu' : "✨ Envoyer à l'IA";   // le bouton d'envoi, vu par un enfant qui ne lit pas encore bien

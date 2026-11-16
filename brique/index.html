@@ -1774,7 +1774,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 <dialog id="dlgAlerte" style="text-align:center">
   <h2>⚠️</h2>
   <p id="dlgAlerteTxt" style="font-size:1.15em;line-height:1.4"></p>
-  <form method="dialog" class="actions" style="justify-content:center"><button class="sec" style="border-color:var(--acc)" autofocus>J'ai compris</button></form>
+  <form method="dialog" class="actions" style="justify-content:center"><button type="button" id="dlgAlerteCo" class="big hide">🔌 Connecter ma console</button><button class="sec" style="border-color:var(--acc)" autofocus>J'ai compris</button></form>
 </dialog>
 
 <main id="atelier" class="hide">
@@ -4152,9 +4152,9 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   rendre();
   let port = null, lecteur = null, attente = null, versionVue = null, errEnCours = null, statVue = null, versionNum = 0;
   const pause = ms => new Promise(r => setTimeout(r, ms));
-  const dire = (t, ok) => {
+  const dire = (t, ok, brancher) => {
     scEtat.innerHTML = ok === undefined ? esc(t) : `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
-    if (ok === false && !document.querySelector('dialog[open]:not(#dlgAlerte)')) { dlgAlerteTxt.textContent = t; if (!dlgAlerte.open) dlgAlerte.showModal(); }   // les avertissements s'affichent aussi au centre (sauf si une autre fenêtre est déjà ouverte)
+    if (ok === false && !document.querySelector('dialog[open]:not(#dlgAlerte)')) { dlgAlerteTxt.textContent = t; dlgAlerteCo.classList.toggle('hide', !brancher); if (!dlgAlerte.open) dlgAlerte.showModal(); }   // les avertissements s'affichent aussi au centre (sauf si une autre fenêtre est déjà ouverte)
   };
   const journal = l => { journal.l = [...(journal.l || []), l].slice(-8); scJournal.textContent = journal.l.join('\n'); scJournal.classList.remove('hide'); };
   function ligne(l) {
@@ -4202,6 +4202,7 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
     for (const p of await navigator.serial.getPorts()) { try { if (await relier(p)) return true; await fermer(); } catch { port = null; } }
     return false;
   }
+  dlgAlerteCo.onclick = () => { dlgAlerte.close(); scBrancher.click(); };   // depuis le message : choisir la console tout de suite (le jeu part dès qu'elle est reliée)
   scBrancher.onclick = async () => {
     if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.', false);
     try {
@@ -4213,7 +4214,7 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   scInstallBtn.addEventListener('click', () => { if (port) fermer(); }, true);   // l'installation a besoin du port
   async function envoyer(prog) {                         // "SCRIPT <octets>" puis le programme ; la console répond OK ou ERR
     if (!port && !(await auto())) {
-      dire('👉 Appuie sur « 📟 Envoyer sur la console » et choisis ta console.', false); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' }); scMettre.focus();
+      dire('Ta console n'est pas connectée : branche-la en USB, puis connecte-la ici pour envoyer ton jeu.', false, true);
       return 'Pas encore sur la console : appuie sur « 📟 Envoyer sur la console ».';
     }
     occupe('📟 J\'envoie ton jeu sur la console…');
@@ -4375,10 +4376,11 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     finally { cherche = false; rendreBulles(); }
   }
   const suivante = () => { const l = etapes(), k = l.findIndex(x => x.id === courant); return [...l.slice(k + 1), ...l.slice(0, k)].find(x => !recette[x.id])?.id || courant; };   // l'étape d'après qui n'a pas encore de choix
+  const ouvrirAuto = () => { if (courant && !axeDe(courant).bulles.length) { idees = true; return charger(courant); } rendreBulles(); };   // étape sans bulle fixe (ce qu'on attrape / évite) : les idées arrivent directement
   scBulles.onclick = async e => {
     const el = e.target.closest('[data-l]'); if (!el || cherche) return;
     const l = el.dataset.l, a = axeDe(courant);   // courant = '' quand tout est répondu : il ne reste que les paires fondues
-    if (l === 'axe') { courant = el.dataset.i; idees = false; return rendreBulles(); }
+    if (l === 'axe') { courant = el.dataset.i; idees = false; return ouvrirAuto(); }
     if (l === 'idees') { idees = true; return charger(courant); }   // charger : pour une étape avec l'IA, va chercher les idées ; sinon, affiche juste les autres structures
     if (l === 'libre') {                                 // pas de bulle à son goût : ce qu'il aime (champ vide : d'autres au hasard) -> de nouvelles idées pour cette étape
       const t = scBulles.querySelector('input').value.trim().replace(/\s+/g, ' ');
@@ -4389,7 +4391,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     if (b.id === 'img') { if (!await prendreIcone(courant, b)) return; } else if (a.ia) retirerImage(courant);
     recette[courant] = b; frais = {};
     const avant = courant; courant = suivante(); idees = false;
-    if (courant === avant) { courant = ''; return rendreBulles(); } scCompris.textContent = AIDE_SUITE; rendreBulles();
+    if (courant === avant) { courant = ''; return rendreBulles(); } scCompris.textContent = AIDE_SUITE; ouvrirAuto();
   };
   scBulles.onkeydown = e => { if (e.key === 'Enter' && e.target.matches('input')) scBulles.querySelector('[data-l=libre]').click(); };
   async function fabriquerBulles() {                     // « Fabriquer » : le programme est assemblé ici (pièces testées), sans IA, puis envoyé à la console

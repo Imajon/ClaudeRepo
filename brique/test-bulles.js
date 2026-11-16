@@ -30,13 +30,13 @@ for (const jeu of jeux.filter(j => !['attrape', 'esquive', 'pluie'].includes(j))
   for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${obst} ${monde} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 70000, `${jeu} ${obst} ${monde} : trop lourd (${v.ops}, ${v.memoire})`); pire = { ops: Math.max(pire.ops, v.ops), memoire: Math.max(pire.memoire, v.memoire) }; n++; }
 }
 // seconde version : chaque cartel x chaque nombre de niveaux x chaque jeu, avec l'ecran de fin (FIN = 1) et, pour les niveaux, un coup de P3 simule par la boucle normale
-const cartels = J.ETAPES.find(e => e.id === 'fin').bulles.map(b => b.id), niv = J.ETAPES.find(e => e.id === 'niv').bulles.map(b => b.id);
+const cartels = J.ETAPES.find(e => e.id === 'fin').bulles.map(b => b.id), niv = ['un', 'trois', 'cinq', 'n2', 'n4', 'n6'];
 for (const [i, jeu] of jeux.entries()) for (const [k, fin] of cartels.entries()) for (const nv of niv) {
   const code = J.assembler({ jeu, fin, niv: nv, monde: mondes[(i + k) % mondes.length] });
   for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${fin} ${nv} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 70000, `${jeu} ${fin} ${nv} : trop lourd (${v.ops}, ${v.memoire})`); n++; }
 }
 // plateforme a niveaux : plateformes differentes x plus de pieges (combinables), vitesse inchangee
-for (const jeu of ['plat-but', 'plat-attrape', 'plat-evite', 'plat-course']) for (const nv of ['trois', 'cinq']) for (const plan of ['non', 'oui']) for (const piege of ['non', 'oui']) {
+for (const jeu of ['plat-but', 'plat-attrape', 'plat-evite', 'plat-course']) for (const nv of ['trois', 'cinq', 'n6']) for (const plan of ['non', 'oui']) for (const piege of ['non', 'oui']) {
   const code = J.assembler({ jeu, niv: nv, plan, piege });
   assert(code.includes('def charge()') && code.includes('majJ(dt)'), `${jeu} ${nv} : niveaux de plateforme`);
   for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${nv} ${plan} ${piege} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 70000, `${jeu} ${nv} ${plan} ${piege} : trop lourd (${v.ops}, ${v.memoire})`); n++; }

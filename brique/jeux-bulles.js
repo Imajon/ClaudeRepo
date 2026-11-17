@@ -11,7 +11,8 @@
   // ---------- les bulles (étape -> choix) ; id = ce que le générateur comprend, bouton = ce que l'enfant voit ----------
   const ETAPES = [
     // ARBORESCENCE : un genre (grande famille) -> un jeu de ce genre (les bulles « genre: » ne s'affichent que sous le genre choisi). Trois genres au départ ; les autres arrivent avec « Des idées pour toi » (plus: true).
-    // À construire (pas encore de moteur, donc pas de bulle) : casse-briques, tetris, labyrinthe. Un nouveau moteur = une entrée dans SYSTEMES + sa bulle ici.
+    // STRUCTURE VISÉE (verbe -> jeux ; récap dans l'Établi, onglet Genres) : saute -> plateforme ; attrape -> perso en bas / plateforme ; tire -> invader / vaisseau central qui tourne / vaisseau sur fond qui défile ; casse -> casse-briques / plateforme qui casse ; rebondis -> plateforme qui rebondit / flappy / pong ; apprends -> quiz / plateforme à questions ; fais grandir -> tamagotchi / plateforme qui grandit.
+    // Exemples Berry testés de chacun : systemes/jeu-*.be. Pas encore de moteur ici (donc pas de bulle) : tout sauf plateforme, chute, quiz, soigne, courses. Un nouveau moteur = une entrée dans SYSTEMES + sa bulle ici.
     // PARCOURS de l'enfant : le type (genre) -> le quoi (perso, ou les questions du quiz) -> le où (monde) -> « comment » sans fin (tout le reste, par 2, puis « aller plus loin ou tester ? »). `pre` : choix déjà faits par la bulle (« Je tire » = invader + gros bouton tir). casse / rebondis : à ajouter avec leur moteur.
     { id: 'genre', h: 210, icone: '🎮', nom: 'Le genre', q: 'Que fais-tu dans ton jeu ?', bulles: [
       { id: 'plateforme', bouton: '🦘 Je saute' }, { id: 'runner', bouton: '💨 Je cours' }, { id: 'invader', bouton: '🧺 J’attrape' }, { id: 'invader', bouton: '💥 Je tire', pre: { action: 'tir' } },
@@ -128,23 +129,37 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
   rect(x + 7, y + 22, 3, 2, A3) rect(x + 14, y + 22, 3, 2, A3)`
   };
 
+  // ---------- décors en COUCHES : des éléments graphiques séparés (ELEMENTS), assemblés par `couches` d'après la fiche d'un monde ----------
+  // Un élément = du Berry qui dessine à (x, y) avec la taille h, couleur c (et c2) ; sol à y = 208. Ajouter un élément = une entrée ici, puis l'employer dans les couches d'un monde.
+  const ELEMENTS = {
+    soleil: c => `disque(x, y, h, ${c})`,
+    nuage: c => `disque(x, y, h, ${c}) disque(x + h, y + h / 2, h * 3 / 4, ${c}) disque(x - h, y + h / 2, h * 2 / 3, ${c})`,
+    colline: c => `disque(x, 222, h, ${c})`,
+    sapin: (c, c2) => `rect(x - 3, 208 - h, 6, h, ${c2}) tri(x - 16, 216 - h, x + 16, 216 - h, x, 180 - h, ${c})`,
+    etoile: c => `if (i + int(temps() * 2)) % 4 != 0 rect(x, y, 2, 2, ${c}) end`,
+    planete: (c, c2) => `disque(x, y, h, ${c}) disque(x - h / 3, y - h / 3, h / 3, ${c2}) disque(x + h / 3, y + h / 3, h / 5, ${c2}) ligne(x - h * 4 / 3, y + h / 2, x + h * 4 / 3, y - h / 2, A1)`
+  };
+  // Une couche : { el, c, c2, at: [[x, y, h]...] (positions fixes) } ou { el, nb, pas, vit, y, dy, h, dz } (nb éléments répartis sur la largeur, vit = dérive en px/s, y + DY % dy, h + DZ * dz). Les couches se dessinent dans l'ordre : du fond vers l'avant.
+  const couches = (liste) => `  var t = 0
+` + liste.map(l => {
+    const el = ELEMENTS[l.el](l.c || 'A1', l.c2 || 'A3');
+    if (l.at) return l.at.map(([x, y, h]) => `  x = ${x} y = ${y} h = ${h}\n  ${el}`).join('\n');
+    return `${l.vit ? `  t = int(temps() * ${l.vit})\n` : ''}  i = 0
+  while i < ${l.nb}
+    x = ${l.vit ? `(DX[i * ${l.pas || 1}] * ${l.k || 1} + t) % 380 - 30` : `DX[i * ${l.pas || 1}]`} y = ${l.y || 0} + DY[i] % ${l.dy || 1} h = ${l.h || 0} + DZ[i] * ${l.dz || 0}
+    ${el}
+    i += 1
+  end`;
+  }).join('\n');
+
   // ---------- les mondes : ciel (haut, bas), sol, 4 couleurs d'ambiance A1..A4, décor, bon objet, mauvais objet (centrés en (x, y), rayon 8) ----------
   const MONDES = {
     foret: { nom: 'dans la foret', ciel: [[130, 200, 240], [200, 235, 200]], sol: [[70, 140, 60], [105, 185, 80]], a: [[255, 225, 90], [255, 255, 255], [110, 75, 45], [40, 120, 70]], n: 8,
-      decor: `  var t = int(temps() * 4)
-  disque(270, 40, 16, A1)
-  while i < 3
-    x = (DX[i] * 2 + t) % 380 - 30 y = 28 + DY[i] % 40
-    disque(x, y, 9, A2) disque(x + 10, y + 4, 7, A2) disque(x - 9, y + 5, 6, A2)
-    i += 1
-  end
-  i = 0
-  while i < 8
-    x = DX[i] h = 22 + DZ[i]
-    rect(x - 3, 208 - h, 6, h, A3)
-    tri(x - 16, 216 - h, x + 16, 216 - h, x, 180 - h, A4)
-    i += 1
-  end`,
+      decor: couches([
+        { el: 'soleil', at: [[270, 40, 16]] },
+        { el: 'nuage', c: 'A2', nb: 3, vit: 4, k: 2, y: 28, dy: 40, h: 9 },
+        { el: 'colline', c: 'SOL2', nb: 4, pas: 2, h: 44, dz: 2 },
+        { el: 'sapin', c: 'A4', c2: 'A3', nb: 8, h: 22, dz: 1 }]),
       bon: `  disque(x, y + 1, 7, rgb(225, 55, 50)) disque(x - 3, y - 2, 2, rgb(255, 170, 160))
   rect(x - 1, y - 8, 2, 4, rgb(110, 75, 45)) tri(x + 1, y - 7, x + 7, y - 9, x + 4, y - 4, rgb(70, 170, 70))`,
       mal: `  disque(x, y, 8, rgb(120, 120, 130)) disque(x - 3, y - 3, 3, rgb(175, 175, 185)) disque(x + 3, y + 3, 2, rgb(85, 85, 95))
@@ -171,12 +186,10 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
   ligne(x + 4, y - 5, x + 7, y - 9, rgb(160, 120, 70))
   disque(x + 7, y - 10, 2 + int(temps() * 8) % 2, rgb(255, 140, 40))` },
     espace: { nom: 'dans l espace', ciel: [[3, 3, 18], [45, 22, 85]], sol: [[95, 90, 115], [135, 130, 155]], a: [[255, 255, 255], [150, 90, 200], [110, 60, 160], [255, 240, 160]], n: 24,
-      decor: `  var t = int(temps() * 2)
-  while i < 24
-    if (i + t) % 4 != 0 rect(DX[i], DY[i] % 200, 2, 2, A1) end
-    i += 1
-  end
-  disque(70, 70, 26, A2) disque(62, 62, 8, A3) disque(80, 80, 5, A3) ligne(36, 82, 106, 56, A1)`,
+      decor: couches([
+        { el: 'etoile', nb: 24, dy: 200 },
+        { el: 'planete', c: 'A2', c2: 'A3', at: [[70, 70, 26]] },
+        { el: 'planete', c: 'A4', c2: 'A2', at: [[262, 44, 11]] }]),
       bon: `  tri(x, y - 9, x - 8, y + 4, x + 8, y + 4, rgb(255, 225, 70)) tri(x, y + 9, x - 8, y - 4, x + 8, y - 4, rgb(255, 225, 70))`,
       mal: `  disque(x, y, 8, rgb(130, 120, 125)) disque(x - 3, y - 2, 3, rgb(90, 82, 88)) disque(x + 3, y + 3, 2, rgb(90, 82, 88)) disque(x + 2, y - 4, 1, rgb(175, 168, 172))` },
     eau: { nom: 'sous l eau', ciel: [[85, 205, 235], [12, 60, 135]], sol: [[225, 205, 140], [248, 232, 172]], a: [[205, 242, 255], [40, 150, 90], [250, 150, 50], [255, 255, 255]], n: 10,

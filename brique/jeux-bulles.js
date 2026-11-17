@@ -2,11 +2,18 @@
 // Pas d'IA pour le code : chaque pièce est du Berry écrit et joué dans verif (node test-bulles.js), donc toute combinaison marche du premier coup.
 // Même fichier pour la page (window.JeuxBulles) et le serveur / les tests (require). Ajouter un SYSTÈME de jeu = une entrée dans SYSTEMES + ses bulles dans JEUX.
 (function (M) {
+  const BE = typeof require === 'function' ? require('./bestiaire.js') : window.Bestiaire;   // les formes du bestiaire (bon, mal, personnages en plus)
   const rgb = c => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
   const mel = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
   const fonce = c => c.map(v => Math.round(v * 0.6)), clair = c => c.map(v => Math.min(255, Math.round(v * 1.2 + 45)));
   const liste0 = (n, f) => Array.from({ length: n }, (_, i) => f(i));
   const liste = (n, f) => '[' + liste0(n, f).join(', ') + ']';
+
+  // une bulle par forme du bestiaire d'un rôle (bon = à attraper, mal = à éviter) : le choix vaut l'id de la forme
+  const EMOJI = { pomme: '🍎', piece: '🪙', etoile: '⭐', perle: '🫧', poisson: '🐟', gemme: '💎', flocon: '❄️', champignon: '🍄', voiture: '🚗', meteorite: '☄️', meduse: '🪼', cactus: '🌵', glacon: '🧊' };
+  const formesBulles = role => BE.FORMES.filter(f => f.role === role).map(f => ({ id: f.id, bouton: (EMOJI[f.id] || '🔷') + ' ' + f.nom }));
+  const formeObjet = id => BE.lignes(BE.forme(id), { dx: -8, dy: -8 });   // forme 16 x 16 centrée en (x, y), comme les objets des mondes
+  const objetCode = (r, k, mo, im) => r[k] === 'img' ? `  image(${im[k]}, x - 8, y - 8, 0, 1)` : BE.forme(r[k]) ? formeObjet(r[k]) : mo[k];
 
   // ---------- les bulles (étape -> choix) ; id = ce que le générateur comprend, bouton = ce que l'enfant voit ----------
   const ETAPES = [
@@ -26,7 +33,7 @@
     { id: 'obst', h: 55, icone: '🚧', nom: 'Les obstacles', q: 'Des obstacles sur la route ?', bulles: [{ id: 'avec', bouton: '🚧 Avec obstacles' }, { id: 'sans', bouton: '🛣 Sans obstacles' }] },
     { id: 'perso', h: 28, icone: '🐱', nom: 'Mon personnage', q: 'Qui joues-tu ?', ia: true, bulles: [
       { id: 'chat', bouton: '🐱 Je joue un chat' }, { id: 'robot', bouton: '🤖 Je joue un robot' }, { id: 'dragon', bouton: '🐉 Je joue un dragon' }, { id: 'fusee', bouton: '🚀 Je joue une fusée' },
-      { id: 'fantome', bouton: '👻 Je joue un fantôme' }, { id: 'magicien', bouton: '🧙 Je joue un magicien' }, { id: 'grenouille', bouton: '🐸 Je joue une grenouille' }, { id: 'hibou', bouton: '🦉 Je joue un hibou' }] },
+      { id: 'fantome', bouton: '👻 Je joue un fantôme' }, { id: 'magicien', bouton: '🧙 Je joue un magicien' }, { id: 'grenouille', bouton: '🐸 Je joue une grenouille' }, { id: 'hibou', bouton: '🦉 Je joue un hibou' }, { id: 'oiseau', bouton: '🐦 Je joue un oiseau' }, { id: 'blob', bouton: '🟡 Je joue une bestiole' }] },
     { id: 'couleur', h: 330, icone: '🎨', nom: 'Sa couleur', q: 'De quelle couleur ?', bulles: [
       { id: 'rouge', bouton: '🔴 Rouge' }, { id: 'orange', bouton: '🟠 Orange' }, { id: 'jaune', bouton: '🟡 Jaune' }, { id: 'vert', bouton: '🟢 Vert' },
       { id: 'bleu', bouton: '🔵 Bleu' }, { id: 'violet', bouton: '🟣 Violet' }, { id: 'rose', bouton: '🩷 Rose' }, { id: 'blanc', bouton: '⚪ Blanc' }] },
@@ -35,8 +42,8 @@
       { id: 'eau', bouton: '🌊 Sous l’eau' }, { id: 'desert', bouton: '🏜 Je joue un désert' }, { id: 'neige', bouton: '❄️ La neige' }] },
     // quiz seulement : l'enfant dit le sujet des questions et le genre de réponses, l'IA écrit 5 questions (api/quiz) ; la bulle prise porte les questions dans .q
     { id: 'quest', quiz: true, h: 300, icone: '❓', nom: 'Les questions', q: 'Sur quoi sont tes questions, et quelles réponses veux-tu ?', bulles: [] },
-    { id: 'bon', h: 100, icone: '🎁', nom: 'Ce que j’attrape', q: 'Que veux-tu attraper ?', ia: true, bulles: [] },
-    { id: 'mal', h: 0, icone: '💣', nom: 'Ce que j’évite', q: 'Que veux-tu éviter ?', ia: true, bulles: [] },
+    { id: 'bon', h: 100, icone: '🎁', nom: 'Ce que j’attrape', q: 'Que veux-tu attraper ?', ia: true, bulles: [{ id: 'monde', bouton: '🎁 Ceux du monde' }, ...formesBulles('bon')] },
+    { id: 'mal', h: 0, icone: '💣', nom: 'Ce que j’évite', q: 'Que veux-tu éviter ?', ia: true, bulles: [{ id: 'monde', bouton: '💣 Ceux du monde' }, ...formesBulles('mal')] },
     { id: 'action', h: 265, icone: '⚡', nom: 'Le gros bouton', q: 'Que fait le gros bouton ?', bulles: [
       { id: 'saut', bouton: '🦘 Sauter' }, { id: 'tir', bouton: '💥 Tirer' }, { id: 'bouclier', bouton: '🛡 Bouclier' }, { id: 'turbo', bouton: '💨 Turbo' }, { id: 'aimant', bouton: '🧲 Aimant' }] },
     // étapes de « seconde version » (v2) : proposées seulement une fois le premier jeu fabriqué, depuis « Modifier ma présentation »
@@ -65,7 +72,7 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
   const COULEURS = { rouge: [225, 60, 55], orange: [240, 140, 40], jaune: [245, 205, 50], vert: [80, 190, 90], bleu: [70, 130, 230], violet: [150, 90, 210], rose: [240, 120, 175], blanc: [240, 240, 245] };
   // jeu : part de mauvais objets (%), un bon objet qui touche le sol coûte une vie ?, un mauvais objet évité rapporte un point ?
   const MODES = { attrape: { pb: 40, manque: false, esquive: false, nom: '' }, esquive: { pb: 100, manque: false, esquive: true, nom: 'Esquive ' }, pluie: { pb: 20, manque: true, esquive: false, nom: 'Pluie de tresors ', lent: 0.4 } };
-  const NOMS = { chat: 'Chat', robot: 'Robot', dragon: 'Dragon', fusee: 'Fusee', fantome: 'Fantome', magicien: 'Magicien', grenouille: 'Grenouille', hibou: 'Hibou' };
+  const NOMS = { chat: 'Chat', robot: 'Robot', dragon: 'Dragon', fusee: 'Fusee', fantome: 'Fantome', magicien: 'Magicien', grenouille: 'Grenouille', hibou: 'Hibou', oiseau: 'Oiseau', blob: 'Bestiole' };
 
   // ---------- les personnages : dessinés dans une boîte de 24 x 24 pixels, coin haut gauche en (x, y) ; C1 corps, C2 ombre, C3 reflet, BL blanc, NO sombre ----------
   const PERSOS = {
@@ -129,23 +136,41 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
   rect(x + 7, y + 22, 3, 2, A3) rect(x + 14, y + 22, 3, 2, A3)`
   };
 
+  // personnages venus du bestiaire (forme 16 x 16 agrandie 1,5 fois dans la boîte de 24 x 24, aux couleurs choisies)
+  for (const id of ['oiseau', 'blob']) PERSOS[id] = BE.lignes(BE.forme(id), { z: 1.5, ex: { a: 'C1', b: 'C3', c: 'C2', w: 'BL', k: 'NO' } });
+
+  // ---------- décors en COUCHES : des éléments graphiques séparés (ELEMENTS), assemblés par `couches` d'après la fiche d'un monde ----------
+  // Un élément = du Berry qui dessine à (x, y) avec la taille h, couleur c (et c2) ; sol à y = 208. Ajouter un élément = une entrée ici, puis l'employer dans les couches d'un monde.
+  const ELEMENTS = {
+    soleil: c => `disque(x, y, h, ${c})`,
+    nuage: c => `disque(x, y, h, ${c}) disque(x + h, y + h / 2, h * 3 / 4, ${c}) disque(x - h, y + h / 2, h * 2 / 3, ${c})`,
+    colline: c => `disque(x, 222, h, ${c})`,
+    sapin: (c, c2) => `rect(x - 3, 208 - h, 6, h, ${c2}) tri(x - 16, 216 - h, x + 16, 216 - h, x, 180 - h, ${c})`,
+    etoile: c => `if (i + int(temps() * 2)) % 4 != 0 rect(x, y, 2, 2, ${c}) end`,
+    planete: (c, c2) => `disque(x, y, h, ${c}) disque(x - h / 3, y - h / 3, h / 3, ${c2}) disque(x + h / 3, y + h / 3, h / 5, ${c2}) ligne(x - h * 4 / 3, y + h / 2, x + h * 4 / 3, y - h / 2, A1)`
+  };
+  // Une couche : { el, c, c2, at: [[x, y, h]...] (positions fixes) } ou { el, nb, pas, vit, k, y, dy, h, dz } (nb éléments répartis sur la largeur, vit = dérive en px/s, y + DY % dy, h + DZ * dz). Dans l'ordre : du fond vers l'avant.
+  const couches = (liste) => '  var t = 0\n' + liste.map(l => {
+    const el = ELEMENTS[l.el](l.c || 'A1', l.c2 || 'A3');
+    if (l.at) return l.at.map(([x, y, h]) => `  x = ${x} y = ${y} h = ${h}\n  ${el}`).join('\n');
+    const ix = l.pas > 1 ? `i * ${l.pas}` : 'i', ex = l.vit ? `(DX[${ix}]${l.k > 1 ? ` * ${l.k}` : ''} + t) % 380 - 30` : `DX[${ix}]`;
+    const ey = l.dy ? `${l.y || 0} + DY[i] % ${l.dy}` : l.y || 0, eh = l.dz ? `${l.h || 0} + DZ[i]${l.dz > 1 ? ` * ${l.dz}` : ''}` : l.h || 0;
+    return (l.vit ? `  t = int(temps() * ${l.vit})\n` : '') + `  i = 0
+  while i < ${l.nb}
+    x = ${ex} y = ${ey} h = ${eh}
+    ${el}
+    i += 1
+  end`;
+  }).join('\n');
+
   // ---------- les mondes : ciel (haut, bas), sol, 4 couleurs d'ambiance A1..A4, décor, bon objet, mauvais objet (centrés en (x, y), rayon 8) ----------
   const MONDES = {
     foret: { nom: 'dans la foret', ciel: [[130, 200, 240], [200, 235, 200]], sol: [[70, 140, 60], [105, 185, 80]], a: [[255, 225, 90], [255, 255, 255], [110, 75, 45], [40, 120, 70]], n: 8,
-      decor: `  var t = int(temps() * 4)
-  disque(270, 40, 16, A1)
-  while i < 3
-    x = (DX[i] * 2 + t) % 380 - 30 y = 28 + DY[i] % 40
-    disque(x, y, 9, A2) disque(x + 10, y + 4, 7, A2) disque(x - 9, y + 5, 6, A2)
-    i += 1
-  end
-  i = 0
-  while i < 8
-    x = DX[i] h = 22 + DZ[i]
-    rect(x - 3, 208 - h, 6, h, A3)
-    tri(x - 16, 216 - h, x + 16, 216 - h, x, 180 - h, A4)
-    i += 1
-  end`,
+      decor: couches([
+        { el: 'soleil', at: [[270, 40, 16]] },
+        { el: 'nuage', c: 'A2', nb: 3, vit: 4, k: 2, y: 28, dy: 40, h: 9 },
+        { el: 'colline', c: 'SOL2', nb: 4, pas: 2, h: 44, dz: 2 },
+        { el: 'sapin', c: 'A4', c2: 'A3', nb: 8, h: 22, dz: 1 }]),
       bon: `  disque(x, y + 1, 7, rgb(225, 55, 50)) disque(x - 3, y - 2, 2, rgb(255, 170, 160))
   rect(x - 1, y - 8, 2, 4, rgb(110, 75, 45)) tri(x + 1, y - 7, x + 7, y - 9, x + 4, y - 4, rgb(70, 170, 70))`,
       mal: `  disque(x, y, 8, rgb(120, 120, 130)) disque(x - 3, y - 3, 3, rgb(175, 175, 185)) disque(x + 3, y + 3, 2, rgb(85, 85, 95))
@@ -172,12 +197,10 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
   ligne(x + 4, y - 5, x + 7, y - 9, rgb(160, 120, 70))
   disque(x + 7, y - 10, 2 + int(temps() * 8) % 2, rgb(255, 140, 40))` },
     espace: { nom: 'dans l espace', ciel: [[3, 3, 18], [45, 22, 85]], sol: [[95, 90, 115], [135, 130, 155]], a: [[255, 255, 255], [150, 90, 200], [110, 60, 160], [255, 240, 160]], n: 24,
-      decor: `  var t = int(temps() * 2)
-  while i < 24
-    if (i + t) % 4 != 0 rect(DX[i], DY[i] % 200, 2, 2, A1) end
-    i += 1
-  end
-  disque(70, 70, 26, A2) disque(62, 62, 8, A3) disque(80, 80, 5, A3) ligne(36, 82, 106, 56, A1)`,
+      decor: couches([
+        { el: 'etoile', nb: 24, dy: 200 },
+        { el: 'planete', c: 'A2', c2: 'A3', at: [[70, 70, 26]] },
+        { el: 'planete', c: 'A4', c2: 'A2', at: [[262, 44, 11]] }]),
       bon: `  tri(x, y - 9, x - 8, y + 4, x + 8, y + 4, rgb(255, 225, 70)) tri(x, y + 9, x - 8, y - 4, x + 8, y - 4, rgb(255, 225, 70))`,
       mal: `  disque(x, y, 8, rgb(130, 120, 125)) disque(x - 3, y - 2, 3, rgb(90, 82, 88)) disque(x + 3, y + 3, 2, rgb(90, 82, 88)) disque(x + 2, y - 4, 1, rgb(175, 168, 172))` },
     eau: { nom: 'sous l eau', ciel: [[85, 205, 235], [12, 60, 135]], sol: [[225, 205, 140], [248, 232, 172]], a: [[205, 242, 255], [40, 150, 90], [250, 150, 50], [255, 255, 255]], n: 10,
@@ -339,9 +362,9 @@ end
 
 def objet(x, y, k)
   if k == 0
-${r.bon === 'img' ? `  image(${im.bon}, x - 8, y - 8, 0, 1)` : mo.bon}
+${objetCode(r, 'bon', mo, im)}
   else
-${r.mal === 'img' ? `  image(${im.mal}, x - 8, y - 8, 0, 1)` : mo.mal}
+${objetCode(r, 'mal', mo, im)}
   end
 end
 
@@ -514,9 +537,9 @@ end
 
 def objet(x, y, k)
   if k == 0
-${r.bon === 'img' ? `  image(${im.bon}, x - 8, y - 8, 0, 1)` : mo.bon}
+${objetCode(r, 'bon', mo, im)}
   else
-${r.mal === 'img' ? `  image(${im.mal}, x - 8, y - 8, 0, 1)` : mo.mal}
+${objetCode(r, 'mal', mo, im)}
   end
 end
 
@@ -1172,7 +1195,7 @@ end
   if b < cx + 2 b = cx + 2 elif b + w > cx + 318 b = cx + 318 - w end
   rect(b, y - 24, w, 14, c) tri(x + 8, y - 10, x + 16, y - 10, x + 12, y - 5, c) texte(b + 4, y - 21, s, d, 1)
 end
-  const PAROLES = ['Change mon decor !', 'Ajoute un niveau !', 'Dessine mes amis !', 'Bzzz ! Mon niveau 2 ?'];
+`;
   function assembler(r) {
     const c = recetteComplete(r), f = SYSTEMES[c.jeu], nn = SOLO[c.jeu] ? 1 : nbNiv(c.niv);
     let code = cartel(f(c), c); if (nn > 1) code = niveaux(code, nn, f === chute, f === plateforme && /^plat-/.test(c.jeu));
@@ -1197,5 +1220,6 @@ M.platDefaut = r => {
   const pl = (c.plan === 'oui' ? PLANS[1] : PLATS).map(p => p.slice()), hz = [...P.hz, ...PIEGES_PLUS].slice(0, P.hz.length).map(x => c.plan === 'oui' ? x + DEC[0] : x);
   return { pl, st: [...pl.map(p => [p[0] + p[2] / 2, p[1] - 16]), [70, 192]], hz, long: 1000, drapeau: 940, bouge: !!P.vh };
 };
+Object.assign(M.EN, {"🐦 Je joue un oiseau": "🐦 I play a bird", "🟡 Je joue une bestiole": "🟡 I play a critter", "🍎 Pomme": "🍎 Apple", "🪙 Pièce": "🪙 Coin", "⭐ Étoile": "⭐ Star", "🫧 Perle": "🫧 Pearl", "🐟 Poisson": "🐟 Fish", "💎 Gemme": "💎 Gem", "❄️ Flocon": "❄️ Snowflake", "🍄 Champignon": "🍄 Mushroom", "🚗 Voiture": "🚗 Car", "☄️ Météorite": "☄️ Meteorite", "🪼 Méduse": "🪼 Jellyfish", "🌵 Cactus": "🌵 Cactus", "🧊 Glaçon pointu": "🧊 Sharp icicle"});   // formes du bestiaire (bon, mal) et personnages en plus
 M.ETAPES = ETAPES; M.genreDe = jeu => ETAPES[0].bulles.find(b => b.id === GENRE_DE[jeu]); M.saute = saute; M.nivBulles = nivBulles; M.nbNiv = nbNiv; M.DEFAUT = DEFAUT; M.recetteComplete = recetteComplete; M.assembler = assembler;
 })(typeof module === 'object' ? module.exports : (window.JeuxBulles = {}));

@@ -108,6 +108,18 @@
     return `def forme_${f.id.replace(/-/g, '_')}(x, y, z)\n  ${lignes.join('\n  ')}\nend`;
   };
 
+
+  // ---- Berry en ligne (sans fonction) pour le générateur des bulles : la forme dessinée au zoom z (réel), décalée de (dx, dy) par rapport à (x, y) ; ex = expressions Berry des couleurs (ex. { a: 'C1', b: 'C3' }), sinon les couleurs de la forme ----
+  M.lignes = (f, o) => {
+    o = o || {}; const z = o.z || 1, dx = o.dx || 0, dy = o.dy || 0, ex = o.ex || {}, a = o.a || f.a, b = o.b || f.b;
+    const C = c => { if (ex[c]) return ex[c]; const v = hex(M.couleur(c, a, b)); return `rgb(${v[0]}, ${v[1]}, ${v[2]})`; };
+    const n = (v, base) => Math.round(base + v * z), W = v => Math.max(1, Math.round(v * z)), X = v => { const k = n(v, dx); return k ? `x + ${k}` : 'x'; }, Y = v => { const k = n(v, dy); return k ? `y + ${k}` : 'y'; };
+    return f.p.map(p => '  ' + (p[0] === 'r' ? `rect(${X(p[1])}, ${Y(p[2])}, ${W(p[3])}, ${W(p[4])}, ${C(p[5])})`
+      : p[0] === 'd' ? `disque(${X(p[1])}, ${Y(p[2])}, ${W(p[3])}, ${C(p[4])})`
+      : p[0] === 't' ? `tri(${X(p[1])}, ${Y(p[2])}, ${X(p[3])}, ${Y(p[4])}, ${X(p[5])}, ${Y(p[6])}, ${C(p[7])})`
+      : `ligne(${X(p[1])}, ${Y(p[2])}, ${X(p[3])}, ${Y(p[4])}, ${C(p[5])})`)).join('\n');
+  };
+
   // ---- la décomposition des jeux : chaque élément = un rôle (les formes du bestiaire qui peuvent le remplacer) ; f = formes précises, sinon toutes celles du rôle ----
   // rôle 'fond' = couleur seulement (haut et bas du dégradé) ; 'texte' = couleur seulement. Toujours personnalisable : la couleur (a, b) ; la forme quand le rôle a des formes.
   const E = (n, role, note, f) => ({ n, role, note: note || '', f: f || null });

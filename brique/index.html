@@ -4335,14 +4335,34 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const AXES = JeuxBulles.ETAPES, T = s => document.documentElement.lang === 'en' ? JeuxBulles.EN[s] || s : s;   // T : les bulles toutes faites, en anglais sur la page /en
   const salut = () => `Bonjour${pseudo() ? ' ' + pseudo() : ''}, quel jeu va-t-on faire aujourd'hui ?`, AIDE_ECRIRE = "Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».", AIDE_SUITE = "";
   const ATTENTE = "⏳ Je cherche des bulles pour toi…";
-  let fait = false, recette = {}, props = {}, frais = {}, courant = 'genre', cherche = false, gouts = [], vu = '', idees = false, menu = false, fabrique = '';   // fabrique : la recette du dernier jeu fabriqué (le bouton reste grisé tant qu'elle n'a pas changé) ; recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
+  let fait = false, recette = {}, props = {}, frais = {}, courant = 'genre', cherche = false, gouts = [], vu = '', idees = false, menu = false, fabrique = '', serie = 0, dyn = {};   // serie : « comment » déjà posés depuis la dernière question « plus loin ou tester » ; dyn : les questions et boutons réécrits par Mistral { étape: { q, b: { id: texte } } } ; fabrique : la recette du dernier jeu fabriqué (le bouton reste grisé tant qu'elle n'a pas changé) ; recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
   const axeDe = id => AXES.find(x => x.id === id);
   const dispo = a => a.id === 'niv' ? JeuxBulles.nivBulles(recette.niv?.id) : a.bulles.filter(b => !b.genre || recette.genre?.id === b.genre), base = a => dispo(a).filter(b => !b.plus || recette[a.id]?.id === b.id), extra = a => idees ? [...dispo(a).filter(b => b.plus && recette[a.id]?.id !== b.id), ...((a.ia || a.libre) && !cherche ? props[a.id] || [] : [])] : [];   // base : visibles tout de suite ; extra : après « Des idées pour toi »
-  const toutes = a => [...base(a), ...extra(a)];
+  const toutes = a => [...base(a), ...extra(a)].map(b => dyn[a.id]?.b[b.id] ? { ...b, bouton: dyn[a.id].b[b.id] } : b);   // les mots de Mistral sur les bulles qui existent
   const ids = () => Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.id]));
   const etapes = () => AXES.filter(x => !JeuxBulles.saute(x.id, ids()) && (fait || !x.v2));   // les étapes « v2 » (cartel de fin, niveaux) n'arrivent qu'après le premier jeu   // la couleur n'a pas de sens pour une image
   const sig = () => JSON.stringify([Object.entries(recette).map(([k, v]) => [k, v.bouton]), etat.edit || 0]);   // etat.edit : le niveau 1 placé à la main
-  const raz = () => { recette = structuredClone(etat.recette || {}); if (recette.jeu && !recette.genre) recette.genre = JeuxBulles.genreDe(recette.jeu.id);   /* anciennes recettes : sans genre */ props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); fabrique = fait ? sig() : ''; courant = fait ? '' : 'genre'; gouts = []; vu = ''; idees = false; menu = false; };
+  const raz = () => { recette = structuredClone(etat.recette || {}); if (recette.jeu && !recette.genre) recette.genre = JeuxBulles.genreDe(recette.jeu.id);   /* anciennes recettes : sans genre */ props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); fabrique = fait ? sig() : ''; courant = fait ? '' : 'genre'; gouts = []; vu = ''; idees = false; menu = false; serie = 0; dyn = {}; };
+  // PARCOURS : 3 bulles de départ (type, quoi, où), puis « comment » sans fin : 2 de suite, puis « aller plus loin ou tester ? » ; une réponse déjà donnée se rouvre en touchant sa goutte
+  const BASE = () => ['genre', recette.genre?.id === 'quiz' ? 'quest' : 'perso', 'monde'], enBase = id => BASE().includes(id);
+  const comment = () => etapes().find(x => !enBase(x.id) && !recette[x.id])?.id;   // le prochain « comment » sans réponse
+  const premier = () => BASE().find(id => !recette[id] && etapes().some(x => x.id === id)) || comment() || 'fork';
+  function apres(avant, neuf) {                          // où aller après une réponse
+    const nx = { niv: 'plan', plan: 'piege' }[avant];    // niveau ajouté : tout de suite les difficultés
+    if (fait && nx && etapes().some(x => x.id === nx)) return nx;
+    const b = BASE().find(id => !recette[id] && etapes().some(x => x.id === id)); if (b) return b;
+    if (!enBase(avant) && neuf && ++serie >= 2) { serie = 0; return 'fork'; }
+    return comment() || 'fork';
+  }
+  async function reecrire(id) {                          // Mistral écrit la question de cette étape en reprenant les choix de l'enfant et réécrit les boutons (mêmes ids : le jeu fait la même chose) ; sans réponse, les bulles de départ restent
+    const a = axeDe(id); if (!a || !a.bulles.length || dyn[id] || document.documentElement.lang === 'en' || !Object.keys(recette).length) return;
+    cherche = true; rendreBulles();
+    try {
+      const r = await api('api/bulles', { ...ident(), axe: 'suite', historique: etapes().filter(x => recette[x.id]).map(x => ({ question: x.q, choix: recette[x.id].bouton })), gouts,
+        prochaine: { sujet: a.q, axe: id === 'perso' ? 'qui' : id === 'monde' ? 'où' : 'comment', ...!enBase(id) && { direction: 'La question commence par « Comment » et reste sur le sujet donné.' }, options: dispo(a).map(b => ({ id: b.id, bouton: b.bouton })) } });
+      if (r.question && r.bulles?.length) dyn[id] = { q: r.question, b: Object.fromEntries(r.bulles.filter(m => m.id).map(m => [m.id, m.bouton])) };
+    } catch {} finally { cherche = false; rendreBulles(); majTokens(); }
+  }
   const retirerImage = role => { const k = (etat.images || []).findIndex(m => m.role === role); if (k >= 0) { sources.delete(etat.images[k]); etat.images.splice(k, 1); imagesChangees(); } };
   function rendreBulles() {
     scBulles.classList.toggle('hide', mode !== 'petits'); if (mode !== 'petits') return;
@@ -4354,15 +4374,18 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const paire = x => { const c = `<span class="pq">${x.icone}</span><span class="pr">${esc(T(recette[x.id].bouton))}</span>`;   // 2 calques identiques : le fond passe au filtre « goutte », le texte reste net par-dessus
       return `<button class="bPaire" style="--h:${x.h}" data-l="axe" data-i="${x.id}"><span class="pf" aria-hidden="true">${c}</span><span class="pt">${c}</span></button>`; };
     const ouvert = a => { const b0 = base(a), ex = extra(a), plus = a.ia || a.libre || a.bulles.some(b => b.plus);
-      return `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${T(a.q)}</div><div class="bulles">${b0.map(bulle).join('')}</div>`
+      if (a.quiz) return `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${T(a.q)}</div><div class="libre quiz"><input id="qzSujet" type="text" maxlength="100" placeholder="✏️ Les questions parlent de… (les dinosaures, le foot…)"></div><div class="libre quiz"><input id="qzRep" type="text" maxlength="100" placeholder="✏️ Les réponses : sérieuses, rigolotes… (pas obligé)"></div><div class="libre"><button class="bulle autre" data-l="quiz">✨ Fabriquer mes questions</button></div></div>`;
+      return `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${esc(dyn[a.id]?.q || T(a.q))}</div><div class="bulles">${b0.map(bulle).join('')}</div>`
       + (plus && !idees ? (a.ia || a.libre ? `<div class="libre"><input type="text" maxlength="100" placeholder="✏️ Ce que tu aimes…"><button class="bulle autre" data-l="libre">✨ Des idées pour toi</button></div>` : `<div class="libre"><button class="bulle autre" data-l="idees">✨ Des idées pour toi</button></div>`) : '')   // le champ « Ce que tu aimes » reste là, réduit, avant même les idées ; optionnel : pas d'idées tant qu'il ne les demande pas
       + (plus && idees ? `<h4>✨ Des idées pour toi</h4><div class="bulles">${cherche ? `<span class="attente">${ATTENTE}</span>` : ex.map((b, i) => bulle(b, b0.length + i)).join('')}</div>`
         + (a.ia || a.libre ? `<div class="libre"><input type="text" maxlength="100" placeholder="✏️ Ce que tu aimes…"><button class="bulle autre" data-l="libre">🔄 D'autres bulles</button></div>` : '') : '') + '</div>'; };
-    const venir = fait ? [] : etapes().filter(x => x.id !== courant && !recette[x.id]);   // l'ensemble de la structure : ce qui est répondu (en gouttes), ce qui se fait (ouvert), ce qui reste (pastilles)
+    const venir = fait || !enBase(courant) ? [] : BASE().filter(id => id !== courant && !recette[id]).map(axeDe);
+    const forke = courant === 'fork' ? `<div class="bZone" style="--h:150"><div class="bQ">🚀 ${T('Tu veux aller plus loin ou tester ton jeu ?')}</div><div class="bulles">${comment() ? `<button class="bulle" data-l="plus">🚀 ${T('Aller plus loin')}</button>` : ''}<button class="bulle" data-l="tester">🎮 ${T('Tester mon jeu')}</button><button class="bulle" data-l="menu">✏️ ${T('Changer un choix')}</button></div></div>` : '';   // l'ensemble de la structure : ce qui est répondu (en gouttes), ce qui se fait (ouvert), ce qui reste (pastilles)
     scBulles.innerHTML = (fait ? `<div class="fait">✅ Ton jeu est prêt !</div>` : '')
       + etapes().map(x => x.id === courant ? ouvert(x) : recette[x.id] ? paire(x) : '').join('').replace(/(<button class="bPaire"[\s\S]*?<\/button>)+/g, '<div class="rangPaires">$&</div>')   // les réponses se suivent sur UNE ligne
+      + forke
       + (venir.length ? `<div class="aVenir">Ensuite : ${venir.map(x => `<button class="pastille" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}</div>` : '')
-      + (fait && !courant ? (   // après le premier jeu : tout de suite « Que veux-tu faire maintenant ? » et les bulles de ce qu'on peut changer (personnage, fond, gros bouton...)
+      + ((fait || menu) && !courant ? (   // après le premier jeu : tout de suite « Que veux-tu faire maintenant ? » et les bulles de ce qu'on peut changer (personnage, fond, gros bouton...)
         `<div class="bZone" style="--h:200"><div class="bQ">✏️ ${T('Que veux-tu faire maintenant ?')}</div><div class="bulles">${etapes().map(x => `<button class="bulle${recette[x.id] ? ' prise' : ''}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(x.nom))}</button>`).join('')}${/^plat-/.test(recette.jeu?.id) && JeuxBulles.nbNiv(recette.niv?.id) <= 4 ? `<button class="bulle" data-l="placer">🎯 ${T('Placer à la main')}</button>` : ''}</div></div>`) : '');
     scDemande.value = etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ');   // le champ (caché) dit ce qui est choisi
   }
@@ -4396,15 +4419,28 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     } catch { scCompris.textContent = "Je n'ai pas trouvé l'image (internet ?) : touche une autre bulle."; return false; }
     finally { cherche = false; rendreBulles(); }
   }
-  const suivante = () => { const l = etapes(), k = l.findIndex(x => x.id === courant); return [...l.slice(k + 1), ...l.slice(0, k)].find(x => !recette[x.id])?.id || courant; };   // l'étape d'après qui n'a pas encore de choix
-  const ouvrirAuto = () => { if (courant && !axeDe(courant).bulles.length) { idees = true; return charger(courant); } rendreBulles(); };   // étape sans bulle fixe (ce qu'on attrape / évite) : les idées arrivent directement
+  const ouvrirAuto = async () => { if (courant && courant !== 'fork' && !axeDe(courant).bulles.length && !axeDe(courant).quiz) { idees = true; return charger(courant); } rendreBulles(); if (courant && courant !== 'fork') await reecrire(courant); };   // étape sans bulle fixe (ce qu'on attrape / évite) : les idées arrivent directement ; sinon Mistral réécrit la question
   scBulles.onclick = async e => {
     const el = e.target.closest('[data-l]'); if (!el || cherche) return;
     const l = el.dataset.l, a = axeDe(courant);   // courant = '' quand tout est répondu : il ne reste que les paires fondues
-    if (l === 'menu') { menu = true; return rendreBulles(); }
+    if (l === 'menu') { menu = true; courant = ''; return rendreBulles(); }   // « Changer un choix » : la liste de ce qu'on peut changer
+    if (l === 'plus') { courant = comment() || 'fork'; idees = false; return ouvrirAuto(); }   // 2 « comment » de plus
+    if (l === 'tester') { if (scGo.disabled) { scCompris.textContent = T('Ton jeu est déjà prêt : change quelque chose avant de le renvoyer.'); return; } return scGo.click(); }
     if (l === 'axe') { courant = el.dataset.i; idees = false; return ouvrirAuto(); }
     if (l === 'placer') return plOuvrir();
     if (l === 'idees') { idees = true; return charger(courant); }   // charger : pour une étape avec l'IA, va chercher les idées ; sinon, affiche juste les autres structures
+    if (l === 'quiz') {                                  // le sujet + le genre de réponses -> 5 questions écrites par l'IA, gardées dans la bulle (recette.quest.q)
+      const sujet = qzSujet.value.trim(), reponses = qzRep.value.trim();
+      if (!sujet) { scCompris.textContent = 'Écris d’abord de quoi parlent tes questions.'; return qzSujet.focus(); }
+      const neuf = !recette.quest; cherche = true; rendreBulles(); scCompris.textContent = '⏳ J’écris tes questions…';
+      try {
+        const r = await api('api/quiz', { ...ident(), sujet, reponses });
+        recette.quest = { id: 'quest', bouton: '❓ ' + sujet + (reponses ? ' · ' + reponses : ''), q: r.questions }; frais = {}; scCompris.textContent = AIDE_SUITE;
+      } catch (err) { scCompris.textContent = err.message === 'IA non configuree' ? 'L’IA n’est pas branchée sur ce serveur : le quiz gardera ses questions de départ.' : err.message || 'L’IA ne répond pas : réessaie.'; }
+      finally { cherche = false; majTokens(); }
+      if (!recette.quest) { rendreBulles(); return; }
+      courant = apres('quest', neuf); idees = false; return ouvrirAuto();
+    }
     if (l === 'libre') {                                 // pas de bulle à son goût : ce qu'il aime (champ vide : d'autres au hasard) -> de nouvelles idées pour cette étape
       const t = scBulles.querySelector('input').value.trim().replace(/\s+/g, ' ');
       if (t) gouts.push(t); idees = true; return charger(courant, true);
@@ -4412,22 +4448,22 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const b = toutes(a)[+el.dataset.i];
     if (recette[courant]?.bouton === b.bouton) { delete recette[courant]; if (a.ia) retirerImage(courant); frais = {}; return rendreBulles(); }   // retoucher la bulle prise l'enlève
     if (b.id === 'img') { if (!await prendreIcone(courant, b)) return; } else if (a.ia) retirerImage(courant);
-    if (courant === 'genre' && recette.genre?.id !== b.id) delete recette.jeu;   // autre genre : le jeu est à rechoisir parmi les siens
+    const neuf = !recette[courant]; if (!neuf && enBase(courant)) dyn = {};   // une réponse de départ change : les questions suivantes sont à réécrire
     recette[courant] = b; frais = {};
-    if (fait) { const nx = { niv: 'plan', plan: 'piege' }[courant]; if (nx && etapes().some(x => x.id === nx)) { courant = nx; idees = false; return rendreBulles(); }   // niveau ajouté : tout de suite les difficultés (plateformes, pièges)
-      courant = ''; idees = false; menu = true; scCompris.textContent = AIDE_SUITE; return rendreBulles(); }   // seconde version : on revient à la liste de ce qu'on peut changer, « Fabriquer » se réactive
-    const avant = courant; courant = suivante(); idees = false;
-    if (courant === avant) { courant = ''; return rendreBulles(); } scCompris.textContent = AIDE_SUITE; ouvrirAuto();
+    if (courant === 'genre') { delete recette.jeu; delete recette.action; serie = 0; dyn = {}; for (const [k, v] of Object.entries(b.pre || {})) recette[k] = axeDe(k).bulles.find(x => x.id === v); }   // autre genre : le jeu est à rechoisir parmi les siens ; « Je tire » prend déjà le gros bouton tir
+    const avant = courant; courant = apres(avant, neuf); idees = false; scCompris.textContent = AIDE_SUITE; ouvrirAuto();   // on reste sur « comment » : plus de retour à la liste, même après « Fabriquer »
   };
   scBulles.onkeydown = e => { if (e.key === 'Enter' && e.target.matches('input')) scBulles.querySelector('[data-l=libre]').click(); };
   async function fabriquerBulles() {                     // « Fabriquer » : le programme est assemblé ici (pièces testées), sans IA, puis envoyé à la console
     const imgs = {}; (etat.images || []).forEach((m, i) => { if (m.role) imgs[m.role] = i + 1; });
-    const r = { ...ids(), imgs, ...(etat.edit && { edit: etat.edit }) }, script = JeuxBulles.assembler(r);
-    fabrique = sig(); scGo.disabled = true; etat.recette = structuredClone(recette);
+    scGo.disabled = true; let paroles = []; scCompris.textContent = '✍️ Je fais parler ton personnage…';
+    try { paroles = (await api('api/paroles', { ...ident(), choix: Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.bouton])) })).paroles || []; } catch {}   // l'IA écrit ce que dit le personnage, d'après son jeu ; sans elle, les phrases de base
+    const r = { ...ids(), imgs, paroles, ...(recette.quest?.q && { quest: recette.quest.q }), ...(etat.edit && { edit: etat.edit }) }, script = JeuxBulles.assembler(r);
+    fabrique = sig(); etat.recette = structuredClone(recette);
     etat.script = script; mettreCode(script);
     scCompris.textContent = '✅ Ton jeu est prêt !';
     etat.essais.push({ demande: scDemande.value || '(bulles)', auto: false, explication: '', console: '', date: Date.now(), lignes: script.split('\n').length });
-    majAide(true); fait = true; courant = ''; idees = false; menu = false; rendreBulles(); sauver(); rendre();   // la question « Que veux-tu faire maintenant ? » s'affiche avec ses bulles
+    majAide(true); fait = true; serie = 0; idees = false; menu = false; courant = premier(); ouvrirAuto(); sauver(); rendre();   // on reste sur « comment » (la suite du jeu), « Changer un choix » ouvre la liste
     const pb = await envoyer(script); scGo.disabled = fabrique === sig();
     if (pb) { etat.essais.at(-1).console = pb; etat.essais.at(-1).consoleOk = false; sauver(); rendre(); }
   }

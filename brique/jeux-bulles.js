@@ -196,9 +196,9 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
       mal: `  disque(x, y + 1, 8, rgb(40, 40, 50)) disque(x - 3, y - 2, 2, rgb(110, 110, 125))
   ligne(x + 4, y - 5, x + 7, y - 9, rgb(160, 120, 70))
   disque(x + 7, y - 10, 2 + int(temps() * 8) % 2, rgb(255, 140, 40))` },
-    espace: { nom: 'dans l espace', ciel: [[3, 3, 18], [45, 22, 85]], sol: [[95, 90, 115], [135, 130, 155]], a: [[255, 255, 255], [150, 90, 200], [110, 60, 160], [255, 240, 160]], n: 24,
+    espace: { nom: 'dans l espace', ciel: [[3, 3, 18], [45, 22, 85]], sol: [[95, 90, 115], [135, 130, 155]], a: [[255, 255, 255], [150, 90, 200], [110, 60, 160], [255, 240, 160]], n: 16,
       decor: couches([
-        { el: 'etoile', nb: 24, dy: 200 },
+        { el: 'etoile', nb: 16, dy: 200 },
         { el: 'planete', c: 'A2', c2: 'A3', at: [[70, 70, 26]] },
         { el: 'planete', c: 'A4', c2: 'A2', at: [[262, 44, 11]] }]),
       bon: `  tri(x, y - 9, x - 8, y + 4, x + 8, y + 4, rgb(255, 225, 70)) tri(x, y + 9, x - 8, y - 4, x + 8, y - 4, rgb(255, 225, 70))`,
@@ -1185,22 +1185,23 @@ end
   // le personnage invite l'enfant a modifier son jeu : une bulle 2,5 s toutes les 4 s (cx : decalage de camera, pour rester dans l'ecran)
   const PAROLES = ['Change mon decor !', "Et si j'etais bleu ?", 'Invente ton jeu !', 'Bzzz ! Attrape-moi !'];
   const parole = (p, i) => { const s = typeof p?.[i] === 'string' ? p[i].replace(/[^A-Za-z0-9 !?.,'-]/g, '').trim().slice(0, 26) : ''; return s.length > 2 ? s : PAROLES[i]; };   // phrases de l'IA (r.paroles), sinon celles de base ; que des caracteres sans risque dans le code Berry
-  const PAROLE = p => `def parle(x, y, cx)
-  var t = temps() var k = int(t / 4) var u = t - k * 4 var s = ${JSON.stringify([0, 1, 2, 3].map(i => parole(p, i)))}[k % 4] var w = size(s) * 6 + 8 var c = BL var d = NO var b = x + 12 - w / 2
+  // simple = 4 niveaux ou plus : la memoire de la console est presque pleine, donc 3 phrases et pas de petit cube volant
+  const PAROLE = (p, simple) => `def parle(x, y, cx)
+  var t = temps() var k = int(t / 4) var u = t - k * 4 var s = ${JSON.stringify([0, 1, 2, 3].slice(0, simple ? 3 : 4).map(i => parole(p, i)))}[k % ${simple ? 3 : 4}] var w = size(s) * 6 + 8 var b = x + 12 - w / 2${simple ? '' : ' var c = BL var d = NO'}
   if u > 2.5 return end
-  if k % 4 == 3
+${simple ? '' : `  if k % 4 == 3
     x = int(cx + 30 + u * 60) y = 70 + int(t * 6) % 2 * 3 b = x - 20 c = NO d = BL
     rect(x, y, 14, 14, rgb(255, int(t * 200) % 255, 255 - int(t * 90) % 255)) rect(x + 3, y + 4, 3, 3, BL) rect(x + 9, y + 4, 3, 3, BL)
   end
-  if b < cx + 2 b = cx + 2 elif b + w > cx + 318 b = cx + 318 - w end
-  rect(b, y - 24, w, 14, c) tri(x + 8, y - 10, x + 16, y - 10, x + 12, y - 5, c) texte(b + 4, y - 21, s, d, 1)
+`}  if b < cx + 2 b = cx + 2 elif b + w > cx + 318 b = cx + 318 - w end
+  rect(b, y - 24, w, 14, ${simple ? 'BL' : 'c'}) tri(x + 8, y - 10, x + 16, y - 10, x + 12, y - 5, ${simple ? 'BL' : 'c'}) texte(b + 4, y - 21, s, ${simple ? 'NO' : 'd'}, 1)
 end
 `;
   function assembler(r) {
     const c = recetteComplete(r), f = SYSTEMES[c.jeu], nn = SOLO[c.jeu] ? 1 : nbNiv(c.niv);
     let code = cartel(f(c), c); if (nn > 1) code = niveaux(code, nn, f === chute, f === plateforme && /^plat-/.test(c.jeu));
-    if (nn > 4) code = code.replace(/ parle\(.*?, (0|CAMX)\)/g, '');   // 5 et 6 niveaux : la memoire de la console est deja pleine, pas de bulle
-    if (/ parle\(/.test(code)) code = code.replace(/\ndef perso\(/, '\n' + PAROLE(r && r.paroles) + '\ndef perso(');   // pas de bulle dans les questions ni le personnage a soigner : leur ecran est deja plein
+    if (nn > 6) code = code.replace(/ parle\(.*?, (0|CAMX)\)/g, '');   // (6 niveaux au plus : jamais atteint)
+    if (/ parle\(/.test(code)) code = code.replace(/\ndef perso\(/, '\n' + PAROLE(r && r.paroles, nn > 3) + '\ndef perso(');   // pas de bulle dans les questions ni le personnage a soigner : leur ecran est deja plein
     return MULTI.has(f) ? multi(code, MULTI.get(f), !!COURSE[c.jeu]) : code;
   }
   const AIDE = { saut: 'il saute', tir: 'il tire', bouclier: 'il se protege avec un bouclier', turbo: 'il va plus vite', aimant: 'il attire les bons objets' };

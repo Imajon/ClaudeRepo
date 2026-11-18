@@ -939,7 +939,8 @@ const libreProche = (f, x, y) => {                      // la colonne libre ("."
   return x;
 };
 async function iaFiche(texte, avant) {
-  const r = await mistral(CONSIGNE_FICHE, { fiche_actuelle: avant, demande: texte });
+  const appel = () => mistral(CONSIGNE_FICHE, { fiche_actuelle: avant, demande: texte });
+  const r = await appel().catch(e => { if (/^Mistral 4/.test(e.message)) throw e; console.error('fiche, 2e essai :', e.message); return appel(); });   // coupure réseau ou délai : un 2e essai
   const { poser: poserDedans, ...changements } = r.changements && typeof r.changements === 'object' ? r.changements : {};   // l'IA glisse parfois "poser" dans "changements"
   if (!/enl[eè]ve|retir|supprim|efface|[ée]limin|d[ée]truit|[oô]te|plus (de|d')|sans/i.test(texte))   // l'IA efface parfois un objet « en passant » : on ne le laisse faire que si l'enfant le demande
     for (const k of ['objets', 'briques']) if (changements[k] && typeof changements[k] === 'object') for (const l in changements[k]) if (changements[k][l] === null) delete changements[k][l];

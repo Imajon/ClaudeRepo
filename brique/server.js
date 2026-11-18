@@ -954,6 +954,18 @@ function lireJSON(req, max = 131072) {
   });
 }
 
+// l'Etabli : en ligne, brique/etabli.enc chiffre (cle ETABLI_KEY, voir etabli-pack.js : GitHub Pages sert le depot en clair) ; en local, le dossier brique/etabli/
+let ETABLI = null;
+function lireEtabli(rel) {
+  if (/(^|\/)\.\.(\/|$)|\x00|\\/.test(rel)) return null;
+  const enc = path.join(__dirname, 'etabli.enc'), dossier = path.join(__dirname, 'etabli');
+  if (process.env.ETABLI_KEY && fs.existsSync(enc)) {
+    if (!ETABLI) try { ETABLI = require('./etabli-pack').unpack(fs.readFileSync(enc), process.env.ETABLI_KEY); } catch (e) { console.error('etabli.enc : ' + e.message); }
+    return ETABLI?.get(rel) || null;
+  }
+  const f = path.join(dossier, rel);
+  return f.startsWith(dossier + path.sep) && fs.existsSync(f) && fs.statSync(f).isFile() ? fs.readFileSync(f) : null;
+}
 const posteLocal = req => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host || '');   // banc du moteur de bulles : jamais en ligne (Render : l'adresse du site n'est pas localhost)
 const origineEtabli = req => /^https:\/\/([a-z0-9-]+\.)*(claude\.ai|claude\.com|claudeusercontent\.com)$/.test(req.headers.origin || '') ? req.headers.origin : '';   // l'Etabli (artifact) peut appeler le banc de bulles de ce poste ; aucune autre page web
 const serveur = http.createServer(async (req, res) => {
@@ -988,6 +1000,20 @@ const serveur = http.createServer(async (req, res) => {
   }
   if (req.method === 'GET' && url === '/api/exemples') return repondre(res, 200, anglais() ? JEUX_BRIQUE.map(j => ({ ...j, titre: tr(j.titre), desc: tr(j.desc) })) : JEUX_BRIQUE);   // les jeux d'exemple (exemples/*.be), a prendre depuis la Communaute
   if (req.method === 'GET' && url === '/jeu-commun.be') { res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'jeu-commun.be')).pipe(res); }   // le jeu commun (plateforme de la premiere console), sans niveau
+  if (req.method === 'GET' && (url === '/etabli' || url.startsWith('/etabli/'))) {   // l'Etabli (page perso de l'admin, brique/etabli/) : reserve a l'admin, cookie pose par /api/etabli/cookie
+    if (url === '/etabli') { res.writeHead(301, { Location: '/etabli/' }); return res.end(); }
+    const adm = (m => { const x = m && db.sessions[empreinte(m[1])]; return !!x && x.exp > Date.now() && ADMINS.includes(x.email); })(/(?:^|;s*)etabli=([0-9a-f]+)/.exec(req.headers.cookie || ''));
+    if (!adm) {
+      if (url !== '/etabli/') return repondre(res, 401, { erreur: 'reserve a ladmin' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });   // la page lit la session animateur du site, demande le cookie, se recharge
+      return res.end(`<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width"><title>Établi</title><body style="font:16px system-ui;padding:24px"><p id=m>Connexion…</p><script>(async()=>{let s=null;try{s=JSON.parse(localStorage.getItem('brique-session'))}catch{}if(s){const r=await fetch('/api/etabli/cookie',{method:'POST',headers:{'X-Session':s,'Content-Type':'application/json'},body:'{}'}).catch(()=>null);if(r&&r.ok)return location.reload()}document.getElementById('m').innerHTML='Réservé à l\u2019admin : connecte-toi sur <a href="/#anim">le site</a> (Animateur), puis reviens ici.'})()</script>`);
+    }
+    const rel = (() => { try { return decodeURIComponent(url.slice(8)); } catch { return '\0'; } })() || 'index.html', buf = lireEtabli(rel);
+    if (!buf) return repondre(res, 404, { erreur: 'introuvable' });
+    const ext = path.extname(rel).toLowerCase();
+    res.writeHead(200, { 'Content-Type': { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.be': 'text/plain; charset=utf-8' }[ext] || 'application/octet-stream', 'Cache-Control': ext === '.html' ? 'private, no-cache' : 'private, max-age=3600', 'X-Robots-Tag': 'noindex' });
+    return res.end(buf);
+  }
   if (req.method === 'GET' && url === '/moteur-bulles') { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'moteur-bulles.html')).pipe(res); }   // page du moteur de bulles (en ligne aussi : la cle Mistral reste cote serveur)
   if (req.method === 'GET' && url === '/bestiaire.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'bestiaire.js')).pipe(res); }
   if (req.method === 'GET' && url === '/jeux-bulles.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'jeux-bulles.js')).pipe(res); }
@@ -1121,6 +1147,11 @@ const serveur = http.createServer(async (req, res) => {
       ligne({ t: 'fin', ms: Date.now() - t0, resultat: suite ? { question: GROS_MOTS.test(court(j.question, 150)) ? '' : court(j.question, 150), bulles: (Array.isArray(j.bulles) ? j.bulles : []).map(m => ({ id: court(m?.id, 20), bouton: court(m?.bouton, 80) })).filter(m => m.bouton && (!m.id || ok.has(m.id)) && !GROS_MOTS.test(m.bouton)).slice(0, 8) } : { bulles: bullesImages(j.bulles) } });
     } catch (e) { console.error(e.message); ligne({ t: 'erreur', m: e.message.slice(0, 200) }); }
     return res.end();
+  }
+  if (url === '/api/etabli/cookie') {                // l'admin (session animateur du site) -> cookie HttpOnly limite a /etabli ; jamais lu par les autres routes (pas de CSRF)
+    const email = animateurDe(req); if (!email || !ADMINS.includes(email)) return repondre(res, 403, { erreur: 'reserve a ladmin' });
+    res.setHeader('Set-Cookie', `etabli=${req.headers['x-session']}; Path=/etabli; HttpOnly; SameSite=Strict; Max-Age=2592000${LOCAL ? '' : '; Secure'}`);
+    return repondre(res, 200, { ok: true });
   }
   if (url === '/api/quiz') {                       // Créer, bulle « Les questions » : sujet + genre de réponses -> 5 questions [ligne1, ligne2, rép0, rép1, rép2, numéro de la bonne]
     if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moteur de bulles (Mistral)</title>
+<style>
+:root{--bg:#eef2ee;--surface:#fff;--fg:#17231b;--muted:#5b6b60;--line:#cfd9d1;--mask:#136b3a;--copper:#b0812a;--ok:#1e7a45;--wait:#9a6a00;--bad:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1510;--surface:#16211a;--fg:#e4ece6;--muted:#9aab9f;--line:#2a3a2f;--mask:#3fbf74;--copper:#e0b55a;--ok:#4fd08a;--wait:#e6b94a;--bad:#ff7b6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif;padding:16px}
+.wrap{max-width:1180px;margin:0 auto}h1{margin:0 0 4px;font-size:28px}h2{margin:0 0 8px;font-size:18px}
+.lead,.tag{color:var(--muted);font-size:14px;margin:0 0 14px}.tag{margin:0}
+code,pre,textarea{font:12px/1.45 ui-monospace,Consolas,monospace}
+.mt{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.mt{grid-template-columns:minmax(0,1fr)}}
+.sim{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.trail{display:flex;flex-wrap:wrap;gap:6px;min-height:30px;align-items:center}
+.trail button{font:500 12px ui-monospace,monospace;border:1px solid var(--copper);color:var(--copper);background:none;border-radius:999px;padding:4px 10px;cursor:pointer}
+.react{margin:0;background:var(--bg);border-left:3px solid var(--mask);padding:8px 12px;border-radius:0 8px 8px 0;color:var(--muted)}
+.q{font-size:21px;font-weight:600;margin:0}
+.bul{display:flex;flex-wrap:wrap;gap:8px}
+.bul button{font:600 15px system-ui,sans-serif;background:var(--mask);color:var(--bg);border:0;border-radius:999px;padding:10px 16px;cursor:pointer;text-align:left}
+.bul button.ia{background:var(--copper)}
+@media (prefers-reduced-motion:no-preference){.bul button{animation:pop .25s both;transition:transform .12s}.bul button:hover{transform:scale(1.04)}}
+@keyframes pop{from{opacity:0;transform:scale(.8)}}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row button,.logw h2 button{font:500 12px ui-monospace,monospace;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:6px 12px;cursor:pointer}
+#gouts{flex:1 1 180px;font:14px system-ui;padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);min-width:0}
+pre{margin:0;background:var(--bg);padding:8px 10px;border-radius:6px;overflow-x:auto}
+.def{display:flex;flex-direction:column;gap:10px;min-width:0}
+textarea{width:100%;min-height:420px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);resize:vertical}
+.bad{color:var(--bad)}.ok{color:var(--ok)}.wait{color:var(--wait)}
+.rap ul{margin:6px 0 0;padding-left:18px;font-size:14px}.rap li{margin:3px 0}
+.logw{position:sticky;top:8px;min-width:0}.logw h2{display:flex;gap:12px;align-items:center}
+.log{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;max-height:calc(100vh - 80px);min-height:300px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.l{border-left:3px solid var(--copper);padding-left:10px;min-width:0}
+.lh{font:500 12px ui-monospace,monospace;color:var(--muted);margin-top:6px}.lh b{color:var(--copper)}
+.l pre{margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}.sum{font-size:14px;font-weight:600;margin:4px 0}.l .lr{border-left:3px solid var(--mask);min-height:1.4em}
+</style></head><body><div class="wrap">
+<h1>Moteur de bulles <small class="tag">· Mistral, comme sur le site</small></h1>
+<details class="lead"><summary>Comment ça marche</summary>La bulle affichée dépend de ce qui a été cliqué avant. <b>Mistral écrit lui-même chaque question et chaque bulle</b> d’après l’historique des clics (la définition garde les règles : quelles étapes, quelles options), et propose des idées (même modèle que <code>/api/bulles</code>). Chaque envoi et chaque réponse, au fil de l'eau, s'affichent en bas. Cette page ne marche que sur ton poste (<code>node server.js</code>, clé Mistral dans l'environnement).</details>
+<div class="mt">
+ <div class="sim">
+  <div class="trail" id="trail" aria-label="Choix déjà faits"></div>
+  <p class="react" id="react" hidden></p>
+  <h2 class="q" id="q"></h2>
+  <div class="bul" id="bul"></div>
+  <p class="tag" id="note" role="status"></p>
+  <div class="row"><button type="button" id="back">↩ Retour</button><button type="button" id="rand">🎲 Au hasard jusqu'au bout</button><button type="button" id="reset">Recommencer</button></div>
+  <div class="row"><label class="tag"><input type="checkbox" id="dyn" checked> Mistral écrit chaque bulle d’après les clics précédents</label><input type="text" id="gouts" placeholder="Ce que tu aimes (pour « ✨ Des idées »)" maxlength="60" aria-label="Ce que l'enfant aime"></div>
+  <div><span class="tag">Recette en cours</span><pre id="etat"></pre></div>
+ </div>
+<div class="logw"><h2>Échanges avec Mistral (en direct) <button type="button" id="logclear">Effacer</button></h2>
+ <div class="log" id="log" aria-live="polite"><p class="tag">Rien d'envoyé pour l'instant.</p></div></div>
+ <div class="def" style="grid-column:1/-1">
+  <label class="tag" for="txt">Définition (JSON) : modifie, puis « Appliquer » (gardée dans ce navigateur)</label>
+  <textarea id="txt" spellcheck="false"></textarea>
+  <div class="row"><button type="button" id="apply">Appliquer</button><button type="button" id="verif">Vérifier tous les chemins</button><button type="button" id="ex">Exemple de départ</button></div>
+  <p class="tag bad" id="err" role="alert"></p><div class="rap" id="rap"></div>
+  <details><summary class="tag">Format</summary><ul class="tag">
+   <li><b>Étape</b> : <code>id</code>, <code>q</code>, <code>bulles</code>, <code>si</code> (condition d'existence), <code>ia:1</code> (« ✨ Des idées » par Mistral). Posées dans l'ordre ; sans bulle visible, sautée.</li>
+   <li><b>Bulle</b> : <code>id</code>, <code>t</code>, <code>m</code> (mot repris), <code>r</code> (réaction), <code>si</code>.</li>
+   <li><b>Condition</b> : <code>{"genre":"runner"}</code>, <code>["a","b"]</code> = l'un des deux, <code>"!quiz"</code> = pas quiz.</li>
+   <li><b>Texte</b> : <code>{genre}</code> = mot du choix fait à cette étape. <code>q</code> peut être <code>[{"si":…,"q":"…"},{"q":"défaut"}]</code>.</li></ul></details>
+ </div>
+</div>
+</div>
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const B=(id,t,m,r,si)=>({id,t,m,r,si});
+const MEX={etapes:[
+ {id:"genre",q:"Que fais-tu dans ton jeu ?",bulles:[
+  B("plateforme","🏃 Je saute de plateforme en plateforme","plateforme","Ça va sauter !"),B("runner","💨 Je cours tout seul et j’évite les obstacles","runner","Ça va filer !"),
+  B("invader","🛸 Je reste en bas, tout vient vers moi","invader","Attention à ce qui tombe !"),B("quiz","❓ Je réponds à des questions","quiz","Un quiz : pas de personnage à choisir."),
+  B("soigne","🐣 Je m’occupe d’un personnage","soin","Pas d’obstacles ici, juste de la douceur.")]},
+ {id:"jeu",si:{genre:["!quiz","!soigne"]},q:"Quel jeu de {genre} ?",bulles:[
+  B("plat-but","🏁 Je cours et je saute jusqu’au drapeau","course au drapeau",0,{genre:"plateforme"}),B("plat-attrape","⭐ Je saute pour ramasser toutes les étoiles","chasse aux étoiles",0,{genre:"plateforme"}),B("plat-evite","👾 Je saute par-dessus les monstres","saute-monstres",0,{genre:"plateforme"}),
+  B("cote","🏃 Je cours en sautant les obstacles","course de côté",0,{genre:"runner"}),B("derriere","🚗 Je conduis et je change de voie","course de derrière",0,{genre:"runner"}),B("dessus","🛰 Je pilote ma voiture sur la piste","course vue du dessus",0,{genre:"runner"}),
+  B("attrape","🧺 J’attrape ce qui tombe","attrape",0,{genre:"invader"}),B("esquive","💨 J’évite ce qui tombe","esquive",0,{genre:"invader"}),B("pluie","🌧 J’attrape tout, rien ne doit tomber","pluie de trésors",0,{genre:"invader"})]},
+ {id:"figure",si:{genre:"runner"},q:"Sur quoi roules-tu dans ta {jeu} ?",bulles:[B("auto","🚗 En voiture","voiture"),B("moto","🏍 En moto de motocross","moto"),B("surf","🏄 Sur une planche de surf","planche")]},
+ {id:"obst",si:{jeu:["derriere","dessus"]},q:"Des obstacles sur la route, avec ta {figure} ?",bulles:[B("avec","🚧 Avec obstacles"),B("sans","🛣 Sans obstacles")]},
+ {id:"perso",ia:1,si:{genre:["!quiz","!soigne"]},q:[{si:{genre:"runner"},q:"Qui pilote ta {figure} ?"},{q:"Qui joues-tu dans ta {jeu} ?"}],bulles:[
+  B("chat","🐱 Je joue un chat","ton chat","Un chat, bon choix pour {jeu}."),B("robot","🤖 Je joue un robot","ton robot","Bip bip : {genre} version robot !"),B("dragon","🐉 Je joue un dragon","ton dragon","Un dragon dans {jeu}, ça va chauffer."),B("fusee","🚀 Je joue une fusée","ta fusée","3, 2, 1…")]},
+ {id:"monde",ia:1,q:[{si:{perso:["chat","robot","dragon","fusee"]},q:"Où se déroule l’aventure de {perso} ?"},{q:"Dans quel monde ?"}],bulles:[
+  B("foret","🌳 La forêt","la forêt","{perso} va adorer cet endroit."),B("ville","🏙 La ville la nuit","la ville",0),B("espace","🌌 L’espace","l’espace","Pas de gravité ?")]},
+ {id:"action",si:{genre:"invader"},q:"Que fait le gros bouton de {perso} ?",bulles:[
+  B("saut","🦘 Sauter"),B("tir","💥 Tirer"),B("bouclier","🛡 Bouclier",0,0,{jeu:["esquive","pluie"]}),B("aimant","🧲 Aimant",0,0,{jeu:["attrape","pluie"]})]},
+ {id:"fin",q:"Que dit le cartel quand tu perds ?",bulles:[B("perdu","😵 PERDU !"),B("over","💀 GAME OVER"),B("encore","😸 ENCORE !")]}
+]};
+const MRE=/^[^\p{L}\p{N}]+/u,MKEY="moteur-bulles-v1";
+let MD=null,MC={},MH=[],ML=null,MIA={},MN=0,MQ={},MPEND={};   // MQ : question et textes écrits par Mistral, par étape   // MIA : bulles proposées par Mistral, par étape
+const mOk=(si,ch)=>!si||Object.entries(si).every(([k,v])=>{const a=[].concat(v),neg=a.filter(x=>x[0]==="!").map(x=>x.slice(1)),pos=a.filter(x=>x[0]!=="!");return(!pos.length||pos.includes(ch[k]))&&!neg.includes(ch[k])});
+const mVis=(e,ch)=>mOk(e.si,ch)?e.bulles.filter(b=>mOk(b.si,ch)).concat(MIA[e.id]||[]):[];
+const mToutes=e=>e.bulles.concat(MIA[e.id]||[]);
+const mSuite=(D,ch)=>D.etapes.find(e=>ch[e.id]===undefined&&mVis(e,ch).length);
+const mTx=(e,b)=>(MQ[e.id]&&MQ[e.id].t[b.id])||b.t;   // texte du bouton : celui de Mistral s'il l'a réécrit
+const mMot=b=>b.m||b.t.replace(MRE,"");
+function mValide(D,ch){const n={};for(const e of D.etapes){const v=mVis(e,n);if(ch[e.id]!==undefined&&v.some(b=>b.id===ch[e.id]))n[e.id]=ch[e.id]}return[n,Object.keys(ch).filter(k=>!(k in n))]}
+function mTxt(s,ch){return String(s||"").replace(/\{(\w+)\}/g,(_,k)=>{const e=MD.etapes.find(x=>x.id===k),b=e&&mToutes(e).find(x=>x.id===ch[k]);return b?mMot(b):"…"})}
+const mQ=(e,ch)=>mTxt(Array.isArray(e.q)?(e.q.find(x=>mOk(x.si,ch))||{}).q:e.q,ch);
+function mCharge(txt){let D;try{D=JSON.parse(txt)}catch(x){return"JSON invalide : "+x.message}
+  if(!D||!Array.isArray(D.etapes)||!D.etapes.length)return"Il faut un tableau « etapes ».";
+  const ids=new Set();for(const e of D.etapes){if(!e.id||ids.has(e.id))return"Étape sans id, ou id en double : « "+(e.id||"?")+" ».";ids.add(e.id);
+    if(!Array.isArray(e.bulles))return"L’étape « "+e.id+" » n’a pas de tableau « bulles ».";
+    const bi=new Set();for(const b of e.bulles){if(!b.id||!b.t||bi.has(b.id))return"Dans « "+e.id+" » : une bulle sans id, sans texte « t », ou en double.";bi.add(b.id)}}
+  MD=D;MC={};MH=[];ML=null;MIA={};MQ={};return""}
+function mRend(){const e=mSuite(MD,MC);
+  $("trail").innerHTML=MD.etapes.filter(x=>MC[x.id]!==undefined).map(x=>`<button type="button" data-e="${esc(x.id)}" title="Changer ce choix">${esc(x.id)} : ${esc(mMot(mToutes(x).find(y=>y.id===MC[x.id])))}</button>`).join("")||'<span class="tag">Aucun choix pour l’instant.</span>';
+  const r=ML&&ML.r?mTxt(ML.r,MC):"";$("react").hidden=!r;$("react").textContent=r;
+  $("q").textContent=e?(MQ[e.id]&&MQ[e.id].q||mQ(e,MC)):"Parcours terminé : la recette est complète.";
+  $("bul").innerHTML=e?mVis(e,MC).map((b,i)=>`<button type="button" data-b="${esc(b.id)}" style="animation-delay:${i*40}ms">${esc(mTx(e,b))}</button>`).join("")+(e.ia?'<button type="button" class="ia" id="idees">✨ Des idées pour toi (Mistral)</button>':""):"";
+  $("etat").textContent=JSON.stringify(MC,null,1);$("back").disabled=!MH.length}
+function mChange(id){delete MC[id];const[n,d]=mValide(MD,MC);MC=n;MH=MH.filter(x=>x in MC);ML=null;
+  const ids=MD.etapes.map(x=>x.id),ix=ids.indexOf(id);Object.keys(MIA).forEach(k=>{if(ids.indexOf(k)>ix||d.includes(k)&&k!==id)delete MIA[k]});Object.keys(MQ).forEach(k=>{if(ids.indexOf(k)>ix||d.includes(k)&&k!==id)delete MQ[k]});
+  const eff=d.filter(x=>x!==id);$("note").textContent=eff.length?"Ne va plus avec ce choix, effacé : "+eff.join(", ")+".":"";mRend();mDyn()}
+const mChoix=()=>Object.fromEntries(MD.etapes.filter(x=>MC[x.id]!==undefined).map(x=>[x.id,mMot(mToutes(x).find(y=>y.id===MC[x.id]))]));
+function mClic(bid){const e=mSuite(MD,MC);if(!e)return;MC[e.id]=bid;MH.push(e.id);ML=mVis(e,MC).find(x=>x.id===bid);$("note").textContent="";mRend();mDyn()}
+const mHist=()=>MH.map(id=>{const x=MD.etapes.find(y=>y.id===id),b=mToutes(x).find(y=>y.id===MC[id]);return{question:(MQ[id]&&MQ[id].q)||mQ(x,MC),choix:mTx(x,b)}});
+// Mistral écrit la prochaine bulle (question qui reprend le dernier choix + boutons réécrits) d'après l'historique des clics ; les règles (quelles étapes, quelles options) restent celles de la définition
+async function mDyn(){if(!$("dyn").checked)return;const e=mSuite(MD,MC);if(!e||MQ[e.id]||MPEND[e.id])return;
+  MPEND[e.id]=1;$("note").textContent="Mistral écrit la bulle « "+e.id+" »…";const g=$("gouts").value.trim();
+  const dc=mHist().slice(-1)[0],res=await mAsk((dc?"clic « "+dc.choix+" » → ":"départ → ")+"bulle « "+e.id+" »",{mode:"suite",historique:mHist(),prochaine:{sujet:mQ(e,MC),options:mVis(e,MC).map(b=>({id:b.id,bouton:b.t}))},gouts:g?[g]:[]});
+  delete MPEND[e.id];if(!res||mSuite(MD,MC)!==e){$("note").textContent=res?"":"Mistral n’a pas répondu : bulle de la définition gardée.";return}
+  MQ[e.id]={q:res.question,t:Object.fromEntries(res.bulles.filter(x=>x.id).map(x=>[x.id,x.bouton]))};
+  const nv=res.bulles.filter(x=>!x.id).slice(0,2).map(x=>({id:"ia-"+(++MN),t:x.bouton}));if(nv.length)(MIA[e.id]=MIA[e.id]||[]).push(...nv);
+  $("note").textContent="Bulle écrite par Mistral.";mRend()}
+// ---- échanges avec Mistral : le serveur local diffuse des lignes JSON { envoi | morceau | fin | erreur } ----
+async function mAsk(label,corps,onFin,onTexte){const log=$("log");log.querySelector("p.tag")?.remove();
+  const box=document.createElement("div");box.className="l";
+  box.innerHTML=`<div class="lh"><b>➡ ENVOI</b> · ${esc(label)} · ${new Date().toLocaleTimeString("fr-FR")}</div><pre class="lp"></pre><div class="lh"><b>⬅ RÉPONSE</b> · <span class="ls">en attente de Mistral…</span></div><div class="sum"></div><pre class="lr"></pre>`;
+  const lp=box.querySelector(".lp"),lr=box.querySelector(".lr"),ls=box.querySelector(".ls");
+  lp.textContent="POST /api/moteur-bulles\n"+JSON.stringify(corps,null,1);log.append(box);log.scrollTop=log.scrollHeight;
+  let txt="",res=null;
+  try{const r=await fetch("/api/moteur-bulles",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(corps)});
+    if(!r.ok){let m="HTTP "+r.status;try{m=(await r.json()).erreur||m}catch(x){}throw new Error(m)}
+    const rd=r.body.getReader(),dec=new TextDecoder();let reste="";
+    for(;;){const{done,value}=await rd.read();if(done)break;const ls_=(reste+dec.decode(value,{stream:true})).split("\n");reste=ls_.pop();
+      for(const l of ls_){if(!l.trim())continue;const o=JSON.parse(l);
+        if(o.t==="envoi")lp.textContent=`${o.url}\nmodèle : ${o.modele} · température ${o.temperature} · flux\n\n— SYSTEM —\n${o.system}\n\n— USER —\n${o.user}`;
+        else if(o.t==="morceau"){txt+=o.d;lr.textContent=txt;ls.textContent="reçoit… "+txt.length+" car.";log.scrollTop=log.scrollHeight;if(onTexte&&corps.mode==="reaction")onTexte(txt)}
+        else if(o.t==="fin"){res=o.resultat;if(res)box.querySelector(".sum").textContent=(res.question?"« "+res.question+" » ":"")+(res.bulles||[]).map(b=>"["+b.bouton+"]").join(" ")+(res.texte?res.texte:"");ls.textContent=`terminé en ${(o.ms/1000).toFixed(1)} s · ${txt.length} car.`;ls.classList.add("ok")}
+        else if(o.t==="erreur")throw new Error(o.m)}}
+    if(res&&onTexte&&res.texte)onTexte(res.texte);
+    if(onFin)onFin(res);return res}
+  catch(x){ls.textContent="erreur : "+x.message;ls.classList.add("bad");return null}}
+async function mIdees(){const e=mSuite(MD,MC);if(!e)return;const bt=$("idees");if(bt)bt.disabled=true;
+  const g=$("gouts").value.trim();
+  const res=await mAsk("idées de bulles pour « "+e.id+" »",{mode:"idees",etape:mQ(e,MC),choix:mChoix(),gouts:g?[g]:[],deja:mVis(e,MC).map(mMot)});
+  if(!res){mRend();return}
+  const nv=(res.bulles||[]).map(x=>({id:"ia-"+(++MN),t:x.bouton}));
+  (MIA[e.id]=MIA[e.id]||[]).push(...nv);$("note").textContent=nv.length?nv.length+" bulle(s) ajoutée(s) par Mistral.":"Mistral n'a rien rendu d'utilisable.";mRend()}
+function mVerif(){const D=MD,ids=D.etapes.map(e=>e.id),vus=new Set(),saut={};let n=0,mn=1e9,mx=0,tr=false;
+  const rec=ch=>{if(n>=30000){tr=true;return}const e=mSuite(D,ch);
+    if(!e){n++;const l=Object.keys(ch).length;mn=Math.min(mn,l);mx=Math.max(mx,l);ids.forEach(k=>{if(ch[k]===undefined)saut[k]=(saut[k]||0)+1});return}
+    for(const b of mVis(e,ch)){vus.add(e.id+"/"+b.id);rec({...ch,[e.id]:b.id})}};rec({});
+  const L=[],bad=[],inc=new Set(),ref=(s,w,max)=>(String(s||"").match(/\{(\w+)\}/g)||[]).forEach(x=>{const k=x.slice(1,-1),i=ids.indexOf(k);if(i<0||i>max)inc.add(w+" parle de {"+k+"}, "+(i<0?"qui n’existe pas":"pas encore choisi à ce moment"))}),
+    scan=(si,w)=>si&&Object.keys(si).forEach(k=>{if(!ids.includes(k))inc.add(w+" : condition sur « "+k+" », étape inconnue")});
+  D.etapes.forEach((e,i)=>{scan(e.si,e.id);(Array.isArray(e.q)?e.q:[{q:e.q}]).forEach(x=>{scan(x.si,e.id);ref(x.q,e.id+"/q",i-1)});e.bulles.forEach(b=>{scan(b.si,e.id+"/"+b.id);ref(b.r,e.id+"/"+b.id+" (réaction)",i)})});
+  const jam=D.etapes.flatMap(e=>e.bulles.filter(b=>!vus.has(e.id+"/"+b.id)).map(b=>e.id+"/"+b.id)),nev=ids.filter(k=>![...vus].some(v=>v.startsWith(k+"/")));
+  L.push(`<li><b>${n}${tr?"+":""} chemins complets</b>${tr?" (arrêté à 30 000)":""}, de ${n?mn:0} à ${n?mx:0} choix.</li>`);
+  if(nev.length)bad.push(`Étapes jamais posées : <code>${nev.map(esc).join("</code>, <code>")}</code>`);
+  const sa=Object.entries(saut).filter(([k])=>!nev.includes(k));
+  if(sa.length)L.push(`<li>Étapes sautées dans certains chemins (normal si voulu) : ${sa.map(([k,c])=>`<code>${esc(k)}</code> (${c} sur ${n})`).join(", ")}</li>`);
+  const jj=jam.filter(j=>!nev.includes(j.split("/")[0]));if(jj.length)bad.push(`Bulles jamais affichées : <code>${jj.map(esc).join("</code>, <code>")}</code>`);
+  if(inc.size)bad.push([...inc].map(esc).join("<br>"));if(!n)bad.push("Aucun chemin ne va jusqu’au bout.");
+  $("rap").innerHTML=`<h2>Vérification</h2><ul>${L.join("")}${bad.map(x=>`<li><span class="wait">⚠</span> ${x}</li>`).join("")}${bad.length?"":'<li><span class="ok">✓</span> Aucune impasse, aucune bulle orpheline, aucune condition perdue.</li>'}</ul>`}
+const mAplique=txt=>{const err=mCharge(txt);$("err").textContent=err;if(err)return false;try{localStorage.setItem(MKEY,txt)}catch(x){}$("note").textContent="";$("rap").innerHTML="";mRend();mDyn();return true};
+const mDef=()=>JSON.stringify(MEX,(k,v)=>v===0||v===""?undefined:v,1);
+let t0=mDef();try{t0=localStorage.getItem(MKEY)||t0}catch(x){}
+$("txt").value=t0;if(!mAplique(t0)){$("txt").value=mDef();mAplique(mDef())}
+$("bul").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.id==="idees")mIdees();else if(b.dataset.b)mClic(b.dataset.b)};
+$("trail").onclick=e=>{const b=e.target.closest("button[data-e]");if(b)mChange(b.dataset.e)};
+$("back").onclick=()=>{if(MH.length)mChange(MH[MH.length-1])};
+$("reset").onclick=()=>{MC={};MH=[];ML=null;MIA={};MQ={};$("note").textContent="";mRend();mDyn()};
+$("rand").onclick=()=>{const ia=$("dyn").checked;$("dyn").checked=false;let e,g=0;while((e=mSuite(MD,MC))&&g++<200){const v=mVis(e,MC);mClic(v[Math.floor(Math.random()*v.length)].id)}$("dyn").checked=ia};   // pas de réaction Mistral pour chaque clic du parcours au hasard
+$("apply").onclick=()=>mAplique($("txt").value);
+$("ex").onclick=()=>{$("txt").value=mDef();mAplique(mDef())};
+$("verif").onclick=()=>{if(mAplique($("txt").value))mVerif()};
+$("dyn").onchange=mDyn;
+$("logclear").onclick=()=>{$("log").innerHTML=""};
+</script></body></html>

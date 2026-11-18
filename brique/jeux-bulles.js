@@ -22,12 +22,13 @@
     // Exemples Berry testés de chacun : systemes/jeu-*.be. Pas encore de moteur ici (donc pas de bulle) : tout sauf plateforme, chute, quiz, soigne, courses. Un nouveau moteur = une entrée dans SYSTEMES + sa bulle ici.
     // PARCOURS de l'enfant : le type (genre) -> le quoi (perso, ou les questions du quiz) -> le où (monde) -> « comment » sans fin (tout le reste, par 2, puis « aller plus loin ou tester ? »). `pre` : choix déjà faits par la bulle (« Je tire » = invader + gros bouton tir). casse / rebondis : à ajouter avec leur moteur.
     { id: 'genre', h: 210, icone: '🎮', nom: 'Le genre', q: 'Que fais-tu dans ton jeu ?', bulles: [
-      { id: 'plateforme', bouton: '🦘 Je saute' }, { id: 'runner', bouton: '💨 Je cours' }, { id: 'invader', bouton: '🧺 J’attrape' }, { id: 'invader', bouton: '💥 Je tire', pre: { action: 'tir' } },
+      { id: 'plateforme', bouton: '🦘 Je saute' }, { id: 'runner', bouton: '💨 Je cours' }, { id: 'invader', bouton: '🧺 J’attrape' }, { id: 'tire', bouton: '💥 Je tire' },
       { id: 'quiz', bouton: '🧠 J’apprends' }, { id: 'soigne', bouton: '🌱 Je fais grandir' }] },
     { id: 'jeu', libre: true, h: 235, icone: '🕹', nom: 'Le jeu', q: 'Quel jeu ?', bulles: [
       { id: 'plat-but', genre: 'plateforme', bouton: '🏁 Je cours et je saute jusqu’au drapeau' }, { id: 'plat-attrape', genre: 'plateforme', bouton: '⭐ Je saute pour ramasser toutes les étoiles' }, { id: 'plat-evite', genre: 'plateforme', bouton: '👾 Je saute par-dessus les monstres' }, { id: 'plat-course', genre: 'plateforme', bouton: '⏱ Je cours plus vite que mon rival' },
       { id: 'cote', genre: 'runner', bouton: '🏃 Je cours en sautant les obstacles' }, { id: 'derriere', genre: 'runner', bouton: '🚗 Je conduis et je change de voie' }, { id: 'dessus', genre: 'runner', bouton: '🛰 Je pilote ma voiture sur la piste' }, { id: 'iso', genre: 'runner', bouton: '🧊 Je roule en 3D en diagonale' },
       { id: 'attrape', genre: 'invader', bouton: '🧺 J’attrape ce qui tombe' }, { id: 'esquive', genre: 'invader', bouton: '💨 J’évite ce qui tombe' }, { id: 'pluie', genre: 'invader', bouton: '🌧 J’attrape tout, rien ne doit tomber' },
+      { id: 'tir-haut', genre: 'tire', bouton: '⬆️ Je tire vers le haut' }, { id: 'tir-perso', genre: 'tire', bouton: '🚀 Je tire avec un personnage que je déplace' }, { id: 'tir-autour', genre: 'tire', bouton: '🎯 Je tire autour de moi' },
       { id: 'quiz', genre: 'quiz', bouton: '❓ Je réponds à des questions' }, { id: 'soigne', genre: 'soigne', bouton: '🐣 Je m’occupe d’un personnage' }] },
     { id: 'figure', h: 20, icone: '🏍', nom: 'Mon véhicule', q: 'Sur quoi roules-tu ?', bulles: [{ id: 'auto', bouton: '🚗 En voiture' }, { id: 'moto', bouton: '🏍 En moto de motocross' }, { id: 'surf', bouton: '🏄 Sur une planche de surf' }] },
     { id: 'obst', h: 55, icone: '🚧', nom: 'Les obstacles', q: 'Des obstacles sur la route ?', bulles: [{ id: 'avec', bouton: '🚧 Avec obstacles' }, { id: 'sans', bouton: '🛣 Sans obstacles' }] },
@@ -65,13 +66,14 @@
   const nivBulles = id => { const n = nbNiv(id), bs = [{ id: 'n' + n, bouton: '✋ Rester à ' + n + (n > 1 ? ' niveaux' : ' niveau') }]; if (n < NIV_MAX) bs.unshift({ id: 'n' + (n + 1), bouton: '➕ Ajouter un niveau (ça fera ' + (n + 1) + ')' }); return bs; };
 // L'IA propose d'autres idées pour perso, bon et mal : chacune devient une image (icône de la page, numéro dans r.imgs) et son choix vaut 'img'. Sans image trouvée, retour au dessin du monde.
 const COURSES = { cote: 1, derriere: 1, dessus: 1, iso: 1 }, NOUVEAUX = { 'plat-but': 1, 'plat-attrape': 1, 'plat-evite': 1, 'plat-course': 1, ...COURSES };   // les nouveaux jeux : le gros bouton a son rôle fixe (sauter, turbo), les obstacles ne comptent que pour les courses
+const FIXES = { 'tir-perso': 1, 'tir-autour': 1 };   // jeux de tir au look fixe : seuls le genre et le jeu se choisissent
 const SOLO = { quiz: 1, soigne: 1 };   // ces deux jeux n'ont ni obstacles, ni objets, ni gros bouton à choisir
-const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && !!NOUVEAUX[r.jeu]); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
+const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (FIXES[r.jeu] && id !== 'genre' && id !== 'jeu') return true; if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && (!!NOUVEAUX[r.jeu] || r.jeu === 'tir-haut')); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
 
   const FIG = {"auto":["rect(x - 3, y + 16, 30, 9, C2) rect(x - 3, y + 16, 30, 3, C3) disque(x + 3, y + 25, 4, NO) disque(x + 21, y + 25, 4, NO)","rect(x - 2, y + 16, 28, 10, C2) rect(x - 2, y + 16, 28, 3, C3) rect(x, y + 25, 6, 4, NO) rect(x + 18, y + 25, 6, 4, NO)"],"moto":["disque(x + 2, y + 24, 5, NO) disque(x + 22, y + 24, 5, NO) rect(x + 2, y + 17, 20, 4, C2) rect(x + 18, y + 12, 3, 6, NO)","rect(x + 9, y + 18, 6, 10, NO) rect(x + 4, y + 17, 16, 3, C2)"],"surf":["rect(x - 3, y + 21, 30, 3, C2) tri(x + 27, y + 21, x + 27, y + 24, x + 32, y + 22, C2) rect(x - 4, y + 25, 32, 2, A3)","rect(x + 5, y + 20, 14, 5, C2) rect(x + 3, y + 25, 18, 2, A3)"]};   // le véhicule sous le personnage dans les courses : [vue de côté, vue de derrière / dessus]
   const COULEURS = { rouge: [225, 60, 55], orange: [240, 140, 40], jaune: [245, 205, 50], vert: [80, 190, 90], bleu: [70, 130, 230], violet: [150, 90, 210], rose: [240, 120, 175], blanc: [240, 240, 245] };
   // jeu : part de mauvais objets (%), un bon objet qui touche le sol coûte une vie ?, un mauvais objet évité rapporte un point ?
-  const MODES = { attrape: { pb: 40, manque: false, esquive: false, nom: '' }, esquive: { pb: 100, manque: false, esquive: true, nom: 'Esquive ' }, pluie: { pb: 20, manque: true, esquive: false, nom: 'Pluie de tresors ', lent: 0.4 } };
+  const MODES = { attrape: { pb: 40, manque: false, esquive: false, nom: '' }, esquive: { pb: 100, manque: false, esquive: true, nom: 'Esquive ' }, 'tir-haut': { pb: 100, manque: false, esquive: false, nom: 'Tir ' }, pluie: { pb: 20, manque: true, esquive: false, nom: 'Pluie de tresors ', lent: 0.4 } };
   const NOMS = { chat: 'Chat', robot: 'Robot', dragon: 'Dragon', fusee: 'Fusee', fantome: 'Fantome', magicien: 'Magicien', grenouille: 'Grenouille', hibou: 'Hibou', oiseau: 'Oiseau', blob: 'Bestiole' };
 
   // ---------- les personnages : dessinés dans une boîte de 24 x 24 pixels, coin haut gauche en (x, y) ; C1 corps, C2 ombre, C3 reflet, BL blanc, NO sombre ----------
@@ -1083,7 +1085,152 @@ end
 `;
   }
 
-  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, derriere: course, dessus: course, iso: course };   // jeu -> son système
+  // jeux de tir a look fixe (vaisseau, ennemis) : les memes Berry que systemes/jeu-shmup.be et jeu-vaisseau-centre.be, testes dans verif ; personnage, monde et gros bouton ne se choisissent pas
+  const TIR_PERSO = `# Tir et deplace
+var y = 110.0 var pts = 0 var vies = 3 var fin = false var inv = 0.0 var prochain = 1.0 var rythme = 1.0
+var BX = [] var BY = []                             # 5 tirs : BX < 0 = libre
+var EX = [] var EY = [] var EP = [] var EA = []     # 6 ennemis : EP = phase de l'ondulation
+var SX = [] var SY = []                             # 24 etoiles
+
+def reset()
+  y = 110.0 pts = 0 vies = 3 fin = false inv = 0.0 prochain = 1.0 rythme = 1.0
+  for i: 0 .. 4 BX[i] = -10.0 end
+  for i: 0 .. 5 EA[i] = false end
+end
+def debut()
+  for i: 0 .. 4 BX.push(-10.0) BY.push(0.0) end
+  for i: 0 .. 5 EX.push(0.0) EY.push(0.0) EP.push(0.0) EA.push(false) end
+  for i: 0 .. 23 SX.push(hasard(0, 319)) SY.push(hasard(0, 239)) end
+end
+
+def maj(dt)
+  if fin
+    if appui(P3) reset() end
+    return
+  end
+  if bouton(G) y -= 130 * dt end
+  if bouton(D) y += 130 * dt end
+  if y < 8 y = 8.0 elif y > 232 y = 232.0 end
+  if inv > 0 inv -= dt end
+  for i: 0 .. 23 SX[i] -= (i % 2 == 0 ? 30 : 80) * dt if SX[i] < 0 SX[i] += 320 end end   # 2 couches : lente et rapide
+  if appui(P3)
+    for i: 0 .. 4 if BX[i] < 0 BX[i] = 50.0 BY[i] = y son(1200, 20) break end end
+  end
+  for i: 0 .. 4 if BX[i] >= 0 BX[i] += 320 * dt if BX[i] > 320 BX[i] = -10.0 end end end
+  rythme += 0.02 * dt prochain -= dt * rythme
+  if prochain <= 0
+    prochain = 1.0
+    for i: 0 .. 5 if !EA[i] EA[i] = true EX[i] = 330.0 EY[i] = real(hasard(20, 220)) EP[i] = real(hasard(0, 6)) break end end
+  end
+  for i: 0 .. 5
+    if EA[i]
+      EX[i] -= (60 + pts * 2) * dt EP[i] += 3 * dt
+      var dy = EY[i] - y var dx = EX[i] - 34
+      if EX[i] < -20 EA[i] = false
+      elif inv <= 0 && dx * dx + dy * dy < 300 EA[i] = false vies -= 1 inv = 1.5 son(150, 200) end
+      for j: 0 .. 4
+        var ex = BX[j] - EX[i] var ey = BY[j] - EY[i]
+        if BX[j] >= 0 && EA[i] && ex * ex + ey * ey < 200 EA[i] = false BX[j] = -10.0 pts += 1 score(pts) son(440, 50) end
+      end
+    end
+  end
+  if vies <= 0 fin = true son(200, 300) end
+end
+
+def dessine()
+  fond(rgb(8, 8, 28))
+  for i: 0 .. 23 var c = i % 2 == 0 ? 90 : 220 rect(int(SX[i]), SY[i], 2, 2, rgb(c, c, c + 30)) end
+  for i: 0 .. 5
+    if EA[i] var ey = int(EY[i] + 0) disque(int(EX[i]), ey, 9, rgb(120, 200, 90)) disque(int(EX[i]) - 3, ey - 2, 2, rgb(20, 20, 20)) end
+  end
+  for i: 0 .. 4 if BX[i] >= 0 rect(int(BX[i]), int(BY[i]) - 1, 8, 3, rgb(255, 220, 60)) end end
+  if inv <= 0 || int(temps() * 10) % 2 == 0
+    var iy = int(y)
+    tri(52, iy, 28, iy - 10, 28, iy + 10, rgb(232, 50, 43)) rect(24, iy - 3, 8, 6, rgb(255, 160, 40))
+  end
+  for i: 1 .. vies disque(8 + i * 14, 12, 5, rgb(240, 70, 80)) end
+  texte(250, 6, str(pts), rgb(255, 255, 255), 2)
+  if fin texte(80, 100, "PERDU !", rgb(255, 220, 60), 4) texte(90, 150, "P3 : rejouer", rgb(255, 255, 255), 2) end
+end
+`;
+  const TIR_AUTOUR = `# Tir autour
+import math
+var ang = 0.0 var pts = 0 var vies = 3 var fin = false var inv = 0.0 var prochain = 1.0 var rythme = 1.0
+var BX = [] var BY = [] var BVX = [] var BVY = [] var BV = []   # 6 tirs : BV = duree de vie restante (<= 0 : libre)
+var AX = [] var AY = [] var AVX = [] var AVY = [] var AA = []   # 6 asteroides, AA = actif
+
+def reset()
+  ang = 0.0 pts = 0 vies = 3 fin = false inv = 0.0 prochain = 1.0 rythme = 1.0
+  for i: 0 .. 5 BV[i] = 0.0 AA[i] = false end
+end
+def debut()
+  for i: 0 .. 5
+    BX.push(0.0) BY.push(0.0) BVX.push(0.0) BVY.push(0.0) BV.push(0.0)
+    AX.push(0.0) AY.push(0.0) AVX.push(0.0) AVY.push(0.0) AA.push(false)
+  end
+end
+
+def maj(dt)
+  if fin
+    if appui(P3) reset() end
+    return
+  end
+  if bouton(G) ang -= 3.5 * dt end
+  if bouton(D) ang += 3.5 * dt end
+  if inv > 0 inv -= dt end
+  if appui(P3)
+    for i: 0 .. 5
+      if BV[i] <= 0
+        BX[i] = 160.0 BY[i] = 120.0 BV[i] = 1.2
+        BVX[i] = math.cos(ang) * 260 BVY[i] = math.sin(ang) * 260 son(1200, 20) break
+      end
+    end
+  end
+  rythme += 0.02 * dt prochain -= dt * rythme
+  if prochain <= 0
+    prochain = 1.0
+    for i: 0 .. 5
+      if !AA[i]
+        var a = real(hasard(0, 628)) / 100.0         # arrive d'un point du bord, vise le centre
+        AX[i] = 160.0 + math.cos(a) * 200 AY[i] = 120.0 + math.sin(a) * 200
+        AVX[i] = -math.cos(a) * 40 AVY[i] = -math.sin(a) * 40 AA[i] = true
+        break
+      end
+    end
+  end
+  for i: 0 .. 5
+    if BV[i] > 0 BV[i] -= dt BX[i] += BVX[i] * dt BY[i] += BVY[i] * dt end
+    if AA[i]
+      AX[i] += AVX[i] * dt AY[i] += AVY[i] * dt
+      var dx = AX[i] - 160 var dy = AY[i] - 120
+      if dx * dx + dy * dy < 200 && inv <= 0        # touche le vaisseau (distance au carre)
+        AA[i] = false vies -= 1 inv = 1.5 son(150, 200)
+      end
+      for j: 0 .. 5
+        var ex = BX[j] - AX[i] var ey = BY[j] - AY[i]
+        if BV[j] > 0 && AA[i] && ex * ex + ey * ey < 144 AA[i] = false BV[j] = 0.0 pts += 1 score(pts) son(440, 50) end
+      end
+    end
+  end
+  if vies <= 0 fin = true son(200, 300) end
+end
+
+def dessine()
+  fond(rgb(10, 10, 30))
+  for i: 0 .. 5
+    if AA[i] disque(int(AX[i]), int(AY[i]), 10, rgb(150, 120, 100)) disque(int(AX[i]) - 3, int(AY[i]) - 3, 3, rgb(190, 160, 130)) end
+    if BV[i] > 0 rect(int(BX[i]) - 1, int(BY[i]) - 1, 3, 3, rgb(255, 220, 60)) end
+  end
+  if inv <= 0 || int(temps() * 10) % 2 == 0
+    tri(160 + int(math.cos(ang) * 14), 120 + int(math.sin(ang) * 14), 160 + int(math.cos(ang + 2.5) * 10), 120 + int(math.sin(ang + 2.5) * 10), 160 + int(math.cos(ang - 2.5) * 10), 120 + int(math.sin(ang - 2.5) * 10), rgb(232, 50, 43))
+  end
+  for i: 1 .. vies disque(8 + i * 14, 12, 5, rgb(240, 70, 80)) end
+  texte(250, 6, str(pts), rgb(255, 255, 255), 2)
+  if fin texte(80, 100, "PERDU !", rgb(255, 220, 60), 4) texte(90, 150, "P3 : rejouer", rgb(255, 255, 255), 2) end
+end
+`;
+
+  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'tir-haut': chute, 'tir-perso': () => TIR_PERSO, 'tir-autour': () => TIR_AUTOUR, 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, derriere: course, dessus: course, iso: course };   // jeu -> son système
 
   function recetteComplete(r) {   // une étape sans choix (ou un choix inconnu) prend sa valeur par défaut : le jeu marche toujours
     const o = {};
@@ -1091,6 +1238,7 @@ end
     for (const e of ETAPES.filter(e => !e.quiz)) o[e.id] = (e.id === 'niv' ? nbNiv(r.niv) <= NIV_MAX && r.niv : e.bulles.some(b => b.id === r[e.id])) || (e.ia && r[e.id] === 'img' && imgs[e.id] > 0) ? r[e.id] : DEFAUT[e.id];
     if (!JEUX_DE[r.genre]) o.genre = GENRE_DE[o.jeu];                                    // pas de genre : celui du jeu (anciennes recettes)
     else if (GENRE_DE[o.jeu] !== o.genre) o.jeu = SOLO[o.genre] ? o.genre : JEUX_DE[o.genre][0];   // un jeu d'un autre genre : le premier du genre choisi
+    if (o.jeu === 'tir-haut') o.action = 'tir';   // « tirer vers le haut » : le gros bouton tire toujours
     return o;
   }
   // Multijoueur sans menu : le jeu envoie sa position (« identifiant,x,y ») et dessine un fantôme quand une autre console envoie le MÊME identifiant (= empreinte du programme : même recette = même jeu).
@@ -1198,8 +1346,8 @@ ${simple ? '' : `  if k % 4 == 3
 end
 `;
   function assembler(r) {
-    const c = recetteComplete(r), f = SYSTEMES[c.jeu], nn = SOLO[c.jeu] ? 1 : nbNiv(c.niv);
-    let code = cartel(f(c), c); if (nn > 1) code = niveaux(code, nn, f === chute, f === plateforme && /^plat-/.test(c.jeu));
+    const c = recetteComplete(r), f = SYSTEMES[c.jeu], nn = SOLO[c.jeu] || FIXES[c.jeu] ? 1 : nbNiv(c.niv);
+    let code = FIXES[c.jeu] ? f(c) : cartel(f(c), c); if (nn > 1) code = niveaux(code, nn, f === chute, f === plateforme && /^plat-/.test(c.jeu));
     if (nn > 6) code = code.replace(/ parle\(.*?, (0|CAMX)\)/g, '');   // (6 niveaux au plus : jamais atteint)
     if (/ parle\(/.test(code)) code = code.replace(/\ndef perso\(/, '\n' + PAROLE(r && r.paroles, nn > 3) + '\ndef perso(');   // pas de bulle dans les questions ni le personnage a soigner : leur ecran est deja plein
     return MULTI.has(f) ? multi(code, MULTI.get(f), !!COURSE[c.jeu]) : code;
@@ -1208,12 +1356,14 @@ end
 const AIDE_JEU = { 'plat-but': 'G et D pour courir, le gros bouton : il saute. Arrive au drapeau !', 'plat-attrape': 'G et D pour courir, le gros bouton : il saute. Attrape toutes les etoiles !', 'plat-evite': 'G et D pour courir, le gros bouton : il saute. Evite les monstres et arrive au drapeau !', 'plat-course': 'G et D pour courir, le gros bouton : il saute. Arrive au drapeau avant le rival !',
   cote: 'Il court tout seul : D va plus vite, G ralentit, le gros bouton : turbo. Arrive avant le rival !', 'cote-obst': 'Il court tout seul : D va plus vite, G ralentit, le gros bouton : il saute. Saute les obstacles et arrive avant le rival !', derriere: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !', dessus: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !', iso: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !' };
 const AIDE_OBST = { derriere: ' Evite les mauvais objets.', dessus: ' Evite les mauvais objets.', iso: ' Evite les mauvais objets.' };
+AIDE_JEU['tir-perso'] = 'G monte, D descend, le gros bouton : tir. Detruis les ennemis qui arrivent, 3 vies !'; AIDE_JEU['tir-autour'] = 'G et D tournent, le gros bouton : tir dans la direction du vaisseau. Detruis tout ce qui arrive de partout, 3 vies !';
 AIDE_JEU.quiz = 'Lis la question, puis choisis ta reponse : G (la 1re), le gros bouton (la 2e) ou D (la 3e). 3 vies !'; AIDE_JEU.soigne = 'G : il mange, le gros bouton : il joue, D : il dort. Garde ses 3 jauges pleines pendant 45 secondes !';
-M.aide = r => { const c = recetteComplete(r); if (SOLO[c.jeu]) return AIDE_JEU[c.jeu]; if (NOUVEAUX[c.jeu]) return AIDE_JEU[c.jeu === 'cote' && c.obst === 'avec' ? 'cote-obst' : c.jeu] + (c.obst === 'avec' ? AIDE_OBST[c.jeu] || '' : ''); const a = c.action; return 'G et D pour bouger, le gros bouton : ' + AIDE[a] + '.'; };
+M.aide = r => { const c = recetteComplete(r); if (SOLO[c.jeu] || FIXES[c.jeu]) return AIDE_JEU[c.jeu]; if (NOUVEAUX[c.jeu]) return AIDE_JEU[c.jeu === 'cote' && c.obst === 'avec' ? 'cote-obst' : c.jeu] + (c.obst === 'avec' ? AIDE_OBST[c.jeu] || '' : ''); const a = c.action; return 'G et D pour bouger, le gros bouton : ' + AIDE[a] + '.'; };
 M.EN = {"Placer à la main":"Place things by hand","🧊 Je roule en 3D en diagonale":"🧊 I ride in diagonal 3D","Mon véhicule":"My vehicle","Sur quoi roules-tu ?":"What are you riding?","🚗 En voiture":"🚗 In a car","🏍 En moto de motocross":"🏍 On a motocross bike","🏄 Sur une planche de surf":"🏄 On a surfboard","Modifier ma présentation":"Change my game’s look","Que veux-tu changer ?":"What do you want to change?","Quand je perds":"When I lose","Que dit le cartel quand tu perds ?":"What does the sign say when you lose?","😵 PERDU !":"😵 YOU LOST!","😬 OUPS !":"😬 OOPS!","💀 GAME OVER":"💀 GAME OVER","😸 ENCORE !":"😸 AGAIN!","🔥 RATÉ !":"🔥 MISSED!","🤖 ERREUR":"🤖 ERROR","Les niveaux":"The levels","Combien de niveaux ?":"How many levels?","1️⃣ Un seul niveau":"1️⃣ A single level","🪜 3 niveaux":"🪜 3 levels","🏔 5 niveaux":"🏔 5 levels","❓ Je réponds à des questions":"❓ I answer questions","🐣 Je m’occupe d’un personnage":"🐣 I take care of a character","Lis la question, puis choisis ta reponse : G (la 1re), le gros bouton (la 2e) ou D (la 3e). 3 vies !":"Read the question, then pick your answer: L (1st), big button (2nd) or R (3rd). 3 lives!","G : il mange, le gros bouton : il joue, D : il dort. Garde ses 3 jauges pleines pendant 45 secondes !":"L: it eats, big button: it plays, R: it sleeps. Keep its 3 gauges full for 45 seconds!","🏁 Plateforme : arriver au drapeau":"🏁 Platformer: reach the flag","⭐ Plateforme : tout attraper":"⭐ Platformer: catch everything","👾 Plateforme : éviter les monstres":"👾 Platformer: dodge the monsters","⏱ Plateforme : course":"⏱ Platformer: race","🏃 Course de côté":"🏃 Side-view race","🚗 Course vue de derrière":"🚗 Race seen from behind","🛰 Course vue de dessus":"🛰 Race seen from above","Les obstacles":"The obstacles","Des obstacles sur la route ?":"Any obstacles on the road?","🚧 Avec obstacles":"🚧 With obstacles","🛣 Sans obstacles":"🛣 No obstacles","G et D pour courir, le gros bouton : il saute. Arrive au drapeau !":"L and R to run, big button: it jumps. Reach the flag!","G et D pour courir, le gros bouton : il saute. Attrape toutes les etoiles !":"L and R to run, big button: it jumps. Catch all the stars!","G et D pour courir, le gros bouton : il saute. Evite les monstres et arrive au drapeau !":"L and R to run, big button: it jumps. Dodge the monsters and reach the flag!","G et D pour courir, le gros bouton : il saute. Arrive au drapeau avant le rival !":"L and R to run, big button: it jumps. Reach the flag before the rival!","Il court tout seul : D va plus vite, G ralentit, le gros bouton : il saute. Saute les obstacles et arrive avant le rival !":"It runs by itself: R goes faster, L slows down, big button: it jumps. Jump over the obstacles and get there before the rival!","Il court tout seul : D va plus vite, G ralentit, le gros bouton : turbo. Arrive avant le rival !":"It runs by itself: R goes faster, L slows down, big button: turbo. Get there before the rival!","G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !":"L and R to change lane, big button: turbo. Pick up the good things and get there before the rival!","G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival ! Evite les mauvais objets.":"L and R to change lane, big button: turbo. Pick up the good things and get there before the rival! Avoid the bad things.","Le jeu":"The game","Quel jeu veux-tu ?":"Which game?","🍎 Attraper":"🍎 Catch","💨 Esquiver":"💨 Dodge","🌧 Ne rien rater":"🌧 Miss nothing","Mon personnage":"My character","Qui es-tu ?":"Who are you?","🐱 Un chat":"🐱 A cat","🤖 Un robot":"🤖 A robot","🐉 Un dragon":"🐉 A dragon","🚀 Une fusée":"🚀 A rocket","👻 Un fantôme":"👻 A ghost","🧙 Un magicien":"🧙 A wizard","🐸 Une grenouille":"🐸 A frog","🦉 Un hibou":"🦉 An owl","Sa couleur":"Its colour","De quelle couleur ?":"Which colour?","🔴 Rouge":"🔴 Red","🟠 Orange":"🟠 Orange","🟡 Jaune":"🟡 Yellow","🟢 Vert":"🟢 Green","🔵 Bleu":"🔵 Blue","🟣 Violet":"🟣 Purple","🩷 Rose":"🩷 Pink","⚪ Blanc":"⚪ White","Le monde":"The world","Où es-tu ?":"Where are you?","🌳 Une forêt":"🌳 A forest","🏙 La ville la nuit":"🏙 The city at night","🌌 L’espace":"🌌 Space","🌊 Sous l’eau":"🌊 Underwater","🏜 Un désert":"🏜 A desert","❄️ La neige":"❄️ Snow","Ce que j’attrape":"What I catch","Que veux-tu attraper ?":"What do you want to catch?","🎁 Ceux du monde":"🎁 The ones from this world","Ce que j’évite":"What I avoid","Que veux-tu éviter ?":"What do you want to avoid?","💣 Ceux du monde":"💣 The ones from this world","Le gros bouton":"The big button","Que fait le gros bouton ?":"What does the big button do?","🦘 Sauter":"🦘 Jump","💥 Tirer":"💥 Shoot","🛡 Bouclier":"🛡 Shield","💨 Turbo":"💨 Turbo","🧲 Aimant":"🧲 Magnet","G et D pour bouger, le gros bouton : il saute.":"L and R to move, big button: it jumps.","G et D pour bouger, le gros bouton : il tire.":"L and R to move, big button: it shoots.","G et D pour bouger, le gros bouton : il se protege avec un bouclier.":"L and R to move, big button: it protects itself with a shield.","G et D pour bouger, le gros bouton : il va plus vite.":"L and R to move, big button: it goes faster.","G et D pour bouger, le gros bouton : il attire les bons objets.":"L and R to move, big button: it attracts the good things."};   // la page anglaise (lang="en") traduit les bulles avec ce dictionnaire
 Object.assign(M.EN, { "Un niveau de plus ?": "One more level?", "🦘 Je saute": "🦘 I jump", "💨 Je cours": "💨 I run", "🧺 J’attrape": "🧺 I catch", "💥 Je tire": "💥 I shoot", "🧠 J’apprends": "🧠 I learn", "🌱 Je fais grandir": "🌱 I make it grow", "Tu veux aller plus loin ou tester ton jeu ?": "Go further, or test your game?", "Aller plus loin": "Go further", "Tester mon jeu": "Test my game", "Changer un choix": "Change a choice", "Ton jeu est déjà prêt : change quelque chose avant de le renvoyer.": "Your game is ready: change something before sending it again." });
 for (let n = 1; n <= NIV_MAX; n++) { M.EN['➕ Ajouter un niveau (ça fera ' + (n + 1) + ')'] = '➕ Add a level (that makes ' + (n + 1) + ')'; M.EN['✋ Rester à ' + n + (n > 1 ? ' niveaux' : ' niveau')] = '✋ Stay at ' + n + (n > 1 ? ' levels' : ' level'); }
 Object.assign(M.EN, { "Les plateformes": "The platforms", "Difficulté : les plateformes des niveaux ?": "Difficulty: the platforms in each level?", "🧱 Les mêmes à chaque niveau": "🧱 The same in every level", "🗺 À des endroits différents à chaque niveau": "🗺 In different places in every level", "Les pièges": "The traps", "Difficulté : et les pièges ?": "Difficulty: and the traps?", "⚖️ Autant de pièges à chaque niveau": "⚖️ The same number of traps", "👾 De plus en plus de pièges": "👾 More and more traps" });
+Object.assign(M.EN, { "⬆️ Je tire vers le haut": "⬆️ I shoot upwards", "🚀 Je tire avec un personnage que je déplace": "🚀 I shoot with a character I move", "🎯 Je tire autour de moi": "🎯 I shoot all around me" });
 Object.assign(M.EN, { "Le genre": "The genre", "Quel jeu ?": "Which game?", "🏃 Je saute de plateforme en plateforme": "🏃 I jump from platform to platform", "💨 Je cours tout seul et j’évite les obstacles": "💨 I run on my own and dodge obstacles", "🛸 Je reste en bas, tout vient vers moi": "🛸 I stay at the bottom, everything comes at me", "🧺 J’attrape ce qui tombe": "🧺 I catch what falls" });
 // le niveau 1 de la plateforme tel que le jeu le fait (point de départ de « Placer à la main ») ; null si ce jeu n'est pas une plateforme
 M.platDefaut = r => {

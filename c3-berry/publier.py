@@ -21,7 +21,7 @@ parts = [("bootloader.bin", os.path.join(BUILD, "c3-berry.ino.bootloader.bin"), 
 os.makedirs(DEST, exist_ok=True)
 for nom, src, _ in parts:
     shutil.copyfile(src, os.path.join(DEST, nom))
-json.dump({"name": "Console Brique (script)", "version": version, "new_install_prompt_erase": False,
+json.dump({"name": "Console Brique (script) " + version, "version": version, "new_install_prompt_erase": False,
            "builds": [{"chipFamily": "ESP32-C3", "parts": [{"path": nom, "offset": off} for nom, _, off in parts]}]},
           open(os.path.join(DEST, "manifest.json"), "w"), indent=1)
 print(f"c3-berry {version} pret dans brique/firmware-berry/ : commit + push pour le publier.")

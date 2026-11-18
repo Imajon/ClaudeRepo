@@ -1915,7 +1915,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p class="aide">Le numéro de ta console s'affiche sur son écran de démarrage (ex. « v55.3 - appuie sur un bouton ») ; branche-la ici pour qu'on compare.</p>
       <p class="aide">La nouvelle version du jeu de la console. <b>Attention : on repart du niveau 1</b> (niveaux, pièces, skins remis à zéro) ; tes jeux de « Mes niveaux » sont gardés. Chrome ou Edge sur ordinateur, câble USB branché, environ 1 minute.</p>
       <esp-web-install-button id="majBtn" manifest="firmware/manifest.json">
-        <button slot="activate" class="sec">🔄 Mettre à jour ma console</button>
+        <button slot="activate" class="sec">🔄 Mettre à jour ma console<span id="majFwVer"></span></button>
         <span slot="unsupported" class="aide">Ce navigateur ne sait pas mettre à jour la console : ouvre la page dans Chrome ou Edge, sur un ordinateur.</span>
         <span slot="not-allowed" class="aide">Il faut ouvrir la page en https (ou sur localhost).</span>
       </esp-web-install-button>
@@ -1935,7 +1935,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.20">
+<main id="vueScript" class="hide" data-version="1.21">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mPetits">🫧 Bulles</button><button id="mGuide">💡 Guidé</button><button id="mLibre">✍️ Libre</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
@@ -1973,7 +1973,7 @@ body{overflow-x:clip}                                           /* la bande 100v
         <button id="scBrancher" class="sec"><svg class="prises" viewBox="0 0 48 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 10h5"/><rect x="6" y="4" width="9" height="12" rx="2"/><path d="M15 7h4M15 13h4"/><rect x="29" y="4" width="9" height="12" rx="2"/><path d="M38 10h9"/></g></svg> Connecter ma console</button>
         <div id="scEtat" class="envoi">Console pas connectée. C'est elle qui fait tourner ton jeu.</div>
         <esp-web-install-button id="scInstallBtn" manifest="firmware-berry/manifest.json">
-          <button slot="activate" class="sec" title="Une fois suffit, environ 1 minute (Chrome ou Edge sur ordinateur, câble USB branché). La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la.">⬇ Installer la dernière version du firmware</button>
+          <button slot="activate" class="sec" title="Une fois suffit, environ 1 minute (Chrome ou Edge sur ordinateur, câble USB branché). La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la.">⬇ Installer la dernière version du firmware<span id="scFwVer"></span></button>
           <span slot="unsupported" class="aide">Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge, sur un ordinateur.</span>
           <span slot="not-allowed" class="aide">Il faut ouvrir la page en https (ou sur localhost).</span>
         </esp-web-install-button>
@@ -2989,7 +2989,7 @@ fetch('firmware/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json()
   .then(m => { manifeste = m; majDetails.classList.toggle('hide', !m); if (m) majEnLigne.textContent = 'version en ligne : ' + m.version; }).catch(() => {});
 majBtn.addEventListener('click', () => fermer(), true);   // esp-web-tools ouvre le port lui-même : on lui laisse
 Promise.all(['firmware', 'firmware-berry'].map(d => fetch(d + '/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null)))   // pied de page : versions publiées des deux firmwares
-  .then(([a, b]) => consoleVersions.textContent = [a && ' · console ' + a.version, b && ' · moteur script ' + b.version].filter(Boolean).join(''));
+  .then(([a, b]) => { if (a) majFwVer.textContent = ' (' + a.version + ')'; if (b) scFwVer.textContent = ' (' + b.version + ')'; consoleVersions.textContent = [a && ' · console ' + a.version, b && ' · moteur script ' + b.version].filter(Boolean).join(''); });
 async function verifierVersion() {                       // la console dit sa version ; plus ancienne que celle publiée -> on propose la mise à jour
   if (!manifeste || !port) return;
   const v = await new Promise(async ok => {

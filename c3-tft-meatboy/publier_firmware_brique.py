@@ -30,7 +30,7 @@ parts = [("bootloader.bin", os.path.join(BUILD, "c3-tft-meatboy.ino.bootloader.b
 os.makedirs(DEST, exist_ok=True)
 for nom, src, _ in parts:
     shutil.copyfile(src, os.path.join(DEST, nom))
-manifest = {"name": "Console Brique", "version": version, "new_install_prompt_erase": False,
+manifest = {"name": "Console Brique " + version, "version": version, "new_install_prompt_erase": False,
             "builds": [{"chipFamily": "ESP32-C3", "parts": [{"path": nom, "offset": off} for nom, _, off in parts]}]}
 with open(os.path.join(DEST, "manifest.json"), "w") as f:
     json.dump(manifest, f, indent=1)

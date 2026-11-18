@@ -2989,7 +2989,7 @@ fetch('firmware/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json()
   .then(m => { manifeste = m; majDetails.classList.toggle('hide', !m); if (m) majEnLigne.textContent = 'version en ligne : ' + m.version; }).catch(() => {});
 majBtn.addEventListener('click', () => fermer(), true);   // esp-web-tools ouvre le port lui-même : on lui laisse
 Promise.all(['firmware', 'firmware-berry'].map(d => fetch(d + '/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null)))   // pied de page : versions publiées des deux firmwares
-  .then(([a, b]) => { if (a) majFwVer.textContent = ' (' + a.version + ')'; if (b) scFwVer.textContent = ' (' + b.version + ')'; consoleVersions.textContent = [a && ' · console ' + a.version, b && ' · moteur script ' + b.version].filter(Boolean).join(''); });
+  .then(([a, b]) => { if (a) majFwVer.textContent = ' (' + a.version + ')'; if (b) scFwVer.textContent = ' (console ' + (b.console || a && a.version || '?') + ' / moteur ' + b.version + ')'; consoleVersions.textContent = [a && ' · console ' + a.version, b && ' · moteur script ' + b.version].filter(Boolean).join(''); });
 async function verifierVersion() {                       // la console dit sa version ; plus ancienne que celle publiée -> on propose la mise à jour
   if (!manifeste || !port) return;
   const v = await new Promise(async ok => {

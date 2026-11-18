@@ -1,6 +1,7 @@
 {
- "name": "Console Brique (script) b9",
- "version": "b9",
+ "name": "Console Brique v56.1 / moteur b10",
+ "version": "b10",
+ "console": "v56.1",
  "new_install_prompt_erase": false,
  "builds": [
   {

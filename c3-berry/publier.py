@@ -10,7 +10,8 @@ BUILD = os.path.join(os.environ.get("TEMP", ICI), "c3-berry-build")   # hors Dro
 DEST = os.path.join(ICI, "..", "brique", "firmware-berry")
 version = re.search(r'#define BERRY_VERSION "([^"]+)"', open(os.path.join(ICI, "c3-berry.ino"), encoding="utf-8").read()).group(1)
 be = open(os.path.join(ICI, "..", "brique", "jeu-commun.be"), encoding="utf-8").read()   # le jeu commun, de base dans la console
-open(os.path.join(ICI, "jeu_commun.h"), "w", encoding="utf-8", newline="\n").write('// genere par publier.py depuis ../brique/jeu-commun.be : ne pas modifier ici\nconst char JEU_COMMUN[] = R"BE(' + be + ')BE";\n')
+console = re.search(r'#define FW_VERSION "([^"]+)"', open(os.path.join(ICI, "..", "c3-tft-meatboy", "c3-tft-meatboy.ino"), encoding="utf-8").read()).group(1)   # version de la console : affichee a cote de celle du moteur
+open(os.path.join(ICI, "jeu_commun.h"), "w", encoding="utf-8", newline="\n").write('// genere par publier.py depuis ../brique/jeu-commun.be : ne pas modifier ici\n#define CONSOLE_VERSION "' + console + '"\nconst char JEU_COMMUN[] = R"BE(' + be + ')BE";\n')
 env = dict(os.environ, ARDUINO_DIRECTORIES_USER=os.path.join(ICI, "..", "c3-tft-meatboy", "libs"))
 subprocess.run([CLI, "compile", "--fqbn", FQBN, "--build-path", BUILD, "c3-berry.ino"], cwd=ICI, env=env, check=True)
 boot_app0 = sorted(glob.glob(os.path.join(os.environ["LOCALAPPDATA"], "Arduino15", "packages", "esp32", "hardware", "esp32", "*", "tools", "partitions", "boot_app0.bin")))[-1]
@@ -21,7 +22,7 @@ parts = [("bootloader.bin", os.path.join(BUILD, "c3-berry.ino.bootloader.bin"), 
 os.makedirs(DEST, exist_ok=True)
 for nom, src, _ in parts:
     shutil.copyfile(src, os.path.join(DEST, nom))
-json.dump({"name": "Console Brique (script) " + version, "version": version, "new_install_prompt_erase": False,
+json.dump({"name": f"Console Brique {console} / moteur {version}", "version": version, "console": console, "new_install_prompt_erase": False,
            "builds": [{"chipFamily": "ESP32-C3", "parts": [{"path": nom, "offset": off} for nom, _, off in parts]}]},
           open(os.path.join(DEST, "manifest.json"), "w"), indent=1)
 print(f"c3-berry {version} pret dans brique/firmware-berry/ : commit + push pour le publier.")

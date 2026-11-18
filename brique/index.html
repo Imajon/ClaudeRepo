@@ -1796,6 +1796,8 @@ body{overflow-x:clip}                                           /* la bande 100v
       <h3>📋 Ma fiche, telle que la console la lit</h3>
       <ul id="ficheLue" class="fiche-lue"></ul>
       <ul id="ficheManque" class="fiche-lue fiche-manque"></ul>
+      <p><button id="ficheMonIA" class="sec" title="Copie un texte à coller dans ton IA (ChatGPT, Claude, Mistral…) : le format de la fiche, ta fiche, et ce que tu veux changer">🤝 Ouvrir avec mon IA</button> <span id="ficheMonIAMsg" class="aide"></span></p>
+      <textarea id="fichePrompt" class="hide" readonly rows="8" style="width:100%"></textarea>
       <details class="fiche-expert"><summary>🧑‍💻 Mode expert : écrire la fiche moi-même</summary>
         <textarea id="ficheJson" spellcheck="false"></textarea>
         <button id="ficheAppliquer" class="sec">✔ Appliquer ma fiche</button> <span id="ficheMsg" class="aide"></span>
@@ -2782,12 +2784,17 @@ async function ficheGo() {
   go.textContent = '✨ Changer ma fiche'; demande.value = ''; envoi.textContent = '';
 }
 ficheAppliquer.onclick = () => {                         // mode expert : la fiche écrite à la main (même vérification que l'IA)
-  let f; try { const [haut, bas] = ficheJson.value.split(/\n(?=\{"rows")/); f = { ...JSON.parse(haut), ...(bas ? JSON.parse(bas) : { rows: fiche?.rows || [] }) }; }
+  let f; try { const [haut, bas] = ficheJson.value.replace(/```\w*/g, '').trim().split(/\n(?=\{"rows")/); f = { rows: fiche?.rows || [], ...JSON.parse(haut), ...(bas ? JSON.parse(bas) : {}) }; }   // la réponse d'une autre IA : avec ou sans ```, grille dans le bloc ou à part
   catch (e) { ficheMsg.innerHTML = `<span style="color:var(--ko)">Le JSON est mal écrit : ${esc(e.message)}</span>`; return; }
   const { fiche: propre, refus } = Fiche.nettoyer(f); fiche = propre;
   const niv = ficheAfficher();
   ficheMsg.innerHTML = refus.length ? `<span style="color:var(--ko)">🚫 Enlevé : ${refus.map(esc).join(', ')}</span>` : '<span style="color:var(--ok)">✔ Fiche appliquée</span>';
   historique.push({ demande: '(mode expert)', vu: refus.map(r => '🚫 ' + r), niv, duree: 0, corr: '' }); rendreHist();
+};
+ficheMonIA.onclick = async () => {                      // pont vers sa propre IA : le format, la fiche, et la place pour dire ce qu'on veut ; la réponse se colle dans le mode expert
+  const t = `Tu m'aides à écrire la « fiche » d'un jeu pour ma petite console (écran de 20 cases de large). Une machine lit cette fiche telle quelle : elle ne comprend que ce format, rien d'autre n'existe.\n\nLE FORMAT\n${Fiche.FORMAT}\n\nMA FICHE ACTUELLE (un bloc JSON, puis la grille)\n${ficheJson.value}\n\nCE QUE JE VEUX CHANGER :\n(écris ici ton idée)\n\nRéponds avec la fiche COMPLÈTE, dans le même format que ma fiche actuelle (le bloc JSON, puis une ligne {"rows":[...]}). Si une idée est impossible avec ce format, dis-le en une phrase après la fiche.`;
+  try { await navigator.clipboard.writeText(t); fichePrompt.classList.add('hide'); ficheMonIAMsg.textContent = '✔ Copié ! Colle-le dans ton IA, écris ton idée à la place de « (écris ici ton idée) », puis colle sa réponse dans « Mode expert » et clique sur « Appliquer ma fiche ».'; }
+  catch { fichePrompt.value = t; fichePrompt.classList.remove('hide'); fichePrompt.select(); ficheMonIAMsg.textContent = 'Copie ce texte (Ctrl+C), colle-le dans ton IA, puis colle sa réponse dans « Mode expert ».'; }
 };
 // ---------- Icônes perso (héros, étoile, arrivée), trouvées sur le web ----------
 // 16x16 ; chaque pixel = 3 chiffres hexa "rgb" (4 bits), "---" = transparent. Même rendu ici et sur la console.

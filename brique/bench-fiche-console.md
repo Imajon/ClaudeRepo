@@ -21,6 +21,8 @@ Mode d'emploi : page `http://localhost:8080/#creer` → bouton **📋 Fiche** �
 | ☐ | 9. Impossible | « un dragon qui vole et crache du feu » | rien de cassé ; la page dit ce qui est impossible (💡 idées) | oui (pas de plantage) |
 | ☐ | 10. Message | une règle avec message de victoire accentué | texte lisible, sans accents cassés (la console n'a pas d'accents) | non |
 
+| ☐ | 11. Ouvrir avec mon IA | clic sur « 🤝 Ouvrir avec mon IA », coller dans ChatGPT / Claude / Mistral avec une idée, puis coller sa réponse dans « Mode expert » → « Appliquer ma fiche » | l'autre IA comprend le format et rend une fiche que la page accepte ; le jeu part sur la console | texte et réponse collée vérifiés (réponse en ``` ou grille dans le bloc) ; pas l'IA tierce |
+
 À noter pour chaque ligne : ça se joue ou non · ce qui diffère de la phrase · tout plantage ou « ⛔ » inattendu.
 
 ## Limites connues du banc

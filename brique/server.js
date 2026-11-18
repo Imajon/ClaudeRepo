@@ -912,21 +912,7 @@ async function methodeContexte(nom, args, surMorceau) {
 const iaMistral = async(texte, base) => iaReglages(await mistral(CONSIGNE, { reglages_actuels: base, demande: texte }), base);
 // ---------- IA de la fiche : phrase de l'enfant -> changements de la fiche (FICHE-JEU.md), verifies ici ----------
 const CONSIGNE_FICHE = `Tu aides des enfants de 9 a 14 ans a decrire un jeu pour une petite console, avec une "fiche".
-On te donne la fiche actuelle et la demande de l'enfant. Unites : cases (16 pixels) et secondes. La grille "rows" : une lettre par case, ligne 0 en haut, colonne 0 a gauche ;
-"." vide, "S" depart ; chaque autre lettre est decrite dans "briques" ou "objets".
-Cles de la fiche (rien d'autre n'existe) :
- modele : plateforme | cote | iso (ne change pas).
- monde : {gravite 0-200 cases/s2 (0 = rien ne tombe, 87.5 = normal), bord : mur | vide | boucle, camera : suit | fixe}
- heros : {boutons {G, D, P3} chacun parmi rien, aller_gauche, aller_droite, sauter, aller_haut, aller_bas, tourner_gauche, tourner_droite, avancer_case, tirer ;
-   vitesse 0-20 cases/s ; elan 0-1 (1 = glisse longtemps) ; saut {hauteur cases 0-20, en_l_air 0-2} ; mur {glisse 0/1, saut_mural 0/1} ; vies 0-9 (0 = on recommence)}
- briques : {lettre: {solide, mortel, ramasse, arrivee : 0/1 ; glisse 0-1 ; rebond cases ; disparait secondes}}
- objets (16 au plus) : {lettre: {forme pic|scie|bloc|ennemi|projectile, mouvement fixe|aller_retour|patrouille|boucle|tomber|suivre,
-   points [[dx,dy],...] (4 au plus, decalages en cases depuis la case de l'objet, dy positif = vers le bas), duree s par trajet, pause s,
-   declencheur toujours|proche|touche, distance cases, cache 0/1, contact perd|rebond|rien|ramasse|vie_moins, dessus "ecrase", vitesse cases/s (suivre, projectile)}}
-   Un bloc avec contact rien qui bouge = une plateforme mobile. "tirer" lance l'objet de forme projectile.
- regles (8 au plus) : [{"quand": "ramasse_tout" | "ecrase_tout" | {"touche":"K"} | {"temps":s} | {"points":n},
-   "alors": "gagne" | "perd" | "vie_plus" | {"ouvre":"P"} (les P disparaissent) | {"ferme":"P"} (les P deviennent des murs) | {"message":"texte court"} | {"vitesse":k}}]
- but : arriver | ramasser_tout | ecraser_tout | regles | {"survivre": secondes}
+On te donne la fiche actuelle et la demande de l'enfant. ${Fiche.FORMAT}
 Reponds UNIQUEMENT avec un objet JSON :
 {"changements": {SEULEMENT ce qui change, ex. {"heros":{"saut":{"hauteur":9}}} ; null efface, ex. {"objets":{"Z":null}} ; "regles" remplace toute la liste},
  "poser": [{"lettre":"Z","x":colonne,"y":ligne}] (pour placer un nouvel objet ou une brique dans la grille, sur une case "." ; sinon liste vide),

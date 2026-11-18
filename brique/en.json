@@ -1604,5 +1604,9 @@
   "Placer à la main": "Place things by hand",
   "✍️ Je fais parler ton personnage…": "✍️ Getting your character to talk…",
   "Tu décris les règles de ton jeu : la console les lit telles quelles": "You describe the rules of your game: the console reads them as they are",
-  "← Revenir à mon jeu (bulles, guidé, libre)": "← Back to my game (bubbles, guided, free)"
+  "← Revenir à mon jeu (bulles, guidé, libre)": "← Back to my game (bubbles, guided, free)",
+  "Copie un texte à coller dans ton IA (ChatGPT, Claude, Mistral…) : le format de la fiche, ta fiche, et ce que tu veux changer": "Copies a text to paste into your AI (ChatGPT, Claude, Mistral…): the sheet format, your sheet, and what you want to change",
+  "🤝 Ouvrir avec mon IA": "🤝 Open with my AI",
+  "✔ Copié ! Colle-le dans ton IA, écris ton idée à la place de « (écris ici ton idée) », puis colle sa réponse dans « Mode expert » et clique sur « Appliquer ma fiche ».": "✔ Copied! Paste it into your AI, write your idea instead of “(write your idea here)”, then paste its answer into “Expert mode” and click “Apply my sheet”.",
+  "Copie ce texte (Ctrl+C), colle-le dans ton IA, puis colle sa réponse dans « Mode expert ».": "Copy this text (Ctrl+C), paste it into your AI, then paste its answer into “Expert mode”."
 }

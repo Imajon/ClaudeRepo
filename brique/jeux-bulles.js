@@ -254,6 +254,60 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
       mal: `  tri(x - 7, y - 9, x + 7, y - 9, x, y + 9, rgb(120, 205, 240)) tri(x - 4, y - 8, x + 1, y - 8, x - 1, y, rgb(215, 245, 255))` }
   };
 
+  // ---------- l'AVANT-PLAN de chaque monde : dessiné APRÈS le personnage, qui passe donc derrière (3 éléments par écran, positions DX décalées de celles du décor ; sol à y = 208) ----------
+  // Même contexte que `decor` (variables i j x y h, tableaux DX DY DZ, couleurs A1..A4). Un nouveau monde = une entrée ici (sinon pas d'avant-plan).
+  const POS_AV = '(DX[i] * 2 + 60) % 320';
+  const AVANT = {
+    foret: `  i = 1
+  while i < 8
+    x = ${POS_AV} h = 11 + DZ[i] % 5
+    disque(x - h, 214, h * 3 / 4, rgb(30, 105, 55)) disque(x + h, 214, h * 2 / 3, rgb(30, 105, 55)) disque(x, 210, h, rgb(40, 125, 62)) disque(x - 3, 206, h / 3, rgb(95, 170, 70))
+    i += 3
+  end`,
+    ville: `  i = 1
+  while i < 8
+    x = ${POS_AV}
+    rect(x - 22, 196, 44, 14, rgb(18, 18, 36)) rect(x - 13, 187, 26, 10, rgb(18, 18, 36)) rect(x - 10, 189, 8, 6, rgb(60, 70, 120)) rect(x + 2, 189, 8, 6, rgb(60, 70, 120)) rect(x + 18, 199, 4, 3, A3)
+    disque(x - 12, 210, 4, NO) disque(x + 12, 210, 4, NO)
+    i += 3
+  end`,
+    espace: `  i = 1
+  while i < 8
+    x = ${POS_AV} h = 10 + DZ[i] % 5
+    tri(x - 5, 210, x + 5, 210, x, 188 - h, A2)
+    disque(x - 6, 214, h, rgb(70, 62, 92)) disque(x + h / 2, 212, h * 2 / 3, rgb(88, 80, 112))
+    i += 3
+  end`,
+    eau: `  var s = int(temps() * 3)
+  i = 1
+  while i < 8
+    x = ${POS_AV}
+    ligne(x, 216, x + (s + i) % 3 * 3 - 3, 172 - DZ[i], rgb(25, 120, 70)) ligne(x + 1, 216, x + 1 + (s + i) % 3 * 3 - 3, 172 - DZ[i], rgb(25, 120, 70)) ligne(x + 2, 216, x + 2 + (s + i) % 3 * 3 - 3, 172 - DZ[i], rgb(25, 120, 70))
+    ligne(x + 8, 216, x + 8 + (s + i + 1) % 3 * 3 - 3, 184 - DZ[i], rgb(35, 150, 85)) ligne(x + 9, 216, x + 9 + (s + i + 1) % 3 * 3 - 3, 184 - DZ[i], rgb(35, 150, 85))
+    i += 3
+  end`,
+    desert: `  i = 1
+  while i < 8
+    x = ${POS_AV}
+    if i == 4
+      disque(x, 216, 14, rgb(170, 110, 60)) disque(x + 12, 218, 10, rgb(150, 95, 52)) disque(x - 4, 210, 5, rgb(205, 150, 90))
+    else
+      rect(x - 4, 172, 8, 40, rgb(40, 110, 60)) rect(x - 14, 184, 6, 14, rgb(40, 110, 60)) rect(x - 14, 194, 14, 6, rgb(40, 110, 60)) rect(x + 8, 180, 6, 14, rgb(40, 110, 60)) rect(x + 2, 190, 8, 6, rgb(40, 110, 60))
+    end
+    i += 3
+  end`,
+    neige: `  i = 1
+  while i < 8
+    x = ${POS_AV}
+    if i == 4
+      disque(x, 224, 26, A1) disque(x - 10, 220, 14, rgb(205, 222, 245)) disque(x + 14, 222, 12, A1)
+    else
+      rect(x - 3, 212, 6, 8, A4) tri(x - 22, 214, x + 22, 214, x, 150, rgb(25, 80, 60)) tri(x - 15, 184, x + 15, 184, x, 140, rgb(25, 80, 60)) tri(x - 7, 156, x + 7, 156, x, 140, A1)
+    end
+    i += 3
+  end`
+  };
+
   // ---------- les actions du gros bouton P3 : variables, remise à zéro, vitesse, mise à jour du joueur, effet sur chaque objet qui tombe, dessin ----------
   const ACTIONS = {
     saut: { vars: 'var sol = true var PVY = 0.0', raz: 'PVY = 0.0 sol = true',
@@ -360,6 +414,11 @@ end
 def decor()
   var i = 0 var j = 0 var x = 0 var y = 0 var h = 0
 ${mo.decor}
+end
+
+def avant()
+  var i = 0 var j = 0 var x = 0 var y = 0 var h = 0
+${AVANT[r.monde]}
 end
 
 def objet(x, y, k)
@@ -478,6 +537,7 @@ ${ac.dessin}
     if FT[i] > 0 cercle(int(FX[i]), int(FY[i]), int((0.4 - FT[i]) * 60) + 2, A4) end
     i += 1
   end
+  avant()
   camera(0, 0)
   texte(9, 9, str(PTS), NO, 3) texte(8, 8, str(PTS), BL, 3)
   i = 0
@@ -535,6 +595,11 @@ end
 def decor()
   var i = 0 var j = 0 var x = 0 var y = 0 var h = 0
 ${mo.decor}
+end
+
+def avant()
+  var i = 0 var j = 0 var x = 0 var y = 0 var h = 0
+${AVANT[r.monde]}
 end
 
 def objet(x, y, k)
@@ -742,6 +807,8 @@ ${c.rival ? `  if RX > CAMX - 30 && RX < CAMX + 340
   end` : ''}
   rect(int(PX) + 3, 207, 18, 3, SOL2)
   if HT <= 0 || int(t * 12) % 2 == 0 perso(int(PX), int(PY)) parle(int(PX), int(PY), CAMX) end
+  s = CAMX % 320
+  camera(s, 0) avant() camera(s - 320, 0) avant()
   camera(0, 0)
   ${c.fin === 'etoiles' ? `texte(9, 9, str(PTS) + "/${st.length}", NO, 3) texte(8, 8, str(PTS) + "/${st.length}", BL, 3)` : 'texte(9, 9, str(PTS), NO, 3) texte(8, 8, str(PTS), BL, 3)'}
 ${drap ? `  barre(int(PX * 100 / ${c.long}), ${c.rival ? `int(RX * 100 / ${c.long})` : -1})` : ''}

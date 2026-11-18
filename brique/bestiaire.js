@@ -7,7 +7,7 @@
   const S = (id, nom, theme, role, a, b, p) => ({ id, nom, theme, role, a, b, p });
 
   M.THEMES = [{ id: 'heros', nom: 'Héros' }, { id: 'foret', nom: 'Forêt' }, { id: 'ville', nom: 'Ville' }, { id: 'espace', nom: 'Espace' }, { id: 'eau', nom: 'Sous l’eau' }, { id: 'desert', nom: 'Désert' }, { id: 'neige', nom: 'Neige' }, { id: 'pieces', nom: 'Pièces de jeu' }];
-  M.ROLES = { heros: 'Héros', plateforme: 'Plateforme, sol', bon: 'À attraper', mal: 'À éviter', ennemi: 'Ennemi', decor: 'Décor', tir: 'Tir', piece: 'Pièce de jeu' };
+  M.ROLES = { heros: 'Héros', plateforme: 'Plateforme, sol', bon: 'À attraper', mal: 'À éviter', ennemi: 'Ennemi', decor: 'Décor', avant: 'Avant-plan (le personnage passe derrière)', tir: 'Tir', piece: 'Pièce de jeu' };
 
   M.FORMES = [
     // ---- héros (valables dans tous les mondes) ----
@@ -28,6 +28,11 @@
     S('herisson', 'Hérisson', 'foret', 'ennemi', '#8a5a30', '#d8b080', [t(1, 12, 3, 3, 6, 10, 'c'), t(4, 12, 6, 1, 9, 10, 'c'), t(8, 12, 11, 2, 13, 10, 'c'), t(11, 12, 15, 5, 15, 12, 'c'), d(8, 11, 5, 'a'), d(13, 12, 2, 'b'), r(14, 11, 1, 1, 'k')]),
     S('sapin', 'Sapin', 'foret', 'decor', '#2e7d32', '#7a4a20', [r(7, 12, 2, 4, 'b'), t(8, 0, 3, 8, 13, 8, 'a'), t(8, 4, 1, 12, 15, 12, 'a')]),
     S('fleur', 'Fleur', 'foret', 'decor', '#ff80b0', '#ffe060', [r(8, 8, 1, 8, '#3a8a3a'), d(8, 2, 2, 'a'), d(8, 8, 2, 'a'), d(5, 5, 2, 'a'), d(11, 5, 2, 'a'), d(8, 5, 2, 'b')]),
+    S('chene', 'Grand chêne', 'foret', 'decor', '#4f9a2a', '#7a3f3a', [r(6, 8, 4, 8, 'b'), r(5, 13, 6, 3, 'b'), l(8, 10, 3, 6, 'b'), l(8, 10, 13, 5, 'b'), d(4, 7, 3, 'c'), d(8, 4, 4, 'c'), d(12, 7, 3, 'c'), d(8, 8, 3, 'c'), d(4, 6, 2, 'a'), d(8, 3, 3, 'a'), d(12, 6, 2, 'a'), d(8, 7, 2, 'a'), d(7, 2, 1, '#9ccc4a'), d(3, 5, 1, '#9ccc4a'), d(12, 5, 1, '#9ccc4a')]),
+    S('arbre-penche', 'Arbre penché', 'foret', 'decor', '#4f9a2a', '#7a3f3a', [t(5, 16, 9, 16, 10, 7, 'b'), t(5, 16, 10, 7, 8, 7, 'b'), l(9, 10, 13, 6, 'b'), d(5, 5, 3, 'c'), d(11, 4, 3, 'c'), d(9, 7, 3, 'c'), d(13, 8, 2, 'c'), d(5, 4, 2, 'a'), d(11, 3, 2, 'a'), d(9, 6, 2, 'a'), d(13, 7, 1, 'a'), d(4, 3, 1, '#9ccc4a'), d(11, 2, 1, '#9ccc4a')]),
+    S('petit-arbre', 'Petit arbre', 'foret', 'decor', '#4f9a2a', '#7a3f3a', [t(6, 16, 10, 16, 8, 7, 'b'), d(5, 8, 3, 'c'), d(11, 8, 3, 'c'), d(8, 5, 3, 'c'), d(8, 9, 3, 'c'), d(5, 7, 2, 'a'), d(11, 7, 2, 'a'), d(8, 4, 2, 'a'), d(8, 8, 2, 'a'), d(7, 3, 1, '#9ccc4a'), d(4, 6, 1, '#9ccc4a')]),
+    S('buisson', 'Buisson', 'foret', 'avant', '#2a7d3a', '#7bc050', [d(4, 11, 4, 'c'), d(12, 11, 4, 'c'), d(8, 9, 5, 'a'), d(6, 7, 2, 'b'), d(11, 8, 1, 'b'), r(0, 14, 16, 2, 'c')]),
+    S('tronc', 'Gros tronc', 'foret', 'avant', '#6a3a30', '#8a5040', [r(4, 0, 8, 16, 'a'), r(4, 0, 2, 16, 'b'), r(9, 3, 1, 5, 'c'), r(7, 10, 1, 4, 'c'), t(4, 16, 1, 16, 4, 12, 'a'), t(12, 16, 15, 16, 12, 12, 'a')]),
     // ---- ville ----
     S('toit', 'Toit', 'ville', 'plateforme', '#6b7280', '#9aa3af', [r(0, 6, 16, 4, 'a'), r(0, 6, 16, 1, 'b'), r(2, 10, 3, 2, 'c'), r(10, 10, 3, 2, 'c')]),
     S('piece', 'Pièce', 'ville', 'bon', '#ffd040', '#e0a820', [d(8, 8, 6, 'b'), d(8, 8, 5, 'a'), r(7, 5, 2, 6, 'b')]),
@@ -35,6 +40,7 @@
     S('drone', 'Drone', 'ville', 'ennemi', '#4a5568', '#ff3030', [r(1, 5, 5, 1, 'c'), r(10, 5, 5, 1, 'c'), r(7, 5, 2, 2, 'c'), d(8, 8, 3, 'a'), d(8, 8, 1, 'b'), r(3, 6, 1, 2, 'c'), r(12, 6, 1, 2, 'c')]),
     S('immeuble', 'Immeuble', 'ville', 'decor', '#3a4a6a', '#ffe680', [r(3, 1, 10, 15, 'a'), r(5, 3, 2, 2, 'b'), r(9, 3, 2, 2, 'b'), r(5, 7, 2, 2, 'b'), r(9, 7, 2, 2, 'b'), r(5, 11, 2, 2, 'b'), r(9, 11, 2, 2, 'b')]),
     S('lampadaire', 'Lampadaire', 'ville', 'decor', '#444a55', '#ffe680', [r(7, 4, 2, 12, 'a'), r(5, 15, 6, 1, 'a'), d(8, 3, 3, 'b')]),
+    S('voiture-garee', 'Voiture garée', 'ville', 'avant', '#1a1a30', '#ffe680', [r(1, 8, 14, 5, 'a'), r(4, 4, 8, 4, 'a'), r(5, 5, 2, 2, '#3c4678'), r(9, 5, 2, 2, '#3c4678'), d(4, 13, 2, 'k'), d(12, 13, 2, 'k'), r(14, 9, 2, 2, 'b')]),
     // ---- espace ----
     S('asteroide-plat', 'Roche flottante', 'espace', 'plateforme', '#7a7f8a', '#a0a6b0', [r(1, 6, 14, 5, 'a'), r(1, 6, 14, 1, 'b'), d(4, 8, 1, 'c'), d(10, 7, 2, 'c'), r(3, 11, 10, 1, 'c')]),
     S('etoile', 'Étoile', 'espace', 'bon', '#ffe060', '#ffffff', [t(8, 0, 4, 11, 12, 11, 'a'), t(8, 16, 4, 5, 12, 5, 'a'), d(8, 8, 2, 'b')]),
@@ -42,6 +48,7 @@
     S('alien', 'Alien', 'espace', 'ennemi', '#60d060', '#ff60c0', [l(5, 3, 6, 5, 'b'), l(11, 3, 10, 5, 'b'), d(5, 3, 1, 'b'), d(11, 3, 1, 'b'), d(8, 9, 5, 'a'), d(6, 8, 1, 'w'), d(10, 8, 1, 'w'), r(6, 12, 4, 1, 'k')]),
     S('planete', 'Planète', 'espace', 'decor', '#c07040', '#f0c080', [d(8, 8, 6, 'a'), r(0, 7, 16, 2, 'b'), d(6, 5, 1, 'c')]),
     S('lune', 'Lune', 'espace', 'decor', '#e8e8f0', '#c0c0d0', [d(8, 8, 6, 'a'), d(6, 6, 2, 'b'), d(10, 10, 1, 'b'), d(11, 5, 1, 'b')]),
+    S('cristal', 'Cristal et rocher', 'espace', 'avant', '#9a5ac8', '#58506f', [d(5, 13, 4, 'b'), d(11, 14, 3, 'b'), t(8, 1, 5, 12, 11, 12, 'a'), t(8, 1, 8, 12, 11, 12, 'c')]),
     // ---- sous l'eau ----
     S('corail', 'Corail', 'eau', 'plateforme', '#ff7a90', '#ffd0d8', [r(0, 9, 16, 7, 'a'), r(2, 5, 2, 5, 'a'), r(7, 3, 2, 7, 'a'), r(12, 6, 2, 4, 'a'), d(5, 12, 1, 'b'), d(11, 13, 1, 'b')]),
     S('perle', 'Perle', 'eau', 'bon', '#f4f0ff', '#c0b8e0', [d(8, 8, 5, 'b'), d(8, 8, 4, 'a'), d(6, 6, 1, 'w')]),
@@ -49,6 +56,7 @@
     S('meduse', 'Méduse', 'eau', 'mal', '#d070e0', '#f0a0f8', [d(8, 6, 5, 'a'), l(4, 9, 4, 14, 'b'), l(7, 10, 7, 15, 'b'), l(10, 10, 10, 15, 'b'), l(12, 9, 12, 14, 'b'), d(6, 5, 1, 'w'), d(10, 5, 1, 'w')]),
     S('requin', 'Requin', 'eau', 'ennemi', '#6a8aa8', '#ffffff', [r(1, 6, 12, 5, 'a'), t(13, 8, 16, 4, 16, 12, 'a'), t(5, 6, 8, 2, 9, 6, 'c'), r(1, 9, 12, 2, 'b'), d(3, 8, 1, 'k')]),
     S('algue', 'Algue', 'eau', 'decor', '#2e9a5a', '#60d090', [r(3, 6, 2, 10, 'a'), r(8, 2, 2, 14, 'a'), r(12, 8, 2, 8, 'a'), r(4, 6, 1, 3, 'b'), r(9, 2, 1, 5, 'b')]),
+    S('algue-haute', 'Algues hautes', 'eau', 'avant', '#19784a', '#23965a', [r(4, 2, 2, 14, 'a'), r(5, 1, 1, 3, 'a'), r(3, 7, 1, 4, 'a'), r(10, 6, 2, 10, 'b'), r(11, 5, 1, 3, 'b'), r(9, 10, 1, 3, 'b')]),
     // ---- désert ----
     S('rocher', 'Rocher plat', 'desert', 'plateforme', '#c08a50', '#e0b070', [r(0, 7, 16, 6, 'a'), r(0, 7, 16, 2, 'b'), r(3, 10, 2, 1, 'c'), r(10, 11, 3, 1, 'c')]),
     S('gemme', 'Gemme', 'desert', 'bon', '#40c0e0', '#a0f0ff', [t(8, 1, 3, 7, 13, 7, 'a'), t(3, 7, 13, 7, 8, 15, 'c'), t(8, 1, 6, 7, 10, 7, 'b')]),
@@ -56,6 +64,7 @@
     S('scorpion', 'Scorpion', 'desert', 'ennemi', '#a05030', '#d08060', [d(6, 11, 4, 'a'), r(10, 5, 2, 6, 'a'), r(8, 3, 3, 2, 'a'), t(8, 1, 10, 3, 7, 3, 'k'), d(2, 10, 2, 'b'), d(2, 13, 2, 'b'), r(5, 10, 1, 1, 'k')]),
     S('dune', 'Dune', 'desert', 'decor', '#e8c070', '#d0a850', [t(0, 16, 6, 5, 16, 16, 'a'), t(8, 16, 13, 9, 16, 16, 'b')]),
     S('soleil', 'Soleil', 'desert', 'decor', '#ffb020', '#ffe060', [d(8, 8, 5, 'a'), d(8, 8, 3, 'b'), r(7, 0, 2, 2, 'a'), r(7, 14, 2, 2, 'a'), r(0, 7, 2, 2, 'a'), r(14, 7, 2, 2, 'a')]),
+    S('cactus-devant', 'Grand cactus', 'desert', 'avant', '#286e3c', '#aa6e3c', [r(6, 1, 4, 15, 'a'), r(1, 5, 2, 5, 'a'), r(1, 8, 6, 2, 'a'), r(13, 3, 2, 5, 'a'), r(9, 6, 5, 2, 'a'), d(3, 15, 2, 'b'), d(13, 15, 3, 'b')]),
     // ---- neige ----
     S('banquise', 'Banquise', 'neige', 'plateforme', '#bfe3ff', '#8fc4f0', [r(0, 7, 16, 4, 'a'), r(0, 7, 16, 2, 'w'), t(3, 11, 6, 11, 4, 14, 'b'), t(10, 11, 13, 11, 12, 14, 'b')]),
     S('flocon', 'Flocon', 'neige', 'bon', '#bfe8ff', '#ffffff', [r(7, 1, 2, 14, 'a'), r(1, 7, 14, 2, 'a'), l(3, 3, 13, 13, 'a'), l(13, 3, 3, 13, 'a'), d(8, 8, 2, 'b')]),
@@ -63,6 +72,7 @@
     S('bonhomme-neige', 'Bonhomme de neige', 'neige', 'ennemi', '#ffffff', '#303040', [d(8, 12, 4, 'a'), d(8, 6, 3, 'a'), r(5, 2, 6, 2, 'b'), r(6, 0, 4, 3, 'b'), r(7, 5, 1, 1, 'k'), r(9, 5, 1, 1, 'k'), t(8, 6, 12, 7, 8, 8, '#ff8030'), d(8, 11, 1, 'k')]),
     S('sapin-neige', 'Sapin enneigé', 'neige', 'decor', '#2e6a4a', '#7a4a20', [r(7, 12, 2, 4, 'b'), t(8, 0, 3, 8, 13, 8, 'a'), t(8, 4, 1, 12, 15, 12, 'a'), t(8, 0, 6, 3, 10, 3, 'w'), t(8, 4, 5, 7, 11, 7, 'w')]),
     S('igloo', 'Igloo', 'neige', 'decor', '#e8f4ff', '#202838', [d(8, 12, 6, 'a'), r(2, 10, 12, 1, 'w'), r(6, 11, 4, 5, 'b')]),
+    S('congere', 'Congère', 'neige', 'avant', '#ffffff', '#cddef5', [d(8, 15, 7, 'a'), d(3, 14, 4, 'b'), d(13, 14, 3, 'a'), d(6, 11, 2, 'b')]),
     // ---- pièces de jeu (valables partout) ----
     S('balle', 'Balle ronde', 'pieces', 'piece', '#ffdc3c', '#ffffff', [d(8, 8, 4, 'a'), d(7, 7, 1, 'b')]),
     S('balle-carree', 'Balle carrée', 'pieces', 'piece', '#ffdc3c', '#ffffff', [r(4, 4, 8, 8, 'a'), r(5, 5, 2, 2, 'b')]),
@@ -123,20 +133,20 @@
   // ---- la décomposition des jeux : chaque élément = un rôle (les formes du bestiaire qui peuvent le remplacer) ; f = formes précises, sinon toutes celles du rôle ----
   // rôle 'fond' = couleur seulement (haut et bas du dégradé) ; 'texte' = couleur seulement. Toujours personnalisable : la couleur (a, b) ; la forme quand le rôle a des formes.
   const E = (n, role, note, f) => ({ n, role, note: note || '', f: f || null });
-  const fond = E('Fond', 'fond', 'ciel ou mur du fond : 2 couleurs en dégradé, selon le monde'), decor = E('Décor', 'decor', 'arbres, immeubles, planètes… posés derrière, 2 plans'), vies = E('Vies', 'piece', 'une icône par vie', ['coeur']), score = E('Score', 'texte', 'couleur du texte et de son ombre');
+  const fond = E('Fond', 'fond', 'ciel ou mur du fond : 2 couleurs en dégradé, selon le monde'), decor = E('Décor', 'decor', 'arbres, immeubles, planètes… posés derrière, 2 plans'), avant = E('Avant-plan', 'avant', 'dessiné après le personnage, qui passe derrière : 3 par écran'), vies = E('Vies', 'piece', 'une icône par vie', ['coeur']), score = E('Score', 'texte', 'couleur du texte et de son ombre');
   M.JEUX = [
-    { id: 'plateforme', nom: 'Plateforme (drapeau, étoiles, monstres, course)', verbe: 'je saute', fichier: 'saut.be · exemples/4-plateforme.be', el: [fond, decor, E('Plateformes', 'plateforme', 'le sol et les marches'), E('Personnage', 'heros', 'taille fixe'), E('À ramasser', 'bon', 'étoiles ou fruits'), E('Monstres', 'ennemi', 'ils patrouillent'), E('Arrivée', 'piece', 'le drapeau', ['drapeau']), vies, score] },
-    { id: 'attrape', nom: 'Attrape (personnage en bas)', verbe: 'j’attrape', fichier: 'jeu-attrape.be', el: [fond, decor, E('Personnage / panier', 'heros', 'ou le panier', ['panier']), E('Bon objet', 'bon', 'tombe, on l’attrape'), E('Mauvais objet', 'mal', 'tombe, on l’évite'), vies, score] },
+    { id: 'plateforme', nom: 'Plateforme (drapeau, étoiles, monstres, course)', verbe: 'je saute', fichier: 'saut.be · exemples/4-plateforme.be', el: [fond, decor, avant, E('Plateformes', 'plateforme', 'le sol et les marches'), E('Personnage', 'heros', 'taille fixe'), E('À ramasser', 'bon', 'étoiles ou fruits'), E('Monstres', 'ennemi', 'ils patrouillent'), E('Arrivée', 'piece', 'le drapeau', ['drapeau']), vies, score] },
+    { id: 'attrape', nom: 'Attrape (personnage en bas)', verbe: 'j’attrape', fichier: 'jeu-attrape.be', el: [fond, decor, avant, E('Personnage / panier', 'heros', 'ou le panier', ['panier']), E('Bon objet', 'bon', 'tombe, on l’attrape'), E('Mauvais objet', 'mal', 'tombe, on l’évite'), vies, score] },
     { id: 'vaisseau-centre', nom: 'Vaisseau central qui tourne', verbe: 'je tire', fichier: 'jeu-vaisseau-centre.be', el: [E('Fond', 'fond', 'espace : étoiles'), E('Vaisseau', 'heros', 'au centre, tourne', ['fusee']), E('Astéroïdes', 'mal', 'arrivent de tous les bords', ['meteorite']), E('Tir', 'tir', 'part dans la direction du vaisseau'), vies, score] },
     { id: 'shmup', nom: 'Vaisseau sur fond qui défile', verbe: 'je tire', fichier: 'jeu-shmup.be', el: [fond, E('Étoiles', 'decor', 'défilent en 2 couches (lente, rapide)', ['etoile', 'planete', 'lune']), E('Vaisseau', 'heros', 'à gauche, monte et descend'), E('Ennemis', 'ennemi', 'arrivent de la droite'), E('Tir', 'tir', 'vers la droite'), vies, score] },
     { id: 'casse-briques', nom: 'Casse-briques', verbe: 'je casse', fichier: 'jeu-casse-briques.be', el: [fond, E('Raquette', 'piece', 'G et D', ['raquette']), E('Balle', 'piece', 'ronde ou carrée', ['balle', 'balle-carree']), E('Briques', 'piece', '3 rangées, 3 couleurs', ['brique', 'brique-dure']), vies, score] },
-    { id: 'plateforme-casse', nom: 'Plateforme : casser et découvrir', verbe: 'je casse', fichier: 'jeu-plateforme-casse.be', el: [fond, decor, E('Sol', 'plateforme', 'sol continu'), E('Personnage', 'heros', 'la tête casse'), E('Caisses', 'piece', 'à casser par en dessous', ['caisse', 'brique']), E('Objets cachés', 'bon', 'apparaissent quand la caisse casse'), score] },
-    { id: 'flappy', nom: 'Flappy', verbe: 'je rebondis', fichier: 'jeu-flappy.be', el: [E('Ciel', 'fond', 'dégradé selon le monde'), decor, E('Sol', 'plateforme', 'bande du bas'), E('Oiseau', 'heros', 'une touche : il bat des ailes', ['oiseau', 'fusee', 'fantome', 'chat']), E('Tuyaux', 'piece', 'le trou se déplace', ['tuyau']), score] },
+    { id: 'plateforme-casse', nom: 'Plateforme : casser et découvrir', verbe: 'je casse', fichier: 'jeu-plateforme-casse.be', el: [fond, decor, avant, E('Sol', 'plateforme', 'sol continu'), E('Personnage', 'heros', 'la tête casse'), E('Caisses', 'piece', 'à casser par en dessous', ['caisse', 'brique']), E('Objets cachés', 'bon', 'apparaissent quand la caisse casse'), score] },
+    { id: 'flappy', nom: 'Flappy', verbe: 'je rebondis', fichier: 'jeu-flappy.be', el: [E('Ciel', 'fond', 'dégradé selon le monde'), decor, avant, E('Sol', 'plateforme', 'bande du bas'), E('Oiseau', 'heros', 'une touche : il bat des ailes', ['oiseau', 'fusee', 'fantome', 'chat']), E('Tuyaux', 'piece', 'le trou se déplace', ['tuyau']), score] },
     { id: 'pong', nom: 'Pong', verbe: 'je rebondis', fichier: 'jeu-pong.be', el: [E('Terrain', 'fond', 'fond du terrain'), E('Ma raquette', 'piece', 'à gauche', ['raquette']), E('Raquette adverse', 'piece', 'à droite, jouée par la console', ['raquette']), E('Balle', 'piece', 'carrée ou ronde (ROND)', ['balle', 'balle-carree']), E('Filet', 'texte', 'trait pointillé : couleur seulement'), score] },
-    { id: 'plateforme-rebond', nom: 'Plateforme qui rebondit', verbe: 'je rebondis', fichier: 'jeu-plateforme-rebond.be', el: [fond, decor, E('Plateformes', 'plateforme', '8 en colonne, recyclées'), E('Trampolines', 'piece', 'rebond plus haut', ['trampoline']), E('Personnage', 'heros', 'rebondit tout seul'), score] },
+    { id: 'plateforme-rebond', nom: 'Plateforme qui rebondit', verbe: 'je rebondis', fichier: 'jeu-plateforme-rebond.be', el: [fond, decor, avant, E('Plateformes', 'plateforme', '8 en colonne, recyclées'), E('Trampolines', 'piece', 'rebond plus haut', ['trampoline']), E('Personnage', 'heros', 'rebondit tout seul'), score] },
     { id: 'plateforme-quiz', nom: 'Plateforme à questions', verbe: 'j’apprends', fichier: 'jeu-plateforme-quiz.be', el: [fond, E('Sol', 'plateforme', ''), E('Plateformes', 'plateforme', '3 en l’air'), E('Personnage', 'heros', ''), E('Objets-réponses', 'bon', 'un par plateforme, porte la réponse'), E('Question', 'texte', 'texte en haut'), vies, score] },
     { id: 'tamagotchi', nom: 'Tamagotchi', verbe: 'je fais grandir', fichier: 'jeu-tamagotchi.be', el: [E('Pièce', 'fond', 'mur et sol'), E('Bestiole', 'heros', 'grandit avec le temps (4 tailles)', ['blob', 'chat', 'grenouille', 'hibou', 'dragon']), E('Jauge manger', 'bon', 'icône + barre', ['pomme', 'poisson']), E('Jauge jouer', 'piece', 'icône + barre', ['balle', 'balle-carree']), E('Jauge dormir', 'decor', 'icône + barre', ['lune']), E('Câlin', 'piece', 'petit cœur', ['coeur'])] },
-    { id: 'plateforme-grandit', nom: 'Plateforme qui fait grandir', verbe: 'je fais grandir', fichier: 'jeu-plateforme-grandit.be', el: [fond, decor, E('Plateformes', 'plateforme', ''), E('Personnage', 'heros', '4 tailles, couleur qui change'), E('Fruit', 'bon', 'chaque fruit le fait grandir'), score] },
+    { id: 'plateforme-grandit', nom: 'Plateforme qui fait grandir', verbe: 'je fais grandir', fichier: 'jeu-plateforme-grandit.be', el: [fond, decor, avant, E('Plateformes', 'plateforme', ''), E('Personnage', 'heros', '4 tailles, couleur qui change'), E('Fruit', 'bon', 'chaque fruit le fait grandir'), score] },
     { id: 'rythme', nom: 'Rythme (guitar hero)', verbe: 'je réagis', fichier: 'jeu-rythme.be', el: [E('Scène', 'fond', 'fond sombre'), E('Couloirs', 'texte', '3 couleurs, une par bouton : couleurs seulement'), E('Notes', 'piece', 'tombent dans leur couloir', ['note', 'balle', 'etoile']), E('Ligne de frappe', 'texte', 'couleur seulement'), E('Combo et score', 'texte', '')] },
     { id: 'alignement', nom: 'Plateformes à aligner', verbe: 'je réagis', fichier: 'jeu-alignement.be', el: [fond, E('Étages', 'plateforme', 'chaque étage change de teinte'), E('Bloc qui glisse', 'piece', 'même forme que les étages', ['brique', 'brique-dure', 'caisse']), score] }
   ];

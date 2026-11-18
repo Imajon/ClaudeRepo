@@ -4688,7 +4688,8 @@ function afficher(v) {
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); propos.classList.toggle('hide', v !== 'propos'); cgv.classList.toggle('hide', v !== 'cgv'); vApropos.classList.toggle('on', v === 'propos'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');
-  atelier.classList.add('hide'); vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché, à retirer quand le mode script aura sa communauté
+  const ancien = new URLSearchParams(location.search).has('fiche');   // /?fiche : « Créer » ouvre l'ancien générateur (#atelier) pour tester « Ma fiche »
+  atelier.classList.toggle('hide', !(ancien && v === 'creer')); vueScript.classList.toggle('hide', v !== 'creer' || ancien);   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché (sauf /?fiche), à retirer quand le mode script aura sa communauté
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
   const m = document.querySelector("main[data-version]:not(.hide)"); sectionVersion.textContent = m ? " · section v" + m.dataset.version : "";   // numéro de la grande section affichée, à monter à la main dans sa balise <main>

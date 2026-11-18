@@ -661,21 +661,22 @@ end
     // plusieurs niveaux : les données de chaque niveau sont à plat (niveau k = tranche k) et charge() les recopie au début du niveau
     // niveau 1 placé à la main, jusqu'à 4 niveaux (r.edit : 7 plateformes [x, haut, largeur], 1 à 8 étoiles [x, y], 0 à 8 monstres x) : les autres niveaux ne changent pas
     const nb = (v, a, z) => Math.max(a, Math.min(z, Math.round(+v) || a)), e = r.edit;
-    const ed = c.pl && nbNiv(r.niv) <= 4 && e && e.pl?.length === 7 ? { pl: e.pl.map(p => [nb(p[0], 0, 940), nb(p[1], 72, 192), nb(p[2], 30, 140)]), st: (e.st || []).slice(0, 8).map(q => [nb(q[0], 0, 990), nb(q[1], 20, 200)]), hz: (e.hz || []).slice(0, 8).map(x => nb(x, 70, 900)) } : null;
+    const ed = c.pl && nbNiv(r.niv) <= 4 && e && e.pl?.length === 7 ? { pl: e.pl.map(p => [nb(p[0], 0, 940), nb(p[1], 72, 192), nb(p[2], 30, 140)]), st: (e.st || []).slice(0, 8).map(q => [nb(q[0], 0, 990), nb(q[1], 20, 200)]), hz: (e.hz || []).slice(0, 8).map(h => Array.isArray(h) ? [nb(h[0], 70, 900), nb(h[1], 60, 200)] : [nb(h, 70, 900), 200]) } : null;   // monstre : [x, y] (un nombre seul = au sol)
     const nn = c.pl ? nbNiv(r.niv) : 1, multi = nn > 1, plans = liste0(nn, k => k === 0 && ed ? ed.pl : r.plan === 'oui' ? PLANS[(k + 1) % PLANS.length] : PLATS);
-    const pool = [...c.hz, ...PIEGES_PLUS], hzK = liste0(nn, k => k === 0 && ed ? ed.hz : pool.slice(0, c.hz.length + (r.piege === 'oui' ? 2 * k : 0)).map(x => r.plan === 'oui' ? x + DEC[k % 6] : x)), NH = Math.max(...hzK.map(h => h.length));
+    const pool = [...c.hz, ...PIEGES_PLUS], hzK = liste0(nn, k => k === 0 && ed ? ed.hz.map(h => h[0]) : pool.slice(0, c.hz.length + (r.piege === 'oui' ? 2 * k : 0)).map(x => r.plan === 'oui' ? x + DEC[k % 6] : x)), NH = Math.max(...hzK.map(h => h.length));
     const hzPad = k => Array.from({ length: NH }, (_, i) => i < hzK[k].length ? hzK[k][i] : -999);
-    if (multi) c.hz = hzPad(0); else if (ed) c.hz = ed.hz;
+    if (multi) c.hz = hzPad(0); else if (ed) c.hz = ed.hz.map(h => h[0]);
+    const hy = c.hz.map((_, i) => ed?.hz[i]?.[1] ?? 200);   // hauteur de chaque monstre : 200 = au sol
     const pl = c.pl ? plans[0] : [], st = c.pl ? (ed?.st.length ? ed.st : [...pl.map(p => [p[0] + p[2] / 2, p[1] - 16]), [70, 192]]) : [], FL = c.long - 60, MAXX = c.long - 30, drap = c.fin === 'drapeau';
     const reels = a => liste(a.length, i => a[i].toFixed(1));
     return `${nomJeu(c.nom, r)}${b.tete}
 var PX = 20.0 var PY = 184.0 var PVY = 0.0 var sol = true var CAMX = 0 var RX = 20.0
 var PLX = ${liste(pl.length, i => pl[i][0])} var PT = ${liste(pl.length, i => pl[i][1])} var PW = ${liste(pl.length, i => pl[i][2])}
 var SX = ${liste(st.length, i => st[i][0])} var SY = ${liste(st.length, i => st[i][1])} var SV = ${liste(st.length, () => 'true')}
-var HX = ${reels(c.hz)} var HB = ${reels(c.hz)} var HD = ${liste(c.hz.length, () => '1.0')}
+var HX = ${reels(c.hz)} var HB = ${reels(c.hz)} var HD = ${liste(c.hz.length, () => '1.0')} var HY = ${reels(hy)}
 ${multi ? `var LP = ${liste(nn * 7, i => plans[(i / 7) | 0][i % 7][0])} var LT = ${liste(nn * 7, i => plans[(i / 7) | 0][i % 7][1])} var LW = ${liste(nn * 7, i => plans[(i / 7) | 0][i % 7][2])}
 var LH = ${liste(nn * NH, i => hzPad((i / NH) | 0)[i % NH].toFixed(1))}
-${ed ? `var E1X = ${liste(st.length, i => st[i][0])} var E1Y = ${liste(st.length, i => st[i][1])}\n` : ''}` : ''}${b.defs}
+${ed ? `var E1X = ${liste(st.length, i => st[i][0])} var E1Y = ${liste(st.length, i => st[i][1])} var E1H = ${reels(hy)}\n` : ''}` : ''}${b.defs}
 ${multi ? `def charge()
   var i = 0 var k = NV - 1
 ${ed ? `  while i < 7
@@ -697,7 +698,7 @@ ${st.length > 7 ? '  if k > 0 SX[7] = 70 SY[7] = 192 end\n' : ''}` : `  while i 
     i += 1
   end
 `}  i = 0
-  while i < ${NH} HB[i] = LH[k * ${NH} + i] i += 1 end
+  while i < ${NH} HB[i] = LH[k * ${NH} + i] HY[i] = ${ed ? '(k == 0 ? E1H[i] : 200.0)' : '200.0'} i += 1 end
 end
 
 ` : ''}def nouvelle()
@@ -756,7 +757,7 @@ ${c.saut ? '  if appui(P3) && sol PVY = -300.0 sol = false son(660, 40) end' : '
   while i < ${c.hz.length}
 ${c.vh ? `    HX[i] += HD[i] * ${c.vh} * dt
     if HX[i] > HB[i] + 25 HD[i] = -1.0 elif HX[i] < HB[i] - 25 HD[i] = 1.0 end
-` : ''}    if HT <= 0 && HX[i] + 8 > PX + 3 && HX[i] - 8 < PX + 21 && PY + 24 > 192 && PY + 4 < 208
+` : ''}    if HT <= 0 && HX[i] + 8 > PX + 3 && HX[i] - 8 < PX + 21 && PY + 24 > HY[i] - 8 && PY + 4 < HY[i] + 8
       VIES -= 1 HT = 1.0 son(140, 160) PVY = -220.0 sol = false PX -= 30
       if PX < 0 PX = 0.0 end
       if VIES <= 0 FIN = 2 son(100, 400) end
@@ -797,7 +798,7 @@ ${drap ? `  rect(${FL}, 168, 3, 40, NO) tri(${FL + 3}, 168, ${FL + 3}, 180, ${FL
   end
   i = 0
   while i < ${c.hz.length}
-    if HX[i] > CAMX - 20 && HX[i] < CAMX + 340 objet(int(HX[i]), 200, 1) end
+    if HX[i] > CAMX - 20 && HX[i] < CAMX + 340 objet(int(HX[i]), int(HY[i]), 1) end
     i += 1
   end
 ${c.rival ? `  if RX > CAMX - 30 && RX < CAMX + 340
@@ -1436,7 +1437,7 @@ Object.assign(M.EN, { "Le genre": "The genre", "Quel jeu ?": "Which game?", "�
 M.platDefaut = r => {
   const c = recetteComplete(r), P = PLATEFORMES[c.jeu]; if (!P) return null;
   const pl = (c.plan === 'oui' ? PLANS[1] : PLATS).map(p => p.slice()), hz = [...P.hz, ...PIEGES_PLUS].slice(0, P.hz.length).map(x => c.plan === 'oui' ? x + DEC[0] : x);
-  return { pl, st: [...pl.map(p => [p[0] + p[2] / 2, p[1] - 16]), [70, 192]], hz, long: 1000, drapeau: 940, bouge: !!P.vh };
+  return { pl, st: [...pl.map(p => [p[0] + p[2] / 2, p[1] - 16]), [70, 192]], hz: hz.map(x => [x, 200]), long: 1000, drapeau: 940, bouge: !!P.vh };
 };
 Object.assign(M.EN, {"🐦 Je joue un oiseau": "🐦 I play a bird", "🟡 Je joue une bestiole": "🟡 I play a critter", "🍎 Pomme": "🍎 Apple", "🪙 Pièce": "🪙 Coin", "⭐ Étoile": "⭐ Star", "🫧 Perle": "🫧 Pearl", "🐟 Poisson": "🐟 Fish", "💎 Gemme": "💎 Gem", "❄️ Flocon": "❄️ Snowflake", "🍄 Champignon": "🍄 Mushroom", "🚗 Voiture": "🚗 Car", "☄️ Météorite": "☄️ Meteorite", "🪼 Méduse": "🪼 Jellyfish", "🌵 Cactus": "🌵 Cactus", "🧊 Glaçon pointu": "🧊 Sharp icicle"});   // formes du bestiaire (bon, mal) et personnages en plus
 M.ETAPES = ETAPES; M.genreDe = jeu => ETAPES[0].bulles.find(b => b.id === GENRE_DE[jeu]); M.saute = saute; M.nivBulles = nivBulles; M.nbNiv = nbNiv; M.DEFAUT = DEFAUT; M.recetteComplete = recetteComplete; M.assembler = assembler;

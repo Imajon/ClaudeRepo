@@ -4489,8 +4489,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     c.font = '24px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText('🏃', 20, 194); c.fillText('🏁', 940, 190);
     pD.st.forEach(([x, y], j) => { c.fillText('⭐', x, y); if (!at.st[j]) { c.strokeStyle = mal; c.lineWidth = 3; c.beginPath(); c.arc(x, y, 15, 0, 7); c.stroke(); } });
-    pD.hz.forEach(x => c.fillText('👾', x, 196));
-    if (pSel) { const { k, i } = pSel, [x, y, w, h] = k === 's' ? [pD.st[i][0] - 16, pD.st[i][1] - 16, 32, 32] : k === 'm' ? [pD.hz[i] - 16, 178, 32, 32] : [pD.pl[i][0] - 4, pD.pl[i][1] - 4, pD.pl[i][2] + 8, 16];
+    pD.hz.forEach(([x, y]) => c.fillText('👾', x, y - 4));
+    if (pSel) { const { k, i } = pSel, [x, y, w, h] = k === 's' ? [pD.st[i][0] - 16, pD.st[i][1] - 16, 32, 32] : k === 'm' ? [pD.hz[i][0] - 16, pD.hz[i][1] - 22, 32, 32] : [pD.pl[i][0] - 4, pD.pl[i][1] - 4, pD.pl[i][2] + 8, 16];
       c.setLineDash([6, 4]); c.strokeStyle = '#e6a800'; c.lineWidth = 3; c.strokeRect(x, y, w, h); c.setLineDash([]); }
     const n = at.pl.filter(o => !o).length + at.st.filter(o => !o).length;
     plDit(n ? '⚠ Le héros ne peut pas atteindre ce qui est entouré de rouge : rapproche-le (un saut monte de 40 et passe 60 de vide).' : '✅ Tout est atteignable. Tire une plateforme, une étoile ou un monstre pour le placer.');
@@ -4500,7 +4500,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   plCv.onpointerdown = e => {
     const [x, y] = pPos(e); let s = null;
     pD.st.forEach(([sx, sy], i) => { if (!s && Math.hypot(x - sx, y - sy) < 20) s = { k: 's', i }; });
-    pD.hz.forEach((hx, i) => { if (!s && Math.abs(x - hx) < 18 && y > 174) s = { k: 'm', i }; });
+    pD.hz.forEach(([hx, hy], i) => { if (!s && Math.abs(x - hx) < 18 && Math.abs(y - (hy - 4)) < 20) s = { k: 'm', i }; });
     pD.pl.forEach(([px, t, w], i) => { if (s) return; if (Math.hypot(x - (px + w), y - (t + 4)) < 16) s = { k: 'c', i }; else if (x >= px - 4 && x <= px + w + 4 && Math.abs(y - (t + 4)) < 16) s = { k: 'p', i, dx: x - px, dy: y - t }; });
     pSel = s; if (s) { pGarde(); plCv.setPointerCapture(e.pointerId); } pDessine();
   };
@@ -4509,13 +4509,13 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const [x, y] = pPos(e), { k, i } = pSel;
     if (k === 'p') pD.pl[i] = [borne(snap(x - pSel.dx, 10), 0, 1000 - pD.pl[i][2]), borne(snap(y - pSel.dy, 4), 72, 192), pD.pl[i][2]];
     else if (k === 'c') pD.pl[i][2] = borne(snap(x - pD.pl[i][0], 10), 30, Math.min(140, 1000 - pD.pl[i][0]));
-    else if (k === 'm') pD.hz[i] = borne(snap(x, 10), 90, 900);
+    else if (k === 'm') { const my = borne(snap(y + 4, 4), 60, 200); pD.hz[i] = [borne(snap(x, 10), 90, 900), my > 192 ? 200 : my]; }   // près du sol : il s'y pose
     else { const sx = borne(x, 0, 990); let sy = borne(y, 20, 200), p = pD.pl.find(([px, t, w]) => sx >= px - 6 && sx <= px + w + 6 && Math.abs(sy - (t - 16)) < 22);   // aimant : une étoile lâchée près d'une plateforme ou du sol s'y pose
       sy = p ? p[1] - 16 : Math.abs(sy - 192) < 20 ? 192 : sy; pD.st[i] = [Math.round(sx), Math.round(sy)]; }
     pDessine();
   };
   plEtoile.onclick = () => { if (pD.st.length >= 8) return plDit('8 étoiles au plus.'); pGarde(); pD.st.push([500, 192]); pSel = { k: 's', i: pD.st.length - 1 }; pDessine(); };
-  plMonstre.onclick = () => { if (pD.hz.length >= 8) return plDit('8 monstres au plus.'); pGarde(); pD.hz.push(500); pSel = { k: 'm', i: pD.hz.length - 1 }; pDessine(); };
+  plMonstre.onclick = () => { if (pD.hz.length >= 8) return plDit('8 monstres au plus.'); pGarde(); pD.hz.push([500, 200]); pSel = { k: 'm', i: pD.hz.length - 1 }; pDessine(); };
   plEnlever.onclick = () => {
     if (!pSel || !'sm'.includes(pSel.k)) return plDit("Touche d'abord une étoile ou un monstre, puis « Enlever ».");
     if (pSel.k === 's' && pD.st.length < 2) return plDit('Garde au moins une étoile.');
@@ -4532,6 +4532,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   function plOuvrir() {
     const d = JeuxBulles.platDefaut(ids()); if (!d) return;
     pD = structuredClone(etat.edit?.pl?.length === 7 ? { pl: etat.edit.pl, st: etat.edit.st, hz: etat.edit.hz } : { pl: d.pl, st: d.st, hz: d.hz }); pSel = null; pPile = [];
+    pD.hz = pD.hz.map(h => Array.isArray(h) ? h : [h, 200]);   // anciens niveaux : un monstre = juste son x, au sol
     dlgPlacer.showModal(); pDessine();
   }
   const libGo = () => mode === 'petits' ? '✨ Fabriquer mon jeu' : "✨ Envoyer à l'IA";   // le bouton d'envoi, vu par un enfant qui ne lit pas encore bien

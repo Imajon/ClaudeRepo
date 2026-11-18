@@ -59,12 +59,13 @@ console.log('ok : vues x vehicules');
 for (const jeu of ['plat-but', 'plat-attrape', 'plat-evite', 'plat-course']) {
   const d = J.platDefaut({ jeu }); assert(d && d.pl.length === 7, `${jeu} : platDefaut`);
   assert(J.assembler({ jeu, edit: { pl: d.pl, st: d.st, hz: d.hz } }) === J.assembler({ jeu }), `${jeu} : edit = defaut, meme programme`);
-  const edits = [{ pl: d.pl, st: d.st.slice(0, 3), hz: [] }, { pl: d.pl.map(p => [p[0] + 10, p[1] - 4, p[2] + 10]), st: [[100, 192]], hz: [200, 250, 300, 350, 400, 450, 500, 550] }, { pl: d.pl, st: d.st, hz: [9999, -5] }];
+  const edits = [{ pl: d.pl, st: d.st.slice(0, 3), hz: [] }, { pl: d.pl.map(p => [p[0] + 10, p[1] - 4, p[2] + 10]), st: [[100, 192]], hz: [200, 250, 300, 350, 400, 450, 500, 550] }, { pl: d.pl, st: d.st, hz: [9999, -5] }, { pl: d.pl, st: d.st, hz: [[200, 100], [300, 60], [400, 200], [500, 999]] }];
   for (const nv of ['un', 'trois', 'n4']) for (const edit of edits) for (const plan of ['non', 'oui']) {
     const code = J.assembler({ jeu, niv: nv, plan, piege: 'oui', edit });
     for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${nv} ${plan} edit : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 72000, `${jeu} ${nv} edit : trop lourd (${v.ops}, ${v.memoire})`); }
   }
 }
+assert(J.assembler({ jeu: "plat-but", edit: { pl: J.platDefaut({ jeu: "plat-but" }).pl, st: [[100, 192]], hz: [[300, 100]] } }).includes("var HY = [100.0]"), "monstre en l air : sa hauteur est dans le jeu");
 assert(J.assembler({ jeu: 'plat-but', niv: 'n6', edit: { pl: J.platDefaut({ jeu: 'plat-but' }).pl, st: [[100, 192]], hz: [] } }) === J.assembler({ jeu: 'plat-but', niv: 'n6' }), '5 niveaux et plus : placement ignore');
 assert(J.platDefaut({ jeu: 'attrape' }) === null, 'platDefaut : seulement les plateformes');
 assert(J.assembler({ jeu: 'attrape', edit: { pl: [], st: [], hz: [] } }) === J.assembler({ jeu: 'attrape' }), 'edit sans effet hors plateforme');

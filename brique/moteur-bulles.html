@@ -34,13 +34,29 @@ textarea{width:100%;min-height:420px;padding:10px;border:1px solid var(--line);b
 .lh{font:500 12px ui-monospace,monospace;color:var(--muted);margin-top:6px}.lh b{color:var(--copper)}
 .l pre{margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}.sum{font-size:14px;font-weight:600;margin:4px 0}.l .lr{border-left:3px solid var(--mask);min-height:1.4em}
 .pts{display:inline-flex;gap:6px;align-items:center;height:1.4em}.pts i{width:10px;height:10px;border-radius:50%;background:var(--copper);animation:pts 1s infinite ease-in-out both}.pts i:nth-child(2){animation-delay:.15s}.pts i:nth-child(3){animation-delay:.3s}@keyframes pts{0%,80%,100%{transform:translateY(0);opacity:.35}40%{transform:translateY(-8px);opacity:1}}@media (prefers-reduced-motion:reduce){.pts i{animation:none}}
-.dirw{min-width:0}.dirtab{overflow-x:auto;margin-top:10px}
-.dt{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}.dt th{text-align:left;font:500 12px ui-monospace,Consolas,monospace;color:var(--muted);padding:6px 8px}
-.dt td{padding:3px 6px;vertical-align:middle}.dt tbody{border-top:2px solid var(--line)}
-.dt input,.dt select{width:100%;font:14px system-ui,sans-serif;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);min-width:0}
-.dt input.bad{border-color:#c0392b}.dt .de td{background:color-mix(in srgb,var(--copper) 10%,transparent)}.dt .de input[data-f=q]{width:calc(100% - 90px)}
-.dt .da{white-space:nowrap;text-align:right;width:1%}.dt button,.dirtab>p button{font:500 12px ui-monospace,Consolas,monospace;border:1px solid var(--line);background:none;color:var(--fg);border-radius:999px;padding:3px 9px;cursor:pointer}
-.dt .dp button{margin-right:6px}.dirtab>p{margin:8px 0 0}
+.log.json .vue,.log:not(.json) .brut{display:none}
+.vue{font-size:14px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.vue .kv{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.vue .k{font:500 11px ui-monospace,monospace;color:var(--muted);min-width:78px}
+.vue .v{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;overflow-wrap:anywhere}.vue .kv.big .v{display:block}
+.vue .chip{font:500 12px ui-monospace,monospace;border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:var(--bg)}
+.vue .pill{background:var(--mask);color:var(--bg);border-radius:999px;padding:5px 12px;font-weight:600}.vue .pill small{font:500 11px ui-monospace,monospace;opacity:.8;margin-left:6px}
+.vue .rq{font-size:18px;font-weight:600}.vue .clic{border-left:3px solid var(--copper);padding-left:8px}.vue .clic i{color:var(--muted)}
+.vue details{margin-top:2px}.vue summary{font:500 12px ui-monospace,monospace;color:var(--muted);cursor:pointer}
+.dirw{min-width:0}.dirtab{margin-top:10px}
+.dirtab input,.dirtab select{font:14px system-ui,sans-serif;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);min-width:0}
+.dirtab input.bad{border-color:var(--bad)}
+.dirtab button{font:500 12px ui-monospace,Consolas,monospace;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:3px 9px;cursor:pointer}
+.nd{position:relative;padding-bottom:22px}.nd:not(:last-of-type)::after{content:"▼";position:absolute;left:22px;bottom:4px;font-size:12px;color:var(--line)}
+.nd>.q1{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--mask);color:var(--bg);border-radius:18px;padding:8px 12px;max-width:760px}
+.nd>.q1 b{font:600 12px ui-monospace,monospace;opacity:.85}.nd>.q1 input[data-f=q]{flex:1 1 260px;font-weight:600;font-size:15px}
+.nd>.q1 select{font-size:12px}.nd>.q1 .da{margin-left:auto;white-space:nowrap}
+.nd>.dr{display:flex;gap:6px;align-items:center;margin:6px 0 0 22px;max-width:738px}.dr span{font-size:13px;color:var(--muted);white-space:nowrap}.dr input{flex:1}
+.kids{margin:8px 0 0 22px;padding-left:18px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.kid{position:relative;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}.kid::before{content:"";position:absolute;left:-18px;top:18px;width:14px;border-top:2px solid var(--line)}
+.kid .rep{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:color-mix(in srgb,var(--copper) 14%,var(--surface));border:1px solid var(--copper);border-radius:999px;padding:4px 6px 4px 12px}
+.kid .rep input[data-f=bt]{border:0;background:none;font-weight:600;width:340px;max-width:100%}
+.kid input[data-f=mots]{width:200px;max-width:100%}.kid input[data-f=bsi],.kid input[data-f=dsi]{width:150px;font:12px ui-monospace,Consolas,monospace}
+.kid.dd .arr{color:var(--muted);font-size:13px}.kid.dd input[data-f=ddir]{flex:1 1 260px}
 </style></head><body><div class="wrap">
 <h1>Moteur de bulles <small class="tag">· Mistral, comme sur le site</small></h1>
 <details class="lead"><summary>Comment ça marche</summary>La bulle affichée dépend de ce qui a été cliqué avant. <b>Mistral écrit lui-même chaque question et chaque bulle</b> d’après l’historique des clics (la définition garde les règles : quelles étapes, quelles options), et propose des idées (même modèle que <code>/api/bulles</code>). Chaque envoi et chaque réponse, au fil de l'eau, s'affichent en bas. Cette page ne marche que sur ton poste (<code>node server.js</code>, clé Mistral dans l'environnement).</details>
@@ -55,10 +71,11 @@ textarea{width:100%;min-height:420px;padding:10px;border:1px solid var(--line);b
   <div class="row"><label class="tag"><input type="checkbox" id="dyn" checked> Mistral écrit chaque bulle d’après les clics précédents</label><input type="text" id="gouts" placeholder="Ce que tu aimes (pour « ✨ Des idées »)" maxlength="60" aria-label="Ce que l'enfant aime"></div>
   <div><span class="tag">Recette en cours</span><pre id="etat"></pre></div>
  </div>
-<div class="logw"><h2>Échanges avec Mistral (en direct) <button type="button" id="logclear">Effacer</button></h2>
+<div class="logw"><h2>Échanges avec Mistral (en direct) <button type="button" id="logvue" title="Passer de la mise en page au JSON brut">Vue : mise en page</button> <button type="button" id="logclear">Effacer</button></h2>
  <div class="log" id="log" aria-live="polite"><p class="tag">Rien d'envoyé pour l'instant.</p></div></div>
- <div class="dirw" style="grid-column:1/-1"><h2>Tableau des directions</h2><p class="tag">Une ligne par étape, dans l'ordre où elles sont posées. <b>Axe</b> : quel jeu, où, qui, comment. <b>Direction</b> : ce que Mistral doit viser pour cette question. <b>↳ direction selon un choix</b> : une direction de plus quand la condition est vraie (ex. <code>{"genre":"runner"}</code>). <b>Mots</b> : mots ajoutés à une réponse ; quand l'enfant la touche, Mistral les reçoit pour écrire la suite. Les changements de texte sont pris tout de suite ; ajouter, supprimer ou déplacer repart de zéro.</p><div id="dirtab" class="dirtab"></div></div>
-<div class="def" style="grid-column:1/-1">
+</div>
+ <div class="dirw" style="margin-top:24px"><h2>Arbre des bulles</h2><p class="tag">Une bulle verte par étape (la question), dans l'ordre où elles sont posées ; ses réponses sont les bulles orange en dessous. <b>Axe</b> : quel jeu, où, qui, comment. <b>Direction</b> : ce que Mistral doit viser pour cette question. <b>↳ direction selon un choix</b> : une direction de plus quand la condition est vraie (ex. <code>{"genre":"runner"}</code>). <b>Mots</b> : mots ajoutés à une réponse ; quand l'enfant la touche, Mistral les reçoit pour écrire la suite. Les changements de texte sont pris tout de suite ; ajouter, supprimer ou déplacer repart de zéro.</p><div id="dirtab" class="dirtab"></div></div>
+<div class="def" style="margin-top:24px">
   <label class="tag" for="txt">Définition (JSON) : modifie, puis « Appliquer » (gardée dans ce navigateur)</label>
   <textarea id="txt" spellcheck="false"></textarea>
   <div class="row"><button type="button" id="apply">Appliquer</button><button type="button" id="verif">Vérifier tous les chemins</button><button type="button" id="ex">Exemple de départ</button></div>
@@ -69,7 +86,6 @@ textarea{width:100%;min-height:420px;padding:10px;border:1px solid var(--line);b
    <li><b>Condition</b> : <code>{"genre":"runner"}</code>, <code>["a","b"]</code> = l'un des deux, <code>"!quiz"</code> = pas quiz.</li>
    <li><b>Texte</b> : <code>{genre}</code> = mot du choix fait à cette étape. <code>q</code> peut être <code>[{"si":…,"q":"…"},{"q":"défaut"}]</code>.</li></ul></details>
  </div>
-</div>
 </div>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -132,24 +148,34 @@ async function mDyn(){if(!$("dyn").checked)return;const e=mSuite(MD,MC);if(!e||M
   const nv=res.bulles.filter(x=>!x.id).slice(0,2).map(x=>({id:"ia-"+(++MN),t:x.bouton}));if(nv.length)(MIA[e.id]=MIA[e.id]||[]).push(...nv);
   $("note").textContent="Bulle écrite par Mistral.";mRend()}
 // ---- échanges avec Mistral : le serveur local diffuse des lignes JSON { envoi | morceau | fin | erreur } ----
+// ---- vue « mise en page » du journal (le JSON brut reste dans l'autre vue) ----
+const vPill=b=>`<span class="pill">${esc(b.bouton||b.t||"")}${b.id?`<small>${esc(b.id)}</small>`:""}${b.mots?`<small>+ ${esc(b.mots)}</small>`:""}</span>`;
+function vVal(v){if(v==null||v===""||(Array.isArray(v)&&!v.length))return"";
+ if(Array.isArray(v))return v.map(x=>x&&typeof x==="object"?(x.bouton?vPill(x):x.choix?`<div class="clic" style="flex-basis:100%"><i>${esc(x.question||"")}</i><br>→ <b>${esc(x.choix)}</b>${x.mots?` <span class="chip">${esc(x.mots)}</span>`:""}</div>`:vVal(x)):`<span class="chip">${esc(x)}</span>`).join("");
+ if(typeof v==="object")return Object.entries(v).map(([k,x])=>vKv(k,x)).join("");
+ return esc(v)}
+const vKv=(k,v)=>{const h=vVal(v);return h?`<div class="kv${typeof v==="string"&&v.length>40?" big":""}"><span class="k">${esc(k)}</span><div class="v">${typeof v==="object"&&!Array.isArray(v)?`<div class="vue" style="flex-basis:100%">${h}</div>`:h}</div></div>`:""};
+const vEnvoi=c=>Object.entries(c).map(([k,v])=>vKv(k==="mode"?"mode":k,v)).join("");
+function vRep(r){if(!r)return"<span class='tag'>(pas de résultat)</span>";
+ return(r.question?`<div class="rq">${esc(r.question)}</div>`:"")+((r.bulles||[]).length?`<div class="v">${r.bulles.map(vPill).join("")}</div>`:"")+(r.texte?`<div>${esc(r.texte)}</div>`:"")}
 async function mAsk(label,corps,onFin,onTexte){const log=$("log");log.querySelector("p.tag")?.remove();
   const box=document.createElement("div");box.className="l";
-  box.innerHTML=`<div class="lh"><b>➡ ENVOI</b> · ${esc(label)} · ${new Date().toLocaleTimeString("fr-FR")}</div><pre class="lp"></pre><div class="lh"><b>⬅ RÉPONSE</b> · <span class="ls">en attente de Mistral…</span></div><div class="sum"></div><pre class="lr"></pre>`;
-  const lp=box.querySelector(".lp"),lr=box.querySelector(".lr"),ls=box.querySelector(".ls");
-  lp.textContent="POST /api/moteur-bulles\n"+JSON.stringify(corps,null,1);log.append(box);log.scrollTop=log.scrollHeight;
+  box.innerHTML=`<div class="lh"><b>➡ ENVOI</b> · ${esc(label)} · ${new Date().toLocaleTimeString("fr-FR")}</div><div class="vue lv"></div><pre class="lp brut"></pre><div class="lh"><b>⬅ RÉPONSE</b> · <span class="ls">en attente de Mistral…</span></div><div class="vue lrv"><span class="pts"><i></i><i></i><i></i></span></div><pre class="lr brut"></pre>`;
+  const lv=box.querySelector(".lv"),lrv=box.querySelector(".lrv"),lp=box.querySelector(".lp"),lr=box.querySelector(".lr"),ls=box.querySelector(".ls");
+  lv.innerHTML=vEnvoi(corps);lp.textContent="POST /api/moteur-bulles\n"+JSON.stringify(corps,null,1);log.append(box);log.scrollTop=log.scrollHeight;
   let txt="",res=null;
   try{const r=await fetch("/api/moteur-bulles",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(corps)});
     if(!r.ok){let m="HTTP "+r.status;try{m=(await r.json()).erreur||m}catch(x){}throw new Error(m)}
     const rd=r.body.getReader(),dec=new TextDecoder();let reste="";
     for(;;){const{done,value}=await rd.read();if(done)break;const ls_=(reste+dec.decode(value,{stream:true})).split("\n");reste=ls_.pop();
       for(const l of ls_){if(!l.trim())continue;const o=JSON.parse(l);
-        if(o.t==="envoi")lp.textContent=`${o.url}\nmodèle : ${o.modele} · température ${o.temperature} · flux\n\n— SYSTEM —\n${o.system}\n\n— USER —\n${o.user}`;
+        if(o.t==="envoi"){lv.insertAdjacentHTML("beforeend",`<details><summary>Consigne envoyée à Mistral (${esc(o.modele)}, température ${o.temperature})</summary><pre>${esc(o.system)}</pre></details>`);lp.textContent=`${o.url}\nmodèle : ${o.modele} · température ${o.temperature} · flux\n\n— SYSTEM —\n${o.system}\n\n— USER —\n${o.user}`;}
         else if(o.t==="morceau"){txt+=o.d;lr.textContent=txt;ls.textContent="reçoit… "+txt.length+" car.";log.scrollTop=log.scrollHeight;if(onTexte&&corps.mode==="reaction")onTexte(txt)}
-        else if(o.t==="fin"){res=o.resultat;if(res)box.querySelector(".sum").textContent=(res.question?"« "+res.question+" » ":"")+(res.bulles||[]).map(b=>"["+b.bouton+"]").join(" ")+(res.texte?res.texte:"");ls.textContent=`terminé en ${(o.ms/1000).toFixed(1)} s · ${txt.length} car.`;ls.classList.add("ok")}
+        else if(o.t==="fin"){res=o.resultat;lrv.innerHTML=vRep(res);ls.textContent=`terminé en ${(o.ms/1000).toFixed(1)} s · ${txt.length} car.`;ls.classList.add("ok")}
         else if(o.t==="erreur")throw new Error(o.m)}}
     if(res&&onTexte&&res.texte)onTexte(res.texte);
     if(onFin)onFin(res);return res}
-  catch(x){ls.textContent="erreur : "+x.message;ls.classList.add("bad");return null}}
+  catch(x){lrv.innerHTML="";ls.textContent="erreur : "+x.message;ls.classList.add("bad");return null}}
 async function mIdees(){const e=mSuite(MD,MC);if(!e)return;const bt=$("idees");if(bt)bt.disabled=true;
   const g=$("gouts").value.trim();
   const res=await mAsk("idées de bulles pour « "+e.id+" »",{mode:"idees",etape:mQ(e,MC),choix:mChoix(),gouts:g?[g]:[],deja:mVis(e,MC).map(mMot)});
@@ -178,24 +204,24 @@ function dSave(){const t=JSON.stringify(MD,(k,v)=>v===0||v===""?undefined:v,1);d
 function dStruct(){dSave();mAplique(dTX().value)}
 const dJ=v=>v?JSON.stringify(v):"",dId=p=>p+(Date.now()%100000);
 function dTab(){const T=document.getElementById("dirtab");if(!T||!MD)return;
- T.innerHTML=`<table class="dt"><thead><tr><th>Axe · condition</th><th>Étape · réponse</th><th>Direction · mots à ajouter</th><th></th></tr></thead>`+MD.etapes.map((e,i)=>`<tbody data-e="${i}">
- <tr class="de"><td><select data-f="axe" aria-label="Axe">${["",...DAXES].map(a=>`<option${(e.axe||"")===a?" selected":""}>${a}</option>`).join("")}</select></td>
- <td><b>${esc(e.id)}</b> <input data-f="q" aria-label="Question" value="${typeof e.q==="string"?esc(e.q):""}" ${typeof e.q==="string"?"":'disabled placeholder="(variantes : voir le JSON)"'}></td>
- <td><input data-f="dir" aria-label="Direction de la question" value="${esc(e.dir||"")}" placeholder="Direction de cette question, toujours"></td>
- <td class="da"><button type="button" data-a="up" aria-label="Monter">↑</button><button type="button" data-a="down" aria-label="Descendre">↓</button><button type="button" data-a="dele" aria-label="Supprimer l'étape">✕</button></td></tr>`
- +(e.dirs||[]).map((d,k)=>`<tr class="dd" data-d="${k}"><td><input data-f="dsi" aria-label="Condition" value="${esc(dJ(d.si))}" placeholder='{"genre":"runner"}'></td><td class="tag">↳ alors</td><td><input data-f="ddir" aria-label="Direction" value="${esc(d.dir||"")}" placeholder="Direction si la condition est vraie"></td><td class="da"><button type="button" data-a="deld" aria-label="Supprimer">✕</button></td></tr>`).join("")
- +e.bulles.map((b,j)=>`<tr class="db" data-b="${j}"><td><input data-f="bsi" aria-label="Condition" value="${esc(dJ(b.si))}" placeholder="toujours"></td><td><input data-f="bt" aria-label="Réponse" value="${esc(b.t)}"></td><td><input data-f="mots" aria-label="Mots" value="${esc(b.mots||"")}" placeholder="mots à ajouter : océan, calme…"></td><td class="da"><button type="button" data-a="delb" aria-label="Supprimer la réponse">✕</button></td></tr>`).join("")
- +`<tr class="dp"><td></td><td colspan="3"><button type="button" data-a="addb">+ réponse</button> <button type="button" data-a="addd">+ direction selon un choix</button></td></tr></tbody>`).join("")
- +`</table><p><button type="button" data-a="adde">+ étape</button></p>`}
+ T.innerHTML=MD.etapes.map((e,i)=>`<div class="nd" data-e="${i}">
+ <div class="q1"><select data-f="axe" aria-label="Axe">${["",...DAXES].map(a=>`<option${(e.axe||"")===a?" selected":""}>${a}</option>`).join("")}</select><b>${esc(e.id)}</b> <input data-f="q" aria-label="Question" value="${typeof e.q==="string"?esc(e.q):""}" ${typeof e.q==="string"?"":'disabled placeholder="(variantes : voir le JSON)"'}>
+ <span class="da"><button type="button" data-a="up" aria-label="Monter">↑</button> <button type="button" data-a="down" aria-label="Descendre">↓</button> <button type="button" data-a="dele" aria-label="Supprimer l'étape">✕</button></span></div>
+ <div class="dr"><span>🎯 direction</span><input data-f="dir" aria-label="Direction de la question" value="${esc(e.dir||"")}" placeholder="Ce que Mistral doit viser, toujours"></div>
+ <div class="kids">`
+ +(e.dirs||[]).map((d,k)=>`<div class="kid dd" data-d="${k}"><span class="arr">🎯 si</span><input data-f="dsi" aria-label="Condition" value="${esc(dJ(d.si))}" placeholder='{"genre":"runner"}'><span class="arr">alors</span><input data-f="ddir" aria-label="Direction" value="${esc(d.dir||"")}" placeholder="Direction si la condition est vraie"><button type="button" data-a="deld" aria-label="Supprimer">✕</button></div>`).join("")
+ +e.bulles.map((b,j)=>`<div class="kid db" data-b="${j}"><span class="rep"><input data-f="bt" aria-label="Réponse" value="${esc(b.t)}"><button type="button" data-a="delb" aria-label="Supprimer la réponse">✕</button></span><input data-f="mots" aria-label="Mots" value="${esc(b.mots||"")}" placeholder="mots à ajouter"><input data-f="bsi" aria-label="Condition" value="${esc(dJ(b.si))}" placeholder="si : toujours"></div>`).join("")
+ +`<div class="kid"><button type="button" data-a="addb">+ réponse</button><button type="button" data-a="addd">+ direction selon un choix</button></div></div></div>`).join("")
+ +`<p><button type="button" data-a="adde">+ étape</button></p>`}
 (function(){const T=document.getElementById("dirtab");if(!T)return;
- T.addEventListener("change",ev=>{const x=ev.target,f=x.dataset.f,tb=x.closest("tbody");if(!f||!tb)return;const e=MD.etapes[+tb.dataset.e],tr=x.closest("tr"),v=x.value.trim();
+ T.addEventListener("change",ev=>{const x=ev.target,f=x.dataset.f,tb=x.closest(".nd");if(!f||!tb)return;const e=MD.etapes[+tb.dataset.e],tr=x.closest(".kid"),v=x.value.trim();
   const js=s=>{if(!s)return{};try{const o=JSON.parse(s);x.classList.remove("bad");return{o}}catch(z){x.classList.add("bad");return null}};
   if(f==="axe")e.axe=v;else if(f==="q")e.q=v;else if(f==="dir")e.dir=v;
   else if(f==="dsi"||f==="ddir"){const d=e.dirs[+tr.dataset.d];if(f==="ddir")d.dir=v;else{const r=js(v);if(!r)return;if(r.o)d.si=r.o;else delete d.si}}
   else if(f==="bt"){if(!v)return;e.bulles[+tr.dataset.b].t=v}else if(f==="mots")e.bulles[+tr.dataset.b].mots=v;
   else if(f==="bsi"){const r=js(v),b=e.bulles[+tr.dataset.b];if(!r)return;if(r.o)b.si=r.o;else delete b.si}
   dSave();mRend()});
- T.addEventListener("click",ev=>{const a=ev.target.closest("button[data-a]");if(!a)return;const tb=a.closest("tbody"),i=tb?+tb.dataset.e:-1,e=MD.etapes[i],tr=a.closest("tr"),A=a.dataset.a;
+ T.addEventListener("click",ev=>{const a=ev.target.closest("button[data-a]");if(!a)return;const tb=a.closest(".nd"),i=tb?+tb.dataset.e:-1,e=MD.etapes[i],tr=a.closest(".kid"),A=a.dataset.a;
   if(A==="up"&&i>0)[MD.etapes[i-1],MD.etapes[i]]=[MD.etapes[i],MD.etapes[i-1]];
   else if(A==="down"&&i<MD.etapes.length-1)[MD.etapes[i+1],MD.etapes[i]]=[MD.etapes[i],MD.etapes[i+1]];
   else if(A==="dele"){if(a.dataset.ok!=="1"){a.dataset.ok="1";a.textContent="Supprimer ?";return}MD.etapes.splice(i,1)}
@@ -220,5 +246,6 @@ $("apply").onclick=()=>mAplique($("txt").value);
 $("ex").onclick=()=>{$("txt").value=mDef();mAplique(mDef())};
 $("verif").onclick=()=>{if(mAplique($("txt").value))mVerif()};
 $("dyn").onchange=mDyn;
+$("logvue").onclick=()=>{const j=$("log").classList.toggle("json");$("logvue").textContent="Vue : "+(j?"JSON brut":"mise en page")};
 $("logclear").onclick=()=>{$("log").innerHTML=""};
 </script></body></html>

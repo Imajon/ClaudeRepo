@@ -988,7 +988,7 @@ const serveur = http.createServer(async (req, res) => {
   }
   if (req.method === 'GET' && url === '/api/exemples') return repondre(res, 200, anglais() ? JEUX_BRIQUE.map(j => ({ ...j, titre: tr(j.titre), desc: tr(j.desc) })) : JEUX_BRIQUE);   // les jeux d'exemple (exemples/*.be), a prendre depuis la Communaute
   if (req.method === 'GET' && url === '/jeu-commun.be') { res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'jeu-commun.be')).pipe(res); }   // le jeu commun (plateforme de la premiere console), sans niveau
-  if (req.method === 'GET' && url === '/moteur-bulles' && posteLocal(req)) { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'moteur-bulles.html')).pipe(res); }   // page du moteur de bulles (poste local seulement)
+  if (req.method === 'GET' && url === '/moteur-bulles') { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'moteur-bulles.html')).pipe(res); }   // page du moteur de bulles (en ligne aussi : la cle Mistral reste cote serveur)
   if (req.method === 'GET' && url === '/bestiaire.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'bestiaire.js')).pipe(res); }
   if (req.method === 'GET' && url === '/jeux-bulles.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'jeux-bulles.js')).pipe(res); }
   if (req.method === 'GET' && url === '/fiche.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'fiche.js')).pipe(res); }
@@ -1102,8 +1102,9 @@ const serveur = http.createServer(async (req, res) => {
       return repondre(res, 200, { paroles: p.length >= 4 ? p.slice(0, 4) : [] });
     } catch (e) { console.error(e.message); return repondre(res, 502, { erreur: "L'IA ne répond pas" }); }
   }
-  if (url === '/api/moteur-bulles' && posteLocal(req)) {   // banc du moteur de bulles : meme Mistral et memes consignes que /api/bulles ; diffuse en lignes JSON { t: envoi | morceau | fin | erreur } ce qui part et ce qui revient
+  if (url === '/api/moteur-bulles') {   // banc du moteur de bulles (en ligne aussi, comme /api/bulles) : meme Mistral et memes consignes que /api/bulles ; diffuse en lignes JSON { t: envoi | morceau | fin | erreur } ce qui part et ce qui revient
     if (!process.env.MISTRAL_API_KEY) return repondre(res, 503, { erreur: 'IA non configuree' });
+    const pas = quotaIA(req, b); if (pas) return repondre(res, 429, { erreur: pas });
     const choix = Object.fromEntries(Object.entries(b.choix && typeof b.choix === 'object' ? b.choix : {}).slice(0, 12).map(([k, v]) => [court(k, 20), court(v, 60)]).filter(([k, v]) => k && v));
     const liste = (v, n, lg) => (Array.isArray(v) ? v : []).map(x => court(x, lg)).filter(Boolean).slice(-n);
     const suite = b.mode === 'suite', modele = process.env.MISTRAL_MODEL_BULLES || 'mistral-large-2512', chaud = suite ? 0.6 : 0.7;

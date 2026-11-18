@@ -1015,6 +1015,7 @@ const serveur = http.createServer(async (req, res) => {
     return res.end(buf);
   }
   if (req.method === 'GET' && url === '/moteur-bulles') { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'moteur-bulles.html')).pipe(res); }   // page du moteur de bulles (en ligne aussi : la cle Mistral reste cote serveur)
+  if (req.method === 'GET' && url === '/arbres-foret.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'arbres-foret.js')).pipe(res); }
   if (req.method === 'GET' && url === '/bestiaire.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'bestiaire.js')).pipe(res); }
   if (req.method === 'GET' && url === '/jeux-bulles.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'jeux-bulles.js')).pipe(res); }
   if (req.method === 'GET' && url === '/fiche.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(path.join(__dirname, 'fiche.js')).pipe(res); }

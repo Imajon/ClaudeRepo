@@ -2,6 +2,7 @@
 // Pas d'IA pour le code : chaque pièce est du Berry écrit et joué dans verif (node test-bulles.js), donc toute combinaison marche du premier coup.
 // Même fichier pour la page (window.JeuxBulles) et le serveur / les tests (require). Ajouter un SYSTÈME de jeu = une entrée dans SYSTEMES + ses bulles dans JEUX.
 (function (M) {
+  const AR = typeof require === 'function' ? require('./arbres-foret.js') : window.ArbresForet;   // 3 arbres en pixel art (images du jeu), décor du monde Forêt
   const BE = typeof require === 'function' ? require('./bestiaire.js') : window.Bestiaire;   // les formes du bestiaire (bon, mal, personnages en plus)
   const rgb = c => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
   const mel = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
@@ -148,12 +149,13 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
     nuage: c => `disque(x, y, h, ${c}) disque(x + h, y + h / 2, h * 3 / 4, ${c}) disque(x - h, y + h / 2, h * 2 / 3, ${c})`,
     colline: c => `disque(x, 222, h, ${c})`,
     sapin: (c, c2) => `rect(x - 3, 208 - h, 6, h, ${c2}) tri(x - 16, 216 - h, x + 16, 216 - h, x, 180 - h, ${c})`,
+    arbre: (c, c2, l) => `image(${l.n0} + i % 3, x - 12, 174 + h % 5, 0, 1)`,   // image n0, n0 + 1, n0 + 2 = les 3 arbres (ARBRES) ; le sol les recouvre un peu
     etoile: c => `if (i + int(temps() * 2)) % 4 != 0 rect(x, y, 2, 2, ${c}) end`,
     planete: (c, c2) => `disque(x, y, h, ${c}) disque(x - h / 3, y - h / 3, h / 3, ${c2}) disque(x + h / 3, y + h / 3, h / 5, ${c2}) ligne(x - h * 4 / 3, y + h / 2, x + h * 4 / 3, y - h / 2, A1)`
   };
   // Une couche : { el, c, c2, at: [[x, y, h]...] (positions fixes) } ou { el, nb, pas, vit, k, y, dy, h, dz } (nb éléments répartis sur la largeur, vit = dérive en px/s, y + DY % dy, h + DZ * dz). Dans l'ordre : du fond vers l'avant.
   const couches = (liste) => '  var t = 0\n' + liste.map(l => {
-    const el = ELEMENTS[l.el](l.c || 'A1', l.c2 || 'A3');
+    const el = ELEMENTS[l.el](l.c || 'A1', l.c2 || 'A3', l);
     if (l.at) return l.at.map(([x, y, h]) => `  x = ${x} y = ${y} h = ${h}\n  ${el}`).join('\n');
     const ix = l.pas > 1 ? `i * ${l.pas}` : 'i', ex = l.vit ? `(DX[${ix}]${l.k > 1 ? ` * ${l.k}` : ''} + t) % 380 - 30` : `DX[${ix}]`;
     const ey = l.dy ? `${l.y || 0} + DY[i] % ${l.dy}` : l.y || 0, eh = l.dz ? `${l.h || 0} + DZ[i]${l.dz > 1 ? ` * ${l.dz}` : ''}` : l.h || 0;
@@ -168,11 +170,11 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
   // ---------- les mondes : ciel (haut, bas), sol, 4 couleurs d'ambiance A1..A4, décor, bon objet, mauvais objet (centrés en (x, y), rayon 8) ----------
   const MONDES = {
     foret: { nom: 'dans la foret', ciel: [[130, 200, 240], [200, 235, 200]], sol: [[70, 140, 60], [105, 185, 80]], a: [[255, 225, 90], [255, 255, 255], [110, 75, 45], [40, 120, 70]], n: 8,
-      decor: couches([
+      decor: r => (r.arbres ? '  # arbres-foret\n' : '') + couches([
         { el: 'soleil', at: [[270, 40, 16]] },
         { el: 'nuage', c: 'A2', nb: 3, vit: 4, k: 2, y: 28, dy: 40, h: 9 },
         { el: 'colline', c: 'SOL2', nb: 4, pas: 2, h: 44, dz: 2 },
-        { el: 'sapin', c: 'A4', c2: 'A3', nb: 8, h: 22, dz: 1 }]),
+        r.arbres ? { el: 'arbre', n0: r.arbres, nb: 8, dz: 1 } : { el: 'sapin', c: 'A4', c2: 'A3', nb: 8, h: 22, dz: 1 }]),   // r.arbres = numéro de la 1re image d'arbre (0 : sapins dessinés)
       bon: `  disque(x, y + 1, 7, rgb(225, 55, 50)) disque(x - 3, y - 2, 2, rgb(255, 170, 160))
   rect(x - 1, y - 8, 2, 4, rgb(110, 75, 45)) tri(x + 1, y - 7, x + 7, y - 9, x + 4, y - 4, rgb(70, 170, 70))`,
       mal: `  disque(x, y, 8, rgb(120, 120, 130)) disque(x - 3, y - 3, 3, rgb(175, 175, 185)) disque(x + 3, y + 3, 2, rgb(85, 85, 95))
@@ -413,7 +415,7 @@ end
 
 def decor()
   var i = 0 var j = 0 var x = 0 var y = 0 var h = 0
-${mo.decor}
+${typeof mo.decor === 'function' ? mo.decor(r) : mo.decor}
 end
 
 def avant()
@@ -594,7 +596,7 @@ end
 
 def decor()
   var i = 0 var j = 0 var x = 0 var y = 0 var h = 0
-${mo.decor}
+${typeof mo.decor === 'function' ? mo.decor(r) : mo.decor}
 end
 
 def avant()
@@ -1302,7 +1304,7 @@ end
 
   function recetteComplete(r) {   // une étape sans choix (ou un choix inconnu) prend sa valeur par défaut : le jeu marche toujours
     const o = {};
-    r = r || {}; const imgs = r.imgs || {}; o.imgs = imgs; if (r.edit) o.edit = r.edit; if (Array.isArray(r.quest) && r.quest.length) o.quest = r.quest;   // quest : les questions du quiz écrites par l'IA   // edit : niveau 1 de la plateforme placé à la main (voir plateforme)
+    r = r || {}; const imgs = r.imgs || {}; o.imgs = imgs; if (r.arbres > 0) o.arbres = r.arbres; if (r.edit) o.edit = r.edit; if (Array.isArray(r.quest) && r.quest.length) o.quest = r.quest;   // quest : les questions du quiz écrites par l'IA   // edit : niveau 1 de la plateforme placé à la main (voir plateforme)
     for (const e of ETAPES.filter(e => !e.quiz)) o[e.id] = (e.id === 'niv' ? nbNiv(r.niv) <= NIV_MAX && r.niv : e.bulles.some(b => b.id === r[e.id])) || (e.ia && r[e.id] === 'img' && imgs[e.id] > 0) ? r[e.id] : DEFAUT[e.id];
     if (!JEUX_DE[r.genre]) o.genre = GENRE_DE[o.jeu];                                    // pas de genre : celui du jeu (anciennes recettes)
     else if (GENRE_DE[o.jeu] !== o.genre) o.jeu = SOLO[o.genre] ? o.genre : JEUX_DE[o.genre][0];   // un jeu d'un autre genre : le premier du genre choisi
@@ -1440,5 +1442,5 @@ M.platDefaut = r => {
   return { pl, st: [...pl.map(p => [p[0] + p[2] / 2, p[1] - 16]), [70, 192]], hz: hz.map(x => [x, 200]), long: 1000, drapeau: 940, bouge: !!P.vh };
 };
 Object.assign(M.EN, {"🐦 Je joue un oiseau": "🐦 I play a bird", "🟡 Je joue une bestiole": "🟡 I play a critter", "🍎 Pomme": "🍎 Apple", "🪙 Pièce": "🪙 Coin", "⭐ Étoile": "⭐ Star", "🫧 Perle": "🫧 Pearl", "🐟 Poisson": "🐟 Fish", "💎 Gemme": "💎 Gem", "❄️ Flocon": "❄️ Snowflake", "🍄 Champignon": "🍄 Mushroom", "🚗 Voiture": "🚗 Car", "☄️ Météorite": "☄️ Meteorite", "🪼 Méduse": "🪼 Jellyfish", "🌵 Cactus": "🌵 Cactus", "🧊 Glaçon pointu": "🧊 Sharp icicle"});   // formes du bestiaire (bon, mal) et personnages en plus
-M.ETAPES = ETAPES; M.genreDe = jeu => ETAPES[0].bulles.find(b => b.id === GENRE_DE[jeu]); M.saute = saute; M.nivBulles = nivBulles; M.nbNiv = nbNiv; M.DEFAUT = DEFAUT; M.recetteComplete = recetteComplete; M.assembler = assembler;
+M.ARBRES = AR.ARBRES; M.ETAPES = ETAPES; M.genreDe = jeu => ETAPES[0].bulles.find(b => b.id === GENRE_DE[jeu]); M.saute = saute; M.nivBulles = nivBulles; M.nbNiv = nbNiv; M.DEFAUT = DEFAUT; M.recetteComplete = recetteComplete; M.assembler = assembler;
 })(typeof module === 'object' ? module.exports : (window.JeuxBulles = {}));

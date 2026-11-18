@@ -214,7 +214,7 @@ header .compte{margin:0 0 0 auto;width:auto}header .compte summary{color:var(--t
 .sc-console{display:flex;align-items:center;gap:16px}
 .sc-console img{flex:1;min-width:0;max-width:560px;height:auto}
 .sc-cote{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}.sc-cote .sec{width:100%}.sc-cote .envoi{margin:0}#scBrancher.connecte{border-color:var(--ok);color:var(--ok);font-weight:700}
-.sc-cote #scBrancher{width:70%;align-self:flex-start;font-size:.85em;padding:3px 8px;display:flex;align-items:center;justify-content:center;gap:6px}#scBrancher .prises{width:3.2em;height:1.35em;flex:none}
+.sc-cote #scBrancher,.sc-cote #scInstallBtn button{width:auto;align-self:flex-start;padding:3px 8px;display:flex;align-items:center;justify-content:center}.sc-cote #scInstallBtn{align-self:flex-start}#scBrancher .prises{width:3.2em;height:1.35em;flex:none}#scInstallBtn svg{width:1.6em;height:1.6em;display:block}   /* boutons réduits à leur icône : le texte est dans l'infobulle (title) */
 @media (max-width:600px){.sc-console{flex-direction:column;align-items:stretch}}
 #vPanier b{margin-left:6px;padding:0 7px;border-radius:999px;background:var(--acc);color:#fff;font-size:12px}#vPanier b:empty{display:none}
 .sh-ajout{text-align:center;margin-top:18px}
@@ -1779,6 +1779,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </dialog>
 
 <main id="atelier" class="hide">
+  <button id="ficheRetour" class="sec" style="margin:8px 0 0 12px">← Revenir à mon jeu (bulles, guidé, libre)</button>
   <div class="sh-hero page-hero">
     <p class="sh-sur">Créer · ton jeu en une phrase</p>
     <h2 class="sh-titre">Tu décris ton jeu.<br>L'IA le construit.</h2>
@@ -1935,10 +1936,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.21">
+<main id="vueScript" class="hide" data-version="1.22">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
-    <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mPetits">🫧 Bulles</button><button id="mGuide">💡 Guidé</button><button id="mLibre">✍️ Libre</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
+    <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mPetits">🫧 Bulles</button><button id="mGuide">💡 Guidé</button><button id="mLibre">✍️ Libre</button><button id="mFiche" title="Tu décris les règles de ton jeu : la console les lit telles quelles">📋 Fiche</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
@@ -1970,10 +1971,10 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div class="sc-console">                     <!-- à droite de la console : connexion, son log, puis l'installation du firmware -->
       <img src="images/console-face.png" alt="La console Brique" width="1105" height="763">
       <div class="sc-cote">
-        <button id="scBrancher" class="sec"><svg class="prises" viewBox="0 0 48 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 10h5"/><rect x="6" y="4" width="9" height="12" rx="2"/><path d="M15 7h4M15 13h4"/><rect x="29" y="4" width="9" height="12" rx="2"/><path d="M38 10h9"/></g></svg> Connecter ma console</button>
+        <button id="scBrancher" class="sec" title="Connecter ma console" aria-label="Connecter ma console"><svg class="prises" viewBox="0 0 48 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 10h5"/><rect x="6" y="4" width="9" height="12" rx="2"/><path d="M15 7h4M15 13h4"/><rect x="29" y="4" width="9" height="12" rx="2"/><path d="M38 10h9"/></g></svg></button>
         <div id="scEtat" class="envoi">Console pas connectée. C'est elle qui fait tourner ton jeu.</div>
         <esp-web-install-button id="scInstallBtn" manifest="firmware-berry/manifest.json">
-          <button slot="activate" class="sec" title="Une fois suffit, environ 1 minute (Chrome ou Edge sur ordinateur, câble USB branché). La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la.">⬇ Installer la dernière version du firmware<span id="scFwVer"></span></button>
+          <button slot="activate" class="sec" id="scInstallTip" title="Installer la dernière version du firmware. Une fois suffit, environ 1 minute (Chrome ou Edge sur ordinateur, câble USB branché). La console n'est pas trouvée ? Débranche-la, maintiens son bouton BOOT, rebranche-la." aria-label="Installer la dernière version du firmware"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></g></svg><span id="scFwVer" hidden></span></button>
           <span slot="unsupported" class="aide">Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge, sur un ordinateur.</span>
           <span slot="not-allowed" class="aide">Il faut ouvrir la page en https (ou sur localhost).</span>
         </esp-web-install-button>
@@ -2203,7 +2204,7 @@ function setMode(m) {
                                      : 'Décris ton niveau : thème, héros, pièges, hauteur, difficulté…';
 }
 const garderMode = m => { setMode(m); try { localStorage.setItem('brique-age', m); } catch {} };   // le choix de l'enfant reste d'une visite à l'autre
-mPetits.onclick = () => garderMode('petits'); mGuide.onclick = () => garderMode('guide'); mLibre.onclick = () => garderMode('libre');
+mPetits.onclick = () => garderMode('petits'); mGuide.onclick = () => garderMode('guide'); mLibre.onclick = () => garderMode('libre'); mFiche.onclick = () => ouvrirFiche(true); ficheRetour.onclick = () => ouvrirFiche(false);
 setMode((a => ['petits', 'guide', 'libre'].includes(a) ? a : 'petits')((() => { try { return localStorage.getItem('brique-age'); } catch {} })()));
 
 // ---------- "IA" simulée : texte -> paramètres ----------
@@ -2989,7 +2990,7 @@ fetch('firmware/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json()
   .then(m => { manifeste = m; majDetails.classList.toggle('hide', !m); if (m) majEnLigne.textContent = 'version en ligne : ' + m.version; }).catch(() => {});
 majBtn.addEventListener('click', () => fermer(), true);   // esp-web-tools ouvre le port lui-même : on lui laisse
 Promise.all(['firmware', 'firmware-berry'].map(d => fetch(d + '/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null)))   // pied de page : versions publiées des deux firmwares
-  .then(([a, b]) => { if (a) majFwVer.textContent = ' (' + a.version + ')'; if (b) scFwVer.textContent = ' (console ' + (b.console || a && a.version || '?') + ' / moteur ' + b.version + ')'; consoleVersions.textContent = [a && ' · console ' + a.version, b && ' · moteur script ' + b.version].filter(Boolean).join(''); });
+  .then(([a, b]) => { if (a) majFwVer.textContent = ' (' + a.version + ')'; if (b) { scFwVer.textContent = ' (console ' + (b.console || a && a.version || '?') + ' / moteur ' + b.version + ')'; scInstallTip.title += scFwVer.textContent; } consoleVersions.textContent = [a && ' · console ' + a.version, b && ' · moteur script ' + b.version].filter(Boolean).join(''); });
 async function verifierVersion() {                       // la console dit sa version ; plus ancienne que celle publiée -> on propose la mise à jour
   if (!manifeste || !port) return;
   const v = await new Promise(async ok => {
@@ -3381,7 +3382,7 @@ async function rafraichir() {
   catch { EN_LIGNE = false; [vAnim, moiBox, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'anim') afficher('accueil'); return; }   // serveur injoignable (Render endormi, fichier) : la Communauté reste, vide
   enLigne = c.niveaux; modeAtelier(c.atelier);
   if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant d'un groupe : la tranche d'âge choisie par son animateur, il ne peut pas la changer
-  mPetits.disabled = mGuide.disabled = mLibre.disabled = !session && !!c.age; niveauScolaire.title = mGuide.disabled ? 'Choisi par ton animateur' : "Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots.";
+  mPetits.disabled = mGuide.disabled = mLibre.disabled = mFiche.disabled = !session && !!c.age; niveauScolaire.title = mGuide.disabled ? 'Choisi par ton animateur' : "Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots.";
   nJeux.textContent = accJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = accAujourdhui.textContent = c.chiffres.aujourdhui;
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
   const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
@@ -4200,7 +4201,7 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   async function fermer() { const p = port; port = null; try { await lecteur?.cancel(); } catch {} try { await p?.close(); } catch {} dire('Console pas connectée.'); brancheTxt(false); }
   // deux prises : écartées = pas connectée, emboîtées = connectée
   const prises = ok => `<svg class="prises" viewBox="0 0 48 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 10h5"/><rect x="6" y="4" width="9" height="12" rx="2"/><path d="M15 7h${ok ? 7 : 4}M15 13h${ok ? 7 : 4}"/><rect x="${ok ? 22 : 29}" y="4" width="9" height="12" rx="2"/><path d="M${ok ? 31 : 38} 10h${ok ? 16 : 9}"/></g></svg>`;
-  const brancheTxt = ok => { scBrancher.innerHTML = prises(ok) + (ok ? ' Console connectée' : ' Connecter ma console'); scBrancher.classList.toggle('connecte', ok); };   // le bouton laisse place à l'état
+  const brancheTxt = ok => { scBrancher.innerHTML = prises(ok); scBrancher.title = scBrancher.ariaLabel = ok ? 'Console connectée' : 'Connecter ma console'; scBrancher.classList.toggle('connecte', ok); };   // le bouton laisse place à l'état
   async function relier(p) {                             // ouvre le port, demande la version ; true = console avec le moteur de jeu
     occupe('🔌 Je cherche ta console…');
     try { return await relier0(p); } finally { occupe(); }
@@ -4682,13 +4683,16 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
 })();
 
 // ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
-let vue = 'accueil';
+let vue = 'accueil', ficheVue = new URLSearchParams(location.search).has('fiche');
+const ouvrirFiche = on => { ficheVue = on; afficher('creer'); };
 function afficher(v) {
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); propos.classList.toggle('hide', v !== 'propos'); cgv.classList.toggle('hide', v !== 'cgv'); vApropos.classList.toggle('on', v === 'propos'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');
-  atelier.classList.add('hide'); vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché, à retirer quand le mode script aura sa communauté
+  const ancien = ficheVue && v === 'creer';   // 2e mode « 📋 Fiche » (ou /?fiche) : « Créer » montre l'ancien générateur (#atelier) sur « Ma fiche »
+  if (ancien && genre !== 'fiche') genreChoix.querySelector('[data-v="fiche"]').click();
+  atelier.classList.toggle('hide', !ancien); vueScript.classList.toggle('hide', v !== 'creer' || ancien);   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché (sauf /?fiche), à retirer quand le mode script aura sa communauté
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
   const m = document.querySelector("main[data-version]:not(.hide)"); sectionVersion.textContent = m ? " · section v" + m.dataset.version : "";   // numéro de la grande section affichée, à monter à la main dans sa balise <main>

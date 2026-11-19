@@ -16,7 +16,7 @@ function assembler(brute) {
   return { refus, script: '# Jeu declare : les donnees (fiche) puis le moteur (moteur-fiche.be)\nvar FICHE = ' + JSON.stringify(donnees) + '\n' + MOTEUR };
 }
 module.exports = { assembler, MOTEUR };
-if (require.main === module) {   // node fiche-berry.js ma-fiche.json > jeu.be : un jeu pret a envoyer sur une console Berry (page Creer en mode script, ou tester-consoles.ps1)
+if (require.main === module) {   // node fiche-berry.js ma-fiche.json jeu.be : un jeu pret a envoyer sur une console Berry (page Creer en mode script, ou tester-consoles.ps1)
   const r = assembler(JSON.parse(fs.readFileSync(process.argv[2] || 0, 'utf8')));
-  r.refus.forEach(x => console.error('refus : ' + x)); if (r.script) process.stdout.write(r.script); else process.exit(1);
+  r.refus.forEach(x => console.error('refus : ' + x)); if (!r.script) process.exit(1); if (process.argv[3]) fs.writeFileSync(process.argv[3], r.script); else process.stdout.write(r.script);   // avec un 2e argument on ecrit le fichier nous-memes : le ">" de PowerShell 5.1 l'ecrit en UTF-16
 }

@@ -17,7 +17,7 @@ var NSAUT = SAUT.find("en_l_air", 0) var VIES = HE.find("vies", 0)
 var ACT = [HE["boutons"].find("G", "rien"), HE["boutons"].find("D", "rien"), HE["boutons"].find("P3", "rien")]
 var BTN = [G, D, P3]
 var NIV = [] var KB = {} var OBJS = [] var PLAT = [] var EX = [] var EY = [] var PRIS = []
-var CASSE = {} var OUV = {} var FERME = {} var RFAIT = []
+var CASSE = {} var OUV = {} var FERME = {} var RFAIT = [] var SOLID = {} var DT = {} var COL = {} var NPLAT = 0
 var SX = 0.0 var SY = 0.0 var px = 0.0 var py = 0.0 var vx = 0.0 var vy = 0.0 var sol = false var mur = 0 var poussee = 0.0 var nsl = 0 var SUR = nil var VMUL = 1.0
 var fin = false var lives = 0 var pts = 0 var NR = 0 var ECR = 0 var TOTR = 0 var TOTE = 0 var gagne = false var perdu = false var morts = 0 var tv0 = 0.0 var chrono = 0.0 var camy = 0 var MSG = "" var MSGT = 0.0
 var CIEL = 0 var CIEL2 = 0 var BLOC = 0 var BORDC = 0 var FRAG = 0 var PIC = 0 var RESS = 0 var GLACE = 0 var OR = 0 var HERO = 0 var OEIL = 0 var BLANC = 0 var OMBRE = 0 var ROUGE = 0
@@ -32,9 +32,13 @@ def case(c, r)                                    # la brique de la case (c, r) 
 end
 def brute(c, r) return (c < 0 || c >= 20 || r < 0 || r >= H) ? "." : NIV[r][c] end
 def prop(k, i) return KB.contains(k) ? KB[k][i] : 0 end
-def plein(c, r)
-  var k = case(c, r)
-  return k != "." && (FERME.contains(k) || prop(k, 0) != 0)
+def plein(c, r)                                   # SOLID = les lettres solides en ce moment (ouvre / ferme la modifient)
+  if c < 0 || c >= 20 return BORD != "boucle" end
+  if r < 0 return false end
+  if r >= H return BORD == "mur" end
+  var k = NIV[r][c]
+  if k == "." || !SOLID.contains(k) return false end
+  return !(CASSE.contains(r * 20 + c) && temps() > CASSE[r * 20 + c])
 end
 def libreT(x, y)                                  # le heros a cette place ne touche aucune brique solide
   if x < 0 && BORD != "boucle" return false end      # le bord gauche est un mur (int() arrondit vers 0 : -5 / 16 = case 0)
@@ -43,6 +47,7 @@ def libreT(x, y)                                  # le heros a cette place ne to
 end
 def libre(x, y)                                   # ... ni plateforme mobile
   if !libreT(x, y) return false end
+  if NPLAT == 0 return true end
   for o: PLAT
     if x < o["x"] + 16 && x + 10 > o["x"] && y < o["y"] + 16 && y + 14 > o["y"] return false end
   end
@@ -51,18 +56,19 @@ end
 def touche(o) return px < o["x"] + 14 && px + 10 > o["x"] + 2 && py < o["y"] + 14 && py + 14 > o["y"] + 2 end
 def recompte() NR = 0 var i = 0 while i < size(PRIS) if PRIS[i] NR += 1 end i += 1 end pts = NR + ECR end
 
+def resolid() SOLID = {} for k: BR.keys() if BR[k].find("solide", 0) != 0 SOLID[k] = true end end end
 def depart()                                      # une nouvelle vie : le heros, les objets, les regles et les portes reviennent
   px = SX py = SY vx = 0.0 vy = 0.0 poussee = 0.0 SUR = nil nsl = NSAUT VMUL = 1.0
-  CASSE = {} OUV = {} FERME = {} MSG = "" ECR = 0 RFAIT = []
+  CASSE = {} OUV = {} FERME = {} MSG = "" ECR = 0 RFAIT = [] resolid()
   var i = 0 while i < size(RG) RFAIT.push(false) i += 1 end
   for o: OBJS
     o["x"] = o["x0"] o["y"] = o["y0"] o["vivant"] = true o["t0"] = temps() o["dir"] = 1.0 o["vy"] = 0.0 o["dx"] = 0.0 o["dy"] = 0.0
-    o["on"] = o["s"].find("declencheur", "toujours") == "toujours"
+    o["on"] = o["dc"] == "toujours"
   end
   tv0 = temps() recompte()
 end
 def charge()
-  NIV = [] OBJS = [] PLAT = [] EX = [] EY = [] PRIS = [] TOTR = 0 TOTE = 0
+  NIV = [] OBJS = [] PLAT = [] NPLAT = 0 EX = [] EY = [] PRIS = [] TOTR = 0 TOTE = 0
   for r: 0 .. H - 1
     var row = ROWS[r] var s = ""
     for c: 0 .. 19
@@ -70,10 +76,10 @@ def charge()
       if k == "S" SX = c * T + 3.0 SY = r * T + 2.0 k = "."
       elif OB.contains(k)
         var sp = OB[k]
-        var o = {"l": k, "s": sp, "x0": c * T + 0.0, "y0": r * T + 0.0, "x": c * T + 0.0, "y": r * T + 0.0, "vivant": true, "on": false, "t0": 0.0, "dir": 1.0, "vy": 0.0, "dx": 0.0, "dy": 0.0}
+        var o = {"m": sp.find("mouvement", "fixe"), "f": sp.find("forme", "bloc"), "ct": sp.find("contact", "perd"), "ec": sp.find("dessus", "") == "ecrase", "ca": sp.find("cache", 0) != 0, "dc": sp.find("declencheur", "toujours"), "l": k, "s": sp, "x0": c * T + 0.0, "y0": r * T + 0.0, "x": c * T + 0.0, "y": r * T + 0.0, "vivant": true, "on": false, "t0": 0.0, "dir": 1.0, "vy": 0.0, "dx": 0.0, "dy": 0.0}
         OBJS.push(o)
         var ct = sp.find("contact", "perd")
-        if sp.find("forme", "bloc") == "bloc" && ct == "rien" PLAT.push(o) end
+        if sp.find("forme", "bloc") == "bloc" && ct == "rien" PLAT.push(o) NPLAT += 1 end
         if ct == "ramasse" TOTR += 1 end
         if sp.find("forme", "bloc") == "ennemi" || sp.find("dessus", "") == "ecrase" TOTE += 1 end
         k = "."
@@ -101,6 +107,9 @@ def debut()
   PIC = rgb(230, 230, 236) RESS = rgb(255, 212, 0) GLACE = rgb(150, 230, 255) OR = rgb(255, 212, 0) HERO = rgb(232, 70, 60) OEIL = rgb(255, 255, 255) BLANC = rgb(255, 255, 255) OMBRE = rgb(20, 24, 40) ROUGE = rgb(220, 60, 80)
   for k: BR.keys()                                # [solide, mortel, glisse, rebond (cases), disparait (s), ramasse, arrivee]
     var p = BR[k]
+    var sl = p.find("solide", 0) != 0 && p.find("mortel", 0) == 0 && p.find("glisse", 0) < 0.5 && p.find("rebond", 0) == 0 && p.find("disparait", 0) == 0
+    DT[k] = sl ? 1 : p.find("arrivee", 0) != 0 ? 2 : p.find("mortel", 0) != 0 ? 3 : p.find("rebond", 0) != 0 ? 4 : p.find("disparait", 0) != 0 ? 5 : p.find("glisse", 0) >= 0.5 ? 6 : p.find("ramasse", 0) != 0 ? 0 : 7     # 1 bloc 2 arrivee 3 pic 4 ressort 5 fragile 6 glace 7 decor 0 rien
+    COL[k] = k == "#" ? BLOC : rgb(90 + (string.byte(k) * 37) % 120, 80 + (string.byte(k) * 71) % 100, 110 + (string.byte(k) * 23) % 110)
     KB[k] = [p.find("solide", 0), p.find("mortel", 0), p.find("glisse", 0), p.find("rebond", 0), p.find("disparait", 0), p.find("ramasse", 0), p.find("arrivee", 0)]
   end
   charge()
@@ -122,9 +131,9 @@ def chemin(o, s, m)                               # aller_retour / boucle : le t
   o["y"] = o["y0"] + (lp[a][1] + (lp[b][1] - lp[a][1]) * f) * T
 end
 def bouge(o, dt)
-  var s = o["s"] var m = s.find("mouvement", "fixe") var ox = o["x"] var oy = o["y"]
+  var s = o["s"] var m = o["m"] var ox = o["x"] var oy = o["y"]
   if !o["on"]                                     # pas encore declenche
-    var d = s.find("declencheur", "toujours")
+    var d = o["dc"]
     var hx = px + 5 - (o["x0"] + 8) var hy = py + 7 - (o["y0"] + 8)
     if (d == "proche" && math.sqrt(hx * hx + hy * hy) < s.find("distance", 3) * T) || (d == "touche" && touche(o)) o["on"] = true o["t0"] = temps() end
   end
@@ -149,8 +158,8 @@ end
 def agit(a, av)                                   # le "alors" d'une regle
   if a == "gagne" gagne = true son(1320, 300)
   elif a == "perd" mort()
-  elif a == "ouvre" OUV[av] = true
-  elif a == "ferme" FERME[av] = true
+  elif a == "ouvre" OUV[av] = true if SOLID.contains(av) SOLID.remove(av) end
+  elif a == "ferme" FERME[av] = true SOLID[av] = true
   elif a == "vie_plus" lives += 1
   elif a == "message" MSG = av MSGT = temps() + 2.5
   elif a == "vitesse" VMUL = av + 0.0
@@ -177,11 +186,10 @@ def regles(rl)
 end
 def contacts()                                    # le heros touche un objet de la fiche
   for o: OBJS
-    var s = o["s"]
-    if o["vivant"] && (!s.find("cache", 0) || o["on"]) && touche(o)
-      var c = s.find("contact", "perd")
-      if s.find("forme", "bloc") == "bloc" && c == "rien"
-      elif s.find("dessus", "") == "ecrase" && vy > 0 && py + 14 < o["y"] + 10
+    if o["vivant"] && (!o["ca"] || o["on"]) && touche(o)
+      var c = o["ct"]
+      if o["f"] == "bloc" && c == "rien"
+      elif o["ec"] && vy > 0 && py + 14 < o["y"] + 10
         o["vivant"] = false ECR += 1 pts = NR + ECR vy = -300.0 score(pts) son(500, 60)
       elif c == "perd" mort() return
       elif c == "rebond" vy = -560.0 son(990, 60)
@@ -298,20 +306,20 @@ def dessine()
   var r = int(camy / T) var rf = r + 16
   if r < 0 r = 0 end
   if rf > H rf = H end
+  var nO = size(OUV) var nF = size(FERME)
   while r < rf
-    var c = 0
+    var row = NIV[r] var c = 0 var y = r * T
     while c < 20
-      var k = case(c, r)
-      if k != "."
-        var x = c * T var y = r * T
-        if FERME.contains(k) || (prop(k, 0) != 0 && prop(k, 1) == 0 && prop(k, 2) < 0.5 && prop(k, 3) == 0 && prop(k, 4) == 0)
-          rect(x, y, T, T, k == "#" ? BLOC : rgb(90 + (string.byte(k) * 37) % 120, 80 + (string.byte(k) * 71) % 100, 110 + (string.byte(k) * 23) % 110)) rect(x, y, T, 2, BORDC)
-        elif prop(k, 6) != 0 rect(x + 7, y, 2, T, BLANC) tri(x + 9, y, x + 9, y + 8, x + T, y + 4, HERO)
-        elif prop(k, 1) != 0 tri(x, y + T, x + 8, y + 4, x + T, y + T, PIC)
-        elif prop(k, 3) != 0 rect(x, y + 8, T, 8, BLOC) rect(x + 2, y + 4, 12, 4, RESS)
-        elif prop(k, 4) != 0 rect(x, y, T, 6, (CASSE.contains(r * 20 + c) && int(temps() * 20) % 2) ? OMBRE : FRAG)
-        elif prop(k, 2) >= 0.5 rect(x, y, T, T, GLACE)
-        elif prop(k, 5) == 0 rect(x + 4, y + 4, 8, 8, CIEL2)      # du decor
+      var k = row[c]
+      if k != "." && !(nO > 0 && OUV.contains(k))
+        var x = c * T var t = nF > 0 && FERME.contains(k) ? 1 : DT.find(k, 7)
+        if t == 1 rect(x, y, T, T, COL.find(k, BLOC)) rect(x, y, T, 2, BORDC)
+        elif t == 2 rect(x + 7, y, 2, T, BLANC) tri(x + 9, y, x + 9, y + 8, x + T, y + 4, HERO)
+        elif t == 3 tri(x, y + T, x + 8, y + 4, x + T, y + T, PIC)
+        elif t == 4 rect(x, y + 8, T, 8, BLOC) rect(x + 2, y + 4, 12, 4, RESS)
+        elif t == 5 rect(x, y, T, 6, (CASSE.contains(r * 20 + c) && int(temps() * 20) % 2) ? OMBRE : FRAG)
+        elif t == 6 rect(x, y, T, T, GLACE)
+        elif t == 7 rect(x + 4, y + 4, 8, 8, CIEL2)      # du decor
         end
       end
       c += 1
@@ -324,9 +332,8 @@ def dessine()
     i += 1
   end
   for o: OBJS
-    var s = o["s"]
-    if o["vivant"] && (!s.find("cache", 0) || o["on"])
-      var x = int(o["x"]) var y = int(o["y"]) var f = s.find("forme", "bloc")
+    if o["vivant"] && (!o["ca"] || o["on"])
+      var x = int(o["x"]) var y = int(o["y"]) var f = o["f"]
       if f == "scie" disque(x + 8, y + 8, 7, PIC) disque(x + 8, y + 8, 3, OMBRE)
       elif f == "pic" tri(x, y + T, x + 8, y + 4, x + T, y + T, PIC)
       elif f == "ennemi" rect(x + 1, y + 2, 14, 14, ROUGE) rect(x + 3, y + 5, 3, 3, OEIL) rect(x + 9, y + 5, 3, 3, OEIL)

@@ -306,7 +306,7 @@ textarea:focus{outline:none;border-color:var(--acc)}
 /* l'étape en cours : sa question en grosse bulle pleine, ses choix en bulles distinctes dessous */
 #scBulles .bZone{--c:hsl(var(--h) 60% 44%);margin:14px 0}
 #scBulles .bQ{display:inline-block;max-width:100%;background:var(--c);color:#fff;border-radius:999px;padding:8px 18px;font-size:19px;margin-bottom:10px;box-shadow:0 4px 10px hsl(var(--h) 60% 30% / .35)}
-#scBulles .bZone .bulles{min-height:54px;align-items:center;padding-left:18px}#scBulles .attente{color:var(--mute);font-size:16px;display:flex;align-items:center;gap:12px}#scBulles .attente .rond{width:26px;height:26px}
+#scBulles .bZone .bulles{min-height:54px;align-items:center;padding-left:18px}#scBulles .attente{color:var(--mute);font-size:16px;display:flex;align-items:center;gap:12px}#scBulles .attente .rond{width:26px;height:26px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--acc);animation:tourne .8s linear infinite;flex:none}
 #scBulles .bZone .bulle{border:0;background:hsl(var(--h) 70% 50% / .2);box-shadow:inset 0 0 0 3px var(--c),0 3px 8px #0003;padding:7px 16px;font-size:17px}#scBulles .bZone .bulle:hover{background:hsl(var(--h) 70% 50% / .4)}
 #scBulles .bZone .bulle.prise{background:var(--c);color:#fff}#scBulles .bZone .bulle.autre{box-shadow:inset 0 0 0 2px var(--line);font-size:15px;padding:6px 14px}
 /* une étape répondue : la question et la réponse sont fondues (filtre « goutte » sur le calque du fond), la réponse sort de la question comme une excroissance */

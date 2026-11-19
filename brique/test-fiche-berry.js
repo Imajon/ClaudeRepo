@@ -16,7 +16,7 @@ function joue(nom, fiche) {
   assert(v.ok, `${nom} : ${v.erreur}`);
   assert(v.ops <= 1200, `${nom} : ${v.ops} dessins`);
   const ko = Math.round(v.memoire * 0.6 / 1000);   // meme estimation que server.js : verif tourne en 64 bits
-  assert(ko <= 66, `${nom} : ~${ko} Ko de memoire`);
+  assert(ko <= 45, `${nom} : ~${ko} Ko de memoire (moteur + fiche ; plafond du serveur 66)`);
   const suivi = v.suivi.trim().split('\n').map(l => Object.fromEntries([...l.matchAll(/ (\w+)=(\S+)/g)].map(m => [m[1], m[2] === 'true' ? true : m[2] === 'false' ? false : +m[2]])));
   console.log(`  ${nom} : ok, ${v.ops} dessins, ~${ko} Ko, ${script.length} octets`);
   return suivi;

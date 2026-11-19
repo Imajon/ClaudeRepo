@@ -3,6 +3,8 @@
 # La fiche parle en cases (T = 16 pixels) et en secondes ; ici tout est en pixels. Le heros : px, py, 10 x 14 pixels.
 import math
 import string
+import gc
+var GCN = 0
 var T = 16
 var ROWS = FICHE["rows"] var H = size(ROWS)
 var MO = FICHE["monde"] var HE = FICHE["heros"] var BR = FICHE["briques"] var OB = FICHE["objets"] var RG = FICHE["regles"]
@@ -10,7 +12,7 @@ var BUT = FICHE["but"] var BUTV = FICHE["butv"]
 var GRAV = MO.find("gravite", 0) * T + 0.0
 var BORD = MO.find("bord", "vide") var CAM = MO.find("camera", "suit")
 var VIT = HE.find("vitesse", 0) * T + 0.0 var ELAN = HE.find("elan", 0.2) + 0.0
-var SAUT = HE.find("saut", {}) var MUR = HE.find("mur", {})
+var SAUT = HE.find("saut", {}) var MUR = HE.find("mur", {}) var MURG = MUR.find("glisse", 0) != 0 var MURS = MUR.find("saut_mural", 0) != 0
 var VSAUT = 0.0
 if GRAV > 0 && SAUT.find("hauteur", 0) > 0 VSAUT = math.sqrt(2.0 * GRAV * SAUT["hauteur"] * T) end
 var NSAUT = SAUT.find("en_l_air", 0) var VIES = HE.find("vies", 0)
@@ -56,7 +58,7 @@ end
 def touche(o) return px < o["x"] + 14 && px + 10 > o["x"] + 2 && py < o["y"] + 14 && py + 14 > o["y"] + 2 end
 def recompte() NR = 0 var i = 0 while i < size(PRIS) if PRIS[i] NR += 1 end i += 1 end pts = NR + ECR end
 
-def resolid() SOLID = {} for k: BR.keys() if BR[k].find("solide", 0) != 0 SOLID[k] = true end end end
+def resolid() SOLID = {} for k: KB.keys() if KB[k][0] != 0 SOLID[k] = true end end end
 def depart()                                      # une nouvelle vie : le heros, les objets, les regles et les portes reviennent
   px = SX py = SY vx = 0.0 vy = 0.0 poussee = 0.0 SUR = nil nsl = NSAUT VMUL = 1.0
   CASSE = {} OUV = {} FERME = {} MSG = "" ECR = 0 RFAIT = [] resolid()
@@ -113,6 +115,8 @@ def debut()
     KB[k] = [p.find("solide", 0), p.find("mortel", 0), p.find("glisse", 0), p.find("rebond", 0), p.find("disparait", 0), p.find("ramasse", 0), p.find("arrivee", 0)]
   end
   charge()
+  FICHE = nil ROWS = nil MO = nil HE = nil BR = nil OB = nil SAUT = nil MUR = nil     # les donnees de la fiche ne servent qu'ici : on les rend au ramasse-miettes
+  gc.collect()
 end
 
 def chemin(o, s, m)                               # aller_retour / boucle : le trajet de la fiche, duree et pause a chaque point
@@ -203,8 +207,9 @@ def contacts()                                    # le heros touche un objet de 
 end
 
 def maj(dt)
+  GCN += 1 if GCN >= 12 GCN = 0 gc.collect() end      # Berry ne nettoie que quand sa memoire a double : on nettoie plus souvent, le creux de memoire libre est bien moins profond
   if gagne || perdu
-    if appui(P3) gagne = false perdu = false morts = 0 charge() end
+    if appui(P3) gagne = false perdu = false morts = 0 lives = VIES for i: 0 .. size(PRIS) - 1 PRIS[i] = false end depart() end
     return
   end
   if dt > 0.05 dt = 0.05 end
@@ -236,11 +241,11 @@ def maj(dt)
     if but < 0 && !libre(px - 1, py) mur = -1 end
     if but > 0 && !libre(px + 1, py) mur = 1 end
   end
-  if mur != 0 && MUR.find("glisse", 0) != 0 && vy > 70 vy = 70.0 end
+  if mur != 0 && MURG && vy > 70 vy = 70.0 end
   if sb >= 0 && VSAUT > 0
     if appui(BTN[sb])
       if sol vy = -VSAUT son(660, 40)
-      elif mur != 0 && MUR.find("saut_mural", 0) != 0 vy = -VSAUT * 0.93 poussee = -mur * VIT * 0.95 son(780, 40)
+      elif mur != 0 && MURS vy = -VSAUT * 0.93 poussee = -mur * VIT * 0.95 son(780, 40)
       elif nsl > 0 nsl -= 1 vy = -VSAUT son(660, 40)
       end
     end

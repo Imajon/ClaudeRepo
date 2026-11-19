@@ -74,7 +74,8 @@
 const COURSES = { cote: 1, derriere: 1, dessus: 1, iso: 1 }, NOUVEAUX = { 'plat-but': 1, 'plat-attrape': 1, 'plat-evite': 1, 'plat-course': 1, ...COURSES };   // les nouveaux jeux : le gros bouton a son rôle fixe (sauter, turbo), les obstacles ne comptent que pour les courses
 const FIXES = { 'tir-perso': 1, 'tir-autour': 1 };   // jeux de tir au vaisseau fixe : seuls le genre, le jeu et le monde se choisissent (le monde donne le fond, les particules et les ennemis)
 const SOLO = { quiz: 1, soigne: 1 };   // ces deux jeux n'ont ni obstacles, ni objets, ni gros bouton à choisir
-const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (FIXES[r.jeu] && id !== 'genre' && id !== 'jeu' && id !== 'monde') return true; if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (/^monde[2-6]$/.test(id)) return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) >= +id.slice(5)); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && (!!NOUVEAUX[r.jeu] || r.jeu === 'tir-haut')); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
+// tir autour : en plus du genre, du jeu et du monde, son personnage, ses tirs (bon) et ses ennemis (mal) se choisissent
+const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (FIXES[r.jeu] && id !== 'genre' && id !== 'jeu' && id !== 'monde') return !(r.jeu === 'tir-autour' && (id === 'perso' || id === 'bon' || id === 'mal')); if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (/^monde[2-6]$/.test(id)) return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) >= +id.slice(5)); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && (!!NOUVEAUX[r.jeu] || r.jeu === 'tir-haut')); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
 
   const FIG = {"auto":["rect(x - 3, y + 16, 30, 9, C2) rect(x - 3, y + 16, 30, 3, C3) disque(x + 3, y + 25, 4, NO) disque(x + 21, y + 25, 4, NO)","rect(x - 2, y + 16, 28, 10, C2) rect(x - 2, y + 16, 28, 3, C3) rect(x, y + 25, 6, 4, NO) rect(x + 18, y + 25, 6, 4, NO)"],"moto":["disque(x + 2, y + 24, 5, NO) disque(x + 22, y + 24, 5, NO) rect(x + 2, y + 17, 20, 4, C2) rect(x + 18, y + 12, 3, 6, NO)","rect(x + 9, y + 18, 6, 10, NO) rect(x + 4, y + 17, 16, 3, C2)"],"surf":["rect(x - 3, y + 21, 30, 3, C2) tri(x + 27, y + 21, x + 27, y + 24, x + 32, y + 22, C2) rect(x - 4, y + 25, 32, 2, A3)","rect(x + 5, y + 20, 14, 5, C2) rect(x + 3, y + 25, 18, 2, A3)"]};   // le véhicule sous le personnage dans les courses : [vue de côté, vue de derrière / dessus]
   const COULEURS = { rouge: [225, 60, 55], orange: [240, 140, 40], jaune: [245, 205, 50], vert: [80, 190, 90], bleu: [70, 130, 230], violet: [150, 90, 210], rose: [240, 120, 175], blanc: [240, 240, 245] };
@@ -1262,7 +1263,7 @@ def maj(dt)
   if appui(P3)
     for i: 0 .. 5
       if BV[i] <= 0
-        BX[i] = 160.0 BY[i] = 120.0 BV[i] = 1.2
+        BX[i] = 160.0 + math.cos(ang) * 20 BY[i] = 120.0 + math.sin(ang) * 20 BV[i] = 1.2
         BVX[i] = math.cos(ang) * 260 BVY[i] = math.sin(ang) * 260 son(1200, 20) break
       end
     end
@@ -1299,12 +1300,11 @@ end
 def dessine()
   for i: 0 .. 9 rect(0, i * 24, 320, 24, BAND[i]) end
   for i: 0 .. 5
-    if AA[i] objet(int(AX[i]), int(AY[i])) end
-    if BV[i] > 0 rect(int(BX[i]) - 1, int(BY[i]) - 1, 3, 3, TIRC) end
+    if AA[i] objet(int(AX[i]), int(AY[i]), 1) end
+    if BV[i] > 0 objet(int(BX[i]), int(BY[i]), 0) end
   end
-  if inv <= 0 || int(temps() * 10) % 2 == 0
-    tri(160 + int(math.cos(ang) * 14), 120 + int(math.sin(ang) * 14), 160 + int(math.cos(ang + 2.5) * 10), 120 + int(math.sin(ang + 2.5) * 10), 160 + int(math.cos(ang - 2.5) * 10), 120 + int(math.sin(ang - 2.5) * 10), rgb(232, 50, 43))
-  end
+  if inv <= 0 || int(temps() * 10) % 2 == 0 perso(148, 108) end
+  tri(160 + int(math.cos(ang) * 27), 120 + int(math.sin(ang) * 27), 160 + int(math.cos(ang + 0.3) * 19), 120 + int(math.sin(ang + 0.3) * 19), 160 + int(math.cos(ang - 0.3) * 19), 120 + int(math.sin(ang - 0.3) * 19), TIRC)   # le viseur : la direction du tir
   for i: 1 .. vies disque(8 + i * 14, 12, 5, rgb(240, 70, 80)) end
   texte(250, 6, str(pts), TXT, 2)
   if fin texte(80, 100, "PERDU !", TIRC, 4) texte(90, 150, "P3 : rejouer", TXT, 2) end
@@ -1312,14 +1312,15 @@ end
 `;
 
   // le monde choisi habille un tir fixe : dégradé du ciel, particules, ennemis = le mauvais objet du monde (objet(x, y), rayon 8) ; texte et tirs contrastent avec un ciel clair
-  const tirMonde = code => r => {
-    const mo = MONDES[r.monde], clair = mo.ciel[0].concat(mo.ciel[1]).reduce((t, v) => t + v, 0) / 6 > 130;
-    const c = clair ? { pt1: [255, 255, 255], pt2: fonce(mo.ciel[0]), tir: [225, 80, 20], txt: [30, 30, 45] } : { pt1: [90, 90, 120], pt2: [220, 220, 250], tir: [255, 220, 60], txt: [255, 255, 255] };
-    return code.replace(/^# .*\n/, '# ' + ('Tir ' + mo.nom).slice(0, 40) + '\n').replace('\nvar ', '\nvar NO = 0 var A1 = 0 var A2 = 0 var A3 = 0 var A4 = 0 var BAND = [] var PT1 = 0 var PT2 = 0 var TIRC = 0 var TXT = 0\nvar ')
-      .replace('\ndef debut()\n', `\ndef objet(x, y)\n${mo.mal}\nend\ndef debut()\n  NO = rgb(30, 30, 45) A1 = ${rgb(mo.a[0])} A2 = ${rgb(mo.a[1])} A3 = ${rgb(mo.a[2])} A4 = ${rgb(mo.a[3])}\n  BAND = ${liste(10, i => rgb(mel(mo.ciel[0], mo.ciel[1], i / 9)))}\n  PT1 = ${rgb(c.pt1)} PT2 = ${rgb(c.pt2)} TIRC = ${rgb(c.tir)} TXT = ${rgb(c.txt)}\n`);
+  // perso = true (tir autour) : le personnage, les tirs (bon) et les ennemis (mal) se choisissent aussi (dessin du monde ou image) ; sinon look fixe
+  const tirMonde = (code, perso) => r => {
+    const mo = MONDES[r.monde], im = r.imgs || {}, col = COULEURS[r.couleur], pale = mo.ciel[0].concat(mo.ciel[1]).reduce((t, v) => t + v, 0) / 6 > 130;
+    const c = pale ? { pt1: [255, 255, 255], pt2: fonce(mo.ciel[0]), tir: [225, 80, 20], txt: [30, 30, 45] } : { pt1: [90, 90, 120], pt2: [220, 220, 250], tir: [255, 220, 60], txt: [255, 255, 255] };
+    return code.replace(/^# .*\n/, '# ' + ('Tir ' + mo.nom).slice(0, 40) + '\n').replace('\nvar ', '\nvar NO = 0 var A1 = 0 var A2 = 0 var A3 = 0 var A4 = 0 var BAND = [] var PT1 = 0 var PT2 = 0 var TIRC = 0 var TXT = 0' + (perso ? ' var C1 = 0 var C2 = 0 var C3 = 0 var BL = 0' : '') + '\nvar ')
+      .replace('\ndef debut()\n', (perso ? `\ndef objet(x, y, k)\n  if k == 0\n${objetCode(r, 'bon', mo, im)}\n  else\n${objetCode(r, 'mal', mo, im)}\n  end\nend\ndef perso(x, y)\n${r.perso === 'img' ? `  image(${im.perso}, x, y, 0, 1)` : PERSOS[r.perso]}\nend` : `\ndef objet(x, y)\n${mo.mal}\nend`) + `\ndef debut()\n${perso ? `  C1 = rgb(${col.join(', ')}) C2 = rgb(${fonce(col).join(', ')}) C3 = rgb(${clair(col).join(', ')}) BL = rgb(255, 255, 255)\n` : ''}  NO = rgb(30, 30, 45) A1 = ${rgb(mo.a[0])} A2 = ${rgb(mo.a[1])} A3 = ${rgb(mo.a[2])} A4 = ${rgb(mo.a[3])}\n  BAND = ${liste(10, i => rgb(mel(mo.ciel[0], mo.ciel[1], i / 9)))}\n  PT1 = ${rgb(c.pt1)} PT2 = ${rgb(c.pt2)} TIRC = ${rgb(c.tir)} TXT = ${rgb(c.txt)}\n`);
   };
 
-  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'tir-haut': chute, 'tir-perso': tirMonde(TIR_PERSO), 'tir-autour': tirMonde(TIR_AUTOUR), 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, derriere: course, dessus: course, iso: course };   // jeu -> son système
+  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'tir-haut': chute, 'tir-perso': tirMonde(TIR_PERSO), 'tir-autour': tirMonde(TIR_AUTOUR, true), 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, derriere: course, dessus: course, iso: course };   // jeu -> son système
 
   function recetteComplete(r) {   // une étape sans choix (ou un choix inconnu) prend sa valeur par défaut : le jeu marche toujours
     const o = {};
@@ -1467,5 +1468,8 @@ M.mondeBulles = (id, r) => {   // les bulles de « monde du niveau k » : si le 
   const nn = nbNiv(r.niv), pris = new Set([r.monde || DEFAUT.monde]); for (let k = 2; k <= nn; k++) { const w = r['monde' + k]; if (k !== +id.slice(5) && w && w !== 'meme') pris.add(w); }
   const tous = ETAPES.find(e => e.id === id).bulles; return pris.size >= MONDES_MAX ? tous.filter(b => b.id === 'meme' || pris.has(b.id)) : tous;
 };
+const LIB_TIR = { bon: { nom: 'Mes tirs', q: 'Avec quoi tires-tu ?' }, mal: { nom: 'Mes ennemis', q: 'Que veux-tu détruire ?' } };   // « tir autour » : « ce que j’attrape / évite » devient « mes tirs / mes ennemis »
+Object.assign(M.EN, { "Mes tirs": "My shots", "Avec quoi tires-tu ?": "What do you shoot with?", "Mes ennemis": "My enemies", "Que veux-tu détruire ?": "What do you want to destroy?" });
+M.lib = (a, r, k) => (r && r.jeu === 'tir-autour' && LIB_TIR[a.id]?.[k]) || a[k];   // k = 'q' ou 'nom' : le texte de l'étape pour ce jeu
 M.ARBRES = AR.ARBRES; M.ETAPES = ETAPES; M.genreDe = jeu => ETAPES[0].bulles.find(b => b.id === GENRE_DE[jeu]); M.saute = saute; M.nivBulles = nivBulles; M.mot = mot; M.nbNiv = nbNiv; M.DEFAUT = DEFAUT; M.recetteComplete = recetteComplete; M.assembler = assembler;
 })(typeof module === 'object' ? module.exports : (window.JeuxBulles = {}));

@@ -87,11 +87,21 @@ assert(J.assembler({ jeu: 'attrape', edit: { pl: [], st: [], hz: [] } }) === J.a
 console.log('ok : plateforme placee a la main');
 // les tirs fixes : chaque monde habille le fond et les ennemis ; l'etape « monde » n'est plus sautee
 for (const jeu of ['tir-perso', 'tir-autour']) {
-  assert(J.saute('monde', { genre: 'tire', jeu }) === false && J.saute('perso', { genre: 'tire', jeu }) && J.saute('action', { genre: 'tire', jeu }), `${jeu} : seul le monde se choisit`);
+  const autour = jeu === 'tir-autour';   // tir autour : en plus le personnage, les tirs (bon) et les ennemis (mal) se choisissent
+  assert(J.saute('monde', { genre: 'tire', jeu }) === false && J.saute('perso', { genre: 'tire', jeu }) === !autour && J.saute('bon', { genre: 'tire', jeu }) === !autour && J.saute('mal', { genre: 'tire', jeu }) === !autour && J.saute('action', { genre: 'tire', jeu }), `${jeu} : etapes choisies`);
   for (const monde of choix[3]) {
-    const code = J.assembler({ jeu, monde }); assert(code.includes('def objet(x, y)') && code.includes('BAND = ['), `${jeu} ${monde} : monde applique`);
+    const code = J.assembler({ jeu, monde }); assert(code.includes(autour ? 'def objet(x, y, k)' : 'def objet(x, y)') && code.includes('BAND = ['), `${jeu} ${monde} : monde applique`);
     for (const c of [code, code.replace(/fin = false/g, 'fin = true')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok && v.ops <= 600 && v.memoire <= 72000, `${jeu} ${monde} : ${v.erreur || v.ops + ' dessins ' + v.memoire + ' octets'}`); }
   }
   assert(J.assembler({ jeu, monde: 'neige' }) !== J.assembler({ jeu, monde: 'espace' }), `${jeu} : le monde change le code`);
 }
 console.log('ok : tirs x mondes');
+// tir autour : chaque personnage x chaque tir / ennemi du monde ou du bestiaire, et les images de l'enfant (perso, tirs, ennemis)
+const formesBon = J.ETAPES.find(e => e.id === 'bon').bulles.map(b => b.id), formesMal = J.ETAPES.find(e => e.id === 'mal').bulles.map(b => b.id);
+const jouer = (r, nom) => { const code = J.assembler({ jeu: 'tir-autour', ...r }); for (const c of [code, code.replace(/fin = false/g, 'fin = true')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok && v.ops <= 600 && v.memoire <= 72000, `tir-autour ${nom} : ${v.erreur || v.ops + ' dessins ' + v.memoire + ' octets'}`); } };
+for (const [i, perso] of persos.entries()) jouer({ perso, monde: mondes[i % mondes.length], bon: formesBon[i % formesBon.length], mal: formesMal[(i * 3) % formesMal.length] }, perso);
+for (const monde of mondes) jouer({ monde, perso: 'img', bon: 'img', mal: 'img', imgs: { perso: 1, bon: 2, mal: 3 } }, 'images ' + monde);
+assert(J.assembler({ jeu: 'tir-autour', perso: 'chat' }) !== J.assembler({ jeu: 'tir-autour', perso: 'robot' }), 'tir-autour : le personnage change le code');
+assert(J.assembler({ jeu: 'tir-autour', mal: 'img', imgs: { mal: 4 } }).includes('image(4,'), 'tir-autour : l image de l ennemi est dans le jeu');
+assert(J.lib(J.ETAPES.find(e => e.id === 'mal'), { jeu: 'tir-autour' }, 'q') !== J.ETAPES.find(e => e.id === 'mal').q && J.lib(J.ETAPES.find(e => e.id === 'mal'), { jeu: 'attrape' }, 'q') === J.ETAPES.find(e => e.id === 'mal').q, 'tir-autour : questions propres a ce jeu');
+console.log('ok : tir autour x personnage, tirs, ennemis');

@@ -4264,20 +4264,25 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const AXES = JeuxBulles.ETAPES, T = s => document.documentElement.lang === 'en' ? JeuxBulles.EN[s] || s : s;   // T : les bulles toutes faites, en anglais sur la page /en
   const salut = () => `Bonjour${pseudo() ? ' ' + pseudo() : ''}, quel jeu va-t-on faire aujourd'hui ?`, AIDE_ECRIRE = "Écris ce que tu veux créer, puis appuie sur « Envoyer à l'IA ».", AIDE_SUITE = "";
   const ATTENTE = "⏳ Je cherche des bulles pour toi…";
-  let fait = false, recette = {}, props = {}, frais = {}, courant = 'genre', cherche = false, gouts = [], vu = '', idees = false, menu = false, fabrique = '', serie = 0, dyn = {};   // serie : « comment » déjà posés depuis la dernière question « plus loin ou tester » ; dyn : les questions et boutons réécrits par Mistral { étape: { q, b: { id: texte } } } ; fabrique : la recette du dernier jeu fabriqué (le bouton reste grisé tant qu'elle n'a pas changé) ; recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
+  let fait = false, recette = {}, props = {}, frais = {}, courant = 'genre', cherche = false, gouts = {}, vu = '', idees = false, menu = false, fabrique = '', serie = 0, dyn = {};   // serie : « comment » déjà posés depuis la dernière question « plus loin ou tester » ; dyn : les questions et boutons réécrits par Mistral { étape: { q, b: { id: texte } } } ; fabrique : la recette du dernier jeu fabriqué (le bouton reste grisé tant qu'elle n'a pas changé) ; recette : { étape: bulle } ; props : les bulles de l'IA par étape ; frais : celles qui vont avec la recette actuelle ; courant : l'étape affichée ; gouts : ce que l'enfant a écrit qu'il aime
   const axeDe = id => AXES.find(x => x.id === id);
-  const dispo = a => a.id === 'niv' ? JeuxBulles.nivBulles(recette.niv?.id) : a.bulles.filter(b => !b.genre || recette.genre?.id === b.genre), base = a => dispo(a).filter(b => !b.plus || recette[a.id]?.id === b.id), extra = a => idees ? [...dispo(a).filter(b => b.plus && recette[a.id]?.id !== b.id), ...((a.ia || a.libre) && !cherche ? props[a.id] || [] : [])] : [];   // base : visibles tout de suite ; extra : après « Des idées pour toi »
-  const toutes = a => [...base(a), ...extra(a)].map(b => dyn[a.id]?.b[b.id] ? { ...b, bouton: dyn[a.id].b[b.id] } : b);   // les mots de Mistral sur les bulles qui existent
+  const dispo = a => a.id === 'niv' ? JeuxBulles.nivBulles(recette.niv?.id) : /^monde[2-6]$/.test(a.id) ? JeuxBulles.mondeBulles(a.id, ids()) : a.bulles.filter(b => !b.genre || recette.genre?.id === b.genre), base0 = a => dispo(a).filter(b => !b.plus || recette[a.id]?.id === b.id);   // base0 : les bulles de départ de l'étape
+  const txt = (a, b) => dyn[a.id]?.b[b.id] ? { ...b, bouton: dyn[a.id].b[b.id] } : b;   // les mots de Mistral sur une bulle qui existe
+  const choisies = a => { const l = Object.keys(dyn[a.id]?.b || {}); return l.length >= 3 ? l : null; };   // les bulles retenues par Mistral pour cette histoire, dans son ordre (moins de 3 : on garde tout)
+  const cachees = a => { const l = choisies(a); return l ? base0(a).filter(b => !l.includes(b.id) && recette[a.id]?.id !== b.id) : []; };   // écartées de la vue de départ, rendues par « Des idées pour toi »
+  const base = a => { const l = choisies(a), t = base0(a); return (l ? [...l.map(id => t.find(b => b.id === id)).filter(Boolean), ...t.filter(b => recette[a.id]?.id === b.id && !l.includes(b.id))] : t).map(b => txt(a, b)); };   // visibles tout de suite
+  const extra = a => idees ? [...dispo(a).filter(b => b.plus && recette[a.id]?.id !== b.id).map(b => txt(a, b)), ...cachees(a).map(b => txt(a, b)), ...((a.ia || a.libre) && !cherche ? props[a.id] || [] : [])] : [];   // après « Des idées pour toi »
+  const toutes = a => [...base(a), ...extra(a)];
   const ids = () => Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.id]));
   const etapes = () => AXES.filter(x => !JeuxBulles.saute(x.id, ids()) && (fait || !x.v2));   // les étapes « v2 » (cartel de fin, niveaux) n'arrivent qu'après le premier jeu   // la couleur n'a pas de sens pour une image
   const sig = () => JSON.stringify([Object.entries(recette).map(([k, v]) => [k, v.bouton]), etat.edit || 0]);   // etat.edit : le niveau 1 placé à la main
-  const raz = () => { recette = structuredClone(etat.recette || {}); if (recette.jeu && !recette.genre) recette.genre = JeuxBulles.genreDe(recette.jeu.id);   /* anciennes recettes : sans genre */ props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); fabrique = fait ? sig() : ''; courant = fait ? '' : 'genre'; gouts = []; vu = ''; idees = false; menu = false; serie = 0; dyn = {}; };
+  const raz = () => { recette = structuredClone(etat.recette || {}); if (recette.jeu && !recette.genre) recette.genre = JeuxBulles.genreDe(recette.jeu.id);   /* anciennes recettes : sans genre */ props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); fabrique = fait ? sig() : ''; courant = fait ? '' : 'genre'; gouts = {}; vu = ''; idees = false; menu = false; serie = 0; dyn = {}; };
   // PARCOURS : 3 bulles de départ (type, quoi, où), puis « comment » sans fin : 2 de suite, puis « aller plus loin ou tester ? » ; une réponse déjà donnée se rouvre en touchant sa goutte
   const BASE = () => ['genre', recette.genre?.id === 'quiz' ? 'quest' : 'perso', 'monde'], enBase = id => BASE().includes(id);
   const comment = () => etapes().find(x => !enBase(x.id) && !recette[x.id])?.id;   // le prochain « comment » sans réponse
   const premier = () => BASE().find(id => !recette[id] && etapes().some(x => x.id === id)) || comment() || 'fork';
   function apres(avant, neuf) {                          // où aller après une réponse
-    const nx = { niv: 'plan', plan: 'piege' }[avant];    // niveau ajouté : tout de suite les difficultés
+    const nn = JeuxBulles.nbNiv(recette.niv?.id), nx = avant === 'niv' ? (etapes().some(x => x.id === 'monde' + nn) && !recette['monde' + nn] ? 'monde' + nn : 'plan') : /^monde[2-6]$/.test(avant) && neuf ? 'plan' : { plan: 'piege' }[avant];    // niveau ajouté : son monde, puis tout de suite les difficultés
     if (fait && nx && etapes().some(x => x.id === nx)) return nx;
     const b = BASE().find(id => !recette[id] && etapes().some(x => x.id === id)); if (b) return b;
     if (!enBase(avant) && neuf && ++serie >= 2) { serie = 0; return 'fork'; }
@@ -4287,8 +4292,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const a = axeDe(id); if (!a || !a.bulles.length || dyn[id] || document.documentElement.lang === 'en' || !Object.keys(recette).length) return;
     cherche = true; rendreBulles();
     try {
-      const r = await api('api/bulles', { ...ident(), axe: 'suite', historique: etapes().filter(x => recette[x.id]).map(x => ({ question: x.q, choix: recette[x.id].bouton })), gouts,
-        prochaine: { sujet: a.q, axe: id === 'perso' ? 'qui' : id === 'monde' ? 'où' : 'comment', ...!enBase(id) && { direction: 'La question commence par « Comment » et reste sur le sujet donné.' }, options: dispo(a).map(b => ({ id: b.id, bouton: b.bouton })) } });
+      const r = await api('api/bulles', { ...ident(), axe: 'suite', historique: etapes().filter(x => recette[x.id]).map(x => ({ question: x.q, choix: recette[x.id].bouton })), gouts: gouts[id] || [],
+        prochaine: { sujet: a.q, axe: id === 'perso' ? 'qui' : id === 'monde' ? 'où' : 'comment', ...!enBase(id) && { direction: 'La question commence par « Comment » et reste sur le sujet donné.' }, options: base0(a).map(b => ({ id: b.id, bouton: b.bouton })) } });
       if (r.question && r.bulles?.length) dyn[id] = { q: r.question, b: Object.fromEntries(r.bulles.filter(m => m.id).map(m => [m.id, m.bouton])) };
     } catch {} finally { cherche = false; rendreBulles(); majTokens(); }
   }
@@ -4303,7 +4308,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const paire = x => { const c = `<span class="pq">${x.icone}</span><span class="pr">${esc(document.documentElement.lang === 'en' ? T(recette[x.id].bouton) : JeuxBulles.mot(x.id, recette[x.id]))}</span>`;   // le mot clef seul (la réponse entière : toucher la pastille rouvre l'étape) ; 2 calques identiques : le fond passe au filtre « goutte », le texte reste net par-dessus
       return `<button class="bPaire" style="--h:${x.h}" data-l="axe" data-i="${x.id}"><span class="pf" aria-hidden="true">${c}</span><span class="pt">${c}</span></button>`; };
     const attendre = `<span class="attente"><span class="rond"></span>${ATTENTE.slice(2)}</span>`;   // le rond tourne ; slice(2) : sans le sablier du texte
-    const ouvert = a => { const b0 = base(a), ex = extra(a), plus = a.ia || a.libre || a.bulles.some(b => b.plus);
+    const ouvert = a => { const b0 = base(a), ex = extra(a), plus = a.ia || a.libre || a.bulles.some(b => b.plus) || cachees(a).length > 0;
       if (cherche && !idees && !a.quiz) return `<div class="bZone" style="--h:${a.h}">${attendre}</div>`;   // Mistral écrit la suite : rien à toucher tant que les bulles ne sont pas cliquables, elles arrivent ensuite en fondu
       if (a.quiz) return `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${T(a.q)}</div><div class="libre quiz"><input id="qzSujet" type="text" maxlength="100" placeholder="✏️ Les questions parlent de… (les dinosaures, le foot…)"></div><div class="libre quiz"><input id="qzRep" type="text" maxlength="100" placeholder="✏️ Les réponses : sérieuses, rigolotes… (pas obligé)"></div><div class="libre"><button class="bulle autre" data-l="quiz">✨ Fabriquer mes questions</button></div></div>`;
       return `<div class="bZone${anime ? ' fondu' : ''}" style="--h:${a.h}"><div class="bQ">${a.icone} ${esc(dyn[a.id]?.q || T(a.q))}</div><div class="bulles">${b0.map(bulle).join('')}</div>`
@@ -4321,11 +4326,11 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     scDemande.value = etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ');   // le champ (caché) dit ce qui est choisi
   }
   async function charger(id, encore) {                   // les idées de l'IA pour cette étape (personnage, ce qu'on attrape, ce qu'on évite), tournées vers l'univers de l'enfant ; sans choix ni goût, pas d'appel
-    if (!(axeDe(id).ia || axeDe(id).libre) || (!encore && (frais[id] || !(Object.keys(recette).length || gouts.length)))) return rendreBulles();
+    if (!(axeDe(id).ia || axeDe(id).libre) || (!encore && (frais[id] || !(Object.keys(recette).length || (gouts[id] || []).length)))) return rendreBulles();
     const deja = encore ? (props[id] || []).map(b => b.bouton) : [];
     cherche = true; rendreBulles(); scCompris.textContent = ATTENTE;
     try {
-      const r = await api('api/bulles', { ...ident(), axe: id, choix: Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.bouton])), gouts, deja, ...axeDe(id).libre && { options: dispo(axeDe(id)).map(b => ({ id: b.id, bouton: b.bouton })) } });
+      const r = await api('api/bulles', { ...ident(), axe: id, choix: Object.fromEntries(Object.entries(recette).map(([k, v]) => [k, v.bouton])), gouts: gouts[id] || [], deja, ...axeDe(id).libre && { options: dispo(axeDe(id)).map(b => ({ id: b.id, bouton: b.bouton })) } });
       if (axeDe(id).libre) r.bulles = (r.bulles || []).map(m => { const o = dispo(axeDe(id)).find(b => b.id === m.id); return o && { ...o, bouton: m.bouton, plus: true }; }).filter(Boolean);   // genre, jeu : l'IA dit les mots de l'enfant sur une bulle qui existe (le jeu reste assemblé avec des pièces testées)
       if (!r.bulles?.length) throw new Error("Je n'ai pas trouvé d'idée : touche une autre bulle.");
       props[id] = axeDe(id).libre ? r.bulles : r.bulles.map(b => ({ ...b, id: 'img' })); frais[id] = true; scCompris.textContent = AIDE_SUITE;
@@ -4374,7 +4379,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     }
     if (l === 'libre') {                                 // pas de bulle à son goût : ce qu'il aime (champ vide : d'autres au hasard) -> de nouvelles idées pour cette étape
       const t = scBulles.querySelector('input').value.trim().replace(/\s+/g, ' ');
-      if (t) gouts.push(t); idees = true; return charger(courant, true);
+      if (t) (gouts[courant] = gouts[courant] || []).push(t); idees = true;   // la consigne ne vaut que pour l'élément affiché (personnage, monde d'un niveau...)
+      return charger(courant, true);
     }
     const b = toutes(a)[+el.dataset.i];
     if (recette[courant]?.bouton === b.bouton) { delete recette[courant]; if (a.ia) retirerImage(courant); frais = {}; return rendreBulles(); }   // retoucher la bulle prise l'enlève
@@ -4388,7 +4394,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   async function fabriquerBulles() {                     // « Fabriquer » : le programme est assemblé ici (pièces testées), sans IA, puis envoyé à la console
     // monde Forêt : ses 3 arbres sont des images, placées AVANT celles de l'enfant (numéros 1 à 3) pour que les numéros ne bougent pas s'il en ajoute ; trop d'images : sapins dessinés
     const nA = JeuxBulles.ARBRES.length, octA = JeuxBulles.ARBRES.reduce((s, m) => s + imgOctets(m), 0), id0 = ids();
-    const arbres = (id0.monde || 'foret') === 'foret' && (etat.images || []).length + nA <= 16 && octA <= place() ? 1 : 0;
+    const rc = JeuxBulles.recetteComplete(id0), arbres = (rc.mondes || [rc.monde]).includes('foret') && (etat.images || []).length + nA <= 16 && octA <= place() ? 1 : 0;
     etat.imagesMonde = arbres ? JeuxBulles.ARBRES : [];
     const imgs = {}; (etat.images || []).forEach((m, i) => { if (m.role) imgs[m.role] = i + 1 + (arbres ? nA : 0); });
     scGo.disabled = true; let paroles = []; scCompris.textContent = '✍️ Je fais parler ton personnage…';

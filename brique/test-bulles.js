@@ -47,6 +47,21 @@ assert(J.assembler({ jeu: 'plat-but', niv: 'trois', plan: 'oui' }) !== J.assembl
 assert(J.assembler({ jeu: 'plat-but', niv: 'trois', piege: 'oui' }) !== J.assembler({ jeu: 'plat-but', niv: 'trois' }), 'piege change le code');
 assert(J.assembler({ jeu: 'attrape', fin: 'over' }).includes('"GAME OVER"') && !J.assembler({ jeu: 'attrape', fin: 'over' }).includes('"PERDU !"'), 'le cartel change de mot');
 assert(J.assembler({ jeu: 'plat-but', niv: 'trois' }).includes('majJ(') && !J.assembler({ jeu: 'quiz', niv: 'trois' }).includes('majJ('), 'niveaux : pas pour les jeux solo');
+// un monde par niveau (plateforme a plusieurs niveaux) : neige au niveau 1, foret au niveau 2... plafond 74000 (au lieu de 72000) : le 2e monde ajoute son decor et son avant-plan (~3 Ko), le pire cas mesure est 73,4 Ko (plat-evite, 6 niveaux, neige puis eau) : a essayer sur la console
+{ const W = ['neige', 'foret', 'ville', 'espace', 'eau', 'desert'];
+  assert(J.saute('monde2', { jeu: 'plat-but', niv: 'n3' }) === false && J.saute('monde3', { jeu: 'plat-but', niv: 'n3' }) === false && J.saute('monde4', { jeu: 'plat-but', niv: 'n3' }) && J.saute('monde2', { jeu: 'plat-but', niv: 'un' }) && J.saute('monde2', { jeu: 'attrape', niv: 'n3' }), 'monde du niveau k : seulement la plateforme et les niveaux qui existent');
+  assert.deepStrictEqual(J.recetteComplete({ jeu: 'plat-but', niv: 'n3', monde: 'neige', monde2: 'foret' }).mondes, ['neige', 'foret', 'neige'], 'un niveau sans choix reprend le monde du niveau 1');
+  assert(!J.recetteComplete({ jeu: 'plat-but', niv: 'n3', monde: 'neige', monde2: 'meme' }).mondes && !J.recetteComplete({ jeu: 'attrape', niv: 'n3', monde: 'neige', monde2: 'foret' }).mondes, 'pas de mondes par niveau : rien ne change');
+  assert.deepStrictEqual(J.recetteComplete({ jeu: 'plat-but', niv: 'n6', monde: 'neige', monde2: 'foret', monde3: 'ville', monde4: 'espace', monde5: 'eau', monde6: 'desert' }).mondes, ['neige', 'foret', 'neige', 'neige', 'neige', 'neige'], '2 mondes differents au plus');
+  assert(J.assembler({ jeu: 'plat-but', niv: 'n3', monde: 'neige' }) === J.assembler({ jeu: 'plat-but', niv: 'n3', monde: 'neige', monde2: 'meme', monde3: 'meme' }) && J.assembler({ jeu: 'plat-but', niv: 'n3', monde: 'neige', monde2: 'foret' }).includes('NV == 1 || NV == 3'), 'le monde du niveau 2 est dans le code');
+  for (const jeu of ['plat-but', 'plat-attrape', 'plat-evite', 'plat-course']) for (const nv of [2, 3, 4, 6]) for (let d = 0; d < 6; d++) {
+    const r = { jeu, niv: 'n' + nv, monde: W[d] }; for (let k = 2; k <= nv; k++) r['monde' + k] = W[(d + k - 1) % 6];
+    const code = J.assembler(r); assert(code.includes('def couleurs()') && /NV == 1/.test(code), `${jeu} ${nv} : un monde par niveau`);
+    for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${nv} ${W[d]} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 74000, `${jeu} ${nv} ${W[d]} par niveau : trop lourd (${v.ops}, ${v.memoire})`); n++; }
+  }
+  assert.deepStrictEqual(J.mondeBulles('monde3', { niv: 'n3', monde: 'neige', monde2: 'foret' }).map(b => b.id), ['meme', 'foret', 'neige'], 'deja 2 mondes : pas de 3e');
+  assert(J.mondeBulles('monde3', { niv: 'n3', monde: 'neige' }).length === 7 && J.mondeBulles('monde2', { niv: 'n3', monde: 'neige', monde2: 'ville' }).length === 7, 'un 2e monde reste libre (le choix du niveau lui-meme ne compte pas)');
+  console.log('ok : un monde par niveau'); }
 console.log(`ok :${n} programmes joues, au plus ${pire.ops} dessins, ${pire.memoire} octets`);
 // les vues de course x les vehicules (auto, moto, surf), avec l'ecran de fin
 { let m = 0; for (const jeu of ['cote', 'derriere', 'dessus', 'iso']) for (const figure of ['auto', 'moto', 'surf']) for (const obst of ['avec', 'sans']) {

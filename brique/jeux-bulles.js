@@ -39,7 +39,7 @@
     { id: 'couleur', h: 330, icone: '🎨', nom: 'Sa couleur', q: 'De quelle couleur ?', bulles: [
       { id: 'rouge', bouton: '🔴 Rouge' }, { id: 'orange', bouton: '🟠 Orange' }, { id: 'jaune', bouton: '🟡 Jaune' }, { id: 'vert', bouton: '🟢 Vert' },
       { id: 'bleu', bouton: '🔵 Bleu' }, { id: 'violet', bouton: '🟣 Violet' }, { id: 'rose', bouton: '🩷 Rose' }, { id: 'blanc', bouton: '⚪ Blanc' }] },
-    { id: 'monde', h: 150, icone: '🌍', nom: 'Le monde', q: 'Où es-tu ?', bulles: [
+    { id: 'monde', libre: true, h: 150, icone: '🌍', nom: 'Le monde', q: 'Où es-tu ?', bulles: [
       { id: 'foret', bouton: '🌳 Je joue une forêt' }, { id: 'ville', bouton: '🏙 La ville la nuit' }, { id: 'espace', bouton: '🌌 L’espace' },
       { id: 'eau', bouton: '🌊 Sous l’eau' }, { id: 'desert', bouton: '🏜 Je joue un désert' }, { id: 'neige', bouton: '❄️ La neige' }] },
     // quiz seulement : l'enfant dit le sujet des questions et le genre de réponses, l'IA écrit 5 questions (api/quiz) ; la bulle prise porte les questions dans .q
@@ -62,16 +62,19 @@
   const DEFAUT = { genre: 'invader', jeu: 'attrape', obst: 'avec', perso: 'chat', couleur: 'orange', monde: 'foret', bon: 'monde', mal: 'monde', action: 'saut', figure: 'auto', fin: 'perdu', niv: 'un', plan: 'non', piege: 'non' };
   const CARTELS = { perdu: ['PERDU !'], oups: ['OUPS !', [255, 120, 100]], over: ['GAME OVER', [255, 70, 70]], encore: ['ENCORE !', [255, 225, 90]], rate: ['RATE !', [255, 150, 50]], erreur: ['ERREUR', [110, 230, 130]] };   // texte (sans accent : la console n'en dessine pas) et couleur ; 9 lettres au plus, le cartel fait 200 px
   const JEUX = ETAPES.find(e => e.id === 'jeu').bulles, GENRE_DE = Object.fromEntries(JEUX.map(b => [b.id, b.genre])), JEUX_DE = {}; JEUX.forEach(b => (JEUX_DE[b.genre] = JEUX_DE[b.genre] || []).push(b.id));
-  const NIVEAUX = { un: 1, trois: 3, cinq: 5 }, NIV_MAX = 6;   // 6 niveaux au plus (PIEGES_PLUS : 2 monstres de plus par niveau)
+  const NIVEAUX = { un: 1, trois: 3, cinq: 5 }, NIV_MAX = 6, MONDES_MAX = 2;   // 6 niveaux au plus (PIEGES_PLUS : 2 monstres de plus par niveau)
+  // un monde par niveau (plateforme à plusieurs niveaux) : monde2 .. monde6, mêmes bulles que « monde » + « comme le niveau 1 » ; libre : le champ « Ce que tu aimes » choisit le monde le plus proche
+  for (let k = 2; k <= NIV_MAX; k++) { ETAPES.push({ id: 'monde' + k, v2: true, libre: true, h: 130 + k * 22, icone: ['2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣'][k - 2], nom: 'Monde du niveau ' + k, q: 'Niveau ' + k + ' : où es-tu ?', bulles: [{ id: 'meme', bouton: '↩️ Comme le niveau 1' }, ...ETAPES.find(e => e.id === 'monde').bulles] }); DEFAUT['monde' + k] = 'meme'; }
   const nbNiv = id => NIVEAUX[id] || +String(id || '').slice(1) || 1;   // 'n4' = 4 niveaux ; les anciens 'un', 'trois', 'cinq' marchent encore
   const MOTS = {'genre/soigne': 'Grandir', 'jeu/plat-but': 'Drapeau', 'jeu/plat-attrape': 'Étoiles', 'jeu/plat-evite': 'Monstres', 'jeu/plat-course': 'Rival', 'jeu/cote': 'Obstacles', 'jeu/derriere': 'Voies', 'jeu/dessus': 'Piste', 'jeu/iso': '3D', 'jeu/attrape': 'Attraper', 'jeu/esquive': 'Éviter', 'jeu/pluie': 'Tout attraper', 'jeu/tir-haut': 'Tir en haut', 'jeu/tir-perso': 'Tir mobile', 'jeu/tir-autour': 'Tir autour', 'jeu/quiz': 'Questions', 'jeu/soigne': 'Soigner', 'figure/moto': 'Moto', 'figure/surf': 'Surf', 'perso/chat': 'Chat', 'perso/robot': 'Robot', 'perso/dragon': 'Dragon', 'perso/fusee': 'Fusée', 'perso/fantome': 'Fantôme', 'perso/magicien': 'Magicien', 'perso/grenouille': 'Grenouille', 'perso/hibou': 'Hibou', 'perso/oiseau': 'Oiseau', 'perso/blob': 'Bestiole', 'monde/foret': 'Forêt', 'monde/ville': 'Ville', 'monde/desert': 'Désert', 'plan/non': 'Mêmes niveaux', 'plan/oui': 'Niveaux changeants', 'piege/non': 'Pièges égaux', 'piege/oui': 'Pièges en plus'};   // le mot clef d'une réponse longue : le récapitulatif ne garde que lui (la réponse entière se relit en touchant la pastille)
+  for (let k = 2; k <= NIV_MAX; k++) { MOTS['monde' + k + '/meme'] = 'Même monde'; for (const w of ['foret', 'ville', 'espace', 'eau', 'desert', 'neige']) MOTS['monde' + k + '/' + w] = { foret: 'Forêt', ville: 'Ville', espace: 'Espace', eau: 'Eau', desert: 'Désert', neige: 'Neige' }[w]; }
   const mot = (axe, b) => { const m = MOTS[axe + '/' + b.id]; return m ? b.bouton.replace(/^(\S+\s).*$/, '$1') + m : b.bouton; };
   const nivBulles = id => { const n = nbNiv(id), bs = [{ id: 'n' + n, bouton: '✋ Rester à ' + n + (n > 1 ? ' niveaux' : ' niveau') }]; if (n < NIV_MAX) bs.unshift({ id: 'n' + (n + 1), bouton: '➕ Ajouter un niveau (ça fera ' + (n + 1) + ')' }); return bs; };
 // L'IA propose d'autres idées pour perso, bon et mal : chacune devient une image (icône de la page, numéro dans r.imgs) et son choix vaut 'img'. Sans image trouvée, retour au dessin du monde.
 const COURSES = { cote: 1, derriere: 1, dessus: 1, iso: 1 }, NOUVEAUX = { 'plat-but': 1, 'plat-attrape': 1, 'plat-evite': 1, 'plat-course': 1, ...COURSES };   // les nouveaux jeux : le gros bouton a son rôle fixe (sauter, turbo), les obstacles ne comptent que pour les courses
 const FIXES = { 'tir-perso': 1, 'tir-autour': 1 };   // jeux de tir au vaisseau fixe : seuls le genre, le jeu et le monde se choisissent (le monde donne le fond, les particules et les ennemis)
 const SOLO = { quiz: 1, soigne: 1 };   // ces deux jeux n'ont ni obstacles, ni objets, ni gros bouton à choisir
-const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (FIXES[r.jeu] && id !== 'genre' && id !== 'jeu' && id !== 'monde') return true; if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && (!!NOUVEAUX[r.jeu] || r.jeu === 'tir-haut')); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
+const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (FIXES[r.jeu] && id !== 'genre' && id !== 'jeu' && id !== 'monde') return true; if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (/^monde[2-6]$/.test(id)) return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) >= +id.slice(5)); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && (!!NOUVEAUX[r.jeu] || r.jeu === 'tir-haut')); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
 
   const FIG = {"auto":["rect(x - 3, y + 16, 30, 9, C2) rect(x - 3, y + 16, 30, 3, C3) disque(x + 3, y + 25, 4, NO) disque(x + 21, y + 25, 4, NO)","rect(x - 2, y + 16, 28, 10, C2) rect(x - 2, y + 16, 28, 3, C3) rect(x, y + 25, 6, 4, NO) rect(x + 18, y + 25, 6, 4, NO)"],"moto":["disque(x + 2, y + 24, 5, NO) disque(x + 22, y + 24, 5, NO) rect(x + 2, y + 17, 20, 4, C2) rect(x + 18, y + 12, 3, 6, NO)","rect(x + 9, y + 18, 6, 10, NO) rect(x + 4, y + 17, 16, 3, C2)"],"surf":["rect(x - 3, y + 21, 30, 3, C2) tri(x + 27, y + 21, x + 27, y + 24, x + 32, y + 22, C2) rect(x - 4, y + 25, 32, 2, A3)","rect(x + 5, y + 20, 14, 5, C2) rect(x + 3, y + 25, 18, 2, A3)"]};   // le véhicule sous le personnage dans les courses : [vue de côté, vue de derrière / dessus]
   const COULEURS = { rouge: [225, 60, 55], orange: [240, 140, 40], jaune: [245, 205, 50], vert: [80, 190, 90], bleu: [70, 130, 230], violet: [150, 90, 210], rose: [240, 120, 175], blanc: [240, 240, 245] };
@@ -584,33 +587,39 @@ end
 
   function base(r, v) {   // ce que les nouveaux systèmes partagent : couleurs, décor du monde, personnage, objets, cœurs, fin de partie
     const mo = MONDES[r.monde], col = COULEURS[r.couleur], im = r.imgs || {}; r = { ...r, figure: FIG[r.figure] ? r.figure : 'auto' };
+    const parNiv = !!r.mondes && new Set(r.mondes).size > 1;   // un monde par niveau : couleurs, décor, avant-plan et objets se choisissent d'après NV
+    const quand = f => { const ws = [...new Set(r.mondes)]; return ws.map((w, j) => (j === ws.length - 1 ? '  else' : `  ${j ? 'elif' : 'if'} ${r.mondes.map((x, k) => x === w ? 'NV == ' + (k + 1) : '').filter(Boolean).join(' || ')}`) + '\n' + f(MONDES[w], w)).join('\n') + '\n  end'; };
+    const dxyz = m => [liste(m.n, i => Math.round(14 + i * 292 / Math.max(1, m.n - 1) + (i * 37) % 17 - 8)), liste(m.n, i => (i * 53 + 17) % 180), liste(m.n, i => (i * 7) % 14)];
+    const palette = m => `  SOL = ${rgb(m.sol[0])} SOL2 = ${rgb(m.sol[1])}
+  A1 = ${rgb(m.a[0])} A2 = ${rgb(m.a[1])} A3 = ${rgb(m.a[2])} A4 = ${rgb(m.a[3])}
+  BAND = ${liste(10, i => rgb(mel(m.ciel[0], m.ciel[1], i / 9)))}`;
+    const decorDe = m => typeof m.decor === 'function' ? m.decor(r) : m.decor, objetDe = k => r[k] === 'img' || BE.forme(r[k]) || !parNiv ? objetCode(r, k, mo, im) : quand(m => m[k]);
     const dx = liste(mo.n, i => Math.round(14 + i * 292 / Math.max(1, mo.n - 1) + (i * 37) % 17 - 8)), dy = liste(mo.n, i => (i * 53 + 17) % 180), dz = liste(mo.n, i => (i * 7) % 14);
     return {
+      parNiv,
       tete: `var C1 = 0 var C2 = 0 var C3 = 0 var BL = 0 var NO = 0 var SOL = 0 var SOL2 = 0 var RO = 0 var A1 = 0 var A2 = 0 var A3 = 0 var A4 = 0 var BAND = []
 var DX = ${dx} var DY = ${dy} var DZ = ${dz}
 var PTS = 0 var VIES = 3 var FIN = 0 var HT = 0.0 var T = 0.0 var V = ${v === undefined ? -1 : v}`,
       defs: `def couleurs()
   C1 = rgb(${col.join(', ')}) C2 = rgb(${fonce(col).join(', ')}) C3 = rgb(${clair(col).join(', ')}) BL = rgb(255, 255, 255) NO = rgb(30, 30, 45) RO = rgb(70, 70, 80)
-  SOL = ${rgb(mo.sol[0])} SOL2 = ${rgb(mo.sol[1])}
-  A1 = ${rgb(mo.a[0])} A2 = ${rgb(mo.a[1])} A3 = ${rgb(mo.a[2])} A4 = ${rgb(mo.a[3])}
-  BAND = ${liste(10, i => rgb(mel(mo.ciel[0], mo.ciel[1], i / 9)))}
+${parNiv ? quand(m => palette(m) + '\n  DX = ' + dxyz(m)[0] + ' DY = ' + dxyz(m)[1] + ' DZ = ' + dxyz(m)[2]) : palette(mo)}
 end
 
 def decor()
   var i = 0 var j = 0 var x = 0 var y = 0 var h = 0
-${typeof mo.decor === 'function' ? mo.decor(r) : mo.decor}
+${parNiv ? quand(decorDe) : decorDe(mo)}
 end
 
 def avant()
   var i = 0 var j = 0 var x = 0 var y = 0 var h = 0
-${AVANT[r.monde]}
+${parNiv ? quand((m, w) => AVANT[w]) : AVANT[r.monde]}
 end
 
 def objet(x, y, k)
   if k == 0
-${objetCode(r, 'bon', mo, im)}
+${objetDe('bon')}
   else
-${objetCode(r, 'mal', mo, im)}
+${objetDe('mal')}
   end
 end
 
@@ -707,7 +716,7 @@ end
 
 ` : ''}def nouvelle()
   var i = 0
-${multi ? '  charge()\n' : ''}  PX = 20.0 PY = 184.0 PVY = 0.0 sol = true RX = 20.0 PTS = 0 VIES = 3 FIN = 0 HT = 0.0 T = 0.0
+${multi ? '  charge()\n' + (b.parNiv ? '  couleurs()\n' : '') : ''}  PX = 20.0 PY = 184.0 PVY = 0.0 sol = true RX = 20.0 PTS = 0 VIES = 3 FIN = 0 HT = 0.0 T = 0.0
   while i < ${st.length} SV[i] = true i += 1 end
   i = 0
   while i < ${c.hz.length} HX[i] = HB[i] HD[i] = 1.0 i += 1 end
@@ -1318,6 +1327,7 @@ end
     for (const e of ETAPES.filter(e => !e.quiz)) o[e.id] = (e.id === 'niv' ? nbNiv(r.niv) <= NIV_MAX && r.niv : e.bulles.some(b => b.id === r[e.id])) || (e.ia && r[e.id] === 'img' && imgs[e.id] > 0) ? r[e.id] : DEFAUT[e.id];
     if (!JEUX_DE[r.genre]) o.genre = GENRE_DE[o.jeu];                                    // pas de genre : celui du jeu (anciennes recettes)
     else if (GENRE_DE[o.jeu] !== o.genre) o.jeu = SOLO[o.genre] ? o.genre : JEUX_DE[o.genre][0];   // un jeu d'un autre genre : le premier du genre choisi
+    const nn = nbNiv(o.niv); if (/^plat-/.test(o.jeu) && nn > 1) { const m = liste0(nn, k => k > 0 && o['monde' + (k + 1)] !== 'meme' ? o['monde' + (k + 1)] : o.monde); const vus = []; m.forEach((w, k) => { if (!vus.includes(w) && vus.length >= MONDES_MAX) m[k] = o.monde; else if (!vus.includes(w)) vus.push(w); }); if (m.some(x => x !== o.monde)) o.mondes = m; }   // un monde par niveau (seulement s'il y en a un de différent) ; 2 mondes différents au plus (décor + avant-plan de chacun : ~3 Ko de mémoire de console chacun ; à 3 mondes on dépasse le plafond de 72000 du test) : un autre monde reprend celui du niveau 1
     if (o.jeu === 'tir-haut') o.action = 'tir';   // « tirer vers le haut » : le gros bouton tire toujours
     return o;
   }
@@ -1452,5 +1462,10 @@ M.platDefaut = r => {
   return { pl, st: [...pl.map(p => [p[0] + p[2] / 2, p[1] - 16]), [70, 192]], hz: hz.map(x => [x, 200]), long: 1000, drapeau: 940, bouge: !!P.vh };
 };
 Object.assign(M.EN, {"🐦 Je joue un oiseau": "🐦 I play a bird", "🟡 Je joue une bestiole": "🟡 I play a critter", "🍎 Pomme": "🍎 Apple", "🪙 Pièce": "🪙 Coin", "⭐ Étoile": "⭐ Star", "🫧 Perle": "🫧 Pearl", "🐟 Poisson": "🐟 Fish", "💎 Gemme": "💎 Gem", "❄️ Flocon": "❄️ Snowflake", "🍄 Champignon": "🍄 Mushroom", "🚗 Voiture": "🚗 Car", "☄️ Météorite": "☄️ Meteorite", "🪼 Méduse": "🪼 Jellyfish", "🌵 Cactus": "🌵 Cactus", "🧊 Glaçon pointu": "🧊 Sharp icicle"});   // formes du bestiaire (bon, mal) et personnages en plus
+for (let k = 2; k <= NIV_MAX; k++) Object.assign(M.EN, { ['Monde du niveau ' + k]: 'World of level ' + k, ['Niveau ' + k + ' : où es-tu ?']: 'Level ' + k + ': where are you?' }); M.EN['↩️ Comme le niveau 1'] = '↩️ Like level 1';
+M.mondeBulles = (id, r) => {   // les bulles de « monde du niveau k » : si le jeu a déjà 2 mondes différents (niveau 1 + un autre niveau), seuls ces 2 restent offerts
+  const nn = nbNiv(r.niv), pris = new Set([r.monde || DEFAUT.monde]); for (let k = 2; k <= nn; k++) { const w = r['monde' + k]; if (k !== +id.slice(5) && w && w !== 'meme') pris.add(w); }
+  const tous = ETAPES.find(e => e.id === id).bulles; return pris.size >= MONDES_MAX ? tous.filter(b => b.id === 'meme' || pris.has(b.id)) : tous;
+};
 M.ARBRES = AR.ARBRES; M.ETAPES = ETAPES; M.genreDe = jeu => ETAPES[0].bulles.find(b => b.id === GENRE_DE[jeu]); M.saute = saute; M.nivBulles = nivBulles; M.mot = mot; M.nbNiv = nbNiv; M.DEFAUT = DEFAUT; M.recetteComplete = recetteComplete; M.assembler = assembler;
 })(typeof module === 'object' ? module.exports : (window.JeuxBulles = {}));

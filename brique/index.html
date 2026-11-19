@@ -310,14 +310,14 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #scBulles .bZone .bulle{border:0;background:hsl(var(--h) 70% 50% / .2);box-shadow:inset 0 0 0 3px var(--c),0 3px 8px #0003;padding:7px 16px;font-size:17px}#scBulles .bZone .bulle:hover{background:hsl(var(--h) 70% 50% / .4)}
 #scBulles .bZone .bulle.prise{background:var(--c);color:#fff}#scBulles .bZone .bulle.autre{box-shadow:inset 0 0 0 2px var(--line);font-size:15px;padding:6px 14px}
 /* une étape répondue : la question et la réponse sont fondues (filtre « goutte » sur le calque du fond), la réponse sort de la question comme une excroissance */
-#scBulles .rangPaires{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px 8px;margin:2px 0}#scBulles .rangPaires .bPaire{flex:0 1 auto;min-width:0}#scBulles .pf,#scBulles .pt{min-width:0}#scBulles .pr{min-width:0;white-space:normal;overflow-wrap:anywhere;border-radius:16px}   /* le récapitulatif passe à la ligne : chaque réponse se lit en entier, jamais coupée par « … » */
+#scBulles .rangPaires{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px 8px;margin:2px 0}#scBulles .rangPaires .bPaire{flex:0 1 auto;min-width:0}#scBulles .pf,#scBulles .pt{min-width:0}#scBulles .pr{min-width:0;overflow:hidden;text-overflow:ellipsis}   /* le récapitulatif passe à la ligne entre les pastilles ; une réponse ne se replie jamais sur elle-même */
 #scBulles .bPaire{--c:hsl(var(--h) 60% 44%);position:relative;display:block;margin:0;padding:0;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:inherit;max-width:100%}
 #scBulles .pf,#scBulles .pt{display:flex;align-items:flex-end;padding:0 0 12px}
 #scBulles .pt{position:absolute;inset:0}#scBulles .pf{filter:url(#gooey)}
-#scBulles .pq{border-radius:999px;white-space:nowrap}
+#scBulles .pq,#scBulles .pr{border-radius:999px;white-space:nowrap}
 #scBulles .pq{padding:6px 14px;font-size:15px;flex:none}#scBulles .pr{padding:4px 14px;font-size:15px;margin:0 0 -12px -14px;position:relative}
 #scBulles .pf .pq{background:var(--c);color:transparent}#scBulles .pf .pr{background:hsl(var(--h) 75% 62%);color:transparent}
-#scBulles .pt .pq{color:#fff}#scBulles .pt .pr{color:#111;font-weight:bold}
+#scBulles .pt .pq{color:#fff}#scBulles .pt .pr{color:#111}#scBulles .pr{font-weight:bold}   /* gras sur les 2 calques : sinon le fond est calé sur un texte plus étroit que celui du dessus */
 #scBulles .bPaire:hover .pf{transform:scale(1.02)}#scBulles .bPaire:focus-visible{outline:3px solid var(--c);outline-offset:4px;border-radius:30px}
 #scBulles .aVenir{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:14px;color:var(--mute)}#scBulles .aVenir .pastille{width:auto;height:auto;border:2px dashed hsl(var(--h) 50% 50%);background:none;color:var(--mute);border-radius:999px;padding:3px 12px;font:inherit;font-size:14px;cursor:pointer}#scBulles .aVenir .pastille:hover{background:hsl(var(--h) 70% 50% / .2)}#scBulles .fait{font-size:18px;margin:8px 0 2px}
 #scBulles .libre{display:flex;gap:8px;align-items:center;margin-top:6px}#scBulles .libre input{flex:1;min-width:0;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:4px 10px;font:inherit;font-size:15px}#scBulles .libre input:focus{outline:none;border-color:var(--c)}

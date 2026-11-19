@@ -70,3 +70,13 @@ assert(J.assembler({ jeu: 'plat-but', niv: 'n6', edit: { pl: J.platDefaut({ jeu:
 assert(J.platDefaut({ jeu: 'attrape' }) === null, 'platDefaut : seulement les plateformes');
 assert(J.assembler({ jeu: 'attrape', edit: { pl: [], st: [], hz: [] } }) === J.assembler({ jeu: 'attrape' }), 'edit sans effet hors plateforme');
 console.log('ok : plateforme placee a la main');
+// les tirs fixes : chaque monde habille le fond et les ennemis ; l'etape « monde » n'est plus sautee
+for (const jeu of ['tir-perso', 'tir-autour']) {
+  assert(J.saute('monde', { genre: 'tire', jeu }) === false && J.saute('perso', { genre: 'tire', jeu }) && J.saute('action', { genre: 'tire', jeu }), `${jeu} : seul le monde se choisit`);
+  for (const monde of choix[3]) {
+    const code = J.assembler({ jeu, monde }); assert(code.includes('def objet(x, y)') && code.includes('BAND = ['), `${jeu} ${monde} : monde applique`);
+    for (const c of [code, code.replace(/fin = false/g, 'fin = true')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok && v.ops <= 600 && v.memoire <= 72000, `${jeu} ${monde} : ${v.erreur || v.ops + ' dessins ' + v.memoire + ' octets'}`); }
+  }
+  assert(J.assembler({ jeu, monde: 'neige' }) !== J.assembler({ jeu, monde: 'espace' }), `${jeu} : le monde change le code`);
+}
+console.log('ok : tirs x mondes');

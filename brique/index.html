@@ -310,11 +310,11 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #scBulles .bZone .bulle{border:0;background:hsl(var(--h) 70% 50% / .2);box-shadow:inset 0 0 0 3px var(--c),0 3px 8px #0003;padding:7px 16px;font-size:17px}#scBulles .bZone .bulle:hover{background:hsl(var(--h) 70% 50% / .4)}
 #scBulles .bZone .bulle.prise{background:var(--c);color:#fff}#scBulles .bZone .bulle.autre{box-shadow:inset 0 0 0 2px var(--line);font-size:15px;padding:6px 14px}
 /* une étape répondue : la question et la réponse sont fondues (filtre « goutte » sur le calque du fond), la réponse sort de la question comme une excroissance */
-#scBulles .rangPaires{display:flex;flex-wrap:nowrap;align-items:flex-end;gap:8px;overflow:hidden;margin:2px 0}#scBulles .rangPaires .bPaire{flex:0 1 auto;min-width:0}#scBulles .pf,#scBulles .pt{min-width:0}#scBulles .pr{overflow:hidden;text-overflow:ellipsis;min-width:0}   /* le récapitulatif tient sur UNE ligne, sans défiler */
+#scBulles .rangPaires{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px 8px;margin:2px 0}#scBulles .rangPaires .bPaire{flex:0 1 auto;min-width:0}#scBulles .pf,#scBulles .pt{min-width:0}#scBulles .pr{min-width:0;white-space:normal;overflow-wrap:anywhere;border-radius:16px}   /* le récapitulatif passe à la ligne : chaque réponse se lit en entier, jamais coupée par « … » */
 #scBulles .bPaire{--c:hsl(var(--h) 60% 44%);position:relative;display:block;margin:0;padding:0;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:inherit;max-width:100%}
 #scBulles .pf,#scBulles .pt{display:flex;align-items:flex-end;padding:0 0 12px}
 #scBulles .pt{position:absolute;inset:0}#scBulles .pf{filter:url(#gooey)}
-#scBulles .pq,#scBulles .pr{border-radius:999px;white-space:nowrap}
+#scBulles .pq{border-radius:999px;white-space:nowrap}
 #scBulles .pq{padding:6px 14px;font-size:15px;flex:none}#scBulles .pr{padding:4px 14px;font-size:15px;margin:0 0 -12px -14px;position:relative}
 #scBulles .pf .pq{background:var(--c);color:transparent}#scBulles .pf .pr{background:hsl(var(--h) 75% 62%);color:transparent}
 #scBulles .pt .pq{color:#fff}#scBulles .pt .pr{color:#111;font-weight:bold}
@@ -4300,7 +4300,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     if (!cherche) vu = cle;                              // les bulles de l'IA arrivent en fondu, l'une après l'autre (et seulement si la liste change)
     const bulle = (b, i) => `<button class="bulle${recette[courant]?.bouton === b.bouton ? ' prise' : ''}" style="--i:${i}" data-l="bulle" data-i="${i}">${esc(T(b.bouton))}</button>`;
     // les bulles arrivent au fil des réponses : seules les étapes déjà répondues (question + réponse FONDUES en une forme) et l'étape en cours (question + choix) sont là
-    const paire = x => { const c = `<span class="pq">${x.icone}</span><span class="pr">${esc(T(recette[x.id].bouton))}</span>`;   // 2 calques identiques : le fond passe au filtre « goutte », le texte reste net par-dessus
+    const paire = x => { const c = `<span class="pq">${x.icone}</span><span class="pr">${esc(document.documentElement.lang === 'en' ? T(recette[x.id].bouton) : JeuxBulles.mot(x.id, recette[x.id]))}</span>`;   // le mot clef seul (la réponse entière : toucher la pastille rouvre l'étape) ; 2 calques identiques : le fond passe au filtre « goutte », le texte reste net par-dessus
       return `<button class="bPaire" style="--h:${x.h}" data-l="axe" data-i="${x.id}"><span class="pf" aria-hidden="true">${c}</span><span class="pt">${c}</span></button>`; };
     const attendre = `<span class="attente"><span class="rond"></span>${ATTENTE.slice(2)}</span>`;   // le rond tourne ; slice(2) : sans le sablier du texte
     const ouvert = a => { const b0 = base(a), ex = extra(a), plus = a.ia || a.libre || a.bulles.some(b => b.plus);

@@ -3,7 +3,13 @@
 // Chaque scénario part du jeu vide (héros qui bouge, sauf le scénario « mouvement »), envoie des phrases à /api/ia,
 // puis vérifie la fiche obtenue. Ce que le banc ne peut PAS voir (le jeu qui tourne sur la console) : voir bench-fiche-console.md.
 // Rapport : bench/fiche-<date>.md (non versionné).
-const fs = require('fs'), path = require('path'), F = require('./fiche.js');
+const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process'), F = require('./fiche.js'), { assembler } = require('./fiche-berry.js');
+const VERIF = path.join(__dirname, 'verif', process.platform === 'win32' ? 'verif.exe' : 'verif'), durees = [];   // durees : secondes de chaque reponse de l'IA
+const berry = f => {   // la fiche obtenue, jouee par le moteur Berry (moteur-fiche.be) dans verif : ca tourne et ca tient en memoire de la console
+  if (!fs.existsSync(VERIF)) return true;
+  const { script } = assembler(f); if (!script) return false;
+  const v = JSON.parse(execFileSync(VERIF, [], { input: script })); return v.ok && v.ops <= 1200 && v.memoire * 0.6 / 1000 <= 66;
+};
 const BASE = process.env.BASE || 'http://127.0.0.1:8080', PASSAGES = +process.argv[2] || 2, FILTRE = process.argv[3] || '';
 
 const vide = () => F.nettoyer(structuredClone(F.DEPARTS.vide)).fiche;
@@ -38,8 +44,8 @@ const SCENARIOS = [
 ];
 
 async function ia(texte, fiche) {
-  const r = await fetch(BASE + '/api/ia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texte, fiche }), signal: AbortSignal.timeout(60000) });
-  return r.json();
+  const t0 = Date.now(), r = await fetch(BASE + '/api/ia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texte, fiche }), signal: AbortSignal.timeout(60000) });
+  const j = await r.json(); durees.push((Date.now() - t0) / 1000); return j;
 }
 (async () => {
   const lignes = [], total = { ok: 0, n: 0 };
@@ -51,7 +57,7 @@ async function ia(texte, fiche) {
         for (const t of sc.etapes) { j = await ia(t, f); if (j.erreur) { erreurs.push(j.erreur); break; } f = j.fiche; }
         if (!erreurs.length) {
           const lu = F.lire(f);   // contrôle commun : lisible par la console, assez petit pour tenir dans le firmware
-          const comm = [['fiche sans blocage', !lu.bloquants.length], ['taille ≤ 3200', JSON.stringify(F.ligne(structuredClone(f))).length + JSON.stringify(f.rows).length <= 3200]];
+          const comm = [['fiche sans blocage', !lu.bloquants.length], ['taille ≤ 3200', JSON.stringify(F.ligne(structuredClone(f))).length + JSON.stringify(f.rows).length <= 3200], ['moteur Berry : tourne dans verif', berry(f)]];
           res.push({ checks: [...comm, ...sc.verif(f, j)], vu: j.vu, refus: j.refus });
         } else res.push({ checks: [['IA répond', KO]], erreurs });
       } catch (e) { res.push({ checks: [['pas de plantage', KO]], erreurs: [e.message] }); }
@@ -69,6 +75,7 @@ async function ia(texte, fiche) {
   const d = new Date(), nom = `fiche-${d.toISOString().slice(0, 10)}-${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}.md`;
   fs.mkdirSync(path.join(__dirname, 'bench'), { recursive: true });
   fs.writeFileSync(path.join(__dirname, 'bench', nom), `# Banc d'essai « Ma fiche » — ${d.toLocaleString('fr-FR')}\n\n${PASSAGES} passage(s) par scénario, vraie IA, ${BASE}. **${total.ok}/${total.n} vérifications réussies.**\n\n${lignes.join('\n')}`);
-  console.log(`\n${total.ok}/${total.n} vérifications réussies → bench/${nom}`);
+  durees.sort((a, b) => a - b);
+  console.log(`\n${total.ok}/${total.n} vérifications réussies → bench/${nom}\nIA : ${durees.length} réponses, médiane ${durees[durees.length >> 1]} s, pire ${durees.at(-1)} s`);
   process.exit(total.ok === total.n ? 0 : 1);
 })();

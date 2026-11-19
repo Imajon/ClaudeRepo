@@ -1,0 +1,132 @@
+{
+ "modele": "plateforme",
+ "monde": {
+  "gravite": 87.5,
+  "bord": "vide",
+  "camera": "suit"
+ },
+ "heros": {
+  "boutons": {
+   "G": "aller_gauche",
+   "D": "aller_droite",
+   "P3": "sauter"
+  },
+  "vitesse": 12.5,
+  "elan": 0.2,
+  "saut": {
+   "hauteur": 4.5,
+   "en_l_air": 1
+  },
+  "mur": {
+   "glisse": 1,
+   "saut_mural": 1
+  },
+  "vies": 0
+ },
+ "briques": {
+  "#": {
+   "solide": 1
+  },
+  "I": {
+   "solide": 1,
+   "glisse": 0.9
+  },
+  "C": {
+   "solide": 1,
+   "disparait": 0.5
+  },
+  "R": {
+   "solide": 1,
+   "rebond": 7
+  },
+  "^": {
+   "mortel": 1
+  },
+  "*": {
+   "ramasse": 1
+  },
+  "G": {
+   "arrivee": 1
+  },
+  "K": {},
+  "P": {
+   "solide": 1
+  }
+ },
+ "objets": {
+  "Z": {
+   "forme": "scie",
+   "mouvement": "aller_retour",
+   "points": [
+    [
+     0,
+     0
+    ],
+    [
+     4,
+     0
+    ]
+   ],
+   "duree": 2,
+   "pause": 1,
+   "declencheur": "toujours",
+   "contact": "perd"
+  },
+  "F": {
+   "forme": "ennemi",
+   "mouvement": "patrouille",
+   "contact": "perd",
+   "dessus": "ecrase"
+  },
+  "M": {
+   "forme": "bloc",
+   "mouvement": "aller_retour",
+   "points": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     -4
+    ]
+   ],
+   "duree": 2,
+   "pause": 0.5,
+   "contact": "rien"
+  }
+ },
+ "regles": [
+  {
+   "quand": {
+    "touche": "K"
+   },
+   "alors": {
+    "ouvre": "P"
+   }
+  },
+  {
+   "quand": "ramasse_tout",
+   "alors": {
+    "message": "Bravo"
+   }
+  }
+ ],
+ "but": "arriver",
+ "rows": [
+  "....................",
+  "....................",
+  "....................",
+  "....................",
+  "........G...........",
+  "......#####.........",
+  "....................",
+  "...*......*.........",
+  "..##..Z...........F.",
+  "..........R.........",
+  "....................",
+  ".S...K.....P.....M..",
+  "####R####I###C##^###",
+  "####################"
+ ]
+}

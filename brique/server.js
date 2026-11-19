@@ -3,7 +3,7 @@
 // Comptes : seuls les ANIMATEURS donnent un mail (lien de connexion, sans mot de passe). Ils creent des groupes ;
 // les enfants rejoignent un groupe avec un pseudo + le code du groupe : aucune donnee perso cote enfant.
 const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto');
-const Fiche = require('./fiche.js');                   // la fiche de jeu : meme verification que la page
+const Fiche = require('./fiche.js'), FicheBerry = require('./fiche-berry.js');                   // la fiche de jeu : meme verification que la page
 // version anglaise : la page /en (index.html passe par en.js) envoie X-Lang: en a chaque appel ; les messages, le mail, Stripe et l'IA repondent alors en anglais
 const En = require('./en.js'), LANGUE = new (require('async_hooks').AsyncLocalStorage)();
 const anglais = () => LANGUE.getStore() === 'en', racine = () => anglais() ? '/en' : '/';
@@ -1062,6 +1062,10 @@ const serveur = http.createServer(async (req, res) => {
   if ((url === '/api/script' || url === '/api/quota') && !b.methode) b.methode = process.env.METHODE_SCRIPT || (typeof b.script === 'string' && b.script.trim() ? 'large' : 'mistral');   // creer = methode complete (banc nov. 2026 : 10/10), modifier = Large 3 en remplacements (gros jeu 6/10 contre 1/10, moitie des tokens) ; ?methode=sonnet (devstral, claude...) pour comparer
   const modeleScript = b => b.methode === 'sonnet' ? process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5' : b.methode === 'devstral' ? process.env.MISTRAL_MODEL_DEVSTRAL || 'devstral-medium-latest'
     : b.methode === 'medium' ? process.env.MISTRAL_MODEL_MEDIUM || 'mistral-medium-latest' : b.auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-2512';   // le modele qui ecrit le programme (affiche dans Creer)
+  if (url === '/api/fiche-berry') {                   // la fiche (donnees) -> un jeu Berry (donnees + moteur-fiche.be) pour une console Berry ; sans IA : la fiche est verifiee ici
+    if (!b.fiche || typeof b.fiche !== 'object') return repondre(res, 400, { erreur: 'fiche vide' });
+    const r = FicheBerry.assembler(b.fiche); return repondre(res, r.script ? 200 : 400, r);
+  }
   if (url === '/api/script') {                        // mode script : la demande, le programme actuel, ce que la console a dit -> nouveau programme
     if (!process.env[b.methode === 'sonnet' ? 'ANTHROPIC_API_KEY' : 'MISTRAL_API_KEY']) return repondre(res, 503, { erreur: 'IA non configuree' });
     if (typeof b.texte !== 'string' || !b.texte.trim()) return repondre(res, 400, { erreur: 'demande vide' });

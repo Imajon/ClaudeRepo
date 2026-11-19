@@ -1,0 +1,25 @@
+{
+ "modele": "casse",
+ "rows": [
+  "XXXXXXXXXXXX",
+  "BBBBBBBBBBBB",
+  "CCVCCLCCMCCT",
+  "CCCCCCCCCCCC",
+  "AAAAAAAAAAAA",
+  "............"
+ ],
+ "heros": { "boutons": { "G": "aller_gauche", "D": "aller_droite", "P3": "lancer" }, "vitesse": 12, "largeur": 3, "vies": 3 },
+ "balle": { "vitesse": 10, "nombre": 1, "acceleration": 0.5 },
+ "briques": {
+  "X": { "indestructible": 1 },
+  "B": { "coups": 2 },
+  "C": {},
+  "A": {},
+  "V": { "bonus": "vie" },
+  "L": { "bonus": "large" },
+  "M": { "bonus": "multi" },
+  "T": { "bonus": "lent" }
+ },
+ "regles": [ { "quand": { "points": 20 }, "alors": { "message": "Bien joue !" } } ],
+ "but": "casser_tout"
+}

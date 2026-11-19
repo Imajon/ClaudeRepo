@@ -58,27 +58,9 @@ assert(s.some(l => l.gagne === true), 'ramasser la seule etoile doit faire gagne
 s = joue('dessus', base({ monde: { gravite: 0, bord: 'boucle', camera: 'fixe' }, heros: { boutons: { G: 'aller_gauche', D: 'aller_droite', P3: 'aller_haut' }, vies: 3 } }));
 assert(bouge(s), 'vue de dessus : les boutons deplacent');
 
-// ---------- mesures precises : boutons scriptes (verif joue sa propre partie), valeurs lues dans le jeu a des instants donnes ----------
-// scen = corps Berry de _sc(k, t) (k = 0 G, 1 D, 2 P3 ; t = secondes depuis le debut) ; mesure = expression Berry notee aux instants `quand` ; rend les nombres
-function essai(nom, fiche, { scen = 'return false', mesure, quand, duree }) {
-  const { script } = assembler(fiche);
-  const fin = `
-var _m = maj
-var _smp = ${JSON.stringify(quand)} var _i = 0 var _log = ""
-def _sc(k, t) ${scen} end
-bouton = def (k) return _sc(k, temps() - 2.0) end
-appui = def (k) var t = temps() - 2.0 return _sc(k, t) && !_sc(k, t - 0.0167) end
-maj = def (dt)
-  _m(dt) var t = temps() - 2.0
-  if _i < size(_smp) && t >= _smp[_i] _log += str(${mesure}) + " " _i += 1 end
-  if t >= ${duree ?? quand[quand.length - 1] + 0.1} raise "mesure", _log end
-end
-`;
-  const v = JSON.parse(execFileSync(VERIF, [], { input: script + fin })), m = /mesure: (.*)/.exec(v.erreur || '');
-  assert(m, `${nom} : pas de mesure (${v.erreur})`);
-  return m[1].trim().split(' ').map(Number);
-}
-const pres = (nom, got, att, tol) => { att.forEach((a, i) => assert(Math.abs(got[i] - a) <= tol, `${nom} : instant ${i} = ${got[i]}, attendu ${a} +/- ${tol} (tout : ${got})`)); console.log(`  ${nom} : ${got.join(' ')}`); };
+// ---------- mesures precises (essai-verif.js) : boutons scriptes, valeurs lues dans le jeu a des instants donnes ----------
+const { essai: essaiScript, pres } = require('./essai-verif.js');
+const essai = (nom, fiche, o) => essaiScript(nom, assembler(fiche).script, o);
 const sauteA = (t0, t1) => `return k == 2 && t > ${t0} && t < ${t1}`;
 
 // A. saut : 4,5 cases = 72 px depuis le sol (py 178) ; 9 cases = 144 px ; lacher tot = petit saut ; en_l_air 1 = un 2e saut en l'air monte plus haut

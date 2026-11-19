@@ -278,11 +278,6 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .big:disabled{opacity:.5;cursor:wait}
 .sec{border:2px solid var(--line);background:none;color:var(--txt);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer}
 .sec:hover{border-color:var(--acc)}
-.fiche-lue{margin:6px 0 0;padding:8px 12px 8px 26px;border-radius:12px;background:var(--panel2);font:13px/1.55 var(--mono)}
-.fiche-lue:empty{display:none}
-.fiche-manque{border-left:3px solid var(--ko)}
-.fiche-manque .ko{color:var(--ko);font-weight:700}
-.fiche-expert textarea{width:100%;min-height:220px;font:12px/1.4 var(--mono);margin:6px 0}
 .compris{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--panel2);font:13px/1.5 var(--mono);min-height:40px;border-left:3px solid var(--acc)}   /* réponse de l'IA, façon console */
 .compris::before{content:"IA › ";font-weight:800;color:var(--acc)}
 .compris b{color:var(--ok)}
@@ -1780,7 +1775,6 @@ body{overflow-x:clip}                                           /* la bande 100v
 </dialog>
 
 <main id="atelier" class="hide">
-  <button id="ficheRetour" class="sec" style="margin:8px 0 0 12px">← Revenir à mon jeu (bulles, guidé, libre)</button>
   <div class="sh-hero page-hero">
     <p class="sh-sur">Créer · ton jeu en une phrase</p>
     <h2 class="sh-titre">Tu décris ton jeu.<br>L'IA le construit.</h2>
@@ -1792,18 +1786,6 @@ body{overflow-x:clip}                                           /* la bande 100v
     <h2 id="titreDemande">Je décris mon jeu <span class="ref" style="margin-left:6px">l'IA le construit</span></h2>
 
     <h3>Quel jeu ?</h3><div class="chips" id="genreChoix"></div>
-    <div data-jeu="fiche">
-      <h3>Je pars de…</h3><div class="chips" data-k="depart"></div>
-      <h3>📋 Ma fiche, telle que la console la lit</h3>
-      <ul id="ficheLue" class="fiche-lue"></ul>
-      <ul id="ficheManque" class="fiche-lue fiche-manque"></ul>
-      <p><button id="ficheMonIA" class="sec" title="Copie un texte à coller dans ton IA (ChatGPT, Claude, Mistral…) : le format de la fiche, ta fiche, et ce que tu veux changer">🤝 Ouvrir avec mon IA</button> <span id="ficheMonIAMsg" class="aide"></span></p>
-      <textarea id="fichePrompt" class="hide" readonly rows="8" style="width:100%"></textarea>
-      <details class="fiche-expert"><summary>🧑‍💻 Mode expert : écrire la fiche moi-même</summary>
-        <textarea id="ficheJson" spellcheck="false"></textarea>
-        <button id="ficheAppliquer" class="sec">✔ Appliquer ma fiche</button> <span id="ficheMsg" class="aide"></span>
-      </details>
-    </div>
     <div id="guide">
       <div data-jeu="plateforme">
         <h3>Le monde</h3><div class="chips" data-k="theme"></div>
@@ -1841,17 +1823,6 @@ body{overflow-x:clip}                                           /* la bande 100v
         <div>taille : 6 à 12 cases</div><div>relief : plat, collines, montagnes</div><div>des trous</div><div>pics, pics qui sortent, pics cachés</div>
         <div>étoiles</div><div>un drapeau au fond</div><div>difficulté</div><div>vies, chrono</div>
       </div>
-      <div data-jeu="fiche" style="margin-bottom:10px">
-        <h3>Ce que la fiche sait faire</h3>
-        <div class="cat"><div><b>boutons</b> G, D, P3 : aller à gauche / droite / en haut / en bas, sauter, tirer, tourner, avancer d'une case</div>
-          <div><b>héros</b> : vitesse, élan, hauteur du saut, sauts en l'air, glisser et sauter aux murs, vies</div>
-          <div><b>monde</b> : gravité (0 = rien ne tombe), bord (mur, vide, boucle), caméra (suit, fixe)</div>
-          <div><b>briques</b> : solide, mortel, glisse, rebond, disparaît, se ramasse, arrivée</div>
-          <div><b>objets</b> : pic, scie, bloc, ennemi, projectile ; fixe, aller-retour, boucle, patrouille, tombe, suit ; démarre quand on approche ; caché</div>
-          <div><b>contact</b> : perdre, rebondir, ramasser, une vie en moins, rien (un bloc qui bouge = plateforme) ; écrasé par-dessus</div>
-          <div><b>règles</b> : quand on touche une lettre / tout est ramassé / tout est écrasé / au bout de … s / à … points, alors gagner, perdre, ouvrir, fermer, une vie en plus, un message, plus vite</div>
-          <div><b>but</b> : arriver, tout ramasser, tout écraser, survivre … s, ou les règles</div></div>
-      </div>
       <div data-jeu="briques invaders" class="cat" style="margin-bottom:10px">
         <div>dessin : plein, pyramide, damier, cadre, au hasard</div><div>vitesse (lent / vite)</div><div>difficulté</div><div>vies</div>
         <div data-jeu="briques">briques d'acier</div><div data-jeu="briques">sans bonus</div><div data-jeu="invaders">nombre de vagues</div>
@@ -1876,7 +1847,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <button id="go" class="big">✨ Créer mon jeu</button>
     <div id="compris" class="compris">Choisis, écris une phrase, puis appuie sur « Créer ».</div>
 
-    <div data-jeu="plateforme invaders fiche">
+    <div data-jeu="plateforme invaders">
     <h3>🎨 Mes icônes (pas obligé) : choisis quoi remplacer</h3>
     <div id="icSlots" class="chips"></div>
     <div class="icRow"><input id="icRech" class="pseudo" placeholder="Cherche en anglais : cat, dragon, pizza…"><button id="icGo" class="sec">🔍</button></div>
@@ -1885,9 +1856,9 @@ body{overflow-x:clip}                                           /* la bande 100v
       Tu peux aussi la glisser ici ou <label>choisir un fichier<input id="icFile" type="file" accept="image/*" hidden></label>.</div>
     </div>
 
-    <h3 data-jeu="plateforme briques invaders iso fiche">🌈 Mes couleurs (pas obligé)</h3>
-    <div class="palette" data-jeu="plateforme briques invaders iso fiche"><span id="palCielNom">Ciel</span><div id="palCiel" class="chips"></div></div>
-    <div class="palette" data-jeu="plateforme iso fiche"><span>Plateformes</span><div id="palSol" class="chips"></div></div>
+    <h3 data-jeu="plateforme briques invaders iso">🌈 Mes couleurs (pas obligé)</h3>
+    <div class="palette" data-jeu="plateforme briques invaders iso"><span id="palCielNom">Ciel</span><div id="palCiel" class="chips"></div></div>
+    <div class="palette" data-jeu="plateforme iso"><span>Plateformes</span><div id="palSol" class="chips"></div></div>
 
     <h3>⚙️ Mes règles (pas obligé)</h3>
     <div class="palette" data-jeu="plateforme iso"><span>But</span><div id="rgObjectif" class="chips"><button class="chip on" data-v="arriver">🏁 Arriver</button><button class="chip" data-v="tout">⭐ Tout ramasser d'abord</button></div></div>
@@ -1939,9 +1910,9 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.23">
+<main id="vueScript" class="hide" data-version="1.24">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
-    <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
+    <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><select id="scDepart" title="Le jeu de départ : une fiche toute prête que tu changes avec l'IA"><option value="plateforme">🧗 Plateforme</option><option value="casse">🧱 Casse-briques</option><option value="">⬜ Vide</option></select><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Libre : tu décris tout avec tes mots, et « 💡 Aide-moi » te propose des idées."><button id="mPetits">🫧 Bulles</button><button id="mLibre">✍️ Libre</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
@@ -2161,10 +2132,9 @@ const CHOIX = {
   taille: [['6','Petit'],['8','Moyen'],['10','Grand'],['12','Géant']],   // isométrique
   relief: [['plat','Plat'],['collines','Collines'],['montagnes','Montagnes']],
   vide: [['0','Aucun'],['1','Quelques-uns'],['3','Beaucoup']],
-  depart: [['vide','⬜ Un jeu vide'],['plateforme','🧗 Copie de la plateforme'],['cote','🏃 Copie du jeu de côté'],['iso','🧊 Copie de l\'isométrique']],   // fiche
 };
 // les jeux que la console sait faire tourner avec des réglages (firmware : bqMiniParse / briqueParse)
-const GENRES = [['plateforme','🧗 Plateforme (on grimpe)'],['cote','🏃 De côté (on avance)'],['briques','🧱 Casse-briques'],['invaders','👾 Invaders'],['iso','🧊 Isométrique (en 3D)'],['fiche','📋 Ma fiche (j\'invente les règles)']];
+const GENRES = [['plateforme','🧗 Plateforme (on grimpe)'],['cote','🏃 De côté (on avance)'],['briques','🧱 Casse-briques'],['invaders','👾 Invaders'],['iso','🧊 Isométrique (en 3D)']];
 const THEMES = {
   foret:  { ciel:['#9be7ff','#e8fff0'], sol:'#3f8f3a', bord:'#2a5e27', glace:'#b8f0ff' },
   lave:   { ciel:['#3a0b0b','#a8361a'], sol:'#4a3b3b', bord:'#ff6a00', glace:'#ffd0a0' },
@@ -2174,18 +2144,18 @@ const THEMES = {
 };
 const HEROS = { cube:'#e8322b', ninja:'#222233', robot:'#9aa4b0', chat:'#ff9933' };
 
-let mode = 'guide', genre = 'plateforme', choix = { theme:'foret', hero:'cube', danger:'pic', forme:'mixte', motif:'pleine', acier:'non', vagues:'3', ecrans:'2', ecransL:'2', ecransH:'1', plafond:'oui', trous:'1', plateformes:'non', taille:'8', relief:'collines', vide:'1', depart:'vide' };
+let mode = 'guide', genre = 'plateforme', choix = { theme:'foret', hero:'cube', danger:'pic', forme:'mixte', motif:'pleine', acier:'non', vagues:'3', ecrans:'2', ecransL:'2', ecransH:'1', plafond:'oui', trous:'1', plateformes:'non', taille:'8', relief:'collines', vide:'1' };
 for (const [v, lab] of GENRES) {
   const b = document.createElement('button'); b.className = 'chip'; b.dataset.v = v; b.textContent = lab;
-  b.onclick = () => { if (genre !== v) { params = null; setGenre(v); if (v === 'fiche') { if (!fiche) ficheDepart(choix.depart); ficheAfficher(); } } };
+  b.onclick = () => { if (genre !== v) { params = null; setGenre(v); } };
   genreChoix.appendChild(b);
 }
 function setGenre(g) {                                  // n'affiche que ce qui sert au jeu choisi
   genre = g;
   genreChoix.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.v === g));
   document.querySelectorAll('[data-jeu]').forEach(e => e.classList.toggle('hide', !e.dataset.jeu.split(' ').includes(g)));
-  palCielNom.textContent = g === 'plateforme' || g === 'fiche' ? 'Ciel' : 'Fond';
-  if (g === 'fiche') demande.placeholder = 'Ex : « D fait sauter », « une scie qui va et vient », « quand je touche la clé la porte s\'ouvre »'; else if (typeof mLibre !== 'undefined') setMode(mode);
+  palCielNom.textContent = g === 'plateforme' ? 'Ciel' : 'Fond';
+  if (typeof mLibre !== 'undefined') setMode(mode);
   motifTitre.textContent = g === 'briques' ? 'Le dessin des briques' : 'La formation des envahisseurs';
   majIcones();
 }
@@ -2194,7 +2164,7 @@ for (const k in CHOIX) {
   for (const [v, lab] of CHOIX[k]) {
     const b = document.createElement('button');
     b.className = 'chip' + (choix[k] === v ? ' on' : ''); b.textContent = lab;
-    b.onclick = () => { choix[k] = v; box.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); if (k === 'depart') changerDepart(v); };
+    b.onclick = () => { choix[k] = v; box.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); };
     box.appendChild(b);
   }
 }
@@ -2207,7 +2177,7 @@ function setMode(m) {
                                      : 'Décris ton niveau : thème, héros, pièges, hauteur, difficulté…';
 }
 const garderMode = m => { setMode(m); try { localStorage.setItem('brique-age', m); } catch {} };   // le choix de l'enfant reste d'une visite à l'autre
-mPetits.onclick = () => garderMode('petits'); mLibre.onclick = () => garderMode('libre'); ficheRetour.onclick = () => ouvrirFiche(false);
+mPetits.onclick = () => garderMode('petits'); mLibre.onclick = () => garderMode('libre');
 setMode((a => a === 'guide' ? 'libre' : ['petits', 'libre'].includes(a) ? a : 'petits')((() => { try { return localStorage.getItem('brique-age'); } catch {} })()));
 
 // ---------- "IA" simulée : texte -> paramètres ----------
@@ -2670,7 +2640,6 @@ let historique = [], params = null;
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c]);
 
 go.onclick = async () => {
-  if (genre === 'fiche') return ficheGo();
   let texte = demande.value.trim(), base = params ?? structuredClone(DEFAUT), avant = [];
   base.jeu = genre;
   const lab = k => CHOIX[k].find(c => c[0] === choix[k])[1];
@@ -2737,65 +2706,8 @@ function rendreHist() {
 
 nouveau.onclick = () => {
   if (historique.length && !confirm('Tout recommencer ? L\'historique sera effacé.')) return;
-  params = null; jeu = null; historique = []; fiche = null; ficheLue.innerHTML = ficheManque.innerHTML = ''; if (genre === 'fiche') { ficheDepart(choix.depart); ficheAfficher(); } cv.height = 240; dessiner(); capot.textContent = ''; go.textContent = '✨ Créer mon jeu';
+  params = null; jeu = null; historique = []; cv.height = 240; dessiner(); capot.textContent = ''; go.textContent = '✨ Créer mon jeu';
   hist.innerHTML = '<p class="vide">Tes essais apparaîtront ici.</p>'; compris.textContent = 'Choisis, écris une phrase, puis appuie sur « Créer ».';
-};
-// ---------- Ma fiche (FICHE-JEU.md) : l'enfant décrit tout son jeu ; l'IA ne renvoie que des changements, vérifiés par le serveur ----------
-let fiche = null;                                       // la fiche en cours (avec rows), toujours nettoyée par Fiche.nettoyer
-function ficheDepart(nom) {                             // jeu vide, ou copie d'un jeu de la console avec une grille toute neuve
-  const d = structuredClone(Fiche.DEPARTS[nom] || Fiche.DEPARTS.vide), p = { ...structuredClone(DEFAUT), seed: (Math.random() * 1e9) | 0 };
-  if (nom === 'plateforme') d.rows = generer({ ...p, hauteur: 30, ennemis: 2, briques: { pic: true, scie: true, ressort: true, glace: true, fragile: true, cache: true } });
-  if (nom === 'cote') d.rows = genererCote({ ...p, jeu: 'cote', ennemis: 2, briques: { ...p.briques, cache: true } });
-  if (nom === 'iso') { const q = { ...p, jeu: 'iso' }; d.rows = genererIso(q); d.haut = q.haut; }
-  fiche = Fiche.nettoyer(d).fiche;
-}
-function changerDepart(nom) {
-  if (historique.length && !confirm('Repartir de zéro avec ce point de départ ? Ta fiche actuelle sera remplacée.')) return;
-  ficheDepart(nom); const niv = ficheAfficher();
-  historique.push({ demande: 'Départ : ' + CHOIX.depart.find(c => c[0] === nom)[1], vu: [], niv, duree: 0, corr: '' }); rendreHist();
-  compris.textContent = 'Voilà ta fiche. Lis-la, puis dis ce que tu veux changer.';
-}
-const ficheNiv = () => ({ format: 'brique-v1', params: { jeu: 'fiche', theme: choix.theme, hero: choix.hero, couleurs: { ...couleurs }, message: rgMsg.value.trim().slice(0, 40) },
-                          rows: [...fiche.rows], fiche: Fiche.ligne(structuredClone(fiche)), icones: { ...icones } });
-function ficheLire() {                                  // la fiche en français + ce qui manque
-  const lu = Fiche.lire(fiche);
-  ficheLue.innerHTML = lu.phrases.map(p => `<li>${esc(p)}</li>`).join('');
-  ficheManque.innerHTML = [...lu.bloquants.map(b => `<li class="ko">⛔ ${esc(b)}</li>`), ...lu.manques.map(m => `<li>❓ ${esc(m)}</li>`)].join('');
-  ficheJson.value = JSON.stringify(Fiche.ligne(fiche), null, 1) .replace(/\n\s+(?=[\]}])/g, ' ') + '\n' + JSON.stringify({ rows: fiche.rows }, null, 0).replace(/","/g, '",\n "');
-}
-function ficheAfficher() {
-  ficheLire(); const niv = ficheNiv(); charger(niv);
-  capot.textContent = JSON.stringify({ rows: niv.rows, ...niv.fiche }, null, 1).replace(/\n\s+(?=[\]}])/g, ' ');
-  return niv;
-}
-async function ficheGo() {
-  const texte = demande.value.trim(); if (!fiche) ficheDepart(choix.depart);
-  const t0 = performance.now(); let ia = null, note = '';
-  if (texte && EN_LIGNE) {
-    go.disabled = true; go.textContent = '⏳ L\'IA réfléchit…';
-    try { ia = await api('api/ia', { texte, fiche, ...ident() }, session); } catch (e) { note = `L'IA ne répond pas (${e.message}) : change ta fiche toi-même dans le « Mode expert ».`; }
-    go.disabled = false;
-  } else if (texte) note = 'Sans le serveur, pas d\'IA : change ta fiche toi-même dans le « Mode expert ».';
-  if (ia) fiche = ia.fiche;
-  const niv = ficheAfficher(), vu = ia?.vu || [];
-  compris.innerHTML = !texte ? 'Voilà ta fiche. Dis ce que tu veux changer.' : ia
-    ? `🤖 L'IA a changé : <b>${vu.map(esc).join(' ') || 'rien'}</b>${ia.refus?.length ? '<br>🚫 Refusé : ' + ia.refus.map(esc).join(', ') : ''}${ia.remarque ? '<br>' + esc(ia.remarque) : ''}${ia.souhaits?.length ? '<br>💡 Noté dans les idées des joueurs : ' + ia.souhaits.map(esc).join(', ') : ''}`
-    : esc(note || 'L\'IA ne répond pas.');
-  historique.push({ demande: texte || '(sans phrase)', vu, niv, duree: (performance.now() - t0) / 1000, corr: '' }); rendreHist();
-  go.textContent = '✨ Changer ma fiche'; demande.value = ''; envoi.textContent = '';
-}
-ficheAppliquer.onclick = () => {                         // mode expert : la fiche écrite à la main (même vérification que l'IA)
-  let f; try { const [haut, bas] = ficheJson.value.replace(/```\w*/g, '').trim().split(/\n(?=\{"rows")/); f = { rows: fiche?.rows || [], ...JSON.parse(haut), ...(bas ? JSON.parse(bas) : {}) }; }   // la réponse d'une autre IA : avec ou sans ```, grille dans le bloc ou à part
-  catch (e) { ficheMsg.innerHTML = `<span style="color:var(--ko)">Le JSON est mal écrit : ${esc(e.message)}</span>`; return; }
-  const { fiche: propre, refus } = Fiche.nettoyer(f); fiche = propre;
-  const niv = ficheAfficher();
-  ficheMsg.innerHTML = refus.length ? `<span style="color:var(--ko)">🚫 Enlevé : ${refus.map(esc).join(', ')}</span>` : '<span style="color:var(--ok)">✔ Fiche appliquée</span>';
-  historique.push({ demande: '(mode expert)', vu: refus.map(r => '🚫 ' + r), niv, duree: 0, corr: '' }); rendreHist();
-};
-ficheMonIA.onclick = async () => {                      // pont vers sa propre IA : le format, la fiche, et la place pour dire ce qu'on veut ; la réponse se colle dans le mode expert
-  const t = `Tu m'aides à écrire la « fiche » d'un jeu pour ma petite console (écran de 20 cases de large). Une machine lit cette fiche telle quelle : elle ne comprend que ce format, rien d'autre n'existe.\n\nLE FORMAT\n${Fiche.FORMAT}\n\nMA FICHE ACTUELLE (un bloc JSON, puis la grille)\n${ficheJson.value}\n\nCE QUE JE VEUX CHANGER :\n(écris ici ton idée)\n\nRéponds avec la fiche COMPLÈTE, dans le même format que ma fiche actuelle (le bloc JSON, puis une ligne {"rows":[...]}). Si une idée est impossible avec ce format, dis-le en une phrase après la fiche.`;
-  try { await navigator.clipboard.writeText(t); fichePrompt.classList.add('hide'); ficheMonIAMsg.textContent = '✔ Copié ! Colle-le dans ton IA, écris ton idée à la place de « (écris ici ton idée) », puis colle sa réponse dans « Mode expert » et clique sur « Appliquer ma fiche ».'; }
-  catch { fichePrompt.value = t; fichePrompt.classList.remove('hide'); fichePrompt.select(); ficheMonIAMsg.textContent = 'Copie ce texte (Ctrl+C), colle-le dans ton IA, puis colle sa réponse dans « Mode expert ».'; }
 };
 // ---------- Icônes perso (héros, étoile, arrivée), trouvées sur le web ----------
 // 16x16 ; chaque pixel = 3 chiffres hexa "rgb" (4 bits), "---" = transparent. Même rendu ici et sur la console.
@@ -3541,7 +3453,6 @@ let ouvrirScript, jouerCommun;                                      // défini p
 function jouerNiveau(n) {
   if (n.niv.script) return ouvrirScript(n);
   charger({ ...n.niv, id: n.id, code: n.code, titre: n.titre, pseudo: n.pseudo }); params = structuredClone(n.niv.params); setGenre(params.jeu || 'plateforme');
-  if (n.niv.fiche) { fiche = { ...structuredClone(n.niv.fiche), rows: [...n.niv.rows] }; ficheLire(); }
   envoi.innerHTML = `<div class="partage">« ${esc(n.titre)} » de ${esc(n.pseudo)} · code <span class="code">${esc(n.code)}</span><br><small>Envoie-le sur ta console pour y jouer, seul ou à plusieurs (« Mes jeux »).</small></div>`;
   historique.push({ demande: `Jouer « ${n.titre} » de ${n.pseudo}`, vu: [], niv: jeu.niv, duree: 0, corr: '' }); rendreHist();
   afficher('creer'); ecran.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3984,7 +3895,11 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   }
   const nouveau = (nom, e = vide()) => { chantiers.liste.push({ ...e, nom: unique(nom) }); choisir(chantiers.liste.length - 1); };
   scJeux.onchange = () => choisir(+scJeux.value);
-  scNouveau.onclick = () => { const t = prompt('Le nom de ton nouveau jeu ?', ''); if (t !== null) nouveau(t); };
+  scNouveau.onclick = async () => {                      // le jeu de départ : une fiche par défaut, assemblée en Berry par le serveur (moteur-fiche.be / moteur-casse.be)
+    const t = prompt('Le nom de ton nouveau jeu ?', ''); if (t === null) return;
+    let script = ''; if (scDepart.value) try { script = (await api('api/fiche-berry', { depart: scDepart.value })).script || ''; } catch { alert('Le jeu de départ est introuvable (serveur injoignable) : ton jeu démarre vide.'); }
+    nouveau(t, { ...vide(), script });
+  };
   scRenommer.onclick = () => { const t = prompt('Le nouveau nom de ce jeu ?', etat.nom); if (t !== null) { etat.nom = unique(t, etat); sauver(); majJeux(); } };
   const MOTS = 'def|end|if|elif|else|while|for|in|return|import|var|class|break|continue|true|false|nil|and|or|not|do|static|try|except|raise';
   const JETONS = new RegExp(`(#.*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|\\b(${MOTS})\\b|\\b(\\d+(?:\\.\\d+)?)\\b|\\b([a-zA-Z_]\\w*)(?=\\()`, 'g');
@@ -4694,16 +4609,13 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
 })();
 
 // ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
-let vue = 'accueil', ficheVue = new URLSearchParams(location.search).has('fiche');
-const ouvrirFiche = on => { ficheVue = on; afficher('creer'); };
+let vue = 'accueil';
 function afficher(v) {
   vue = v;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); propos.classList.toggle('hide', v !== 'propos'); cgv.classList.toggle('hide', v !== 'cgv'); vApropos.classList.toggle('on', v === 'propos'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');
-  const ancien = ficheVue && v === 'creer';   // 2e mode « 📋 Fiche » (ou /?fiche) : « Créer » montre l'ancien générateur (#atelier) sur « Ma fiche »
-  if (ancien && genre !== 'fiche') genreChoix.querySelector('[data-v="fiche"]').click();
-  atelier.classList.toggle('hide', !ancien); vueScript.classList.toggle('hide', v !== 'creer' || ancien);   // créer = le mode script ; ponytail: l'ancien générateur (#atelier) reste dans la page, caché (sauf /?fiche), à retirer quand le mode script aura sa communauté
+  vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; l'ancien générateur #atelier reste caché (ponytail: à retirer quand le mode script aura sa communauté)
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
   const m = document.querySelector("main[data-version]:not(.hide)"); sectionVersion.textContent = m ? " · section v" + m.dataset.version : "";   // numéro de la grande section affichée, à monter à la main dans sa balise <main>

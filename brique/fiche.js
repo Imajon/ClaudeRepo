@@ -215,6 +215,96 @@ F.poser = function (f, l, x, y) {                      // pose une lettre dans l
   const r = f.rows[y].padEnd(x + 1, '.'); f.rows[y] = r.slice(0, x) + l + r.slice(x + 1); return true;
 };
 
+// ---------- le casse-briques (modele "casse") : meme esprit, autres cles ; joue par moteur-casse.be (Berry) ----------
+// rows = les briques (1 lettre = 1 brique, "." vide), heros = la raquette, balle, briques = ce que fait chaque lettre, regles, but. Pas de gravite, pas de depart S.
+const ACTIONS_C = { rien: 'rien ne se passe', aller_gauche: 'la raquette va à gauche', aller_droite: 'la raquette va à droite', lancer: 'il lance la balle' };
+const BONUS = { vie: 'une vie en plus', large: 'une raquette plus large pendant 10 s', lent: 'une balle plus lente pendant 8 s', multi: 'une balle de plus' };
+const QUAND_C = ['casse_tout', 'temps', 'points'], QUAND_C_ARG = ['temps', 'points'], ALORS_C = ['gagne', 'perd', 'vie_plus', 'message', 'vitesse'], ALORS_C_ARG = ['message', 'vitesse'];
+const BUTS_C = ['casser_tout', 'points', 'regles', 'survivre'];
+TAILLES.casse = [1, 14, 4, 20];
+function nettoyerCasse(f) {
+  const refus = [], o = { modele: 'casse' };
+  const sait = (obj, cles, ou) => { if (obj && typeof obj === 'object') for (const k of Object.keys(obj)) if (!cles.includes(k)) refus.push(`${ou} : je ne connais pas « ${k} »`); };
+  sait(f, ['modele', 'rows', 'heros', 'balle', 'briques', 'regles', 'but'], 'fiche');
+  const T = TAILLES.casse;
+  o.rows = (Array.isArray(f.rows) ? f.rows : []).filter(r => typeof r === 'string').slice(0, T[1]).map(r => [...r].slice(0, T[3]).map(c => LETTRE.test(c) || c === '.' ? c : '.').join(''));
+  const h = f.heros || {}; sait(h, ['boutons', 'vitesse', 'largeur', 'vies'], 'raquette (heros)');
+  const b = h.boutons || {}; sait(b, ['G', 'D', 'P3'], 'boutons (seulement G, D et P3)');
+  o.heros = { boutons: {} };
+  for (const k of ['G', 'D', 'P3']) { o.heros.boutons[k] = has(ACTIONS_C, b[k]) ? b[k] : 'rien'; if (b[k] !== undefined && !has(ACTIONS_C, b[k])) refus.push(`bouton ${k} : je ne connais pas « ${b[k]} »`); }
+  o.heros.vitesse = num(h.vitesse, 1, 30) ?? 12; o.heros.largeur = num(h.largeur, 1, 10) ?? 3; o.heros.vies = Math.round(num(h.vies, 1, 9) ?? 3);
+  const ba = f.balle || {}; sait(ba, ['vitesse', 'nombre', 'acceleration'], 'balle');
+  o.balle = { vitesse: num(ba.vitesse, 2, 25) ?? 10, nombre: Math.round(num(ba.nombre, 1, 3) ?? 1), acceleration: num(ba.acceleration, 0, 1) ?? 0 };
+  o.briques = {};
+  for (const [l, v] of Object.entries(f.briques && typeof f.briques === 'object' ? f.briques : {})) {
+    if (!definissable(l)) { refus.push(`brique « ${l} » : une seule lettre (pas S ni .)`); continue; }
+    if (Object.keys(o.briques).length >= 16) { refus.push('16 sortes de briques au plus'); break; }
+    const p = {}; sait(v, ['coups', 'indestructible', 'bonus'], `brique ${l}`);
+    const n = num(v?.coups, 1, 5); if (n && n > 1) p.coups = Math.round(n);
+    if (v?.indestructible) p.indestructible = 1;
+    if (v?.bonus !== undefined) { if (has(BONUS, v.bonus)) p.bonus = v.bonus; else refus.push(`brique ${l} : je ne connais pas le bonus « ${v.bonus} »`); }
+    o.briques[l] = p;
+  }
+  o.regles = [];
+  const rg = Array.isArray(f.regles) ? f.regles : [];
+  if (rg.length > 8) refus.push('8 règles au plus');
+  for (const r of rg.slice(0, 8)) {
+    const q = motArg(r?.quand, QUAND_C), a = motArg(r?.alors, ALORS_C);
+    if (!q || !a) { refus.push('une règle dit « quand » et « alors », avec des mots que je connais'); continue; }
+    let [qm, qv] = q, [am, av] = a;
+    if (!QUAND_C_ARG.includes(qm)) qv = undefined;
+    if (!ALORS_C_ARG.includes(am)) av = undefined;
+    if (qm === 'temps' || qm === 'points') qv = Math.round(num(+qv, 1, 600) ?? 10);
+    if (am === 'message') { av = ascii(av).slice(0, 20); if (!av) { refus.push('règle « message » : quel texte ?'); continue; } }
+    if (am === 'vitesse') av = num(+av, .1, 3) ?? 1;
+    o.regles.push({ quand: qv === undefined ? qm : { [qm]: qv }, alors: av === undefined ? am : { [am]: av } });
+  }
+  const bt = motArg(f.but, BUTS_C) || ['casser_tout'];
+  if (f.but !== undefined && !motArg(f.but, BUTS_C)) refus.push(`but : je ne connais pas « ${JSON.stringify(f.but)} »`);
+  o.but = bt[0] === 'points' ? { points: Math.round(num(+bt[1], 1, 999) ?? 10) } : bt[0] === 'survivre' ? { survivre: Math.round(num(+bt[1], 1, 600) ?? 30) } : bt[0];
+  return { fiche: o, refus };
+}
+function lireCasse(f) {
+  const phrases = ['🎮 Un casse-briques : une raquette, une balle, des briques à casser.'], manques = [], bloquants = [], H = f.heros, B = H.boutons, act = Object.values(B);
+  for (const k of ['G', 'D', 'P3']) if (B[k] !== 'rien') phrases.push(`🔘 Quand j'appuie sur ${k} : ${ACTIONS_C[B[k]]}.`);
+  if (!act.includes('aller_gauche') && !act.includes('aller_droite')) manques.push('La raquette ne peut pas bouger : mets « aller_gauche » et « aller_droite » sur des boutons.');
+  else if (!act.includes('aller_gauche') || !act.includes('aller_droite')) manques.push('La raquette ne va que d\'un côté : il manque un bouton.');
+  if (!act.includes('lancer')) phrases.push('⏱️ Aucun bouton ne lance la balle : elle part toute seule au bout de 2 secondes.');
+  phrases.push(`🏓 La raquette fait ${H.largeur} case${s(H.largeur)} de large et avance de ${H.vitesse} cases par seconde.`);
+  const b = f.balle; phrases.push(`⚪ ${b.nombre > 1 ? b.nombre + ' balles vont' : 'La balle va'} à ${b.vitesse} cases par seconde${b.acceleration >= .1 ? ', et elle accélère à chaque brique cassée' : ''}.`);
+  phrases.push(`❤️ ${H.vies} vie${s(H.vies)}.`);
+  const utilise = new Set(f.rows.join('')); utilise.delete('.');
+  let cassables = 0;
+  for (const l of utilise) {
+    const p = f.briques[l] || {}, t = [];
+    if (p.indestructible) t.push('on ne peut pas la casser'); else { cassables++; t.push(p.coups > 1 ? `il faut ${p.coups} coups pour la casser` : 'un coup suffit'); }
+    if (p.bonus) t.push(`en la cassant, ${BONUS[p.bonus]}`);
+    phrases.push(`🧱 ${l} : ${t.join(', ')}.`);
+  }
+  for (const r of f.regles) {
+    const [q, qv] = motArg(r.quand, QUAND_C), [a, av] = motArg(r.alors, ALORS_C);
+    const Q = { casse_tout: 'Quand tout est cassé', temps: `Au bout de ${qv} s`, points: `À ${qv} brique${s(qv)} cassée${s(qv)}` }[q];
+    const A = { gagne: 'on gagne', perd: 'on perd', vie_plus: 'une vie en plus', message: `le message « ${av} » s'affiche`, vitesse: `la balle va ${av} fois plus vite` }[a];
+    phrases.push(`📜 ${Q}, ${A}.`);
+  }
+  const [but, bv] = motArg(f.but, BUTS_C);
+  phrases.push('🏁 Pour gagner : ' + { casser_tout: 'casser toutes les briques.', points: `casser ${bv} brique${s(bv)}.`, regles: 'ce que disent les règles.', survivre: `tenir ${bv} s sans perdre.` }[but]);
+  const nbCassables = f.rows.join('').split('').filter(l => l !== '.' && !f.briques[l]?.indestructible).length;
+  if (!utilise.size) manques.push('Il n\'y a aucune brique : dessine-en dans la grille !');
+  else if (!cassables && but === 'casser_tout') manques.push('Toutes les briques sont incassables : on ne peut pas gagner.');
+  if (but === 'points' && nbCassables < bv) manques.push(`Le but est de casser ${bv} briques mais il n'y en a que ${nbCassables} de cassables dans la grille.`);
+  if (but === 'regles' && !f.regles.some(r => r.alors === 'gagne')) manques.push('Aucune règle ne fait gagner.');
+  const w = Math.max(0, ...f.rows.map(r => r.length)), T = TAILLES.casse;
+  if (f.rows.length < T[0] || f.rows.length > T[1] || w < T[2] || w > T[3]) bloquants.push(`La grille doit faire ${T[0]} à ${T[1]} lignes de ${T[2]} à ${T[3]} cases (elle fait ${f.rows.length} × ${w}).`);
+  return { phrases, manques, bloquants };
+}
+{ const nettoyerPlat = F.nettoyer, lirePlat = F.lire;
+  F.nettoyer = f => f && f.modele === 'casse' ? nettoyerCasse(f) : nettoyerPlat(f);
+  F.lire = f => f.modele === 'casse' ? lireCasse(f) : lirePlat(f); }
+F.FORMAT_CASSE = 'Unites : cases et secondes. Un CASSE-BRIQUES : la grille "rows" = les briques en haut de l\'ecran, une lettre par brique, "." vide, de 1 a 14 lignes et 4 a 20 colonnes (rows ne change pas, utilise "poser").\nCles de la fiche (rien d\'autre n\'existe) :\n modele : casse (ne change pas).\n heros = la raquette : {boutons {G, D, P3} chacun parmi rien, aller_gauche, aller_droite, lancer ; largeur 1-10 cases ; vitesse 1-30 cases/s ; vies 1-9}\n balle : {vitesse 2-25 cases/s (normal 10), nombre 1-3 balles au depart, acceleration 0-1 (1 = elle accelere beaucoup a chaque brique cassee)}\n briques : {lettre: {coups 1-5 (coups pour la casser), indestructible 0/1, bonus vie|large|lent|multi (tombe quand on la casse, a rattraper avec la raquette)}} ; une lettre de la grille qui n\'est pas decrite = brique normale (1 coup)\n regles (8 au plus) : [{"quand": "casse_tout" | {"temps":s} | {"points":n briques cassees}, "alors": "gagne" | "perd" | "vie_plus" | {"message":"texte court"} | {"vitesse":k (balle k fois plus vite)}}]\n but : casser_tout | regles | {"points": n} | {"survivre": secondes}';
+F.DEPARTS_CASSE = { modele: 'casse', rows: ['BBBBBBBBBB', 'BBBBBBBBBB', 'DDDDDDDDDD', '..........'], heros: { boutons: { G: 'aller_gauche', D: 'aller_droite', P3: 'lancer' }, vitesse: 12, largeur: 3, vies: 3 },
+  balle: { vitesse: 10, nombre: 1, acceleration: 0 }, briques: { B: {}, D: { coups: 2 } }, regles: [], but: 'casser_tout' };
+
 // ---------- les points de départ ----------
 const STD = { G: 'aller_gauche', D: 'aller_droite', P3: 'sauter' };
 F.DEPARTS = {

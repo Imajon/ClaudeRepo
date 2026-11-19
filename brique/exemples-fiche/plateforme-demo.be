@@ -2,6 +2,8 @@
 var FICHE = {"rows":["....................","....................","....................","....................","........G...........","......#####.........","....................","...*......*.........","..##..Z...........F.","..........R.........","....................",".S...K.....P.....M..","####R####I###C##^###","####################"],"monde":{"gravite":87.5,"bord":"vide","camera":"suit"},"heros":{"boutons":{"G":"aller_gauche","D":"aller_droite","P3":"sauter"},"vitesse":12.5,"elan":0.2,"vies":0,"saut":{"hauteur":4.5,"en_l_air":1},"mur":{"glisse":1,"saut_mural":1}},"briques":{"#":{"solide":1},"I":{"solide":1,"glisse":0.9},"C":{"solide":1,"disparait":0.5},"R":{"solide":1,"rebond":7},"^":{"mortel":1},"*":{"ramasse":1},"G":{"arrivee":1},"K":{},"P":{"solide":1}},"objets":{"Z":{"forme":"scie","mouvement":"aller_retour","points":[[0,0],[4,0]],"duree":2,"pause":1,"declencheur":"toujours","contact":"perd"},"F":{"forme":"ennemi","mouvement":"patrouille","contact":"perd","dessus":"ecrase"},"M":{"forme":"bloc","mouvement":"aller_retour","points":[[0,0],[0,-4]],"duree":2,"pause":0.5,"contact":"rien"}},"regles":[{"q":"touche","qv":"K","a":"ouvre","av":"P"},{"q":"ramasse_tout","qv":0,"a":"message","av":"Bravo"}],"but":"arriver","butv":0}
 import math
 import string
+import gc
+var GCN = 0
 var T = 16
 var ROWS = FICHE["rows"] var H = size(ROWS)
 var MO = FICHE["monde"] var HE = FICHE["heros"] var BR = FICHE["briques"] var OB = FICHE["objets"] var RG = FICHE["regles"]
@@ -9,7 +11,7 @@ var BUT = FICHE["but"] var BUTV = FICHE["butv"]
 var GRAV = MO.find("gravite", 0) * T + 0.0
 var BORD = MO.find("bord", "vide") var CAM = MO.find("camera", "suit")
 var VIT = HE.find("vitesse", 0) * T + 0.0 var ELAN = HE.find("elan", 0.2) + 0.0
-var SAUT = HE.find("saut", {}) var MUR = HE.find("mur", {})
+var SAUT = HE.find("saut", {}) var MUR = HE.find("mur", {}) var MURG = MUR.find("glisse", 0) != 0 var MURS = MUR.find("saut_mural", 0) != 0
 var VSAUT = 0.0
 if GRAV > 0 && SAUT.find("hauteur", 0) > 0 VSAUT = math.sqrt(2.0 * GRAV * SAUT["hauteur"] * T) end
 var NSAUT = SAUT.find("en_l_air", 0) var VIES = HE.find("vies", 0)
@@ -53,7 +55,7 @@ return true
 end
 def touche(o) return px < o["x"] + 14 && px + 10 > o["x"] + 2 && py < o["y"] + 14 && py + 14 > o["y"] + 2 end
 def recompte() NR = 0 var i = 0 while i < size(PRIS) if PRIS[i] NR += 1 end i += 1 end pts = NR + ECR end
-def resolid() SOLID = {} for k: BR.keys() if BR[k].find("solide", 0) != 0 SOLID[k] = true end end end
+def resolid() SOLID = {} for k: KB.keys() if KB[k][0] != 0 SOLID[k] = true end end end
 def depart()
 px = SX py = SY vx = 0.0 vy = 0.0 poussee = 0.0 SUR = nil nsl = NSAUT VMUL = 1.0
 CASSE = {} OUV = {} FERME = {} MSG = "" ECR = 0 RFAIT = [] resolid()
@@ -109,6 +111,8 @@ COL[k] = k == "#" ? BLOC : rgb(90 + (string.byte(k) * 37) % 120, 80 + (string.by
 KB[k] = [p.find("solide", 0), p.find("mortel", 0), p.find("glisse", 0), p.find("rebond", 0), p.find("disparait", 0), p.find("ramasse", 0), p.find("arrivee", 0)]
 end
 charge()
+FICHE = nil ROWS = nil MO = nil HE = nil BR = nil OB = nil SAUT = nil MUR = nil
+gc.collect()
 end
 def chemin(o, s, m)
 var lp = s.find("points", [[0, 0]]) var n = size(lp)
@@ -196,8 +200,9 @@ end
 end
 end
 def maj(dt)
+GCN += 1 if GCN >= 12 GCN = 0 gc.collect() end
 if gagne || perdu
-if appui(P3) gagne = false perdu = false morts = 0 charge() end
+if appui(P3) gagne = false perdu = false morts = 0 lives = VIES for i: 0 .. size(PRIS) - 1 PRIS[i] = false end depart() end
 return
 end
 if dt > 0.05 dt = 0.05 end
@@ -229,11 +234,11 @@ if GRAV > 0 && !sol
 if but < 0 && !libre(px - 1, py) mur = -1 end
 if but > 0 && !libre(px + 1, py) mur = 1 end
 end
-if mur != 0 && MUR.find("glisse", 0) != 0 && vy > 70 vy = 70.0 end
+if mur != 0 && MURG && vy > 70 vy = 70.0 end
 if sb >= 0 && VSAUT > 0
 if appui(BTN[sb])
 if sol vy = -VSAUT son(660, 40)
-elif mur != 0 && MUR.find("saut_mural", 0) != 0 vy = -VSAUT * 0.93 poussee = -mur * VIT * 0.95 son(780, 40)
+elif mur != 0 && MURS vy = -VSAUT * 0.93 poussee = -mur * VIT * 0.95 son(780, 40)
 elif nsl > 0 nsl -= 1 vy = -VSAUT son(660, 40)
 end
 end

@@ -2939,7 +2939,7 @@ envoyer.onclick = async () => {
   if (pasPret) return dire('Ta fiche n\'est pas prête : ' + pasPret);
   if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.');
   try {
-    if (!port) { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter(); await syncCourses(); await verifierVersion(); }
+    if (!port) { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); ecouter(); await syncCourses(); if (await verifierVersion() === false) return dire('Ta console n’a pas le firmware des jeux (elle a le moteur Berry) : installe-le avec « Mettre à jour ma console », juste au-dessus.'); }
     envoi.textContent = '📟 Envoi…';
     // une ligne par icône d'abord (la console les garde avec le niveau qui suit), puis le niveau
     let qs = jeu.niv.questions;                          // jeu publié : ses questions ; sinon celles du groupe de l'enfant
@@ -3000,12 +3000,13 @@ majBtn.addEventListener('click', () => fermer(), true);   // esp-web-tools ouvre
 Promise.all(['firmware', 'firmware-berry'].map(d => fetch(d + '/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null)))   // pied de page : versions publiées des deux firmwares
   .then(([a, b]) => { if (a) majFwVer.textContent = ' (' + a.version + ')'; if (b) { scFwVer.textContent = ' (console ' + (b.console || a && a.version || '?') + ' / moteur ' + b.version + ')'; scInstallTip.title += scFwVer.textContent; } consoleVersions.textContent = [a && ' · console ' + a.version, b && ' · moteur script ' + b.version].filter(Boolean).join(''); });
 async function verifierVersion() {                       // la console dit sa version ; plus ancienne que celle publiée -> on propose la mise à jour
-  if (!manifeste || !port) return;
+  if (!manifeste || !port) return true;
   const v = await new Promise(async ok => {
     attenteVersion = ok; setTimeout(() => ok(''), 1500);
     const w = port.writable.getWriter(); await w.write(new TextEncoder().encode('VERSION\n')); w.releaseLock();
   });
   attenteVersion = null;
+  if (v === 'BERRY') { majDetails.open = true; majBox.innerHTML = '<span style="color:var(--ko)">⚠️ Ta console a le moteur Berry (Bulles, Guidé, Libre). Ce mode-ci a besoin du firmware des jeux : clique sur « Mettre à jour ma console ».</span>'; return false; }
   const num = s => (s.match(/\d+/g) || []).map(Number);   // "v54.10" -> [54, 10] : comparé nombre par nombre
   const plusVieille = (a, b) => { const x = num(a), y = num(b); for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
   const cmp = `Ta console : <b>${v ? esc(v) : 'avant v55'}</b> · en ligne : <b>${esc(manifeste.version)}</b>`;
@@ -3034,6 +3035,7 @@ function ligneConsole(l) {
   if ((l.startsWith('BRIQUE OK') || l.startsWith('BRIQUE ERR')) && attente) return attente(l);
   if (l.startsWith('BRIQUE RES ')) return resBuf.push(l.slice(11));
   const vm = l.match(/^BRIQUE VERSION (\S+)/); if (vm && attenteVersion) return attenteVersion(vm[1]);
+  if (l.startsWith('BERRY VERSION') && attenteVersion) return attenteVersion('BERRY');   // la console a le moteur Berry (bulles, guidé, libre), pas celui des jeux
   const qz = l.match(/^BRIQUE QUIZ (\S+) ([01])/);                  // question de cours répondue sur la console
   if (qz) { if (moi && EN_LIGNE) api('api/reponses', { ...ident(), reponses: [{ id: qz[1], ok: qz[2] === '1' }] }).catch(() => {});
     return dire(qz[2] === '1' ? '✅ Bonne réponse à la question !' : '❌ Pas tout à fait… la bonne réponse est affichée sur la console.', qz[2] === '1'); }

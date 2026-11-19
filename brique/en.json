@@ -1609,5 +1609,7 @@
   "Copie un texte à coller dans ton IA (ChatGPT, Claude, Mistral…) : le format de la fiche, ta fiche, et ce que tu veux changer": "Copies a text to paste into your AI (ChatGPT, Claude, Mistral…): the sheet format, your sheet, and what you want to change",
   "🤝 Ouvrir avec mon IA": "🤝 Open with my AI",
   "✔ Copié ! Colle-le dans ton IA, écris ton idée à la place de « (écris ici ton idée) », puis colle sa réponse dans « Mode expert » et clique sur « Appliquer ma fiche ».": "✔ Copied! Paste it into your AI, write your idea instead of “(write your idea here)”, then paste its answer into “Expert mode” and click “Apply my sheet”.",
-  "Copie ce texte (Ctrl+C), colle-le dans ton IA, puis colle sa réponse dans « Mode expert ».": "Copy this text (Ctrl+C), paste it into your AI, then paste its answer into “Expert mode”."
+  "Copie ce texte (Ctrl+C), colle-le dans ton IA, puis colle sa réponse dans « Mode expert ».": "Copy this text (Ctrl+C), paste it into your AI, then paste its answer into “Expert mode”.",
+  "Ta console n’a pas le firmware des jeux (elle a le moteur Berry) : installe-le avec « Mettre à jour ma console », juste au-dessus.": "Your console doesn’t have the games firmware (it has the Berry engine): install it with “Update my console”, just above.",
+  "{1}⚠️ Ta console a le moteur Berry (Bulles, Guidé, Libre). Ce mode-ci a besoin du firmware des jeux : clique sur « Mettre à jour ma console ».</span>": "{1}⚠️ Your console has the Berry engine (Bubbles, Guided, Free). This mode needs the games firmware: click “Update my console”.</span>"
 }

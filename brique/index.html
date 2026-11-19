@@ -1939,10 +1939,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.22">
+<main id="vueScript" class="hide" data-version="1.23">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
-    <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots."><button id="mPetits">🫧 Bulles</button><button id="mGuide">💡 Guidé</button><button id="mLibre">✍️ Libre</button><button id="mFiche" title="Tu décris les règles de ton jeu : la console les lit telles quelles">📋 Fiche</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
+    <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Libre : tu décris tout avec tes mots, et « 💡 Aide-moi » te propose des idées."><button id="mPetits">🫧 Bulles</button><button id="mLibre">✍️ Libre</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
@@ -2185,7 +2185,7 @@ function setGenre(g) {                                  // n'affiche que ce qui 
   genreChoix.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.v === g));
   document.querySelectorAll('[data-jeu]').forEach(e => e.classList.toggle('hide', !e.dataset.jeu.split(' ').includes(g)));
   palCielNom.textContent = g === 'plateforme' || g === 'fiche' ? 'Ciel' : 'Fond';
-  if (g === 'fiche') demande.placeholder = 'Ex : « D fait sauter », « une scie qui va et vient », « quand je touche la clé la porte s\'ouvre »'; else if (typeof mGuide !== 'undefined') setMode(mode);
+  if (g === 'fiche') demande.placeholder = 'Ex : « D fait sauter », « une scie qui va et vient », « quand je touche la clé la porte s\'ouvre »'; else if (typeof mLibre !== 'undefined') setMode(mode);
   motifTitre.textContent = g === 'briques' ? 'Le dessin des briques' : 'La formation des envahisseurs';
   majIcones();
 }
@@ -2201,14 +2201,14 @@ for (const k in CHOIX) {
 let majAide = () => {};                                 // mode script : le bouton « 💡 Aide-moi » suit la tranche d'âge (défini plus bas)
 function setMode(m) {
   mode = m; vueScript.classList.toggle('petits', m === 'petits'); majAide();
-  mPetits.classList.toggle('on', m === 'petits'); mGuide.classList.toggle('on', m === 'guide'); mLibre.classList.toggle('on', m === 'libre');
+  mPetits.classList.toggle('on', m === 'petits'); mLibre.classList.toggle('on', m !== 'petits');
   guide.classList.toggle('hide', m === 'libre'); catalogue.classList.toggle('hide', m !== 'libre');   // le générateur de niveau : les 6-9 ans prennent les mêmes boutons que les CM1-CM2
   demande.placeholder = m !== 'libre' ? 'Une phrase en plus (pas obligé) : « très haut », « avec des ressorts »…'
                                      : 'Décris ton niveau : thème, héros, pièges, hauteur, difficulté…';
 }
 const garderMode = m => { setMode(m); try { localStorage.setItem('brique-age', m); } catch {} };   // le choix de l'enfant reste d'une visite à l'autre
-mPetits.onclick = () => garderMode('petits'); mGuide.onclick = () => garderMode('guide'); mLibre.onclick = () => garderMode('libre'); mFiche.onclick = () => ouvrirFiche(true); ficheRetour.onclick = () => ouvrirFiche(false);
-setMode((a => ['petits', 'guide', 'libre'].includes(a) ? a : 'petits')((() => { try { return localStorage.getItem('brique-age'); } catch {} })()));
+mPetits.onclick = () => garderMode('petits'); mLibre.onclick = () => garderMode('libre'); ficheRetour.onclick = () => ouvrirFiche(false);
+setMode((a => a === 'guide' ? 'libre' : ['petits', 'libre'].includes(a) ? a : 'petits')((() => { try { return localStorage.getItem('brique-age'); } catch {} })()));
 
 // ---------- "IA" simulée : texte -> paramètres ----------
 // ponytail: analyse par mots-clés en local pour la maquette ; à remplacer par l'appel serveur -> API Claude (étape 4).
@@ -3391,8 +3391,9 @@ async function rafraichir() {
   try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); if (!EN_LIGNE) { EN_LIGNE = true; majTokens(); majCompte(); } }
   catch { EN_LIGNE = false; [vAnim, moiBox, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'anim') afficher('accueil'); return; }   // serveur injoignable (Render endormi, fichier) : la Communauté reste, vide
   enLigne = c.niveaux; modeAtelier(c.atelier);
-  if (!session && c.age && c.age !== mode) setMode(c.age);   // enfant d'un groupe : la tranche d'âge choisie par son animateur, il ne peut pas la changer
-  mPetits.disabled = mGuide.disabled = mLibre.disabled = mFiche.disabled = !session && !!c.age; niveauScolaire.title = mGuide.disabled ? 'Choisi par ton animateur' : "Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Guidé : l'IA te propose des boutons pour t'aider à dire ce que tu veux. Libre : tu décris tout avec tes mots.";
+  const ageC = c.age === 'guide' ? 'libre' : c.age;      // l'ancien « guidé » n'existe plus : c'est le libre (avec « Aide-moi »)
+  if (!session && ageC && ageC !== mode) setMode(ageC);   // enfant d'un groupe : la tranche d'âge choisie par son animateur, il ne peut pas la changer
+  mPetits.disabled = mLibre.disabled = !session && !!c.age; niveauScolaire.title = mLibre.disabled ? 'Choisi par ton animateur' : "Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Libre : tu décris tout avec tes mots, et « 💡 Aide-moi » te propose des idées.";
   nJeux.textContent = accJeux.textContent = c.chiffres.jeux; nParties.textContent = c.chiffres.parties; nAujourdhui.textContent = accAujourdhui.textContent = c.chiffres.aujourdhui;
   const jeux = enLigne.filter(n => !n.commun), MEDAILLE = ['🥇', '🥈', '🥉'];
   const top = [...jeux].sort((a, b) => b.stats.parties - a.stats.parties).slice(0, 10);
@@ -3654,7 +3655,7 @@ async function rendreAnim(donnees) {
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
     <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <small style="color:var(--mute)" title="tokens IA : aujourd'hui / depuis le début du forfait">⚡${kTok(j.jour || 0)} · ${kTok(j.tokens || 0)}</small> <a href="#" data-mdp="${esc(j.pseudo)}" title="Mot de passe oublié : lui en donner un provisoire" style="color:var(--mute)">🔑</a> <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
     <h3>🎚 Degré de liberté — c'est toi qui le choisis, les enfants ne peuvent pas le changer</h3>
-    <div class="chips" data-age="${esc(g.code)}"><button class="chip ${g.age === 'petits' ? 'on' : ''}" data-agev="petits">🫧 Bulles</button><button class="chip ${g.age === 'guide' ? 'on' : ''}" data-agev="guide">💡 Guidé</button><button class="chip ${g.age === 'guide' || g.age === 'petits' ? '' : 'on'}" data-agev="libre">✍️ Libre</button></div>
+    <div class="chips" data-age="${esc(g.code)}"><button class="chip ${g.age === 'petits' ? 'on' : ''}" data-agev="petits">🫧 Bulles</button><button class="chip ${g.age === 'petits' ? '' : 'on'}" data-agev="libre">✍️ Libre</button></div>
     <p class="aide" style="margin:4px 0 0">Bulles : on touche des bulles, sans rien écrire. Guidé : on choisit avec des boutons, plus une phrase. Libre : on décrit tout son jeu avec ses mots.</p>
     <h3>📚 Mode atelier</h3>
     <div class="icRow"><input class="pseudo" data-matiere="${esc(g.code)}" maxlength="40" placeholder="Matière du jour (ex. Maths : fractions)" value="${esc(g.matiere)}">
@@ -4553,7 +4554,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   }
   const libGo = () => mode === 'petits' ? '✨ Fabriquer mon jeu' : "✨ Envoyer à l'IA";   // le bouton d'envoi, vu par un enfant qui ne lit pas encore bien
   majAide = garder => {                                  // appelé quand la tranche d'âge, le chantier ou le programme change : les anciennes propositions ne valent plus ; garder : on vient d'écrire le jeu, l'explication de l'IA reste affichée
-    const g = mode === 'guide';
+    const g = mode !== 'petits';                         // Libre : « Aide-moi » toujours là
     scAide.classList.toggle('hide', !g); scChoix.classList.add('hide');
     if (mode === 'petits' || Object.keys(recette).length) scDemande.value = '';
     raz(); rendreBulles();

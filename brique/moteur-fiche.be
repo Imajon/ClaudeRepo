@@ -78,7 +78,7 @@ def charge()
       if k == "S" SX = c * T + 3.0 SY = r * T + 2.0 k = "."
       elif OB.contains(k)
         var sp = OB[k]
-        var o = {"m": sp.find("mouvement", "fixe"), "f": sp.find("forme", "bloc"), "ct": sp.find("contact", "perd"), "ec": sp.find("dessus", "") == "ecrase", "ca": sp.find("cache", 0) != 0, "dc": sp.find("declencheur", "toujours"), "l": k, "s": sp, "x0": c * T + 0.0, "y0": r * T + 0.0, "x": c * T + 0.0, "y": r * T + 0.0, "vivant": true, "on": false, "t0": 0.0, "dir": 1.0, "vy": 0.0, "dx": 0.0, "dy": 0.0}
+        var o = {"m": sp.find("mouvement", "fixe"), "f": sp.find("forme", "bloc"), "ct": sp.find("contact", "perd"), "ec": sp.find("dessus", "") == "ecrase", "ca": sp.find("cache", 0) != 0, "dc": sp.find("declencheur", "toujours"), "l": k, "v": (sp.find("mouvement", "fixe") == "suivre" || sp.find("mouvement", "fixe") == "aller_retour" || sp.find("mouvement", "fixe") == "boucle" ? 2 : 0) + string.byte(k) % 2, "c": rgb(150 + (string.byte(k) * 37) % 100, 50 + (string.byte(k) * 71) % 130, 60 + (string.byte(k) * 23) % 130), "s": sp, "x0": c * T + 0.0, "y0": r * T + 0.0, "x": c * T + 0.0, "y": r * T + 0.0, "vivant": true, "on": false, "t0": 0.0, "dir": 1.0, "vy": 0.0, "dx": 0.0, "dy": 0.0}
         OBJS.push(o)
         var ct = sp.find("contact", "perd")
         if sp.find("forme", "bloc") == "bloc" && ct == "rien" PLAT.push(o) NPLAT += 1 end
@@ -304,6 +304,30 @@ def maj(dt)
   if camy > H * T - 240 camy = H * T - 240 end      # niveau moins haut que l'ecran : camy < 0, le sol reste en bas
 end
 
+def monstre(o, x, y)                              # 4 bestioles (blob, coque, fantome, chauve-souris), 2 images chacune, le sens suit le deplacement
+  var v = o["v"] var c = o["c"] var a = int(temps() * 5 + x / 16) % 2
+  var s = o["m"] == "patrouille" ? o["dir"] : (o["dx"] < -0.1 ? -1 : (o["dx"] > 0.1 ? 1 : (px > o["x"] ? 1 : -1)))
+  var ex = x + (s > 0 ? 8 : 3)
+  if v == 0                                       # blob qui s'ecrase / s'etire en marchant
+    var h = a ? 12 : 10 var t = y + 16 - h
+    rect(x + 1, t, 14, h, c) rect(x + 3, t - 2, 10, 2, c) rect(ex, t + 2, 3, 3, OEIL) rect(ex + 4, t + 2, 3, 3, OEIL)
+  elif v == 1                                     # coque : carapace ronde, tete et pattes
+    rect(x + 2 + a * 2, y + 14, 4, 2, OMBRE) rect(x + 9 - a * 2, y + 14, 4, 2, OMBRE)
+    rect(x + (s > 0 ? 10 : 0), y + 8, 6, 5, OEIL) rect(x + (s > 0 ? 13 : 2), y + 9, 2, 2, OMBRE)
+    disque(x + 8, y + 8, 6, c) disque(x + 8, y + 7, 2, OMBRE)
+  elif v == 2                                     # fantome : flotte, le bas ondule
+    var f = y + a
+    disque(x + 8, f + 6, 7, c) rect(x + 1, f + 6, 14, 8, c)
+    rect(x + 1 + a * 2, f + 14, 3, 2, c) rect(x + 6 + a * 2, f + 14, 3, 2, c) rect(x + 11 - a * 2, f + 14, 3, 2, c)
+    rect(ex, f + 4, 3, 4, OEIL) rect(ex + 4, f + 4, 3, 4, OEIL)
+  else                                            # chauve-souris : les ailes battent
+    if a tri(x, y + 2, x + 5, y + 8, x + 5, y + 11) tri(x + 16, y + 2, x + 11, y + 8, x + 11, y + 11)
+    else tri(x, y + 14, x + 5, y + 7, x + 5, y + 10) tri(x + 16, y + 14, x + 11, y + 7, x + 11, y + 10) end
+    disque(x + 8, y + 8, 4, c) tri(x + 4, y + 2, x + 6, y + 6, x + 4, y + 6) tri(x + 12, y + 2, x + 10, y + 6, x + 12, y + 6)
+    rect(x + 5, y + 7, 2, 2, OEIL) rect(x + 9, y + 7, 2, 2, OEIL)
+  end
+end
+
 def dessine()
   fond(CIEL)
   var b = 0 while b < 6 rect(0, b * 40 + 20, 320, 20, CIEL2) b += 1 end
@@ -341,14 +365,18 @@ def dessine()
       var x = int(o["x"]) var y = int(o["y"]) var f = o["f"]
       if f == "scie" disque(x + 8, y + 8, 7, PIC) disque(x + 8, y + 8, 3, OMBRE)
       elif f == "pic" tri(x, y + T, x + 8, y + 4, x + T, y + T, PIC)
-      elif f == "ennemi" rect(x + 1, y + 2, 14, 14, ROUGE) rect(x + 3, y + 5, 3, 3, OEIL) rect(x + 9, y + 5, 3, 3, OEIL)
+      elif f == "ennemi" monstre(o, x, y)
       elif f == "bloc" rect(x, y, T, T, BLOC) rect(x, y, T, 2, BORDC)
       end
     end
   end
   var x = int(px) var y = int(py)
-  rect(x + 2, y + 2, 10, 14, OMBRE) rect(x, y, 10, 14, HERO)
-  rect(x + (vx < 0 ? 1 : 5), y + 3, 4, 4, OEIL)
+  rect(x + 2, y + 2, 10, 14, OMBRE) rect(x, y, 10, 10, HERO)    # corps ; jambes : courent, se serrent en l'air
+  var a = int(temps() * 10) % 2
+  if !sol rect(x + 2, y + 10, 6, 3, OMBRE)
+  elif vx * vx > 100 rect(x + (a ? 0 : 2), y + 10, 3, 4, OMBRE) rect(x + (a ? 7 : 5), y + 10, 3, 4, OMBRE)
+  else rect(x + 1, y + 10, 3, 4, OMBRE) rect(x + 6, y + 10, 3, 4, OMBRE) end
+  rect(x + (vx < 0 ? 1 : 5), y + 3, 4, 4, OEIL) rect(x + (vx < 0 ? 1 : 7), y + 4, 2, 2, OMBRE)
   camera(0, 0)
   var s = string.format("%d * %.1f s", pts, chrono)
   texte(5, 5, s, OMBRE, 2) texte(4, 4, s, BLANC, 2)

@@ -19,7 +19,7 @@ var ACT = [HE["boutons"].find("G", "rien"), HE["boutons"].find("D", "rien"), HE[
 var BTN = [G, D, P3]
 var NIV = [] var KB = {} var OBJS = [] var PLAT = [] var EX = [] var EY = [] var PRIS = []
 var CASSE = {} var OUV = {} var FERME = {} var RFAIT = [] var SOLID = {} var DT = {} var COL = {} var NPLAT = 0
-var SX = 0.0 var SY = 0.0 var px = 0.0 var py = 0.0 var vx = 0.0 var vy = 0.0 var sol = false var mur = 0 var poussee = 0.0 var nsl = 0 var SUR = nil var VMUL = 1.0
+var SX = 0.0 var SY = 0.0 var px = 0.0 var py = 0.0 var vx = 0.0 var vy = 0.0 var sol = false var mur = 0 var poussee = 0.0 var nsl = 0 var SUR = nil var VMUL = 1.0 var SQX = 1.0 var SQY = 1.0 var HIT = 0.0
 var fin = false var lives = 0 var pts = 0 var NR = 0 var ECR = 0 var TOTR = 0 var TOTE = 0 var gagne = false var perdu = false var morts = 0 var tv0 = 0.0 var chrono = 0.0 var camy = 0 var MSG = "" var MSGT = 0.0
 var CIEL = 0 var CIEL2 = 0 var BLOC = 0 var BORDC = 0 var FRAG = 0 var PIC = 0 var RESS = 0 var GLACE = 0 var OR = 0 var HERO = 0 var OEIL = 0 var BLANC = 0 var OMBRE = 0 var ROUGE = 0
 def case(c, r)
@@ -93,7 +93,7 @@ lives = VIES
 depart()
 end
 def mort()
-fin = true morts += 1 son(150, 200)
+fin = true morts += 1 son(150, 200) SQX = 1.4 SQY = 0.6 HIT = temps() + 0.5
 if VIES > 0
 lives -= 1
 if lives <= 0 perdu = true return end
@@ -188,13 +188,13 @@ if o["vivant"] && (!o["ca"] || o["on"]) && touche(o)
 var c = o["ct"]
 if o["f"] == "bloc" && c == "rien"
 elif o["ec"] && vy > 0 && py + 14 < o["y"] + 10
-o["vivant"] = false ECR += 1 pts = NR + ECR vy = -300.0 score(pts) son(500, 60)
+o["vivant"] = false ECR += 1 pts = NR + ECR vy = -300.0 SQX = 0.8 SQY = 1.3 score(pts) son(500, 60)
 elif c == "perd" mort() return
-elif c == "rebond" vy = -560.0 son(990, 60)
+elif c == "rebond" vy = -560.0 SQX = 1.6 SQY = 0.4 son(990, 60)
 elif c == "ramasse" o["vivant"] = false NR += 1 pts = NR + ECR score(pts) son(988, 60)
 elif c == "vie_moins"
 o["vivant"] = false
-if VIES > 0 lives -= 1 son(150, 200) if lives <= 0 perdu = true return end else mort() return end
+if VIES > 0 lives -= 1 son(150, 200) SQX = 1.4 SQY = 0.6 HIT = temps() + 0.5 if lives <= 0 perdu = true return end else mort() return end
 end
 end
 end
@@ -208,6 +208,7 @@ end
 if dt > 0.05 dt = 0.05 end
 fin = false
 chrono = temps() - tv0
+var ek = dt * 10 if ek > 1 ek = 1.0 end SQX += (1 - SQX) * ek SQY += (1 - SQY) * ek
 for o: OBJS if o["vivant"] bouge(o, dt) end end
 if SUR != nil
 var ny = py + SUR["dy"] if libre(px, ny) py = ny end
@@ -235,6 +236,7 @@ if but < 0 && !libre(px - 1, py) mur = -1 end
 if but > 0 && !libre(px + 1, py) mur = 1 end
 end
 if mur != 0 && MURG && vy > 70 vy = 70.0 end
+var pv = vy
 if sb >= 0 && VSAUT > 0
 if appui(BTN[sb])
 if sol vy = -VSAUT son(660, 40)
@@ -244,6 +246,7 @@ end
 end
 if !bouton(BTN[sb]) && vy < -VSAUT * 0.36 vy = -VSAUT * 0.36 end
 end
+if vy < pv - 100 SQX = 0.7 SQY = 1.35 end
 if GRAV > 0 vy += GRAV * dt if vy > 500 vy = 500.0 end else vy += (buty - vy) * kk * dt end
 var nx = px + vx * dt
 if libre(nx, py) px = nx
@@ -258,11 +261,12 @@ elif vy > 0
 var haut = -1.0
 for o: PLAT if px + 10 > o["x"] && px < o["x"] + 16 && ny + 14 > o["y"] && py + 14 <= o["y"] + 4 haut = o["y"] end end
 if haut >= 0 py = haut - 14 else py = int((ny + 13) / T) * T - 14.0 end
+if vy > 220 var kq = (vy - 220) / 300.0 if kq > 1 kq = 1.0 end SQX = 1.15 + 0.25 * kq SQY = 0.85 - 0.25 * kq end
 vy = 0.0
 var r = int((py + 15) / T)
 for c: [int(px / T), int((px + 9) / T)]
 var k = case(c, r)
-var rb = prop(k, 3) if rb > 0 && GRAV > 0 vy = -math.sqrt(2.0 * GRAV * rb * T) son(990, 60) end
+var rb = prop(k, 3) if rb > 0 && GRAV > 0 vy = -math.sqrt(2.0 * GRAV * rb * T) SQX = 1.6 SQY = 0.4 son(990, 60) end
 var di = prop(k, 4) if di > 0 && !CASSE.contains(r * 20 + c) CASSE[r * 20 + c] = temps() + di end
 end
 else py = (int(ny / T) + 1) * T + 0.0 vy = 0.0
@@ -362,12 +366,13 @@ end
 end
 end
 var x = int(px) var y = int(py)
-rect(x + 2, y + 2, 10, 14, OMBRE) rect(x, y, 10, 10, HERO)
-var a = int(temps() * 10) % 2
-if !sol rect(x + 2, y + 10, 6, 3, OMBRE)
-elif vx * vx > 100 rect(x + (a ? 0 : 2), y + 10, 3, 4, OMBRE) rect(x + (a ? 7 : 5), y + 10, 3, 4, OMBRE)
-else rect(x + 1, y + 10, 3, 4, OMBRE) rect(x + 6, y + 10, 3, 4, OMBRE) end
-rect(x + (vx < 0 ? 1 : 5), y + 3, 4, 4, OEIL) rect(x + (vx < 0 ? 1 : 7), y + 4, 2, 2, OMBRE)
+var w = int(10 * SQX + 0.5) var h = int(14 * SQY + 0.5) var bx = x + 5 - w / 2 var by = y + 14 - h var bh = h * 10 / 14 var lh = h - bh
+var a = int(temps() * 10) % 2 var lw = w * 3 / 10 var ew = w * 4 / 10
+rect(bx + 2, by + 2, w, h, OMBRE) rect(bx, by, w, bh, (HIT > temps() && int(temps() * 20) % 2) ? BLANC : HERO)
+if !sol rect(bx + w / 5, by + bh, w * 6 / 10, lh - 1, OMBRE)
+elif vx * vx > 100 rect(bx + (a ? 0 : w / 5), by + bh, lw, lh, OMBRE) rect(bx + (a ? w * 7 / 10 : w / 2), by + bh, lw, lh, OMBRE)
+else rect(bx + w / 10, by + bh, lw, lh, OMBRE) rect(bx + w * 6 / 10, by + bh, lw, lh, OMBRE) end
+rect(bx + (vx < 0 ? w / 10 : w / 2), by + bh * 3 / 10, ew, ew, OEIL) rect(bx + (vx < 0 ? w / 10 : w * 7 / 10), by + bh * 4 / 10, w / 5, w / 5, OMBRE)
 camera(0, 0)
 var s = string.format("%d * %.1f s", pts, chrono)
 texte(5, 5, s, OMBRE, 2) texte(4, 4, s, BLANC, 2)

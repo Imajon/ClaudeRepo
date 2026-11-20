@@ -319,6 +319,12 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #scBulles .pf .pq{background:var(--c);color:transparent}#scBulles .pf .pr{background:hsl(var(--h) 75% 62%);color:transparent}
 #scBulles .pt .pq{color:#fff}#scBulles .pt .pr{color:#111}#scBulles .pr{font-weight:bold}   /* gras sur les 2 calques : sinon le fond est calé sur un texte plus étroit que celui du dessus */
 #scBulles .bPaire:hover .pf{transform:scale(1.02)}#scBulles .bPaire:focus-visible{outline:3px solid var(--c);outline-offset:4px;border-radius:30px}
+/* essai « intercalaires de classeur » (?classeur) : les étapes répondues sont des onglets posés sur un trait, l'étape en cours est la page dessous */
+#scBulles.classeur .rangPaires{gap:0 4px;align-items:flex-end;margin:8px 0 0;padding:0 10px;border-bottom:4px solid var(--line)}
+#scBulles .bOnglet{--c:hsl(var(--h) 60% 44%);display:flex;align-items:center;gap:6px;min-width:0;max-width:100%;margin:0;padding:6px 14px 4px;border:0;border-top:5px solid var(--c);border-radius:12px 12px 0 0;background:hsl(var(--h) 75% 62%);color:#111;font:inherit;font-size:15px;font-weight:bold;cursor:pointer;transition:transform .1s}
+#scBulles .bOnglet:hover{transform:translateY(-4px)}
+#scBulles .bOnglet.sel{position:relative;z-index:1;transform:translateY(0);margin-bottom:-4px;padding-top:14px;padding-bottom:8px;background:var(--c);color:#fff;font-size:17px}   /* l'onglet de l'étape ouverte : plus haut, plein, il passe par-dessus le trait */#scBulles .bOnglet:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+#scBulles .bOnglet .pq{padding:0}#scBulles .bOnglet .pr{padding:0;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #scBulles .aVenir{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:14px;color:var(--mute)}#scBulles .aVenir .pastille{width:auto;height:auto;border:2px dashed hsl(var(--h) 50% 50%);background:none;color:var(--mute);border-radius:999px;padding:3px 12px;font:inherit;font-size:14px;cursor:pointer}#scBulles .aVenir .pastille:hover{background:hsl(var(--h) 70% 50% / .2)}#scBulles .fait{font-size:18px;margin:8px 0 2px}
 #scBulles .libre{display:flex;gap:8px;align-items:center;margin-top:6px}#scBulles .libre input{flex:1;min-width:0;background:var(--panel2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:4px 10px;font:inherit;font-size:15px}#scBulles .libre input:focus{outline:none;border-color:var(--c)}
 @keyframes bFondu{from{opacity:0;transform:translateY(10px)}}   /* les bulles arrivent l'une après l'autre, dans le sens de la lecture (--i = leur rang) */
@@ -4279,7 +4285,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const raz = () => { recette = structuredClone(etat.recette || {}); if (recette.jeu && !recette.genre) recette.genre = JeuxBulles.genreDe(recette.jeu.id);   /* anciennes recettes : sans genre */ props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); fabrique = fait ? sig() : ''; courant = fait ? '' : 'genre'; gouts = {}; vu = ''; idees = false; menu = false; serie = 0; dyn = {}; };
   // PARCOURS : 3 bulles de départ (type, quoi, où), puis « comment » sans fin : 2 de suite, puis « aller plus loin ou tester ? » ; une réponse déjà donnée se rouvre en touchant sa goutte
   const BASE = () => ['genre', recette.genre?.id === 'quiz' ? 'quest' : 'perso', 'monde'], enBase = id => BASE().includes(id);
-  const comment = () => etapes().find(x => !enBase(x.id) && !recette[x.id])?.id;   // le prochain « comment » sans réponse
+  const comment = () => etapes().find(x => !enBase(x.id) && !recette[x.id] && !x.opt)?.id;   // le prochain « comment » sans réponse
   const premier = () => BASE().find(id => !recette[id] && etapes().some(x => x.id === id)) || comment() || 'fork';
   function apres(avant, neuf) {                          // où aller après une réponse
     const nn = JeuxBulles.nbNiv(recette.niv?.id), nx = avant === 'niv' ? (etapes().some(x => x.id === 'monde' + nn) && !recette['monde' + nn] ? 'monde' + nn : 'plan') : /^monde[2-6]$/.test(avant) && neuf ? 'plan' : { plan: 'piege' }[avant];    // niveau ajouté : son monde, puis tout de suite les difficultés
@@ -4298,7 +4304,9 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     } catch {} finally { cherche = false; rendreBulles(); majTokens(); }
   }
   const retirerImage = role => { const k = (etat.images || []).findIndex(m => m.role === role); if (k >= 0) { sources.delete(etat.images[k]); etat.images.splice(k, 1); imagesChangees(); } };
+  const CLASSEUR = /[?&]classeur/.test(location.search);
   function rendreBulles() {
+    scBulles.classList.toggle('classeur', CLASSEUR);
     scBulles.classList.toggle('hide', mode !== 'petits'); if (mode !== 'petits') return;
     scBulles.classList.toggle('attend', cherche); if (!iaEnCours) scGo.disabled = fabrique === sig();
     const cle = courant + '|' + (idees ? 1 : 0) + '|' + (props[courant] || []).map(b => b.bouton).join(), anime = !cherche && cle !== vu;
@@ -4306,7 +4314,8 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     const bulle = (b, i) => `<button class="bulle${recette[courant]?.bouton === b.bouton ? ' prise' : ''}" style="--i:${i}" data-l="bulle" data-i="${i}">${esc(T(b.bouton))}</button>`;
     // les bulles arrivent au fil des réponses : seules les étapes déjà répondues (question + réponse FONDUES en une forme) et l'étape en cours (question + choix) sont là
     const paire = x => { const c = `<span class="pq">${x.icone}</span><span class="pr">${esc(document.documentElement.lang === 'en' ? T(recette[x.id].bouton) : JeuxBulles.mot(x.id, recette[x.id]))}</span>`;   // le mot clef seul (la réponse entière : toucher la pastille rouvre l'étape) ; 2 calques identiques : le fond passe au filtre « goutte », le texte reste net par-dessus
-      return `<button class="bPaire" style="--h:${x.h}" data-l="axe" data-i="${x.id}"><span class="pf" aria-hidden="true">${c}</span><span class="pt">${c}</span></button>`; };
+      return CLASSEUR ? `<button class="bOnglet${x.id === courant ? ' sel' : ''}" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${c}</button>`   // essai « intercalaires de classeur » (?classeur) : la réponse est un onglet, au lieu de la goutte
+        : `<button class="bPaire" style="--h:${x.h}" data-l="axe" data-i="${x.id}"><span class="pf" aria-hidden="true">${c}</span><span class="pt">${c}</span></button>`; };
     const attendre = `<span class="attente"><span class="rond"></span>${ATTENTE.slice(2)}</span>`;   // le rond tourne ; slice(2) : sans le sablier du texte
     const ouvert = a => { const b0 = base(a), ex = extra(a), plus = a.ia || a.libre || a.bulles.some(b => b.plus) || cachees(a).length > 0;
       if (cherche && !idees && !a.quiz) return `<div class="bZone" style="--h:${a.h}">${attendre}</div>`;   // Mistral écrit la suite : rien à toucher tant que les bulles ne sont pas cliquables, elles arrivent ensuite en fondu
@@ -4316,13 +4325,12 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
       + (plus && idees ? `<h4>✨ Des idées pour toi</h4><div class="bulles">${cherche ? attendre : ex.map((b, i) => bulle(b, b0.length + i)).join('')}</div>`
         + (a.ia || a.libre ? `<div class="libre"><input type="text" maxlength="100" placeholder="✏️ Ce que tu aimes…"><button class="bulle autre" data-l="libre">🔄 D'autres bulles</button></div>` : '') : '') + '</div>'; };
     const venir = fait || !enBase(courant) ? [] : BASE().filter(id => id !== courant && !recette[id]).map(axeDe);
-    const forke = courant === 'fork' && !fait ? `<div class="bZone" style="--h:150"><div class="bQ">🚀 ${T('Tu veux aller plus loin ou tester ton jeu ?')}</div><div class="bulles">${comment() ? `<button class="bulle" data-l="plus">🚀 ${T('Aller plus loin')}</button>` : ''}<button class="bulle" data-l="tester">🎮 ${T('Tester mon jeu')}</button><button class="bulle" data-l="menu">✏️ ${T('Changer un choix')}</button></div></div>` : '';   // l'ensemble de la structure : ce qui est répondu (en gouttes), ce qui se fait (ouvert), ce qui reste (pastilles)
     scBulles.innerHTML = (fait ? `<div class="fait">✅ Ton jeu est prêt !</div>` : '')
-      + etapes().map(x => x.id === courant ? ouvert(x) : recette[x.id] ? paire(x) : '').join('').replace(/(<button class="bPaire"[\s\S]*?<\/button>)+/g, '<div class="rangPaires">$&</div>')   // les réponses se suivent sur UNE ligne
-      + forke
+      + (CLASSEUR ? etapes().filter(x => recette[x.id]).map(paire).join('').replace(/^[\s\S]+$/, '<div class="rangPaires">$&</div>') + etapes().filter(x => x.id === courant).map(ouvert).join('')   // classeur : tous les onglets en haut (celui de l'étape ouverte, relevé), la page de l'étape dessous
+        : etapes().map(x => x.id === courant ? ouvert(x) : recette[x.id] ? paire(x) : '').join('')).replace(/(<button class="bPaire"[\s\S]*?<\/button>)+/g,'<div class="rangPaires">$&</div>')   // les réponses se suivent sur UNE ligne
       + (venir.length ? `<div class="aVenir">Ensuite : ${venir.map(x => `<button class="pastille" style="--h:${x.h}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(JeuxBulles.lib(x, ids(), 'nom')))}</button>`).join('')}</div>` : '')
-      + ((fait || menu) && (!courant || courant === 'fork') ? (   // après le premier jeu : tout de suite « Que veux-tu faire maintenant ? » et les bulles de ce qu'on peut changer (personnage, fond, gros bouton...)
-        `<div class="bZone" style="--h:200"><div class="bQ">✏️ ${T('Quel élément veux-tu changer ?')}</div><div class="bulles">${etapes().map(x => `<button class="bulle${recette[x.id] ? ' prise' : ''}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(JeuxBulles.lib(x, ids(), 'nom')))}</button>`).join('')}${/^plat-/.test(recette.jeu?.id) && JeuxBulles.nbNiv(recette.niv?.id) <= 4 ? `<button class="bulle" data-l="placer">🎯 ${T('Placer à la main')}</button>` : ''}</div></div>`) : '');
+      + ((fait || menu || courant === 'fork') && (!courant || courant === 'fork') ? (   // après le premier jeu : tout de suite « Que veux-tu faire maintenant ? » et les bulles de ce qu'on peut changer (personnage, fond, gros bouton...)
+        `<div class="bZone" style="--h:200"><div class="bQ">✏️ ${T('Que veux-tu personnaliser ?')}</div><div class="bulles">${courant === 'fork' && !fait && comment() ? `<button class="bulle" data-l="plus">🚀 ${T('Aller plus loin')}</button>` : ''}${etapes().map(x => `<button class="bulle${recette[x.id] ? ' prise' : ''}" data-l="axe" data-i="${x.id}">${x.icone} ${esc(T(JeuxBulles.lib(x, ids(), 'nom')))}</button>`).join('')}${/^plat-/.test(recette.jeu?.id) && JeuxBulles.nbNiv(recette.niv?.id) <= 4 ? `<button class="bulle" data-l="placer">🎯 ${T('Placer à la main')}</button>` : ''}</div></div>`) : '');
     scDemande.value = etapes().map(x => recette[x.id]?.bouton).filter(Boolean).join(' · ');   // le champ (caché) dit ce qui est choisi
   }
   async function charger(id, encore) {                   // les idées de l'IA pour cette étape (personnage, ce qu'on attrape, ce qu'on évite), tournées vers l'univers de l'enfant ; sans choix ni goût, pas d'appel

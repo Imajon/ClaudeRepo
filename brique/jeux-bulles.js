@@ -29,7 +29,7 @@
       { id: 'plat-but', genre: 'plateforme', bouton: '🏁 Je cours et je saute jusqu’au drapeau' }, { id: 'plat-attrape', genre: 'plateforme', bouton: '⭐ Je saute pour ramasser toutes les étoiles' }, { id: 'plat-evite', genre: 'plateforme', bouton: '👾 Je saute par-dessus les monstres' }, { id: 'plat-course', genre: 'plateforme', bouton: '⏱ Je cours plus vite que mon rival' },
       { id: 'cote', genre: 'runner', bouton: '🏃 Je cours en sautant les obstacles' }, { id: 'derriere', genre: 'runner', bouton: '🚗 Je conduis et je change de voie' }, { id: 'dessus', genre: 'runner', bouton: '🛰 Je pilote ma voiture sur la piste' }, { id: 'iso', genre: 'runner', bouton: '🧊 Je roule en 3D en diagonale' },
       { id: 'attrape', genre: 'invader', bouton: '🧺 J’attrape ce qui tombe' }, { id: 'esquive', genre: 'invader', bouton: '💨 J’évite ce qui tombe' }, { id: 'pluie', genre: 'invader', bouton: '🌧 J’attrape tout, rien ne doit tomber' },
-      { id: 'tir-haut', genre: 'tire', bouton: '⬆️ Je tire vers le haut' }, { id: 'tir-perso', genre: 'tire', bouton: '🚀 Je tire avec un personnage que je déplace' }, { id: 'tir-autour', genre: 'tire', bouton: '🎯 Je tire autour de moi' },
+      { id: 'tir-haut', genre: 'tire', bouton: '⬆️ Je tire vers le haut' }, { id: 'tir-perso', genre: 'tire', bouton: '➡️ Je tire vers la droite' }, { id: 'tir-autour', genre: 'tire', bouton: '🎯 Je tire autour de moi' },
       { id: 'quiz', genre: 'quiz', bouton: '❓ Je réponds à des questions' }, { id: 'soigne', genre: 'soigne', bouton: '🐣 Je m’occupe d’un personnage' }] },
     { id: 'figure', h: 20, icone: '🏍', nom: 'Mon véhicule', q: 'Sur quoi roules-tu ?', bulles: [{ id: 'auto', bouton: '🚗 En voiture' }, { id: 'moto', bouton: '🏍 En moto de motocross' }, { id: 'surf', bouton: '🏄 Sur une planche de surf' }] },
     { id: 'obst', h: 55, icone: '🚧', nom: 'Les obstacles', q: 'Des obstacles sur la route ?', bulles: [{ id: 'avec', bouton: '🚧 Avec obstacles' }, { id: 'sans', bouton: '🛣 Sans obstacles' }] },
@@ -46,6 +46,11 @@
     { id: 'quest', quiz: true, h: 300, icone: '❓', nom: 'Les questions', q: 'Sur quoi sont tes questions, et quelles réponses veux-tu ?', bulles: [] },
     { id: 'bon', h: 100, icone: '🎁', nom: 'Ce que j’attrape', q: 'Que veux-tu attraper ?', ia: true, bulles: [{ id: 'monde', bouton: '🎁 Ceux du monde' }, ...formesBulles('bon')] },
     { id: 'mal', h: 0, icone: '💣', nom: 'Ce que j’évite', q: 'Que veux-tu éviter ?', ia: true, bulles: [{ id: 'monde', bouton: '💣 Ceux du monde' }, ...formesBulles('mal')] },
+    // jeux de tir au vaisseau fixe seulement ; opt : proposées dans « Que veux-tu personnaliser ? », jamais posées d'office dans le parcours
+    { id: 'compo', opt: true, h: 15, icone: '🌀', nom: 'Leur façon de bouger', q: 'Comment bougent tes ennemis ?', bulles: [
+      { id: 'droit', bouton: '➡️ Tout droit' }, { id: 'zigzag', bouton: '〰️ En zigzag' }, { id: 'suit', bouton: '🎯 Ils me poursuivent' }, { id: 'accel', bouton: '⚡ Ils accélèrent en approchant' }] },
+    { id: 'typeEn', opt: true, h: 290, icone: '👹', nom: 'Leurs types', q: 'Quels ennemis veux-tu ?', bulles: [
+      { id: 'pareils', bouton: '👾 Tous pareils' }, { id: 'costauds', bouton: '💪 Des costauds : 3 tirs pour les détruire' }, { id: 'rapides', bouton: '💨 Des rapides' }, { id: 'melange', bouton: '🎲 Un peu de tout' }] },
     { id: 'action', h: 265, icone: '⚡', nom: 'Le gros bouton', q: 'Que fait le gros bouton ?', bulles: [
       { id: 'saut', bouton: '🦘 Sauter' }, { id: 'tir', bouton: '💥 Tirer' }, { id: 'bouclier', bouton: '🛡 Bouclier' }, { id: 'turbo', bouton: '💨 Turbo' }, { id: 'aimant', bouton: '🧲 Aimant' }] },
     // étapes de « seconde version » (v2) : proposées seulement une fois le premier jeu fabriqué, depuis « Modifier ma présentation »
@@ -59,23 +64,24 @@
     { id: 'piege', v2: true, h: 270, icone: '👾', nom: 'Les pièges', q: 'Difficulté : et les pièges ?', bulles: [
       { id: 'non', bouton: '⚖️ Autant de pièges à chaque niveau' }, { id: 'oui', bouton: '👾 De plus en plus de pièges' }] }
   ];
-  const DEFAUT = { genre: 'invader', jeu: 'attrape', obst: 'avec', perso: 'chat', couleur: 'orange', monde: 'foret', bon: 'monde', mal: 'monde', action: 'saut', figure: 'auto', fin: 'perdu', niv: 'un', plan: 'non', piege: 'non' };
+  const DEFAUT = { genre: 'invader', jeu: 'attrape', obst: 'avec', perso: 'chat', couleur: 'orange', monde: 'foret', bon: 'monde', mal: 'monde', action: 'saut', figure: 'auto', fin: 'perdu', niv: 'un', plan: 'non', piege: 'non', compo: 'droit', typeEn: 'pareils' };
+  const COMPOS = ['droit', 'zigzag', 'suit', 'accel'], TYPES_EN = ['pareils', 'costauds', 'rapides', 'melange'];   // leur rang = la valeur de COMPO / TYPE dans le Berry des tirs
   const CARTELS = { perdu: ['PERDU !'], oups: ['OUPS !', [255, 120, 100]], over: ['GAME OVER', [255, 70, 70]], encore: ['ENCORE !', [255, 225, 90]], rate: ['RATE !', [255, 150, 50]], erreur: ['ERREUR', [110, 230, 130]] };   // texte (sans accent : la console n'en dessine pas) et couleur ; 9 lettres au plus, le cartel fait 200 px
   const JEUX = ETAPES.find(e => e.id === 'jeu').bulles, GENRE_DE = Object.fromEntries(JEUX.map(b => [b.id, b.genre])), JEUX_DE = {}; JEUX.forEach(b => (JEUX_DE[b.genre] = JEUX_DE[b.genre] || []).push(b.id));
   const NIVEAUX = { un: 1, trois: 3, cinq: 5 }, NIV_MAX = 6, MONDES_MAX = 2;   // 6 niveaux au plus (PIEGES_PLUS : 2 monstres de plus par niveau)
   // un monde par niveau (plateforme à plusieurs niveaux) : monde2 .. monde6, mêmes bulles que « monde » + « comme le niveau 1 » ; libre : le champ « Ce que tu aimes » choisit le monde le plus proche
   for (let k = 2; k <= NIV_MAX; k++) { ETAPES.push({ id: 'monde' + k, v2: true, libre: true, h: 130 + k * 22, icone: ['2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣'][k - 2], nom: 'Monde du niveau ' + k, q: 'Niveau ' + k + ' : où es-tu ?', bulles: [{ id: 'meme', bouton: '↩️ Comme le niveau 1' }, ...ETAPES.find(e => e.id === 'monde').bulles] }); DEFAUT['monde' + k] = 'meme'; }
   const nbNiv = id => NIVEAUX[id] || +String(id || '').slice(1) || 1;   // 'n4' = 4 niveaux ; les anciens 'un', 'trois', 'cinq' marchent encore
-  const MOTS = {'genre/soigne': 'Grandir', 'jeu/plat-but': 'Drapeau', 'jeu/plat-attrape': 'Étoiles', 'jeu/plat-evite': 'Monstres', 'jeu/plat-course': 'Rival', 'jeu/cote': 'Obstacles', 'jeu/derriere': 'Voies', 'jeu/dessus': 'Piste', 'jeu/iso': '3D', 'jeu/attrape': 'Attraper', 'jeu/esquive': 'Éviter', 'jeu/pluie': 'Tout attraper', 'jeu/tir-haut': 'Tir en haut', 'jeu/tir-perso': 'Tir mobile', 'jeu/tir-autour': 'Tir autour', 'jeu/quiz': 'Questions', 'jeu/soigne': 'Soigner', 'figure/moto': 'Moto', 'figure/surf': 'Surf', 'perso/chat': 'Chat', 'perso/robot': 'Robot', 'perso/dragon': 'Dragon', 'perso/fusee': 'Fusée', 'perso/fantome': 'Fantôme', 'perso/magicien': 'Magicien', 'perso/grenouille': 'Grenouille', 'perso/hibou': 'Hibou', 'perso/oiseau': 'Oiseau', 'perso/blob': 'Bestiole', 'monde/foret': 'Forêt', 'monde/ville': 'Ville', 'monde/desert': 'Désert', 'plan/non': 'Mêmes niveaux', 'plan/oui': 'Niveaux changeants', 'piege/non': 'Pièges égaux', 'piege/oui': 'Pièges en plus'};   // le mot clef d'une réponse longue : le récapitulatif ne garde que lui (la réponse entière se relit en touchant la pastille)
+  const MOTS = {'genre/soigne': 'Grandir', 'jeu/plat-but': 'Drapeau', 'jeu/plat-attrape': 'Étoiles', 'jeu/plat-evite': 'Monstres', 'jeu/plat-course': 'Rival', 'jeu/cote': 'Obstacles', 'jeu/derriere': 'Voies', 'jeu/dessus': 'Piste', 'jeu/iso': '3D', 'jeu/attrape': 'Attraper', 'jeu/esquive': 'Éviter', 'jeu/pluie': 'Tout attraper', 'jeu/tir-haut': 'Tir en haut', 'jeu/tir-perso': 'Tir à droite', 'jeu/tir-autour': 'Tir autour', 'jeu/quiz': 'Questions', 'jeu/soigne': 'Soigner', 'figure/moto': 'Moto', 'figure/surf': 'Surf', 'perso/chat': 'Chat', 'perso/robot': 'Robot', 'perso/dragon': 'Dragon', 'perso/fusee': 'Fusée', 'perso/fantome': 'Fantôme', 'perso/magicien': 'Magicien', 'perso/grenouille': 'Grenouille', 'perso/hibou': 'Hibou', 'perso/oiseau': 'Oiseau', 'perso/blob': 'Bestiole', 'monde/foret': 'Forêt', 'monde/ville': 'Ville', 'monde/desert': 'Désert', 'compo/droit': 'Tout droit', 'compo/zigzag': 'Zigzag', 'compo/suit': 'Poursuite', 'compo/accel': 'Accélèrent', 'typeEn/pareils': 'Tous pareils', 'typeEn/costauds': 'Costauds', 'typeEn/rapides': 'Rapides', 'typeEn/melange': 'Mélange', 'plan/non': 'Mêmes niveaux', 'plan/oui': 'Niveaux changeants', 'piege/non': 'Pièges égaux', 'piege/oui': 'Pièges en plus'};   // le mot clef d'une réponse longue : le récapitulatif ne garde que lui (la réponse entière se relit en touchant la pastille)
   for (let k = 2; k <= NIV_MAX; k++) { MOTS['monde' + k + '/meme'] = 'Même monde'; for (const w of ['foret', 'ville', 'espace', 'eau', 'desert', 'neige']) MOTS['monde' + k + '/' + w] = { foret: 'Forêt', ville: 'Ville', espace: 'Espace', eau: 'Eau', desert: 'Désert', neige: 'Neige' }[w]; }
   const mot = (axe, b) => { const m = MOTS[axe + '/' + b.id]; return m ? b.bouton.replace(/^(\S+\s).*$/, '$1') + m : b.bouton; };
   const nivBulles = id => { const n = nbNiv(id), bs = [{ id: 'n' + n, bouton: '✋ Rester à ' + n + (n > 1 ? ' niveaux' : ' niveau') }]; if (n < NIV_MAX) bs.unshift({ id: 'n' + (n + 1), bouton: '➕ Ajouter un niveau (ça fera ' + (n + 1) + ')' }); return bs; };
 // L'IA propose d'autres idées pour perso, bon et mal : chacune devient une image (icône de la page, numéro dans r.imgs) et son choix vaut 'img'. Sans image trouvée, retour au dessin du monde.
 const COURSES = { cote: 1, derriere: 1, dessus: 1, iso: 1 }, NOUVEAUX = { 'plat-but': 1, 'plat-attrape': 1, 'plat-evite': 1, 'plat-course': 1, ...COURSES };   // les nouveaux jeux : le gros bouton a son rôle fixe (sauter, turbo), les obstacles ne comptent que pour les courses
-const FIXES = { 'tir-perso': 1, 'tir-autour': 1 };   // jeux de tir au vaisseau fixe : seuls le genre, le jeu et le monde se choisissent (le monde donne le fond, les particules et les ennemis)
+const FIXES = { 'tir-perso': 1, 'tir-autour': 1 }, TIRS = { 'tir-haut': 1, 'tir-perso': 1, 'tir-autour': 1 };   // jeux de tir au vaisseau fixe : seuls le genre, le jeu et le monde se choisissent (le monde donne le fond, les particules et les ennemis)
 const SOLO = { quiz: 1, soigne: 1 };   // ces deux jeux n'ont ni obstacles, ni objets, ni gros bouton à choisir
-// tir autour : en plus du genre, du jeu et du monde, son personnage, ses tirs (bon) et ses ennemis (mal) se choisissent
-const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (FIXES[r.jeu] && id !== 'genre' && id !== 'jeu' && id !== 'monde') return !(r.jeu === 'tir-autour' && (id === 'perso' || id === 'bon' || id === 'mal')); if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (/^monde[2-6]$/.test(id)) return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) >= +id.slice(5)); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && (!!NOUVEAUX[r.jeu] || r.jeu === 'tir-haut')); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
+// tir vers la droite et tir autour : en plus du genre, du jeu et du monde, leur personnage, leurs tirs (bon) et leurs ennemis (mal) se choisissent
+const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (id === 'compo' || id === 'typeEn') return !TIRS[r.jeu]; if (FIXES[r.jeu] && id !== 'genre' && id !== 'jeu' && id !== 'monde') return !(id === 'perso' || id === 'bon' || id === 'mal'); if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (/^monde[2-6]$/.test(id)) return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) >= +id.slice(5)); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && (!!NOUVEAUX[r.jeu] || r.jeu === 'tir-haut')); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
 
   const FIG = {"auto":["rect(x - 3, y + 16, 30, 9, C2) rect(x - 3, y + 16, 30, 3, C3) disque(x + 3, y + 25, 4, NO) disque(x + 21, y + 25, 4, NO)","rect(x - 2, y + 16, 28, 10, C2) rect(x - 2, y + 16, 28, 3, C3) rect(x, y + 25, 6, 4, NO) rect(x + 18, y + 25, 6, 4, NO)"],"moto":["disque(x + 2, y + 24, 5, NO) disque(x + 22, y + 24, 5, NO) rect(x + 2, y + 17, 20, 4, C2) rect(x + 18, y + 12, 3, 6, NO)","rect(x + 9, y + 18, 6, 10, NO) rect(x + 4, y + 17, 16, 3, C2)"],"surf":["rect(x - 3, y + 21, 30, 3, C2) tri(x + 27, y + 21, x + 27, y + 24, x + 32, y + 22, C2) rect(x - 4, y + 25, 32, 2, A3)","rect(x + 5, y + 20, 14, 5, C2) rect(x + 3, y + 25, 18, 2, A3)"]};   // le véhicule sous le personnage dans les courses : [vue de côté, vue de derrière / dessus]
   const COULEURS = { rouge: [225, 60, 55], orange: [240, 140, 40], jaune: [245, 205, 50], vert: [80, 190, 90], bleu: [70, 130, 230], violet: [150, 90, 210], rose: [240, 120, 175], blanc: [240, 240, 245] };
@@ -402,14 +408,16 @@ const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.ge
     const nom = (m.nom + (NOMS[r.perso] || 'Heros') + ' ' + mo.nom).slice(0, 40);
     const dx = liste(mo.n, i => Math.round(14 + i * 292 / Math.max(1, mo.n - 1) + (i * 37) % 17 - 8)), dy = liste(mo.n, i => (i * 53 + 17) % 180), dz = liste(mo.n, i => (i * 7) % 14);
     const bandes = liste(10, i => rgb(mel(mo.ciel[0], mo.ciel[1], i / 9)));
+    const tirH = r.jeu === 'tir-haut', cp = COMPOS.indexOf(r.compo), ty = TYPES_EN.indexOf(r.typeEn);   // tir vers le haut : les ennemis (les mauvais objets) bougent et se distinguent comme dans les autres tirs
     const perte = (cond) => `if ${cond} VIES -= 1 HT = 0.8 son(140, 160) effet(IX[i], IY[i]) if VIES <= 0 FIN = true son(100, 400) end end`;
-    return `# ${nom}
+    return `# ${nom}${tirH ? '\nimport math' : ''}
 var C1 = 0 var C2 = 0 var C3 = 0 var BL = 0 var NO = 0 var SOL = 0 var SOL2 = 0 var A1 = 0 var A2 = 0 var A3 = 0 var A4 = 0 var BAND = []
 var DX = ${dx} var DY = ${dy} var DZ = ${dz}
 var PX = 148.0 var PY = 184.0 var PTS = 0 var VIES = 3 var FIN = false var HT = 0.0 var SP = 0.6
 var IX = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] var IY = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] var IK = [0, 0, 0, 0, 0, 0] var IV = [false, false, false, false, false, false]
 var FX = [0.0, 0.0, 0.0, 0.0] var FY = [0.0, 0.0, 0.0, 0.0] var FT = [0.0, 0.0, 0.0, 0.0]
-${ac.vars}
+${tirH ? `var IB = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] var IP = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] var IE = [0, 0, 0, 0, 0, 0] var IH = [1, 1, 1, 1, 1, 1] var COMPO = ${cp} var TYPE = ${ty}
+` : ''}${ac.vars}
 
 def effet(x, y)
   var i = 0
@@ -490,7 +498,14 @@ ${ac.maj}
       if !IV[i]
         IV[i] = true IX[i] = real(hasard(12, 308)) IY[i] = -10.0 IK[i] = 0
         if hasard(1, 100) <= ${m.pb} IK[i] = 1 end
-        i = 6
+${tirH ? `        IB[i] = IX[i] IP[i] = real(hasard(0, 6)) IE[i] = 0 IH[i] = 1
+        if TYPE == 1 && hasard(0, 2) == 0 IE[i] = 1 IH[i] = 3 end
+        if TYPE == 2 && hasard(0, 2) == 0 IE[i] = 2 end
+        if TYPE == 3
+          IE[i] = hasard(0, 2)
+          if IE[i] == 1 IH[i] = 3 end
+        end
+` : ''}        i = 6
       end
       i += 1
     end
@@ -498,8 +513,17 @@ ${ac.maj}
   i = 0
   while i < 6
     if IV[i]
-      IY[i] += vc * dt
-${ac.objet}
+${tirH ? `      var ve = vc
+      if COMPO == 3 ve = ve * (1.0 + IY[i] / 150.0) end
+      if IE[i] == 2 ve = ve * 1.8 end
+      IY[i] += ve * dt IP[i] += 3 * dt
+      if COMPO == 1
+        IX[i] = IB[i] + math.sin(IP[i]) * 30
+      elif COMPO == 2
+        if PX + 12 > IX[i] + 2 IX[i] += 40 * dt elif PX + 12 < IX[i] - 2 IX[i] -= 40 * dt end
+      end
+      if IX[i] < 12 IX[i] = 12.0 elif IX[i] > 308 IX[i] = 308.0 end` : '      IY[i] += vc * dt'}
+${tirH ? ac.objet.replace('IV[i] = false SV[k] = false PTS += 1 score(PTS) son(520, 50) effet(IX[i], IY[i])', 'SV[k] = false IH[i] -= 1\n            if IH[i] <= 0 IV[i] = false PTS += 1 score(PTS) son(520, 50) effet(IX[i], IY[i]) else son(300, 30) end') : ac.objet}
       if IV[i]
         touche = IX[i] + 8 > PX + 3 && IX[i] - 8 < PX + 21 && IY[i] + 8 > PY + 4 && IY[i] - 8 < PY + 24
         if touche
@@ -534,7 +558,11 @@ def dessine()
   while i < 8 rect(i * 41 + 7, 218 + i % 3 * 7, 8, 2, SOL2) i += 1 end
   i = 0
   while i < 6
-    if IV[i] objet(int(IX[i]), int(IY[i]), IK[i]) end
+    if IV[i]
+      objet(int(IX[i]), int(IY[i]), IK[i])
+${tirH ? `      if IE[i] == 1 texte(int(IX[i]) - 3, int(IY[i]) - 25, str(IH[i]), NO, 2) texte(int(IX[i]) - 4, int(IY[i]) - 26, str(IH[i]), BL, 2) end
+      if IE[i] == 2 rect(int(IX[i]) - 4, int(IY[i]) - 24, 2, 9, BL) rect(int(IX[i]) + 3, int(IY[i]) - 20, 2, 7, BL) end
+` : ''}    end
     i += 1
   end
   rect(int(PX) + 3, 207, 18, 3, SOL2)
@@ -1169,9 +1197,11 @@ end
 
   // jeux de tir a look fixe (vaisseau, ennemis) : les memes Berry que systemes/jeu-shmup.be et jeu-vaisseau-centre.be, testes dans verif ; personnage, monde et gros bouton ne se choisissent pas
   const TIR_PERSO = `# Tir et deplace
+import math
 var y = 110.0 var pts = 0 var vies = 3 var fin = false var inv = 0.0 var prochain = 1.0 var rythme = 1.0
 var BX = [] var BY = []                             # 5 tirs : BX < 0 = libre
 var EX = [] var EY = [] var EP = [] var EA = []     # 6 ennemis : EP = phase de l'ondulation
+var EB = [] var EK = [] var EH = []                 # EB = hauteur de depart, EK = type (0 normal, 1 costaud, 2 rapide), EH = points de vie
 var SX = [] var SY = []                             # 24 etoiles
 
 def reset()
@@ -1181,7 +1211,7 @@ def reset()
 end
 def debut()
   for i: 0 .. 4 BX.push(-10.0) BY.push(0.0) end
-  for i: 0 .. 5 EX.push(0.0) EY.push(0.0) EP.push(0.0) EA.push(false) end
+  for i: 0 .. 5 EX.push(0.0) EY.push(0.0) EP.push(0.0) EA.push(false) EB.push(0.0) EK.push(0) EH.push(1) end
   for i: 0 .. 23 SX.push(hasard(0, 319)) SY.push(hasard(0, 239)) end
 end
 
@@ -1202,17 +1232,40 @@ def maj(dt)
   rythme += 0.02 * dt prochain -= dt * rythme
   if prochain <= 0
     prochain = 1.0
-    for i: 0 .. 5 if !EA[i] EA[i] = true EX[i] = 330.0 EY[i] = real(hasard(20, 220)) EP[i] = real(hasard(0, 6)) break end end
+    for i: 0 .. 5
+      if !EA[i]
+        EA[i] = true EX[i] = 330.0 EY[i] = real(hasard(20, 220)) EB[i] = EY[i] EP[i] = real(hasard(0, 6))
+        var k = 0
+        if TYPE == 1 && hasard(0, 2) == 0 k = 1 end
+        if TYPE == 2 && hasard(0, 2) == 0 k = 2 end
+        if TYPE == 3 k = hasard(0, 2) end
+        EK[i] = k EH[i] = 1
+        if k == 1 EH[i] = 3 end
+        break
+      end
+    end
   end
   for i: 0 .. 5
     if EA[i]
-      EX[i] -= (60 + pts * 2) * dt EP[i] += 3 * dt
+      var v = 60 + pts * 2
+      if COMPO == 3 v = v * (1.0 + (330 - EX[i]) / 220) end
+      if EK[i] == 2 v = v * 1.8 end
+      EX[i] -= v * dt EP[i] += 3 * dt
+      if COMPO == 1
+        EY[i] = EB[i] + math.sin(EP[i]) * 30
+      elif COMPO == 2
+        if y > EY[i] + 2 EY[i] += 45 * dt elif y < EY[i] - 2 EY[i] -= 45 * dt end
+      end
+      if EY[i] < 8 EY[i] = 8.0 elif EY[i] > 232 EY[i] = 232.0 end
       var dy = EY[i] - y var dx = EX[i] - 34
       if EX[i] < -20 EA[i] = false
       elif inv <= 0 && dx * dx + dy * dy < 300 EA[i] = false vies -= 1 inv = 1.5 son(150, 200) end
       for j: 0 .. 4
         var ex = BX[j] - EX[i] var ey = BY[j] - EY[i]
-        if BX[j] >= 0 && EA[i] && ex * ex + ey * ey < 200 EA[i] = false BX[j] = -10.0 pts += 1 score(pts) son(440, 50) end
+        if BX[j] >= 0 && EA[i] && ex * ex + ey * ey < 200
+          BX[j] = -10.0 EH[i] -= 1
+          if EH[i] <= 0 EA[i] = false pts += 1 score(pts) son(440, 50) else son(300, 30) end
+        end
       end
     end
   end
@@ -1223,12 +1276,15 @@ def dessine()
   for i: 0 .. 9 rect(0, i * 24, 320, 24, BAND[i]) end
   for i: 0 .. 23 rect(int(SX[i]), SY[i], 2, 2, i % 2 == 0 ? PT1 : PT2) end
   for i: 0 .. 5
-    if EA[i] objet(int(EX[i]), int(EY[i])) end
+    if EA[i]
+      objet(int(EX[i]), int(EY[i]), 1)
+      if EK[i] == 1 texte(int(EX[i]) - 4, int(EY[i]) - 24, str(EH[i]), TXT, 2) end
+      if EK[i] == 2 rect(int(EX[i]) + 10, int(EY[i]) - 4, 14, 2, TXT) rect(int(EX[i]) + 14, int(EY[i]) + 3, 10, 2, TXT) end
+    end
   end
-  for i: 0 .. 4 if BX[i] >= 0 rect(int(BX[i]), int(BY[i]) - 1, 8, 3, TIRC) end end
+  for i: 0 .. 4 if BX[i] >= 0 objet(int(BX[i]), int(BY[i]), 0) end end
   if inv <= 0 || int(temps() * 10) % 2 == 0
-    var iy = int(y)
-    tri(52, iy, 28, iy - 10, 28, iy + 10, rgb(232, 50, 43)) rect(24, iy - 3, 8, 6, rgb(255, 160, 40))
+    perso(22, int(y) - 12)
   end
   for i: 1 .. vies disque(8 + i * 14, 12, 5, rgb(240, 70, 80)) end
   texte(250, 6, str(pts), TXT, 2)
@@ -1240,6 +1296,7 @@ import math
 var ang = 0.0 var pts = 0 var vies = 3 var fin = false var inv = 0.0 var prochain = 1.0 var rythme = 1.0
 var BX = [] var BY = [] var BVX = [] var BVY = [] var BV = []   # 6 tirs : BV = duree de vie restante (<= 0 : libre)
 var AX = [] var AY = [] var AVX = [] var AVY = [] var AA = []   # 6 asteroides, AA = actif
+var AP = [] var AK = [] var AH = []                             # AP = phase du zigzag, AK = type (0 normal, 1 costaud, 2 rapide), AH = points de vie
 
 def reset()
   ang = 0.0 pts = 0 vies = 3 fin = false inv = 0.0 prochain = 1.0 rythme = 1.0
@@ -1248,7 +1305,7 @@ end
 def debut()
   for i: 0 .. 5
     BX.push(0.0) BY.push(0.0) BVX.push(0.0) BVY.push(0.0) BV.push(0.0)
-    AX.push(0.0) AY.push(0.0) AVX.push(0.0) AVY.push(0.0) AA.push(false)
+    AX.push(0.0) AY.push(0.0) AVX.push(0.0) AVY.push(0.0) AA.push(false) AP.push(0.0) AK.push(0) AH.push(1)
   end
 end
 
@@ -1275,7 +1332,13 @@ def maj(dt)
       if !AA[i]
         var a = real(hasard(0, 628)) / 100.0         # arrive d'un point du bord, vise le centre
         AX[i] = 160.0 + math.cos(a) * 200 AY[i] = 120.0 + math.sin(a) * 200
-        AVX[i] = -math.cos(a) * 40 AVY[i] = -math.sin(a) * 40 AA[i] = true
+        AVX[i] = -math.cos(a) * 40 AVY[i] = -math.sin(a) * 40 AA[i] = true AP[i] = 0.0
+        var k = 0
+        if TYPE == 1 && hasard(0, 2) == 0 k = 1 end
+        if TYPE == 2 && hasard(0, 2) == 0 k = 2 end
+        if TYPE == 3 k = hasard(0, 2) end
+        AK[i] = k AH[i] = 1
+        if k == 1 AH[i] = 3 end
         break
       end
     end
@@ -1283,14 +1346,26 @@ def maj(dt)
   for i: 0 .. 5
     if BV[i] > 0 BV[i] -= dt BX[i] += BVX[i] * dt BY[i] += BVY[i] * dt end
     if AA[i]
-      AX[i] += AVX[i] * dt AY[i] += AVY[i] * dt
       var dx = AX[i] - 160 var dy = AY[i] - 120
+      var d = math.sqrt(dx * dx + dy * dy) + 0.1
+      var s = 1.0
+      if AK[i] == 2 s = 1.8 end
+      if COMPO == 3 s = s * (1.0 + (200 - d) / 120) end
+      AP[i] += 4 * dt
+      var vx = AVX[i] var vy = AVY[i]
+      if COMPO == 1 vx = vx - AVY[i] * math.sin(AP[i]) * 2 vy = vy + AVX[i] * math.sin(AP[i]) * 2 end
+      if COMPO == 2 vx = (-dx * 40 - dy * 30) / d vy = (-dy * 40 + dx * 30) / d end
+      AX[i] += vx * s * dt AY[i] += vy * s * dt
+      dx = AX[i] - 160 dy = AY[i] - 120
       if dx * dx + dy * dy < 200 && inv <= 0        # touche le vaisseau (distance au carre)
         AA[i] = false vies -= 1 inv = 1.5 son(150, 200)
       end
       for j: 0 .. 5
         var ex = BX[j] - AX[i] var ey = BY[j] - AY[i]
-        if BV[j] > 0 && AA[i] && ex * ex + ey * ey < 144 AA[i] = false BV[j] = 0.0 pts += 1 score(pts) son(440, 50) end
+        if BV[j] > 0 && AA[i] && ex * ex + ey * ey < 144
+          BV[j] = 0.0 AH[i] -= 1
+          if AH[i] <= 0 AA[i] = false pts += 1 score(pts) son(440, 50) else son(300, 30) end
+        end
       end
     end
   end
@@ -1300,7 +1375,11 @@ end
 def dessine()
   for i: 0 .. 9 rect(0, i * 24, 320, 24, BAND[i]) end
   for i: 0 .. 5
-    if AA[i] objet(int(AX[i]), int(AY[i]), 1) end
+    if AA[i]
+      objet(int(AX[i]), int(AY[i]), 1)
+      if AK[i] == 1 texte(int(AX[i]) - 4, int(AY[i]) - 24, str(AH[i]), TXT, 2) end
+      if AK[i] == 2 rect(int(AX[i] - AVX[i] * 0.3), int(AY[i] - AVY[i] * 0.3), 3, 3, TXT) rect(int(AX[i] - AVX[i] * 0.55), int(AY[i] - AVY[i] * 0.55), 2, 2, TXT) end
+    end
     if BV[i] > 0 objet(int(BX[i]), int(BY[i]), 0) end
   end
   if inv <= 0 || int(temps() * 10) % 2 == 0 perso(148, 108) end
@@ -1316,11 +1395,11 @@ end
   const tirMonde = (code, perso) => r => {
     const mo = MONDES[r.monde], im = r.imgs || {}, col = COULEURS[r.couleur], pale = mo.ciel[0].concat(mo.ciel[1]).reduce((t, v) => t + v, 0) / 6 > 130;
     const c = pale ? { pt1: [255, 255, 255], pt2: fonce(mo.ciel[0]), tir: [225, 80, 20], txt: [30, 30, 45] } : { pt1: [90, 90, 120], pt2: [220, 220, 250], tir: [255, 220, 60], txt: [255, 255, 255] };
-    return code.replace(/^# .*\n/, '# ' + ('Tir ' + mo.nom).slice(0, 40) + '\n').replace('\nvar ', '\nvar NO = 0 var A1 = 0 var A2 = 0 var A3 = 0 var A4 = 0 var BAND = [] var PT1 = 0 var PT2 = 0 var TIRC = 0 var TXT = 0' + (perso ? ' var C1 = 0 var C2 = 0 var C3 = 0 var BL = 0' : '') + '\nvar ')
-      .replace('\ndef debut()\n', (perso ? `\ndef objet(x, y, k)\n  if k == 0\n${objetCode(r, 'bon', mo, im)}\n  else\n${objetCode(r, 'mal', mo, im)}\n  end\nend\ndef perso(x, y)\n${r.perso === 'img' ? `  image(${im.perso}, x, y, 0, 1)` : PERSOS[r.perso]}\nend` : `\ndef objet(x, y)\n${mo.mal}\nend`) + `\ndef debut()\n${perso ? `  C1 = rgb(${col.join(', ')}) C2 = rgb(${fonce(col).join(', ')}) C3 = rgb(${clair(col).join(', ')}) BL = rgb(255, 255, 255)\n` : ''}  NO = rgb(30, 30, 45) A1 = ${rgb(mo.a[0])} A2 = ${rgb(mo.a[1])} A3 = ${rgb(mo.a[2])} A4 = ${rgb(mo.a[3])}\n  BAND = ${liste(10, i => rgb(mel(mo.ciel[0], mo.ciel[1], i / 9)))}\n  PT1 = ${rgb(c.pt1)} PT2 = ${rgb(c.pt2)} TIRC = ${rgb(c.tir)} TXT = ${rgb(c.txt)}\n`);
+    return code.replace(/^# .*\n/, '# ' + ('Tir ' + mo.nom).slice(0, 40) + '\n').replace('\nvar ', '\nvar NO = 0 var A1 = 0 var A2 = 0 var A3 = 0 var A4 = 0 var BAND = [] var PT1 = 0 var PT2 = 0 var TIRC = 0 var TXT = 0 var COMPO = 0 var TYPE = 0' + (perso ? ' var C1 = 0 var C2 = 0 var C3 = 0 var BL = 0' : '') + '\nvar ')
+      .replace('\ndef debut()\n', (perso ? `\ndef objet(x, y, k)\n  if k == 0\n${objetCode(r, 'bon', mo, im)}\n  else\n${objetCode(r, 'mal', mo, im)}\n  end\nend\ndef perso(x, y)\n${r.perso === 'img' ? `  image(${im.perso}, x, y, 0, 1)` : PERSOS[r.perso]}\nend` : `\ndef objet(x, y)\n${mo.mal}\nend`) + `\ndef debut()\n  COMPO = ${COMPOS.indexOf(r.compo)} TYPE = ${TYPES_EN.indexOf(r.typeEn)}\n${perso ? `  C1 = rgb(${col.join(', ')}) C2 = rgb(${fonce(col).join(', ')}) C3 = rgb(${clair(col).join(', ')}) BL = rgb(255, 255, 255)\n` : ''}  NO = rgb(30, 30, 45) A1 = ${rgb(mo.a[0])} A2 = ${rgb(mo.a[1])} A3 = ${rgb(mo.a[2])} A4 = ${rgb(mo.a[3])}\n  BAND = ${liste(10, i => rgb(mel(mo.ciel[0], mo.ciel[1], i / 9)))}\n  PT1 = ${rgb(c.pt1)} PT2 = ${rgb(c.pt2)} TIRC = ${rgb(c.tir)} TXT = ${rgb(c.txt)}\n`);
   };
 
-  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'tir-haut': chute, 'tir-perso': tirMonde(TIR_PERSO), 'tir-autour': tirMonde(TIR_AUTOUR, true), 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, derriere: course, dessus: course, iso: course };   // jeu -> son système
+  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'tir-haut': chute, 'tir-perso': tirMonde(TIR_PERSO, true), 'tir-autour': tirMonde(TIR_AUTOUR, true), 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, derriere: course, dessus: course, iso: course };   // jeu -> son système
 
   function recetteComplete(r) {   // une étape sans choix (ou un choix inconnu) prend sa valeur par défaut : le jeu marche toujours
     const o = {};
@@ -1454,7 +1533,7 @@ M.EN = {"Placer à la main":"Place things by hand","🧊 Je roule en 3D en diago
 Object.assign(M.EN, { "Un niveau de plus ?": "One more level?", "🦘 Je saute": "🦘 I jump", "💨 Je cours": "💨 I run", "🧺 J’attrape": "🧺 I catch", "💥 Je tire": "💥 I shoot", "🧠 J’apprends": "🧠 I learn", "🌱 Je fais grandir": "🌱 I make it grow", "Tu veux aller plus loin ou tester ton jeu ?": "Go further, or test your game?", "Aller plus loin": "Go further", "Tester mon jeu": "Test my game", "Changer un choix": "Change a choice", "Ton jeu est déjà prêt : change quelque chose avant de le renvoyer.": "Your game is ready: change something before sending it again." });
 for (let n = 1; n <= NIV_MAX; n++) { M.EN['➕ Ajouter un niveau (ça fera ' + (n + 1) + ')'] = '➕ Add a level (that makes ' + (n + 1) + ')'; M.EN['✋ Rester à ' + n + (n > 1 ? ' niveaux' : ' niveau')] = '✋ Stay at ' + n + (n > 1 ? ' levels' : ' level'); }
 Object.assign(M.EN, { "Les plateformes": "The platforms", "Difficulté : les plateformes des niveaux ?": "Difficulty: the platforms in each level?", "🧱 Les mêmes à chaque niveau": "🧱 The same in every level", "🗺 À des endroits différents à chaque niveau": "🗺 In different places in every level", "Les pièges": "The traps", "Difficulté : et les pièges ?": "Difficulty: and the traps?", "⚖️ Autant de pièges à chaque niveau": "⚖️ The same number of traps", "👾 De plus en plus de pièges": "👾 More and more traps" });
-Object.assign(M.EN, { "⬆️ Je tire vers le haut": "⬆️ I shoot upwards", "🚀 Je tire avec un personnage que je déplace": "🚀 I shoot with a character I move", "🎯 Je tire autour de moi": "🎯 I shoot all around me" });
+Object.assign(M.EN, { "⬆️ Je tire vers le haut": "⬆️ I shoot upwards", "➡️ Je tire vers la droite": "➡️ I shoot to the right", "🎯 Je tire autour de moi": "🎯 I shoot all around me" });
 Object.assign(M.EN, { "Le genre": "The genre", "Quel jeu ?": "Which game?", "🏃 Je saute de plateforme en plateforme": "🏃 I jump from platform to platform", "💨 Je cours tout seul et j’évite les obstacles": "💨 I run on my own and dodge obstacles", "🛸 Je reste en bas, tout vient vers moi": "🛸 I stay at the bottom, everything comes at me", "🧺 J’attrape ce qui tombe": "🧺 I catch what falls" });
 // le niveau 1 de la plateforme tel que le jeu le fait (point de départ de « Placer à la main ») ; null si ce jeu n'est pas une plateforme
 M.platDefaut = r => {
@@ -1470,6 +1549,7 @@ M.mondeBulles = (id, r) => {   // les bulles de « monde du niveau k » : si le 
 };
 const LIB_TIR = { bon: { nom: 'Mes tirs', q: 'Avec quoi tires-tu ?' }, mal: { nom: 'Mes ennemis', q: 'Que veux-tu détruire ?' } };   // « tir autour » : « ce que j’attrape / évite » devient « mes tirs / mes ennemis »
 Object.assign(M.EN, { "Mes tirs": "My shots", "Avec quoi tires-tu ?": "What do you shoot with?", "Mes ennemis": "My enemies", "Que veux-tu détruire ?": "What do you want to destroy?" });
-M.lib = (a, r, k) => (r && r.jeu === 'tir-autour' && LIB_TIR[a.id]?.[k]) || a[k];   // k = 'q' ou 'nom' : le texte de l'étape pour ce jeu
+Object.assign(M.EN, { "Leur façon de bouger": "How they move", "Comment bougent tes ennemis ?": "How do your enemies move?", "➡️ Tout droit": "➡️ Straight ahead", "〰️ En zigzag": "〰️ Zigzag", "🎯 Ils me poursuivent": "🎯 They chase me", "⚡ Ils accélèrent en approchant": "⚡ They speed up as they come", "Leurs types": "Their types", "Quels ennemis veux-tu ?": "Which enemies do you want?", "👾 Tous pareils": "👾 All the same", "💪 Des costauds : 3 tirs pour les détruire": "💪 Tough ones: 3 shots to destroy them", "💨 Des rapides": "💨 Fast ones", "🎲 Un peu de tout": "🎲 A bit of everything", "Aller plus loin": "Go further" });   // tirs : comment bougent les ennemis, leurs types
+M.lib = (a, r, k) => (r && FIXES[r.jeu] && LIB_TIR[a.id]?.[k]) || a[k];   // k = 'q' ou 'nom' : le texte de l'étape pour ce jeu
 M.ARBRES = AR.ARBRES; M.ETAPES = ETAPES; M.genreDe = jeu => ETAPES[0].bulles.find(b => b.id === GENRE_DE[jeu]); M.saute = saute; M.nivBulles = nivBulles; M.mot = mot; M.nbNiv = nbNiv; M.DEFAUT = DEFAUT; M.recetteComplete = recetteComplete; M.assembler = assembler;
 })(typeof module === 'object' ? module.exports : (window.JeuxBulles = {}));

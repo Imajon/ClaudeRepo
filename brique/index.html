@@ -4346,7 +4346,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const sig = () => JSON.stringify([Object.entries(recette).map(([k, v]) => [k, v.bouton]), etat.edit || 0]);   // etat.edit : le niveau 1 placé à la main
   const raz = () => { recette = structuredClone(etat.recette || {}); if (recette.jeu && !recette.genre) recette.genre = JeuxBulles.genreDe(recette.jeu.id);   /* anciennes recettes : sans genre */ props = {}; frais = {}; fait = !!(etat.script && Object.keys(recette).length); fabrique = fait ? sig() : ''; courant = fait ? '' : 'genre'; gouts = {}; vu = ''; idees = false; menu = false; serie = 0; dyn = {}; };
   // PARCOURS : 3 bulles de départ (type, quoi, où), puis « comment » sans fin : 2 de suite, puis « aller plus loin ou tester ? » ; une réponse déjà donnée se rouvre en touchant sa goutte
-  const BASE = () => ['genre', recette.genre?.id === 'quiz' ? 'quest' : 'perso', 'monde'], enBase = id => BASE().includes(id);
+  const BASE = () => ['genre', 'jeu', recette.genre?.id === 'quiz' ? 'quest' : 'perso', 'monde'], enBase = id => BASE().includes(id);
   const comment = () => etapes().find(x => !enBase(x.id) && !recette[x.id] && !x.opt)?.id;   // le prochain « comment » sans réponse
   const premier = () => BASE().find(id => !recette[id] && etapes().some(x => x.id === id)) || comment() || 'fork';
   function apres(avant, neuf) {                          // où aller après une réponse
@@ -4362,7 +4362,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     cherche = true; rendreBulles();
     try {
       const r = await api('api/bulles', { ...ident(), axe: 'suite', historique: etapes().filter(x => recette[x.id]).map(x => ({ question: JeuxBulles.lib(x, ids(), 'q'), choix: recette[x.id].bouton })), gouts: gouts[id] || [],
-        prochaine: { sujet: JeuxBulles.lib(a, ids(), 'q'), axe: id === 'perso' ? 'qui' : id === 'monde' ? 'où' : 'comment', ...!enBase(id) && { direction: 'La question commence par « Comment » et reste sur le sujet donné.' }, options: base0(a).map(b => ({ id: b.id, bouton: b.bouton })) } });
+        prochaine: { sujet: JeuxBulles.lib(a, ids(), 'q'), axe: id === 'perso' ? 'qui' : id === 'monde' ? 'où' : 'comment', ...(!enBase(id) || id === 'jeu') && { direction: 'La question commence par « Comment » et reste sur le sujet donné.' }, options: base0(a).map(b => ({ id: b.id, bouton: b.bouton })) } });
       if (r.question && r.bulles?.length) dyn[id] = { q: r.question, b: Object.fromEntries(r.bulles.filter(m => m.id).map(m => [m.id, m.bouton])) };
     } catch {} finally { cherche = false; rendreBulles(); majTokens(); }
   }

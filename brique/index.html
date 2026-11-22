@@ -531,12 +531,13 @@ body{overflow-x:clip}                                           /* la bande 100v
 .support table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}
 .support th,.support td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 .support li{margin:6px 0}
+.support .marches li{margin:12px 0}
 .support code{color:var(--acc)}
 .support .tab{overflow-x:auto}
 .page-hero{grid-column:1/-1;align-self:stretch;text-align:center;padding-bottom:8px}   /* titre de page : centré sur toute la largeur, au-dessus des colonnes ou des fiches */
 .support .fiche{background:#fff;border-radius:8px;padding:8px;margin:10px 0}
 .support .fiche svg{display:block;width:100%;height:auto}
-.sup-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-self:stretch}
+.sup-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-self:stretch}
 .sup-nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px;border:2px solid var(--line);border-radius:14px;background:var(--surface);color:var(--txt);font:inherit;cursor:pointer;box-shadow:var(--glow)}
 .sup-nav button span{font-size:38px;line-height:1.1}.sup-nav button b{font-size:17px}.sup-nav button small{color:var(--mute);font-size:13px;text-align:center}
 .sup-nav button:hover,.sup-nav button.on{border-color:var(--acc)}.sup-nav button.on{background:var(--soft2)}
@@ -1080,7 +1081,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== SUPPORT : notice d'assemblage et de prise en main ===== -->
-<main id="support" class="anim support hide" data-version="1.3">
+<main id="support" class="anim support hide" data-version="1.4">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Support · montage et prise en main</p>
     <h2 class="sh-titre">Besoin d'info ?<br>C'est ici.</h2>
@@ -1088,6 +1089,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <nav class="sup-nav" aria-label="Sections du support">
     <button data-groupe="montage" class="on"><span>🔧</span><b>Montage</b><small>Matériel et assemblage</small></button>
     <button data-groupe="tuto"><span>🖥️</span><b>Tuto interface</b><small>Brancher, créer, envoyer</small></button>
+    <button data-groupe="proc"><span>🪜</span><b>Faire un jeu</b><small>Du plus simple au plus poussé</small></button>
     <button data-groupe="pb"><span>🩺</span><b>Problèmes possibles</b><small>Dépannage et fiche de test</small></button>
   </nav>
   <section data-groupe="montage">
@@ -1406,6 +1408,27 @@ body{overflow-x:clip}                                           /* la bande 100v
       <li><b>Faire grandir</b> le jeu demande après demande. Si la console signale une erreur, l'IA la reçoit avec la demande suivante.<div class="capture">📷 Capture à ajouter : l'historique des demandes<br><code>images/tuto-3-grandir.png</code></div></li>
       <li><b>Rejouer plus tard</b> : menu de la console → <b>Jouer</b> (le dernier jeu reçu, gardé même éteinte). G + D tenus 1 s pour revenir au menu.<div class="capture">📷 Capture à ajouter : le menu Jouer sur la console<br><code>images/tuto-4-rejouer.png</code></div></li>
     </ol>
+  </section>
+  <section data-groupe="proc">
+    <h2>Produire un jeu : du plus simple au plus poussé</h2>
+    <p>Cinq marches, de la plus facile à la plus libre. L'interface fait déjà une grande part du réglage : on monte d'une marche seulement quand la précédente ne suffit plus.</p>
+    <ol class="marches">
+      <li><b>1. Le mode 🫧 Bulles</b> (le plus simple)<br>On touche des bulles : personnage, décor, objets, action du gros bouton. Rien à écrire, aucun réglage, et le jeu est toujours testé avant d'arriver sur la console. Idéal pour un premier jeu ou pour les plus jeunes. <span class="aide">Limite : on choisit parmi des pièces prévues.</span></li>
+      <li><b>2. Le mode ✍️ Libre</b><br>On décrit son jeu avec ses mots, « 💡 Aide-moi » propose des idées, l'IA du site écrit le programme et l'envoie sur la console. Le bouton se trouve dans le coin du cadre IA, à côté de Bulles. On fait grandir le jeu demande après demande. <span class="aide">Limite : une demande à la fois, des jeux de taille raisonnable.</span></li>
+      <li><b>3. Partir d'un modèle du mode Libre, et le reprendre dans une IA classique</b><br>On choisit un jeu de départ (plateforme, casse-briques…), on le règle dans le mode Libre jusqu'à ce qu'il tienne debout. Puis on <b>copie son code</b> et on le colle dans une IA du commerce (Claude, ChatGPT, Mistral…) en lui demandant la modification voulue : elle sait faire des jeux plus subtils (ennemis qui réagissent, niveaux enchaînés, effets). On recolle ensuite le code obtenu dans le site et on l'envoie. <span class="aide">Conseil : dire à l'IA que le code est du Berry pour une console ESP32-C3, et lui redonner l'erreur affichée si la console en signale une.</span></li>
+      <li><b>4. Écrire le code avec une IA, en le suivant à la main</b><br>Même principe, mais dès la première ligne : on demande à une IA classique un jeu entier, on lit ce qu'elle propose, on le colle dans le site, on teste sur la console, on revient lui dire ce qui ne va pas. Il faut un peu de lecture de code pour savoir quoi lui reprocher.</li>
+      <li><b>5. Tout programmer depuis une IA</b> (le plus efficace, le plus exigeant)<br>L'IA travaille directement dans le projet : elle écrit le jeu, le compile, l'envoie sur la console et corrige elle-même ses erreurs, sans copier-coller. C'est de loin le plus rapide et le plus puissant, mais la <b>configuration est plus lourde</b> : un outil d'IA qui accède aux fichiers du projet, les outils de compilation de la console, la console branchée en USB et un port série bien identifié. À réserver à celui qui aime déjà bricoler son ordinateur.</li>
+    </ol>
+    <h3>Avantages et inconvénients</h3>
+    <div class="tab"><table>
+      <tr><th>Marche</th><th>Avantages</th><th>Inconvénients</th></tr>
+      <tr><td>1. Bulles</td><td>Aucun écrit, aucune erreur possible, jeu toujours testé, dès 6 ans.</td><td>Choix limité aux pièces prévues, peu de surprises.</td></tr>
+      <tr><td>2. Libre</td><td>On invente avec ses mots, tout est dans le site, rien à installer.</td><td>Une demande à la fois, l'IA du site peut se tromper, jeux de taille limitée.</td></tr>
+      <tr><td>3. Modèle + IA classique</td><td>Une IA plus puissante, une base qui marche déjà, jeux plus subtils.</td><td>Copier-coller à la main, il faut décrire le contexte (Berry, ESP32-C3), les erreurs reviennent à la main.</td></tr>
+      <tr><td>4. Code d'une IA, suivi à la main</td><td>Liberté totale sur le jeu, on comprend ce qu'on envoie.</td><td>Il faut savoir lire du code, beaucoup d'allers-retours, pas de test automatique.</td></tr>
+      <tr><td>5. Tout depuis une IA</td><td>Le plus rapide et le plus puissant : l'IA écrit, compile, envoie et corrige seule.</td><td>Configuration lourde, outils à installer, console et port à identifier, une erreur peut abîmer le projet.</td></tr>
+    </table></div>
+    <p class="aide">Règle simple : commencer en bas de l'échelle, et ne monter que quand on bute sur quelque chose que la marche actuelle ne sait pas faire.</p>
   </section>
   <section data-groupe="pb">
     <h2>Dépannage</h2>
@@ -1915,9 +1938,9 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.26">
+<main id="vueScript" class="hide" data-version="1.27">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
-    <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><select id="scDepart" title="Le jeu de départ : une fiche toute prête que tu changes avec l'IA"><option value="plateforme">🧗 Plateforme</option><option value="casse">🧱 Casse-briques</option><option value="">⬜ Vide</option></select><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
+    <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scZero" class="sec" title="Efface ce jeu, son programme et tes essais (pas celui gardé dans la console)">🗑 Supprimer ce jeu</button><select id="scDepart" title="Le jeu de départ : une fiche toute prête que tu changes avec l'IA"><option value="plateforme">🧗 Plateforme</option><option value="casse">🧱 Casse-briques</option><option value="">⬜ Vide</option></select><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
     <button id="vAnim" class="sec">🎓 Animateur</button>
   </div>
@@ -1963,7 +1986,6 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div class="sc-actions">                     <!-- par ordre d'importance : envoyer, publier, puis effacer (discret) -->
       <button id="scMettre" class="big" disabled>📟 Envoyer sur la console</button>
       <button id="scPublier" class="sec">📢 Publier</button><button id="scCommun" class="sec" title="Ton niveau part à la suite du jeu commun, signé de ton pseudo">🧱 Ajouter au jeu commun</button>
-      <button id="scZero" class="sec" title="Efface ce jeu, son programme et tes essais (pas celui gardé dans la console)">🗑 Supprimer ce jeu</button>
     </div>
     <div id="scPartage"></div>
     <details id="scNote" class="hide" style="margin:8px 0"><summary>📝 Laisser une note à l'équipe Brique</summary>   <!-- comptes connectés : observations lues par l'admin (Espace animateur) -->

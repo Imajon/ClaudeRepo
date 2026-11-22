@@ -340,6 +340,8 @@ function quotasParMail() {
 function espaceAnimateur(email) {
   const test = (process.env.STRIPE_SECRET_KEY || '').startsWith('sk_test') ? 'test/' : '';
   return { email, quotas: ADMINS.includes(email) ? quotasParMail() : undefined, notes: ADMINS.includes(email) ? (db.notes || []).slice().reverse() : undefined, aModerer: ADMINS.includes(email) ? db.niveaux.filter(n => n.attente === 'admin' && !n.masque).map(aVerifier) : undefined,   // createurs hors groupe : l'admin du site verifie
+    support: ADMINS.includes(email) ? Object.values(db.support || {}).filter(f => f.messages.length).map(f => ({ pseudo: f.pseudo, messages: f.messages.slice(-30), aRepondre: f.messages.at(-1).de === 'moi', t: f.messages.at(-1).t }))
+      .sort((a, b) => b.aRepondre - a.aRepondre || b.t - a.t).slice(0, 50) : undefined,   // chat du support : celles qui attendent une reponse d'abord
     commandes: ADMINS.includes(email) ? db.commandes.filter(c => c.statut !== 'attente').sort((a, b) => b.cree - a.cree)   // admin boutique
     .map(c => ({ ...vueCommande(c), stripe: c.paiement ? `https://dashboard.stripe.com/${test}payments/${c.paiement}` : '' })) : undefined, groupes: db.groupes.filter(g => g.email === email).map(g => ({
     code: g.code, nom: g.nom, matiere: g.matiere || '', prive: !!g.prive, age: g.age || 'libre', questions: (g.questions || []).map(q => ({ ...q, stats: statsQuestion(q.id) })),
@@ -1336,6 +1338,11 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
       if (!c) return repondre(res, 404, { erreur: 'commande introuvable' });
       c.statut = 'expediee'; c.expediee = Date.now(); sauver(); return repondre(res, 200, espaceAnimateur(email));
     }
+    if (url === '/api/animateur/supportrep' && ADMINS.includes(email)) {   // l'admin repond dans le chat d'un compte
+      const f = db.support?.[String(b.pseudo || '').toLowerCase()], texte = propre(b.texte, 1000);
+      if (!f || !texte) return repondre(res, 400, { erreur: 'Écris une réponse.' });
+      f.messages = [...f.messages, { de: 'equipe', texte, t: Date.now() }].slice(-100); sauver(); return repondre(res, 200, espaceAnimateur(email));
+    }
     if (url === '/api/animateur/liberer' || url === '/api/animateur/mdp') {   // libérer le pseudo, ou mot de passe oublié : un provisoire, à changer
       const j = db.joueurs.find(j => j.pseudo === b.pseudo); if (!j || !groupe(j.groupe)) return repondre(res, 404, { erreur: 'joueur introuvable' });
       fermerSessions(j.pseudo);
@@ -1475,6 +1482,49 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
     const code = String(b.code || '').trim().toUpperCase(), g = code ? db.groupes.find(g => g.code === code) : { code: '', nom: 'Créateur' };
     if (!g) return repondre(res, 400, { erreur: 'Code de groupe inconnu : vérifie-le.' });
     j.groupe = g.code; sauver(); return repondre(res, 200, { pseudo: j.pseudo, groupe: g.nom });
+  }
+  // ----- page Mon compte : infos perso, jeux publies, chat avec le support -----
+  if (url === '/api/compte') {
+    const f = db.support?.[j.pseudo.toLowerCase()];
+    return repondre(res, 200, { pseudo: j.pseudo, email: j.email || '', code: j.code || '', mdp: !!(j.mdp || j.secret), cree: j.cree, groupe: db.groupes.find(g => g.code === j.groupe)?.nom || '',
+      nonLus: f ? f.messages.filter(m => m.de === 'equipe' && m.t > (f.lu || 0)).length : 0 });
+  }
+  if (url === '/api/mesjeux') {                        // les jeux publies de ce compte ; avec id : le programme entier, pour le rouvrir dans Creer
+    const mes = db.niveaux.filter(n => n.pseudo === j.pseudo);
+    if (b.id) {
+      const n = mes.find(n => n.id === b.id); if (!n?.niv.script) return repondre(res, 404, { erreur: 'Jeu introuvable.' });
+      return repondre(res, 200, { titre: n.titre, pseudo: n.pseudo, code: n.code, niv: { script: n.niv.script, images: n.niv.images || [] } });
+    }
+    return repondre(res, 200, { jeux: mes.sort((a, b) => b.cree - a.cree).map(n => ({ id: n.id, titre: n.titre, code: n.code, cree: n.cree, commun: !!n.commun, masque: !!n.masque, attente: !!n.attente, rouvrable: !!n.niv.script, parties: stats(n.id).parties })) });
+  }
+  if (url === '/api/compte/mdp') {                     // changer son mot de passe (comptes qui en ont un ; pas ceux d'un code)
+    if (!j.mdp && !j.secret) return repondre(res, 400, { erreur: 'Ce compte s\'ouvre avec un code : il n\'a pas de mot de passe.' });
+    const cle = 'mdp:' + j.pseudo.toLowerCase(), nouveau = String(b.nouveau || '').trim();
+    if (tropDEssais(cle, 10)) return repondre(res, 429, { erreur: 'Trop d\'essais : réessaie dans une heure.' });
+    if (!motDePasseOk(j, b.ancien)) { essaiRate(cle); return repondre(res, 401, { erreur: 'Mot de passe actuel incorrect.' }); }
+    if (nouveau.length < 6) return repondre(res, 400, { erreur: 'Mot de passe : 6 caractères au moins.' });
+    j.mdp = hacher(nouveau); delete j.provisoire; delete j.secret; fermerSessions(j.pseudo);
+    return repondre(res, 200, ouvrirSession(j));
+  }
+  if (url === '/api/compte/supprimer') {               // droit a l'effacement : le compte, ses jeux publies, ses scores et ses messages
+    if (j.email && db.groupes.some(g => g.email === j.email)) return repondre(res, 400, { erreur: 'Tu animes des groupes : écris au support (chat de cette page) pour supprimer ce compte.' });
+    fermerSessions(j.pseudo);
+    if (j.email) for (const [k, x] of Object.entries(db.sessions)) if (x.email === j.email) delete db.sessions[k];
+    db.joueurs = db.joueurs.filter(x => x !== j); db.animateurs = db.animateurs.filter(a => a.email !== j.email);
+    db.niveaux = db.niveaux.filter(n => n.pseudo !== j.pseudo); db.parties = db.parties.filter(p => p.pseudo !== j.pseudo); db.courses = db.courses.filter(c => c.pseudo !== j.pseudo);
+    db.notes = (db.notes || []).filter(n => n.qui !== j.pseudo); if (db.support) delete db.support[j.pseudo.toLowerCase()];
+    sauver(); return repondre(res, 200, { ok: true });
+  }
+  if (url === '/api/support') {                        // chat avec l'equipe : le fil du compte ; texte = un message de plus ; ouvert = les reponses sont lues
+    const cle = j.pseudo.toLowerCase(), f = db.support?.[cle] || { pseudo: j.pseudo, messages: [], lu: 0 }, texte = propre(b.texte, 1000);
+    if (texte) {
+      if (f.messages.length >= 5 && f.messages.slice(-5).every(m => m.de === 'moi')) return repondre(res, 429, { erreur: 'L\'équipe n\'a pas encore répondu : patiente un peu avant d\'écrire encore.' });
+      const inactif = f.messages.at(-1)?.de !== 'moi';     // 1er message d'une serie : on previent l'admin par mail (un seul mail par serie)
+      f.messages = [...f.messages, { de: 'moi', texte, t: Date.now() }].slice(-100); (db.support ||= {})[cle] = f;
+      if (inactif) for (const a of ADMINS) envoyerMail(a, 'Brique : message de ' + j.pseudo, `<p>${j.pseudo} écrit au support :</p><p>${texte}</p><p><a href="${PUBLIC_URL}/#anim">Répondre dans l'espace animateur</a></p>`).catch(e => console.error(e.message));
+    }
+    if ((texte || b.ouvert) && db.support?.[cle]) { f.lu = Date.now(); sauver(); }
+    return repondre(res, 200, { messages: f.messages.map(({ de, texte, t }) => ({ de, texte, t })), nonLus: f.messages.filter(m => m.de === 'equipe' && m.t > (f.lu || 0)).length });
   }
   if (url === '/api/niveaux') {                       // publier un jeu (commun=false) ou ajouter un niveau au jeu commun (commun=true)
     const titre = String(b.titre || '').replace(/[<>]/g, '').trim().slice(0, 30) || 'Sans titre';

@@ -553,6 +553,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 .defi-grille small{display:block;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .defi-in{width:100%;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;font-size:14px;resize:vertical}
 .defi-vus{display:flex;flex-wrap:wrap;gap:4px}.defi-vus span{padding:3px 8px;border-radius:12px;background:var(--chipon);font-size:13px}
+.chatfil{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto;padding:8px;border:1px solid var(--line);border-radius:12px}
+.chatfil .m{max-width:82%;padding:6px 10px;border-radius:12px;background:var(--soft);word-break:break-word}
+.chatfil .m.moi{align-self:flex-end;background:var(--acc);color:#fff}
+.chatfil .m small{display:block;opacity:.75;font-size:.75em}
 </style>
 <script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js?module"></script>   <!-- bouton "Mettre a jour ma console" (flash par Web Serial) -->
 <script>try { if (JSON.parse(localStorage.getItem("brique-theme")) === "dark") document.documentElement.dataset.theme = "dark"; } catch {}</script>   <!-- thème choisi, avant l'affichage : pas de flash clair -->
@@ -1746,6 +1750,47 @@ body{overflow-x:clip}                                           /* la bande 100v
         <li>Créez un code par élève et donnez-les : l'élève clique « Se connecter » → « Avec un code », choisit son pseudo, et le code seul le reconnecte ensuite.</li>
       </ol>
       <div class="actions" style="justify-content:flex-start;margin-top:12px"><button id="profsAnim" class="big" style="width:auto;margin:0">🎓 Ouvrir l'espace Animateur</button></div></section>
+  </div>
+</main>
+
+<!-- ===== MON COMPTE : infos perso, mes jeux, chat avec le support ===== -->
+<main id="monCompte" class="hide" data-version="1.1">
+  <div class="sh-hero page-hero">
+    <p class="sh-sur">Mon compte</p>
+    <h2 class="sh-titre">Ton espace,<br>tes jeux.</h2>
+  </div>
+  <section id="mcSans" class="hide">
+    <h2>Mon compte</h2>
+    <p class="aide" style="margin-top:0">Connecte-toi pour retrouver tes infos et tes jeux, et écrire à l'équipe Brique.</p>
+    <div class="actions" style="justify-content:flex-start"><button id="mcConnexion" class="big" style="width:auto;margin:0">👤 Se connecter</button></div>
+  </section>
+  <div id="mcAvec" class="hide" style="display:flex;flex-direction:column;gap:16px">
+    <section>
+      <h2>👤 Mes infos</h2>
+      <div id="mcInfos" class="liste"></div>
+      <details id="mcMdpBox" class="hide" style="margin-top:10px"><summary>🔒 Changer mon mot de passe</summary>
+        <label class="champ">Mot de passe actuel<input id="mcMdpA" class="pseudo" type="password" autocomplete="current-password"></label>
+        <label class="champ">Nouveau mot de passe <small>(6 caractères au moins)</small><input id="mcMdpN" class="pseudo" type="password" autocomplete="new-password"></label>
+        <label class="champ">Confirme le nouveau<input id="mcMdpN2" class="pseudo" type="password" autocomplete="new-password"></label>
+        <div class="actions" style="justify-content:flex-start"><button id="mcMdpOk" class="sec">Changer</button></div>
+      </details>
+      <div class="actions" style="justify-content:flex-start;margin-top:10px"><button id="mcSuppr" class="sec" style="color:var(--ko)">🗑 Supprimer mon compte</button></div>
+    </section>
+    <section>
+      <h2>🎮 Mes jeux</h2>
+      <h3>En chantier sur cet ordinateur</h3>
+      <div id="mcChantiers" class="liste"></div>
+      <h3>Publiés</h3>
+      <p class="aide" style="margin:0 0 6px">« Rouvrir » copie le jeu dans Créer, à côté de tes autres jeux : tu peux le modifier et le republier.</p>
+      <div id="mcPublies" class="liste"></div>
+    </section>
+    <section>
+      <h2>💬 Écrire à l'équipe Brique</h2>
+      <p class="aide" style="margin-top:0">Une question, un bug, une idée ? L'équipe te répond ici (jamais par mail).</p>
+      <div id="mcChat" class="chatfil"></div>
+      <div class="icRow" style="margin-top:8px"><input id="mcChatTxt" class="pseudo" maxlength="1000" placeholder="Ton message"><button id="mcChatEnvoyer" class="sec">Envoyer</button></div>
+    </section>
+    <div id="mcMsg" class="envoi"></div>
   </div>
 </main>
 
@@ -3005,13 +3050,14 @@ const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localS
 const majTheme = () => document.querySelectorAll('.theme').forEach(b => b.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙');
 document.querySelectorAll('.theme').forEach(b => b.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; ecrire('brique-theme', t); majTheme(); });
 majTheme();
+let supportNonLus = 0;
 let moi = lire('brique-moi');                          // { pseudo, jeton, groupe } (navigateurs d'avant : { pseudo, secret, groupe })
 const pseudo = () => moi?.pseudo || '';
 const ident = () => ({ pseudo: moi?.pseudo, jeton: moi?.jeton, secret: moi?.secret });
 function majMoi() {
   moiTxt.innerHTML = moi ? `${avatar(moi.pseudo)} <b>${esc(moi.pseudo)}</b> <small style="color:var(--mute)">${esc(moi.groupe)}</small>` : '';
   rejoindreBtn.classList.toggle('hide', !!moi);
-  majTokens(); majCompte();
+  majTokens(); majSupport();
 }
 // menu compte en haut à droite, comme un site classique : « Se connecter » tant que personne ne l'est, sinon avatar + menu
 // (sessions boutique et animateur lues du stockage : `client` et `session` sont déclarés plus bas)
@@ -3019,8 +3065,8 @@ const adulte = () => lire('brique-client') || lire('brique-session');
 function majCompte() {
   scNote.classList.toggle('hide', !EN_LIGNE || !(moi || adulte()));   // la note : tout compte connecté
   remarque.classList.toggle('hide', !EN_LIGNE || !(moi || adulte()));   // 💬 Remarque du menu : pareil, jamais en public
-  compteTete.innerHTML = moi ? `${avatar(moi.pseudo)} <span class="compte-nom">${esc(moi.pseudo)}</span>` : `👤 <span class="compte-nom">${adulte() ? 'Mon compte' : 'Se connecter'}</span>`;
-  compteMenu.innerHTML = (moi ? `<small>${esc(moi.pseudo)} · ${esc(moi.groupe || '')}</small><a data-c="groupe">👥 Rejoindre un groupe</a>` : '')
+  compteTete.innerHTML = moi ? `${avatar(moi.pseudo)} <span class="compte-nom">${esc(moi.pseudo)}</span>${supportNonLus ? ' <span title="Nouveau message de l\'équipe">💬</span>' : ''}` : `👤 <span class="compte-nom">${adulte() ? 'Mon compte' : 'Se connecter'}</span>`;
+  compteMenu.innerHTML = (moi ? `<small>${esc(moi.pseudo)} · ${esc(moi.groupe || '')}</small><a data-c="moncompte">👤 Mon compte${supportNonLus ? ' 💬 ' + supportNonLus : ''}</a><a data-c="groupe">👥 Rejoindre un groupe</a>` : '')
     + (lire('brique-client') ? '<a data-c="cmd">📦 Mes commandes</a>' : '<a data-c="cmd">🧺 Panier et commandes</a>')
     + (EN_LIGNE ? '<a data-c="anim">🎓 Espace animateur</a>' : '')
     + (moi || adulte() ? '<a data-c="sortir">Se déconnecter</a>' : '<a data-c="crea">Se connecter / créer un compte</a>');
@@ -3029,7 +3075,7 @@ compteTete.onclick = e => { if (!moi && !adulte()) { e.preventDefault(); ouvrirC
 compteMenu.onclick = async e => {
   const c = e.target.closest('a[data-c]')?.dataset.c; if (!c) return;
   compte.open = false;
-  if (c === 'crea') ouvrirConnexion('co'); else if (c === 'cmd') afficher('panier'); else if (c === 'anim') afficher('anim');
+  if (c === 'crea') ouvrirConnexion('co'); else if (c === 'cmd') afficher('panier'); else if (c === 'anim') afficher('anim'); else if (c === 'moncompte') afficher('moncompte');
   else if (c === 'sortir') toutDeconnecter();
   else if (c === 'groupe') {
     const code = prompt('Code du groupe donné par ton animateur (laisse vide pour quitter ton groupe) :', ''); if (code === null) return;
@@ -3119,7 +3165,7 @@ async function api(url, corps, session) {
 async function publier(commun) {
   if (!jeu) return dire('Crée un jeu d\'abord !');
   if (!EN_LIGNE) return dire('Hors ligne : lance le serveur (node server.js) et ouvre http://localhost:8080');
-  if (!moi) { ouvrirConnexion('co'); return dire(adulte() ? 'Un jeu publié est signé d\'un pseudo : connecte-toi avec un compte joueur (pseudo + mot de passe), le compte mail ne suffit pas.' : 'Connecte-toi d\'abord (ou crée ton compte).'); }
+  if (!moi) { ouvrirConnexion('co'); return dire(adulte() ? 'Un jeu publié est signé d\'un pseudo : connecte-toi avec ton e-mail et ton mot de passe (ou un code).' : 'Connecte-toi d\'abord (ou crée ton compte).'); }
   // ponytail: vérifié dans la page seulement (la console n'est pas authentifiée) ; suffit pour l'atelier
   if (!jeu.niv.fini) return dire('Termine ton jeu au moins une fois sur la console avant de le partager : on ne publie que des jeux faisables !');
   try {
@@ -3353,7 +3399,7 @@ const ligneRang = (n, pos, detail, max, val) => `<div class="rang"><span class="
 
 async function rafraichir() {
   let c;
-  try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); if (!EN_LIGNE) { EN_LIGNE = true; majTokens(); majCompte(); } }
+  try { c = await api('api/communaute' + (moi ? '?pseudo=' + encodeURIComponent(moi.pseudo) : '')); if (!EN_LIGNE) { EN_LIGNE = true; majTokens(); majSupport(); } }
   catch { EN_LIGNE = false; [vAnim, moiBox, accVoirDefi, accBlagueDefi, accDefiPc.parentNode, accDefiBarre.parentNode].forEach(e => e.classList.add('hide')); if (vue === 'anim') afficher('accueil'); return; }   // serveur injoignable (Render endormi, fichier) : la Communauté reste, vide
   enLigne = c.niveaux; modeAtelier(c.atelier);
   const ageC = c.age === 'guide' ? 'libre' : c.age;      // l'ancien « guidé » n'existe plus : c'est le libre (avec « Aide-moi »)
@@ -3609,7 +3655,10 @@ async function rendreAnim(donnees) {
   }
   const notes = d.notes ? `<section><h2>📝 Notes des comptes (${d.notes.length})</h2><div class="liste">${d.notes.map(n => `<div class="rang"><div class="qui"><div>${esc(n.texte)}</div>
     <small>${esc(n.qui)}${n.jeu ? ` · jeu « ${esc(n.jeu)} »` : ''} · ${depuis(n.cree)}</small></div><button class="jouer" data-note="${esc(n.id)}" title="Traitée : l'effacer">✓ Lu</button></div>`).join('') || '<span class="vide">Aucune note.</span>'}</div></section>` : '';
-  animGroupes.innerHTML = notes + quotas + aModerer + d.groupes.map(g => `<section>
+  const support = d.support ? `<section><h2>💬 Support (${d.support.filter(f => f.aRepondre).length} à répondre)</h2><div class="liste">${d.support.map(f => `<div class="rang" style="flex-direction:column;align-items:stretch"><b>${esc(f.pseudo)}${f.aRepondre ? ' <span style="color:var(--ko)">● à répondre</span>' : ''}</b>
+    <div class="chatfil">${f.messages.map(m => `<div class="m ${m.de === 'equipe' ? 'moi' : 'eux'}"><small>${m.de === 'equipe' ? 'Équipe' : esc(f.pseudo)} · ${depuis(m.t)}</small>${esc(m.texte)}</div>`).join('')}</div>
+    <div class="icRow"><input class="pseudo" maxlength="1000" placeholder="Ta réponse" data-supptxt><button class="sec" data-supprep="${esc(f.pseudo)}">Répondre</button></div></div>`).join('') || '<span class="vide">Aucun message.</span>'}</div></section>` : '';
+  animGroupes.innerHTML = support + notes + quotas + aModerer + d.groupes.map(g => `<section>
     <h2><b>${esc(g.nom)}</b></h2>
     <h3>🔑 Codes des enfants (${g.codes.length})</h3>
     <p class="aide" style="margin:0 0 6px">Un code par enfant : il le saisit dans « Se connecter » → « Avec un code », choisit son pseudo la première fois, et le code seul le reconnecte ensuite, sur n'importe quel ordinateur.</p>
@@ -3637,7 +3686,7 @@ async function rendreAnim(donnees) {
     <div class="liste">${g.niveaux.sort((a, b) => b.cree - a.cree).map(n => `<div class="rang ${n.masque ? 'masque' : ''}"><div class="qui"><div><b>${esc(n.titre)}</b> <small>par ${esc(n.pseudo)}</small></div>
       <small>${depuis(n.cree)} · ${n.parties} partie${n.parties > 1 ? 's' : ''}${n.masque ? ' · masqué' : ''}${attenteTxt(n)}</small></div>
       ${validerBtn(n)}<button class="jouer" data-masquer="${n.id}" data-etat="${n.masque ? 0 : 1}">${n.masque ? '👁 Remontrer' : '🚫 Masquer'}</button></div>`).join('') || '<span class="vide">Aucun niveau pour l\'instant.</span>'}</div>
-  </section>`).join('') || notes + quotas + aModerer;
+  </section>`).join('') || support + notes + quotas + aModerer;
   const enAttente = [...(d.aModerer || []), ...d.groupes.flatMap(g => g.niveaux)].filter(n => n.attente);
   for (const el of animGroupes.querySelectorAll('[data-apercu]')) imgApercus(el, enAttente.find(n => n.id === el.dataset.apercu)?.images, true);
 }
@@ -3656,6 +3705,7 @@ animGroupes.onchange = async e => {
 animGroupes.onclick = async e => {
   const t = e.target;
   try {
+    if (t.dataset.supprep) { const texte = t.closest('.rang').querySelector('[data-supptxt]').value.trim(); if (!texte) return; return rendreAnim(await api('api/animateur/supportrep', { pseudo: t.dataset.supprep, texte }, session)); }
     if (t.dataset.qsuppr) return questionsDe(t.dataset.qsuppr, qs => qs.splice(+t.dataset.i, 1));
     if (t.dataset.qajout) {
       const f = t.closest('[data-qform]'), q = f.querySelector('[data-q]').value.trim();
@@ -3699,6 +3749,59 @@ async function connexionParLien() {                     // arrivée depuis le li
   afficher('panier'); suite = r.boutique; if (r.boutique) cmdDire('✅ Connecté : choisissez votre point relais.', true);
   majPanier(); chargerCommandes(); return true;
 }
+
+// ---------- Mon compte : infos perso, mes jeux (en chantier ici, publiés) et chat avec le support ----------
+let chatTimer = null;
+function majSupport() { if (moi && EN_LIGNE) api('api/compte', ident()).then(c => { supportNonLus = c.nonLus; majCompte(); }).catch(() => {}); else { supportNonLus = 0; majCompte(); } }
+const mcDire = (t, ok) => mcMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
+const dateHeure = t => new Date(t).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+async function chargerChat(corps = { ouvert: true }) {
+  const r = await api('api/support', { ...ident(), ...corps });
+  mcChat.innerHTML = r.messages.map(m => `<div class="m ${m.de === 'moi' ? 'moi' : 'eux'}"><small>${m.de === 'moi' ? 'Moi' : 'Équipe Brique'} · ${dateHeure(m.t)}</small>${esc(m.texte)}</div>`).join('')
+    || '<span class="vide">Pas encore de message : écris-nous, l\'équipe te répond ici.</span>';
+  mcChat.scrollTop = mcChat.scrollHeight; supportNonLus = 0; majCompte();
+}
+async function rendreCompte() {
+  clearInterval(chatTimer);
+  mcSans.classList.toggle('hide', !!moi); mcAvec.classList.toggle('hide', !moi);
+  if (!moi) return;
+  const ch = window.chantiersBrique.liste().filter(c => c.script);
+  mcChantiers.innerHTML = ch.map(c => `<div class="rang"><div class="qui"><div><b>${esc(c.nom)}</b>${c.cur ? ' <small>(ouvert dans Créer)</small>' : ''}</div><small>${c.lignes} lignes · gardé dans ce navigateur</small></div><button class="jouer" data-chantier="${c.i}">✏️ Ouvrir</button></div>`).join('')
+    || '<span class="vide">Aucun jeu en chantier sur cet ordinateur.</span>';
+  if (!EN_LIGNE) return;
+  try {
+    const [c, mj] = await Promise.all([api('api/compte', ident()), api('api/mesjeux', ident())]);
+    mcInfos.innerHTML = [['Pseudo', `<b>${esc(c.pseudo)}</b>`], ['Connexion', c.email ? `e-mail ${esc(c.email)}` : c.code ? `code <span class="code">${esc(c.code)}</span>` : 'pseudo + mot de passe (ancien compte)'],
+      ['Groupe', esc(c.groupe || 'aucun')], ['Compte créé le', new Date(c.cree).toLocaleDateString('fr-FR')]].map(([k, v]) => `<div class="rang"><div class="qui"><small>${k}</small><div>${v}</div></div></div>`).join('');
+    mcMdpBox.classList.toggle('hide', !c.mdp);
+    mcPublies.innerHTML = mj.jeux.map(n => `<div class="rang"><div class="qui"><div><b>${esc(n.titre)}</b> <small>code ${esc(n.code)}</small></div>
+      <small>${new Date(n.cree).toLocaleDateString('fr-FR')} · ${n.parties} partie${n.parties > 1 ? 's' : ''}${n.commun ? ' · jeu commun' : ''}${n.attente ? ' · ⏳ en attente de validation' : ''}${n.masque ? ' · masqué' : ''}${n.rouvrable ? '' : ' · ancien format'}</small></div>
+      ${n.rouvrable ? `<button class="jouer" data-rouvrir="${esc(n.id)}">↩ Rouvrir</button>` : ''}</div>`).join('') || '<span class="vide">Tu n\'as pas encore publié de jeu.</span>';
+    await chargerChat();
+    chatTimer = setInterval(() => vue !== 'moncompte' ? clearInterval(chatTimer) : chargerChat().catch(() => {}), 15000);
+  } catch (e) { mcDire(e.message); }
+}
+mcConnexion.onclick = () => ouvrirConnexion('co');
+mcChantiers.onclick = e => { const i = e.target.dataset.chantier; if (i != null) window.chantiersBrique.ouvrir(+i); };
+mcPublies.onclick = async e => {
+  const id = e.target.dataset.rouvrir; if (!id) return;
+  try { ouvrirScript(await api('api/mesjeux', { ...ident(), id })); } catch (err) { mcDire(err.message); }
+};
+mcChatEnvoyer.onclick = async () => {
+  const texte = mcChatTxt.value.trim(); if (!texte) return;
+  try { await chargerChat({ texte }); mcChatTxt.value = ''; mcDire(''); } catch (err) { mcDire(err.message); }
+};
+mcChatTxt.onkeydown = e => { if (e.key === 'Enter') mcChatEnvoyer.click(); };
+mcMdpOk.onclick = async () => {
+  if (mcMdpN.value !== mcMdpN2.value) return mcDire('Les deux nouveaux mots de passe ne sont pas pareils.');
+  try { connecte(await api('api/compte/mdp', { ...ident(), ancien: mcMdpA.value, nouveau: mcMdpN.value })); mcMdpA.value = mcMdpN.value = mcMdpN2.value = ''; mcMdpBox.open = false; mcDire('✓ Mot de passe changé.', true); }
+  catch (err) { mcDire(err.message); }
+};
+mcSuppr.onclick = async () => {
+  if (!confirm('Supprimer ton compte ? Tes jeux publiés, tes scores et tes messages sont effacés. Impossible à annuler.')) return;
+  try { await api('api/compte/supprimer', ident()); } catch (err) { return mcDire(err.message); }
+  toutDeconnecter(); afficher('accueil');
+};
 
 // ---------- Boutique : prix unitaire dégressif selon la quantité ----------
 // même grille que server.js (c'est le serveur qui calcule le prix payé)
@@ -3958,6 +4061,10 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   }
   const nouveau = (nom, e = vide()) => { chantiers.liste.push({ ...e, nom: unique(nom) }); choisir(chantiers.liste.length - 1); };
   scJeux.onchange = () => choisir(+scJeux.value);
+  window.chantiersBrique = {                             // lus par la page Mon compte
+    liste: () => chantiers.liste.map((c, i) => ({ i, nom: c.nom, script: c.script, cur: i === chantiers.cur, lignes: (c.script || '').split('\n').length })),
+    ouvrir: i => { afficher('creer'); choisir(i); },
+  };
   scNouveau.onclick = async () => {                      // le jeu de départ : une fiche par défaut, assemblée en Berry par le serveur (moteur-fiche.be / moteur-casse.be)
     const t = prompt('Le nom de ton nouveau jeu ?', ''); if (t === null) return;
     let script = ''; if (scDepart.value) try { script = (await api('api/fiche-berry', { depart: scDepart.value })).script || ''; } catch { alert('Le jeu de départ est introuvable (serveur injoignable) : ton jeu démarre vide.'); }
@@ -4604,7 +4711,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
   const partage = (t, code) => scPartage.innerHTML = `<div class="partage">${t} · code <span class="code">${esc(code)}</span><br><small>Tes copains le récupèrent sur Brique avec ce code (Communauté), puis le mettent sur leur console.</small></div>`;
   const publierScript = async commun => {                // publier (ou ajouter au jeu commun) : seulement un programme qui tourne sur la console sans erreur
     if (!EN_LIGNE) return dire('Hors ligne : la publication a besoin du serveur Brique.', false);
-    if (!moi) { ouvrirConnexion('co'); return dire(adulte() ? 'Un jeu publié est signé d\'un pseudo : connecte-toi avec un compte joueur (pseudo + mot de passe), le compte mail ne suffit pas.' : 'Connecte-toi d\'abord (ou crée ton compte).', false); }
+    if (!moi) { ouvrirConnexion('co'); return dire(adulte() ? 'Un jeu publié est signé d\'un pseudo : connecte-toi avec ton e-mail et ton mot de passe (ou un code).' : 'Connecte-toi d\'abord (ou crée ton compte).', false); }
     if (!etat.script || etat.erreur || etat.surConsole !== etat.essais.length) return dire('Mets ton jeu sur la console et vérifie qu\'il tourne sans erreur avant de le publier.', false);
     const titre = prompt(commun ? 'Le nom de ton niveau ?' : 'Le nom de ton jeu ?', etat.titre || etat.nom || ''); if (titre === null) return;
     try {
@@ -4694,6 +4801,7 @@ function afficher(v) {
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); propos.classList.toggle('hide', v !== 'propos'); cgv.classList.toggle('hide', v !== 'cgv'); vApropos.classList.toggle('on', v === 'propos'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');
+  monCompte.classList.toggle('hide', v !== 'moncompte'); if (v === 'moncompte') rendreCompte();
   vueScript.classList.toggle('hide', v !== 'creer');   // créer = le mode script ; l'ancien générateur #atelier reste caché (ponytail: à retirer quand le mode script aura sa communauté)
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
@@ -4736,7 +4844,7 @@ piedSite.textContent = location.host;
 if (siteVersion.textContent === '__VERSION__') siteVersion.textContent = 'hors ligne';   // page ouverte sans le serveur (fichier, GitHub Pages)
 vTmp.textContent = siteVersion.textContent.replace('site ', '');   // provisoire
 majMoi();
-if (['commu', 'creer', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos', 'cgv'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
+if (['commu', 'creer', 'moncompte', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos', 'cgv'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 new IntersectionObserver(([e], obs) => {      // vidéo du kit : se lance (et se colore) une fois arrivée à l'écran

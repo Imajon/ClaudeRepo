@@ -338,11 +338,14 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #vueScript .agent>h2{padding-right:40px}
 .agent-ligne{display:flex;gap:10px;align-items:stretch}.agent-ligne textarea{flex:1;min-width:0;margin:0}
 .agent-btns{display:flex;flex-direction:column;gap:8px;width:190px;flex:none}
-.agent-suite{display:none;align-items:center;gap:10px}#vueScript.petits .agent-suite{display:flex}   /* petits : « Fabriquer » → « Envoyer sur la console », sur la même ligne */
-.agent-suite i{font-style:normal;font-size:34px;line-height:1;color:var(--acc)}
-.agent-suite .big{margin:0;padding:14px 24px;font-size:20px;border-radius:10px;background:linear-gradient(90deg,#4fbf83,#38a56b)}
+.agent-suite{display:none}   /* petits : « Fabriquer » ➜ « Envoyer sur la console », deux boutons de même taille sur une seule ligne (même sur téléphone) */
+#vueScript.petits .agent-suite{display:contents}#vueScript.petits .agent-ligne{flex-direction:row;align-items:center}
+#vueScript.petits .agent-btns,#vueScript.petits .agent-suite .big{flex:1 1 0;min-width:0;width:auto;box-sizing:border-box}
+.agent-suite i{font-style:normal;font-size:34px;line-height:1;color:var(--acc);flex:none}
+.agent-suite .big{margin:0;padding:14px 0;font-size:20px;border-radius:10px;background:linear-gradient(90deg,#4fbf83,#38a56b);box-shadow:0 2px 8px rgba(11,122,65,.2)}
 .agent-suite .big:disabled,#scCommun:disabled{opacity:.45;cursor:default;filter:grayscale(1)}
-@media (max-width:600px){.agent-suite{flex-wrap:wrap}}
+#vueScript.petits #scMettre{display:none}   /* petits : l'envoi se fait à côté de « Fabriquer » */
+@media (max-width:600px){#vueScript.petits .agent-btns .big,.agent-suite .big{padding:12px 0;font-size:16px}}
 .agent-btns .big{width:100%;margin:0;padding:9px 10px;font-size:14px;border-radius:10px;background:linear-gradient(90deg,#4fbf83,#38a56b);box-shadow:0 2px 8px rgba(11,122,65,.2)}
 @media (max-width:600px){.agent-ligne{flex-direction:column}.agent-btns{width:auto}}
 .sc-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}

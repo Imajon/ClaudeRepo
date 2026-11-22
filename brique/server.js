@@ -1,7 +1,8 @@
 // Brique - serveur : sert la page, garde les niveaux signes (pseudo), les parties jouees et en tire classement + stats.
 // `node server.js` (port 8080, ou PORT=...). Donnees : MySQL si DB_HOST est defini (Aiven), sinon data.json a cote (ou DATA=...).
-// Comptes : seuls les ANIMATEURS donnent un mail (lien de connexion, sans mot de passe). Ils creent des groupes ;
-// les enfants rejoignent un groupe avec un pseudo + le code du groupe : aucune donnee perso cote enfant.
+// Comptes : un seul type de compte, deux entrees. (1) e-mail + pseudo + mot de passe, adresse confirmee par un lien : ce compte est aussi
+// celui de l'animateur (il cree des groupes et leurs codes). (2) un CODE individuel (ex. PANDA-3955) cree par un animateur pour son groupe :
+// l'enfant le saisit, choisit son pseudo la 1re fois, puis le code seul le reconnecte. Aucune donnee perso cote enfant.
 const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto');
 const Fiche = require('./fiche.js'), FicheBerry = require('./fiche-berry.js');                   // la fiche de jeu : meme verification que la page
 // version anglaise : la page /en (index.html passe par en.js) envoie X-Lang: en a chaque appel ; les messages, le mail, Stripe et l'IA repondent alors en anglais
@@ -165,17 +166,23 @@ function motDePasseOk(j, m) {
 function ouvrirSession(j) {                              // 90 jours ; le mot de passe ne reste jamais dans le navigateur
   const jeton = aleatoire(24);
   for (const [k, s] of Object.entries(db.sessions)) if (s.exp < Date.now()) delete db.sessions[k];
-  db.sessions[empreinte(jeton)] = { pseudo: j.pseudo, exp: Date.now() + 90 * JOUR }; sauver();
-  return { pseudo: j.pseudo, jeton, groupe: db.groupes.find(g => g.code === j.groupe)?.nom || 'Créateur' };
+  db.sessions[empreinte(jeton)] = { pseudo: j.pseudo, exp: Date.now() + 90 * JOUR };
+  const adulte = j.email ? sessionsAdulte(j.email) : {};   // compte e-mail : aussi animateur et acheteur, d'un seul appel
+  sauver();
+  return { pseudo: j.pseudo, jeton, groupe: db.groupes.find(g => g.code === j.groupe)?.nom || 'Créateur', ...adulte };
 }
 const fermerSessions = pseudo => { for (const [k, s] of Object.entries(db.sessions)) if (s.pseudo === pseudo) delete db.sessions[k]; };
 function animateurDe(req) {
   const s = db.sessions[empreinte(req.headers['x-session'] || '')];
   return s && s.exp > Date.now() ? s.email : null;
 }
-// mot de passe provisoire donné par l'animateur (ex. TIGRE-4821) ; 10 essais ratés par pseudo et par heure au plus (route reconnexion)
+// mot de passe provisoire donné par l'animateur (ex. TIGRE-4821), et code individuel d'un enfant (même forme, unique dans tous les groupes)
 const codeSecret = () => ['LUNE', 'ROBOT', 'PIXEL', 'FUSEE', 'DRAGON', 'COMETE', 'NINJA', 'VOLCAN', 'GLACE', 'TIGRE', 'ORAGE', 'CASTOR', 'HIBOU', 'PANDA', 'REQUIN', 'ZEBRE'][crypto.randomInt(16)] + '-' + crypto.randomInt(1000, 10000);
+function codeEnfant() { let c; do c = codeSecret(); while (db.groupes.some(g => (g.codes || []).some(x => x.c === c))); return c; }
+// essais ratés par heure : 10 par e-mail ou pseudo ; 60 par connexion Internet pour les codes (une classe entière sort par la même IP)
 const ratesReco = { h: 0, n: new Map() };
+const tropDEssais = (cle, max) => { const h = Math.floor(Date.now() / 36e5); if (ratesReco.h !== h) { ratesReco.h = h; ratesReco.n = new Map(); } return (ratesReco.n.get(cle) || 0) >= max; };
+const essaiRate = cle => ratesReco.n.set(cle, (ratesReco.n.get(cle) || 0) + 1);
 function codeGroupe() {                                  // ex. LUNE-42 : facile a dicter en classe
   const MOTS = ['LUNE', 'ROBOT', 'PIXEL', 'FUSEE', 'DRAGON', 'BRIQUE', 'COMETE', 'NINJA', 'VOLCAN', 'GLACE', 'TIGRE', 'ORAGE'];
   let c; do c = MOTS[crypto.randomInt(MOTS.length)] + '-' + crypto.randomInt(10, 100); while (db.groupes.some(g => g.code === c));
@@ -206,6 +213,20 @@ const LOCAL = PUBLIC_URL.startsWith('http://localhost');
 const SECRET = process.env.BOUTIQUE_SECRET || (LOCAL ? 'dev-local' : null);   // en ligne : obligatoire (sinon les comptes seraient devinables)
 const ADMINS = (process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
 const compteDe = email => crypto.createHmac('sha256', SECRET).update(email).digest('hex');
+// sessions d'un adulte dont l'adresse est prouvee (mot de passe ou lien recu) : animateur (si anim) + acheteur boutique ; a sauver par l'appelant
+function sessionsAdulte(email, anim = true) {
+  const r = {};
+  if (anim) {
+    if (!db.animateurs.some(a => a.email === email)) db.animateurs.push({ email, cree: Date.now() });
+    r.session = aleatoire(24); db.sessions[empreinte(r.session)] = { email, exp: Date.now() + 30 * JOUR };
+  }
+  if (SECRET) {
+    const compte = compteDe(email);
+    if (!db.clients.some(c => c.id === compte)) db.clients.push({ id: compte, cree: Date.now(), vu: Date.now() });
+    r.client = aleatoire(24); db.sessions[empreinte(r.client)] = { compte, exp: Date.now() + 30 * JOUR };
+  }
+  return r;
+}
 // pieces detachees : [libelle, centimes] ; meme liste que PIECES dans index.html
 const PIECES = { esp: ['Module ESP32-C3 Super Mini', 500], ecran: ['Écran couleur', 900], bouton: ['Bouton poussoir', 100] };   // ponytail: prix a confirmer
 const ACCES = ['Accès à l’interface Brique, 3 mois', 900];   // centimes ; accès sans console : pas de livraison ; meme prix dans index.html
@@ -322,7 +343,8 @@ function espaceAnimateur(email) {
     commandes: ADMINS.includes(email) ? db.commandes.filter(c => c.statut !== 'attente').sort((a, b) => b.cree - a.cree)   // admin boutique
     .map(c => ({ ...vueCommande(c), stripe: c.paiement ? `https://dashboard.stripe.com/${test}payments/${c.paiement}` : '' })) : undefined, groupes: db.groupes.filter(g => g.email === email).map(g => ({
     code: g.code, nom: g.nom, matiere: g.matiere || '', prive: !!g.prive, age: g.age || 'libre', questions: (g.questions || []).map(q => ({ ...q, stats: statsQuestion(q.id) })),
-    joueurs: db.joueurs.filter(j => j.groupe === g.code).map(j => { const c = db.conso?.['j:' + j.pseudo.toLowerCase()]; return { pseudo: j.pseudo, cree: j.cree, tokens: c?.t || 0, jour: c?.jour === aujourdhui() ? c.j : 0 }; }),
+    codes: (g.codes || []).map(x => ({ c: x.c, pseudo: db.joueurs.find(j => j.code === x.c)?.pseudo || '' })),   // codes individuels : libres tant que personne ne les a saisis
+    joueurs: db.joueurs.filter(j => j.groupe === g.code).map(j => { const c = db.conso?.['j:' + j.pseudo.toLowerCase()]; return { pseudo: j.pseudo, avecCode: !!j.code, cree: j.cree, tokens: c?.t || 0, jour: c?.jour === aujourdhui() ? c.j : 0 }; }),
     niveaux: db.niveaux.filter(n => n.groupe === g.code).map(n => ({ id: n.id, titre: n.titre, pseudo: n.pseudo, cree: n.cree, masque: !!n.masque, parties: stats(n.id).parties, ...(n.attente ? aVerifier(n) : {}) })),
   })) };
 }
@@ -336,6 +358,17 @@ const ipDe = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAd
 const dernierMail = new Map();                           // 1 lien de connexion par minute et par adresse (pas de bombardement)
 const liensIP = new Map(); setInterval(() => liensIP.clear(), 3600000);   // et 5 demandes de lien par heure et par IP (pas de comptes en rafale)
 const tropDeLiens = ip => { const n = (liensIP.get(ip) || 0) + 1; liensIP.set(ip, n); return n > 5; };
+function limiteMail(req, res, email) {                   // true = refuse (et a deja repondu)
+  if (Date.now() - (dernierMail.get(email) || 0) < 60000) return repondre(res, 429, { erreur: 'Un lien vient d\'être envoyé : regarde tes mails (et les indésirables).' }), true;
+  if (tropDeLiens(ipDe(req))) return repondre(res, 429, { erreur: 'Trop de demandes de lien : réessaie dans une heure.' }), true;
+  dernierMail.set(email, Date.now()); return false;
+}
+async function mailCompte(email, param, jeton, fr, en) {   // fr / en : [sujet, phrase] ; le lien vaut 30 minutes
+  const lien = `${PUBLIC_URL}${racine()}?${param}=${jeton}`, [sujet, phrase] = anglais() ? en : fr;
+  await envoyerMail(email, sujet, anglais()
+    ? `<p>Hello,</p><p>${phrase} (valid for 30 minutes):</p><p><a href="${lien}">${lien}</a></p><p>If you did not ask for this, just ignore this email.</p>`
+    : `<p>Bonjour,</p><p>${phrase} (valable 30 minutes) :</p><p><a href="${lien}">${lien}</a></p><p>Si tu n'as rien demandé, ignore ce mail.</p>`);
+}
 
 // ---------- code du mode edition : EDIT_CODE (12 caracteres mini), compare en temps constant ----------
 // 10 essais faux par heure pour tout le serveur (l'IP est falsifiable) : au-dela, plus aucun essai pendant l'heure
@@ -1213,15 +1246,15 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
     catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'L\'IA ne répond pas' }); }
   }
 
-  // ----- adulte : UN lien de connexion par mail -> session boutique, + session animateur s'il l'est (ou le demande) -----
-  // l'adresse reste 30 min dans le lien ; elle n'est gardée que pour un animateur (ses groupes) : un simple acheteur reste une empreinte HMAC
-  if (url === '/api/animateur/lien' || url === '/api/client/lien') {
+  // ----- acheteur sans compte : un lien de connexion par mail -> session boutique (+ session animateur si l'adresse a un compte) -----
+  // l'adresse reste 30 min dans le lien ; un simple acheteur reste une empreinte HMAC
+  if (url === '/api/client/lien') {
     const email = String(b.email || '').trim().toLowerCase();
     if (!MAIL.test(email)) return repondre(res, 400, { erreur: 'Adresse mail invalide.' });
     if (Date.now() - (dernierMail.get(email) || 0) < 60000) return repondre(res, 429, { erreur: 'Un lien vient d\'être envoyé : regarde tes mails (et les indésirables).' });
     if (tropDeLiens(ipDe(req))) return repondre(res, 429, { erreur: 'Trop de demandes de lien : réessaie dans une heure.' });
     dernierMail.set(email, Date.now());
-    const jeton = aleatoire(24), anim = url === '/api/animateur/lien' || db.animateurs.some(a => a.email === email);
+    const jeton = aleatoire(24), anim = db.animateurs.some(a => a.email === email);
     for (const [k, l] of Object.entries(db.liens)) if (l.exp < Date.now()) delete db.liens[k];
     db.liens[empreinte(jeton)] = { email, anim, boutique: !!b.boutique, exp: Date.now() + 30 * 60000 }; sauver();
     const lien = `${PUBLIC_URL}${racine()}?connexion=${jeton}`;
@@ -1238,16 +1271,7 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
     const k = empreinte(b.jeton || ''), l = db.liens[k]; delete db.liens[k];
     if (!l?.email || l.exp < Date.now()) { sauver(); return repondre(res, 400, { erreur: 'Lien expiré ou déjà utilisé : demande-en un nouveau.' }); }
     for (const [k2, s] of Object.entries(db.sessions)) if (s.exp < Date.now()) delete db.sessions[k2];
-    const r = { email: l.email, boutique: l.boutique };
-    if (l.anim) {
-      if (!db.animateurs.some(a => a.email === l.email)) db.animateurs.push({ email: l.email, cree: Date.now() });
-      r.session = aleatoire(24); db.sessions[empreinte(r.session)] = { email: l.email, exp: Date.now() + 30 * JOUR };
-    }
-    if (SECRET) {
-      const compte = compteDe(l.email);
-      if (!db.clients.some(c => c.id === compte)) db.clients.push({ id: compte, cree: Date.now(), vu: Date.now() });
-      r.client = aleatoire(24); db.sessions[empreinte(r.client)] = { compte, exp: Date.now() + 30 * JOUR };
-    }
+    const r = { email: l.email, boutique: l.boutique, ...sessionsAdulte(l.email, l.anim) };
     sauver(); return repondre(res, 200, r);
   }
   if (url.startsWith('/api/animateur/')) {            // tout le reste demande une session animateur
@@ -1258,6 +1282,19 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
       const nom = String(b.nom || '').replace(/[<>]/g, '').trim().slice(0, 40) || 'Mon groupe';
       db.groupes.push({ code: codeGroupe(), nom, email, cree: Date.now() }); sauver();
       return repondre(res, 200, espaceAnimateur(email));
+    }
+    if (url === '/api/animateur/codes') {             // codes individuels : un par enfant, a lui donner ; il ouvre son compte dans ce groupe
+      const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });
+      const n = Math.max(1, Math.min(50, parseInt(b.n) || 1)); g.codes ||= [];
+      if (g.codes.length + n > 100) return repondre(res, 400, { erreur: 'Un groupe : 100 codes au plus.' });
+      for (let i = 0; i < n; i++) g.codes.push({ c: codeEnfant() });
+      sauver(); return repondre(res, 200, espaceAnimateur(email));
+    }
+    if (url === '/api/animateur/codesuppr') {         // supprimer un code : l'enfant qui l'avait ne peut plus s'en servir (son compte reste, a liberer si besoin)
+      const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });
+      g.codes = (g.codes || []).filter(x => x.c !== b.c);
+      const j = db.joueurs.find(j => j.code === b.c); if (j) { delete j.code; fermerSessions(j.pseudo); }
+      sauver(); return repondre(res, 200, espaceAnimateur(email));
     }
     if (url === '/api/animateur/code') {              // code du groupe divulgue : nouveau code, l'ancien ne marche plus (les enfants deja inscrits restent)
       const g = groupe(b.code); if (!g) return repondre(res, 404, { erreur: 'groupe introuvable' });
@@ -1357,25 +1394,68 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
     return repondre(res, 404, { erreur: 'introuvable' });
   }
 
-  // ----- enfant : rejoindre un groupe avec pseudo + code -----
-  if (url === '/api/joueur') {
+  // ----- compte : e-mail + mot de passe, ou code d'un animateur ; le même compte sert à l'adulte (animateur) et à l'enfant -----
+  if (url === '/api/inscription') {                   // le compte n'existe qu'une fois l'adresse confirmée par le lien (sinon on pourrait prendre l'adresse d'un autre, celle de l'admin comprise)
+    const email = String(b.email || '').trim().toLowerCase(), mdp = String(b.mdp || '').trim();
+    if (!MAIL.test(email)) return repondre(res, 400, { erreur: 'Adresse mail invalide.' });
     if (!PSEUDO.test(b.pseudo || '')) return repondre(res, 400, { erreur: 'Pseudo : 2 à 12 lettres ou chiffres, sans espace.' });
-    const code = String(b.code || '').trim().toUpperCase();
-    // sans code : compte créateur libre (groupe ''), ses jeux vont dans la communauté publique
-    // créateurs libres : leurs images passent par l'IA puis, au moindre doute, par l'admin du site (ADMIN_EMAILS)
-    const g = code ? db.groupes.find(g => g.code === code) : { code: '', nom: 'Créateur' };
-    if (!g) return repondre(res, 400, { erreur: 'Code de groupe inconnu : vérifie-le, ou laisse la case vide.' });
+    if (mdp.length < 6) return repondre(res, 400, { erreur: 'Mot de passe : 6 caractères au moins.' });
+    if (db.joueurs.some(j => j.email === email)) return repondre(res, 409, { erreur: 'Un compte existe déjà avec cette adresse : connecte-toi (« Mot de passe oublié ? » au besoin).' });
     if (joueurNomme(b.pseudo)) return repondre(res, 409, { erreur: 'Ce pseudo est déjà pris : choisis-en un autre.' });
-    if (String(b.mdp || '').trim().length < 6) return repondre(res, 400, { erreur: 'Mot de passe : 6 caractères au moins.' });
-    const j = { pseudo: b.pseudo, groupe: g.code, mdp: hacher(String(b.mdp).trim()), cree: Date.now() };
-    db.joueurs.push(j); return repondre(res, 200, ouvrirSession(j));
+    if (limiteMail(req, res, email)) return;
+    const jeton = aleatoire(24);
+    for (const [k, l] of Object.entries(db.liens)) if (l.exp < Date.now()) delete db.liens[k];
+    db.liens[empreinte(jeton)] = { email, creation: { pseudo: b.pseudo, mdp: hacher(mdp) }, exp: Date.now() + 30 * 60000 }; sauver();
+    try { await mailCompte(email, 'confirmer', jeton, ['Confirme ton compte Brique', 'Pour créer ton compte Brique, clique ici'], ['Confirm your Brique account', 'To create your Brique account, click here']); }
+    catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'Le mail n\'a pas pu partir, réessaie plus tard.' }); }
+    return repondre(res, 200, { ok: true });
   }
-  if (url === '/api/reconnexion') {                   // pseudo + mot de passe -> le même compte, sur n'importe quel ordinateur
-    const k = String(b.pseudo || '').toLowerCase(), h = Math.floor(Date.now() / 36e5);
-    if (ratesReco.h !== h) { ratesReco.h = h; ratesReco.n = new Map(); }
-    if ((ratesReco.n.get(k) || 0) >= 10) return repondre(res, 429, { erreur: 'Trop d\'essais pour ce pseudo : réessaie dans une heure.' });
-    const j = motDePasseOk(joueurNomme(b.pseudo), b.mdp);
-    if (!j) { ratesReco.n.set(k, (ratesReco.n.get(k) || 0) + 1); return repondre(res, 401, { erreur: 'Pseudo ou mot de passe incorrect.' }); }
+  if (url === '/api/oubli') {                         // mot de passe oublié : un lien pour en choisir un nouveau ; même réponse que le compte existe ou non
+    const email = String(b.email || '').trim().toLowerCase();
+    if (!MAIL.test(email)) return repondre(res, 400, { erreur: 'Adresse mail invalide.' });
+    if (limiteMail(req, res, email)) return;
+    if (db.joueurs.some(j => j.email === email)) {
+      const jeton = aleatoire(24); db.liens[empreinte(jeton)] = { email, reinit: true, exp: Date.now() + 30 * 60000 }; sauver();
+      try { await mailCompte(email, 'reinit', jeton, ['Nouveau mot de passe Brique', 'Pour choisir un nouveau mot de passe, clique ici'], ['New Brique password', 'To choose a new password, click here']); }
+      catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'Le mail n\'a pas pu partir, réessaie plus tard.' }); }
+    }
+    return repondre(res, 200, { ok: true });
+  }
+  if (url === '/api/confirmer') {                     // lien du mail : crée le compte, ou pose le nouveau mot de passe ; ouvre la session
+    const k = empreinte(b.jeton || ''), l = db.liens[k], mdp = String(b.mdp || '').trim();
+    if (!l?.email || !(l.creation || l.reinit) || l.exp < Date.now()) return repondre(res, 400, { erreur: 'Lien expiré ou déjà utilisé : recommence.' });
+    if (l.reinit && mdp.length < 6) return repondre(res, 400, { erreur: 'Mot de passe : 6 caractères au moins.' });   // le lien n'est pas consommé
+    let j = db.joueurs.find(j => j.email === l.email);
+    if (l.creation) {
+      if (j) return repondre(res, 409, { erreur: 'Ce compte existe déjà : connecte-toi.' });
+      if (joueurNomme(l.creation.pseudo)) return repondre(res, 409, { erreur: 'Ce pseudo a été pris entre-temps : recommence avec un autre.' });
+      j = { pseudo: l.creation.pseudo, groupe: '', email: l.email, mdp: l.creation.mdp, cree: Date.now() }; db.joueurs.push(j);
+    } else {
+      if (!j) return repondre(res, 404, { erreur: 'Compte introuvable.' });
+      j.mdp = hacher(mdp); delete j.provisoire; delete j.secret; fermerSessions(j.pseudo);
+    }
+    delete db.liens[k];
+    return repondre(res, 200, ouvrirSession(j));
+  }
+  if (url === '/api/reconnexion') {                   // e-mail (ou pseudo des comptes d'avant) + mot de passe -> le même compte, sur n'importe quel ordinateur
+    const id = String(b.identifiant ?? b.pseudo ?? '').trim().toLowerCase();
+    if (tropDEssais(id, 10)) return repondre(res, 429, { erreur: 'Trop d\'essais : réessaie dans une heure.' });
+    const j = motDePasseOk(id.includes('@') ? db.joueurs.find(j => j.email === id) : joueurNomme(id), b.mdp);
+    if (!j) { essaiRate(id); return repondre(res, 401, { erreur: 'E-mail (ou pseudo) ou mot de passe incorrect.' }); }
+    return repondre(res, 200, ouvrirSession(j));
+  }
+  if (url === '/api/code') {                          // code donné par un animateur : à la 1re utilisation l'enfant choisit son pseudo, ensuite le code seul le reconnecte
+    const c = String(b.code || '').trim().toUpperCase(), cle = 'ip:' + ipDe(req);
+    if (tropDEssais(cle, 60)) return repondre(res, 429, { erreur: 'Trop d\'essais : réessaie dans une heure.' });
+    const g = c && db.groupes.find(g => (g.codes || []).some(x => x.c === c));
+    if (!g) { essaiRate(cle); return repondre(res, 401, { erreur: 'Code inconnu : vérifie-le avec ton animateur.' }); }
+    let j = db.joueurs.find(j => j.code === c);
+    if (!j) {
+      if (!b.pseudo) return repondre(res, 200, { pseudoRequis: true });
+      if (!PSEUDO.test(b.pseudo)) return repondre(res, 400, { erreur: 'Pseudo : 2 à 12 lettres ou chiffres, sans espace.' });
+      if (joueurNomme(b.pseudo)) return repondre(res, 409, { erreur: 'Ce pseudo est déjà pris : choisis-en un autre.' });
+      j = { pseudo: b.pseudo, groupe: g.code, code: c, cree: Date.now() }; db.joueurs.push(j);
+    }
     return repondre(res, 200, ouvrirSession(j));
   }
   if (url === '/api/deconnexion') { if (b.jeton) delete db.sessions[empreinte(b.jeton)]; sauver(); return repondre(res, 200, { ok: true }); }

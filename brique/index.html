@@ -738,7 +738,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CGV : conditions générales de vente et d'utilisation (lien en pied de page et au paiement) ===== -->
-<main id="cgv" class="hide" data-version="1.1">
+<main id="cgv" class="hide" data-version="1.2">
 <div class="shop"><div class="sh-hero page-hero"><p class="sh-sur">Conditions générales</p><h2 class="sh-titre">Conditions de vente et d'utilisation</h2></div></div>
 <div class="commu">
   <section style="grid-column:1/-1;max-width:760px;width:100%;margin:0 auto;line-height:1.6">
@@ -762,7 +762,7 @@ body{overflow-x:clip}                                           /* la bande 100v
         <li><b>La soudure</b> : le fer à souder chauffe à plus de 300 °C. Travailler sur un support stable, dans une pièce aérée, porter des lunettes de protection, se laver les mains après avoir touché l'étain, débrancher le fer après usage.</li>
         <li><b>L'alimentation</b> : uniquement par le port USB-C, avec un ordinateur, un chargeur de téléphone ou une batterie externe conformes aux normes CE. Ne jamais brancher autre chose sur les broches de la carte.</li>
         <li><b>Les écrans</b> : certains jeux comportent des clignotements. En cas d'antécédents d'épilepsie photosensible, demander l'avis d'un médecin avant de jouer. Faire des pauses régulières.</li>
-        <li><b>L'IA et le site</b> : la création de jeux par IA se fait en ligne ; un adulte accompagne l'enfant. Aucune donnée personnelle de l'enfant n'est demandée (pseudo et code de groupe seulement).</li>
+        <li><b>L'IA et le site</b> : la création de jeux par IA se fait en ligne ; un adulte accompagne l'enfant. Aucune donnée personnelle de l'enfant n'est demandée (un pseudo et un code donné par l'animateur seulement).</li>
       </ul>
 
       <h3>4. Prix et paiement</h3>
@@ -912,7 +912,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
-<main id="boutique" class="shop hide" data-version="1.7">
+<main id="boutique" class="shop hide" data-version="1.8">
   <div class="sh-hero">
     <h2 class="sh-titre">Un kit simple, à deux,<br>ou un support pédagogique clé en main.</h2>
   </div>
@@ -1007,7 +1007,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div class="sh-colonnes">
       <div><h4>Ce que nous gardons</h4><ul>
         <li><b>Enfant</b> : un pseudo, le groupe qu'il a rejoint, les jeux qu'il publie et ses scores.</li>
-        <li><b>Adulte</b> (animateur, prof, parent) : son e-mail, pour lui envoyer le lien de connexion (aucun mot de passe), et les groupes qu'il a créés.</li>
+        <li><b>Adulte</b> (animateur, prof, parent) : son e-mail et son mot de passe (haché, jamais lisible) pour se connecter, un pseudo, et les groupes et codes qu'il a créés.</li>
       </ul></div>
       <div><h4>Ce qui part chez Mistral AI</h4><ul>
         <li>La phrase tapée et les réglages du jeu en cours. Rien d'autre : ni pseudo, ni groupe, ni adresse IP de l'enfant.</li>
@@ -1654,7 +1654,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== ATELIER : présentation pour les professeurs ===== -->
-<main id="profs" class="anim hide" data-version="1.1">
+<main id="profs" class="anim hide" data-version="1.2">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Atelier · Brique en classe</p>
     <h2 class="sh-titre">Ils fabriquent.<br>Ils créent. Ils apprennent.</h2>
@@ -1716,28 +1716,28 @@ body{overflow-x:clip}                                           /* la bande 100v
         <li><b>Séance 4</b> — publication, échange des jeux par code, courses à plusieurs.</li>
       </ol></section>
     <section><h2>Cadre et sécurité</h2>
-      <p>Les élèves n'ont <b>ni compte ni adresse mail</b> : un pseudo et le code du groupe suffisent. Seul l'adulte se connecte (lien reçu par mail). Vous pouvez masquer un jeu, supprimer une idée, libérer un pseudo.</p>
+      <p>Les élèves n'ont <b>ni adresse mail ni mot de passe</b> : vous leur donnez un code chacun, ils choisissent un pseudo. Seul l'adulte a un compte e-mail + mot de passe. Vous pouvez masquer un jeu, supprimer une idée, libérer un pseudo.</p>
       <p class="aide">Pas de nom, pas de photo, pas de messagerie entre élèves. Les textes affichés sur les consoles sont filtrés.</p></section>
     <section><h2>Pour commencer</h2>
       <ol style="margin:0;padding-left:20px;line-height:1.6">
-        <li>Ouvrez l'<b>espace Animateur</b> et créez un groupe : vous obtenez un code (ex. LUNE-42).</li>
+        <li>Créez votre compte (e-mail + mot de passe), ouvrez l'<b>espace Animateur</b> et créez un groupe.</li>
         <li>Écrivez vos questions de cours et, si besoin, activez le mode atelier.</li>
-        <li>Les élèves cliquent « Se connecter » → « Créer un compte » : un pseudo, un mot de passe et ce code.</li>
+        <li>Créez un code par élève et donnez-les : l'élève clique « Se connecter » → « Avec un code », choisit son pseudo, et le code seul le reconnecte ensuite.</li>
       </ol>
       <div class="actions" style="justify-content:flex-start;margin-top:12px"><button id="profsAnim" class="big" style="width:auto;margin:0">🎓 Ouvrir l'espace Animateur</button></div></section>
   </div>
 </main>
 
 <!-- ===== ESPACE ANIMATEUR ===== -->
-<main id="anim" class="anim hide" data-version="1.0">
+<main id="anim" class="anim hide" data-version="1.1">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Espace animateur</p>
     <h2 class="sh-titre">Ton groupe,<br>en un coup d'œil.</h2>
   </div>
   <section id="animConnexion">
     <h2>Espace animateur</h2>
-    <p class="aide" style="margin-top:0">Entre ton adresse mail : tu reçois un lien de connexion (pas de mot de passe). Les enfants, eux, ne donnent jamais de mail.</p>
-    <div class="icRow"><input id="animMail" class="pseudo" type="email" placeholder="ton.adresse@exemple.fr"><button id="animLienBtn" class="sec">📧 Recevoir mon lien</button></div>
+    <p class="aide" style="margin-top:0">L'espace animateur, c'est ton compte : connecte-toi avec ton e-mail et ton mot de passe (ou crée-le). Tu crées ensuite des groupes et un code par enfant : les enfants n'ont besoin ni d'e-mail ni de mot de passe.</p>
+    <div class="actions" style="justify-content:flex-start"><button id="animConnBtn" class="big" style="width:auto;margin:0">👤 Se connecter / créer mon compte</button></div>
     <div id="animMsg" class="envoi"></div>
   </section>
   <div id="animEspace" class="hide" style="display:flex;flex-direction:column;gap:16px">
@@ -1756,26 +1756,22 @@ body{overflow-x:clip}                                           /* la bande 100v
 <!-- ===== REJOINDRE UN GROUPE (enfant) ===== -->
 <!-- fenêtre de connexion classique : onglets Se connecter / Créer un compte (pseudo + mot de passe), et en bas la connexion adulte par mail -->
 <dialog id="dlgRejoindre">
-  <div class="chips" id="rjOnglets" style="margin-bottom:12px"><button class="chip on" data-onglet="co">Se connecter</button><button class="chip" data-onglet="cr">Créer un compte</button></div>
+  <div class="chips" id="rjOnglets" style="margin-bottom:8px"><button class="chip on" data-onglet="co">Se connecter</button><button class="chip" data-onglet="cr">Créer un compte</button></div>
+  <div class="chips" id="rjModes" style="margin-bottom:12px"><button class="chip on" data-mode="mail">✉️ Avec mon e-mail</button><button class="chip" data-mode="code">🔑 Avec un code</button></div>
   <form id="rjForm" method="dialog">
-    <label class="champ">Pseudo<input id="rjPseudo" class="pseudo" maxlength="12" autocomplete="username" placeholder="2 à 12 lettres ou chiffres" required></label>
-    <label class="champ">Mot de passe<input id="rjMdp" class="pseudo" type="password" autocomplete="current-password" required></label>
-    <div data-cr class="hide">
-      <label class="champ">Confirme le mot de passe<input id="rjMdp2" class="pseudo" type="password" autocomplete="new-password"></label>
-      <label class="champ">Code du groupe (si ton animateur t'en a donné un)<input id="rjCode" class="pseudo" placeholder="ex. LUNE-42" autocapitalize="characters"></label>
-      <p class="aide" style="margin-top:0">Ton pseudo : <b>pas ton vrai nom !</b> Mot de passe : 6 caractères au moins.</p>
-    </div>
+    <label class="champ" id="rjBId"><span id="rjIdLib">E-mail (ou pseudo d'un ancien compte)</span><input id="rjId" class="pseudo" autocomplete="username" placeholder="ton.adresse@exemple.fr"></label>
+    <label class="champ hide" id="rjBPseudo">Pseudo <small>(pas ton vrai nom !)</small><input id="rjPseudo" class="pseudo" maxlength="12" autocomplete="nickname" placeholder="2 à 12 lettres ou chiffres"></label>
+    <label class="champ" id="rjBMdp"><span id="rjMdpLib">Mot de passe</span><input id="rjMdp" class="pseudo" type="password" autocomplete="current-password"></label>
+    <label class="champ hide" id="rjBMdp2">Confirme le mot de passe<input id="rjMdp2" class="pseudo" type="password" autocomplete="new-password"></label>
+    <label class="champ hide" id="rjBCode">Code donné par ton animateur<input id="rjCode" class="pseudo" placeholder="ex. PANDA-3955" autocapitalize="characters" autocomplete="off"></label>
+    <label class="champ hide" id="rjBPseudoCode">Choisis ton pseudo <small>(pas ton vrai nom !)</small><input id="rjPseudoCode" class="pseudo" maxlength="12" placeholder="2 à 12 lettres ou chiffres"></label>
+    <p class="aide" id="rjAideCr" style="margin-top:0">Mot de passe : 6 caractères au moins. Tu recevras un mail pour confirmer ton adresse. Un compte e-mail sert aussi d'espace animateur.</p>
     <div id="rjMsg" class="envoi"></div>
     <div class="actions" style="justify-content:space-between;align-items:center">
-      <a href="#" id="rjOubli" data-co style="color:var(--mute)">Mot de passe oublié ?</a><span data-cr class="hide"></span>
+      <a href="#" id="rjOubli" style="color:var(--mute)">Mot de passe oublié ?</a>
       <span><button type="button" id="rjAnnuler" class="sec">Annuler</button> <button id="rjOk" class="sec" style="border-color:var(--acc)">Se connecter</button></span>
     </div>
   </form>
-  <details id="rjAdulte" style="margin-top:12px;border-top:1px solid var(--line);padding-top:8px"><summary>Adulte (animateur, parent, commande) : connexion par e-mail</summary>
-    <p class="aide">Pas de mot de passe : tu reçois un lien de connexion par mail. Il ouvre ton espace animateur et tes commandes.</p>
-    <div class="icRow"><input id="rjMail" class="pseudo" type="email" autocomplete="email" placeholder="ton.adresse@exemple.fr"><button id="rjLienBtn" class="sec">📧 Recevoir mon lien</button></div>
-    <div id="rjMailMsg" class="envoi"></div>
-  </details>
 </dialog>
 
 <!-- ===== MESSAGE IMPORTANT (Créer) ===== -->
@@ -1921,7 +1917,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.24">
+<main id="vueScript" class="hide" data-version="1.25">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><select id="scDepart" title="Le jeu de départ : une fiche toute prête que tu changes avec l'IA"><option value="plateforme">🧗 Plateforme</option><option value="casse">🧱 Casse-briques</option><option value="">⬜ Vide</option></select><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="niveauScolaire" class="mode" title="Ton degré de liberté. Bulles : tu touches des bulles, sans écrire. Libre : tu décris tout avec tes mots, et « 💡 Aide-moi » te propose des idées."><button id="mPetits">🫧 Bulles</button><button id="mLibre">✍️ Libre</button></span>   <!-- degré de liberté : choisi ici, ou par l'animateur pour son groupe ; les bulles par défaut -->
@@ -1945,11 +1941,11 @@ body{overflow-x:clip}                                           /* la bande 100v
     <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="gooey" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur in="SourceGraphic" stdDeviation="7"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter></svg>   <!-- filtre « goutte » : fond la bulle-question et sa réponse en une seule forme -->
     <div id="scBulles" class="hide"></div>         <!-- degré « bulles » (défaut) : la recette (les bulles prises), puis les bulles à toucher ; rien à écrire -->
     <p class="aide" style="margin:8px 0 0">🚀 Ici, on apprend à décrire ce qu'on veut et à améliorer son jeu par petites touches. Pour aller plus loin : demande ton code à ton propre agent IA, modifie-le avec lui, puis colle-le ici (« &lt;/&gt; Voir le code ») pour le mettre sur ta console.</p>
-      <div class="agent-suite"><i aria-hidden="true">➜</i><button id="scMettre2" class="big" disabled>📟 Envoyer sur la console</button></div>   <!-- petits seulement : double de scMettre -->
     <div id="scChoix" class="hide"></div>          <!-- tranche guidée : la question de l'IA et ses 3 boutons ; un clic écrit la phrase dans le champ -->
     <div class="agent-ligne">                    <!-- le champ, en bas ; ses boutons empilés à droite -->
       <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:76px;font-size:17px"></textarea>
       <div class="agent-btns"><button id="scGo" class="big">✨ Envoyer à l'IA</button><button id="scAide" class="sec hide" title="L'IA te propose 3 idées : celle que tu choisis s'écrit dans le champ">💡 Aide-moi</button><button id="scMicro" class="sec" title="Appuie, parle, réappuie : ton texte s'écrit dans le champ">🎙 Parler</button><button id="scVoirCode" class="sec">&lt;/&gt; Voir le code</button></div>
+      <div class="agent-suite"><i aria-hidden="true">➜</i><button id="scMettre2" class="big" disabled>📟 Envoyer sur la console</button></div>   <!-- petits seulement : double de scMettre -->
     </div>
   </section>
   <section class="console">
@@ -3038,35 +3034,60 @@ async function majTokens() {
     tokTxt.innerHTML = !q.jour ? '' : barreTok('⚡ aujourd’hui', q.jour) + (q.forfait ? ' ' + barreTok('📦 forfait', q.forfait) + ` <small style="color:var(--mute)">jusqu’au ${new Date(q.forfait.fin).toLocaleDateString('fr-FR')}</small>` : '');
   } catch {}
 }
-// fenêtre de connexion : onglet « Se connecter » ou « Créer un compte » (pseudo + mot de passe, retenus par le navigateur)
-let onglet = 'co';
-function ouvrirConnexion(o) {
-  onglet = o; const cr = o === 'cr'; rjMsg.textContent = '';
-  rjOnglets.querySelectorAll('[data-onglet]').forEach(b => b.classList.toggle('on', b.dataset.onglet === o));
-  dlgRejoindre.querySelectorAll('[data-cr]').forEach(el => el.classList.toggle('hide', !cr));
-  dlgRejoindre.querySelectorAll('[data-co]').forEach(el => el.classList.toggle('hide', cr));
-  rjOk.textContent = cr ? 'Créer mon compte' : 'Se connecter';
-  rjMdp.autocomplete = cr ? 'new-password' : 'current-password'; rjMdp2.required = cr;
-  if (!dlgRejoindre.open) dlgRejoindre.showModal();
+// fenêtre de connexion : onglet « Se connecter » ou « Créer un compte », et deux entrées : e-mail + mot de passe, ou le code d'un animateur
+// (le même compte sert à l'adulte et à l'enfant ; le code n'a pas besoin de mot de passe)
+let onglet = 'co', entree = 'mail', reinitJeton = '';
+function majConnexion() {
+  const re = onglet === 're', cr = onglet === 'cr', code = entree === 'code' && !re, mail = !code && !re;
+  const vis = (id, on) => { const b = document.getElementById(id); b.classList.toggle('hide', !on); b.querySelector('input').required = on; };
+  vis('rjBId', mail); vis('rjBPseudo', mail && cr); vis('rjBMdp', !code); vis('rjBMdp2', (mail && cr) || re); vis('rjBCode', code);
+  rjBPseudoCode.classList.toggle('hide', !code || !rjPseudoCode.required);
+  rjOnglets.classList.toggle('hide', re); rjModes.classList.toggle('hide', re);
+  rjAideCr.classList.toggle('hide', !(mail && cr) && !re); rjOubli.classList.toggle('hide', !(mail && !cr));
+  rjOnglets.querySelectorAll('[data-onglet]').forEach(b => b.classList.toggle('on', b.dataset.onglet === onglet));
+  rjModes.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === entree));
+  rjOk.textContent = re ? 'Choisir ce mot de passe' : code ? 'Entrer' : cr ? 'Créer mon compte' : 'Se connecter';
+  rjMdpLib.textContent = re ? 'Nouveau mot de passe' : 'Mot de passe'; rjMdp.autocomplete = cr || re ? 'new-password' : 'current-password';
+}
+function ouvrirConnexion(o = 'co', m = entree) {
+  onglet = o; entree = m; rjMsg.textContent = ''; rjPseudoCode.required = false; rjPseudoCode.value = '';
+  majConnexion(); if (!dlgRejoindre.open) dlgRejoindre.showModal();
 }
 rejoindreBtn.onclick = () => ouvrirConnexion('co');
+animConnBtn.onclick = () => ouvrirConnexion('co');
 rjOnglets.onclick = e => { const o = e.target.closest('[data-onglet]')?.dataset.onglet; if (o) ouvrirConnexion(o); };
+rjModes.onclick = e => { const m = e.target.closest('[data-mode]')?.dataset.mode; if (m) ouvrirConnexion(onglet, m); };
 rjAnnuler.onclick = () => dlgRejoindre.close();
-const connecte = r => { moi = r; ecrire('brique-moi', moi); majMoi(); rjMdp.value = rjMdp2.value = ''; dlgRejoindre.close(); rafraichir(); };
-const rjDire = (t, ok, el = rjMsg) => el.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
+const connecte = r => {                                  // pseudo + jeton de l'enfant ; et, pour un compte e-mail, les sessions animateur (session) et boutique (client)
+  const { session: s, client: c, ...m } = r; moi = m; ecrire('brique-moi', moi);
+  if (s) { session = s; ecrire('brique-session', s); }
+  if (c) { client = c; ecrire('brique-client', c); chargerCommandes(); }
+  majMoi(); rjMdp.value = rjMdp2.value = ''; dlgRejoindre.close(); rafraichir();
+  if (s) rendreAnim();
+};
+const rjDire = (t, ok) => rjMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
 rjForm.onsubmit = async e => {
   e.preventDefault();
-  const id = { pseudo: rjPseudo.value.trim(), mdp: rjMdp.value };
   try {
-    if (onglet === 'co') return connecte(await api('api/reconnexion', id));
+    if (onglet === 're') {
+      if (rjMdp.value !== rjMdp2.value) return rjDire('Les deux mots de passe ne sont pas pareils.');
+      return connecte(await api('api/confirmer', { jeton: reinitJeton, mdp: rjMdp.value }));
+    }
+    if (entree === 'code') {
+      const r = await api('api/code', { code: rjCode.value, pseudo: rjPseudoCode.value.trim() || undefined });
+      if (r.pseudoRequis) { rjPseudoCode.required = true; majConnexion(); rjPseudoCode.focus(); return rjDire('Première fois avec ce code : choisis ton pseudo.', true); }
+      return connecte(r);
+    }
+    if (onglet === 'co') return connecte(await api('api/reconnexion', { identifiant: rjId.value.trim(), mdp: rjMdp.value }));
     if (rjMdp.value !== rjMdp2.value) return rjDire('Les deux mots de passe ne sont pas pareils.');
-    connecte(await api('api/joueur', { ...id, code: rjCode.value.trim() }));
+    await api('api/inscription', { email: rjId.value.trim(), pseudo: rjPseudo.value.trim(), mdp: rjMdp.value });
+    rjDire('📧 Dernière étape : ouvre le lien reçu par mail pour confirmer ton compte (pense aux indésirables).', true);
   } catch (err) { rjDire(err.message); }
 };
-rjOubli.onclick = e => { e.preventDefault(); rjDire('Demande à ton animateur : depuis son espace, il te donne un mot de passe provisoire. Sans groupe, il ne peut pas être retrouvé : crée un nouveau compte.'); };
-rjLienBtn.onclick = async () => {
-  try { await api('api/client/lien', { email: rjMail.value }); rjDire('📧 Lien envoyé ! Ouvre-le depuis ta boîte mail (pense aux indésirables).', true, rjMailMsg); }
-  catch (err) { rjDire(err.message, false, rjMailMsg); }
+rjOubli.onclick = async e => {
+  e.preventDefault(); const email = rjId.value.trim();
+  if (!email.includes('@')) return rjDire('Écris ton adresse e-mail ci-dessus, puis clique à nouveau. Un enfant avec un code n\'a rien à retenir : il redemande son code à son animateur.');
+  try { await api('api/oubli', { email }); rjDire('📧 Si un compte existe pour cette adresse, un lien vient de partir : ouvre-le pour choisir un nouveau mot de passe.', true); } catch (err) { rjDire(err.message); }
 };
 async function api(url, corps, session) {
   const headers = { 'Content-Type': 'application/json' }; if (session) headers['X-Session'] = session;
@@ -3538,13 +3559,9 @@ exemples.onclick = e => {
   exMsg.innerHTML = `<span style="color:var(--ok)">✓ « ${esc(x.titre)} » est dans <a href="#" onclick="afficher('creer');return false" style="color:var(--acc)">Créer</a> : choisis-le dans « Mon jeu », puis envoie-le sur ta console.</span>`;
 };
 
-// ---------- Espace animateur : connexion par lien mail, groupes, modération ----------
+// ---------- Espace animateur : même compte que les autres (e-mail + mot de passe), groupes et codes, modération ----------
 let session = lire('brique-session');                  // jeton de session animateur (30 jours)
 const animDire = (t, ok) => animMsg.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'ko'})">${esc(t)}</span>`;
-animLienBtn.onclick = async () => {
-  try { await api('api/animateur/lien', { email: animMail.value }); animDire('📧 Lien envoyé ! Ouvre-le depuis ta boîte mail (pense aux indésirables).', true); }
-  catch (e) { animDire(e.message); }
-};
 async function rendreAnim(donnees) {
   let d = donnees;
   if (!d && session) try { d = await api('api/animateur', null, session); } catch (e) { if (e.code === 401) { session = null; ecrire('brique-session', null); } }
@@ -3574,9 +3591,13 @@ async function rendreAnim(donnees) {
     <small>${esc(n.qui)}${n.jeu ? ` · jeu « ${esc(n.jeu)} »` : ''} · ${depuis(n.cree)}</small></div><button class="jouer" data-note="${esc(n.id)}" title="Traitée : l'effacer">✓ Lu</button></div>`).join('') || '<span class="vide">Aucune note.</span>'}</div></section>` : '';
   animGroupes.innerHTML = notes + quotas + aModerer + d.groupes.map(g => `<section>
     <h2><b>${esc(g.nom)}</b></h2>
-    <p style="margin:0 0 10px">Code à donner aux enfants : <span class="code">${esc(g.code)}</span> <a href="#" data-nouveaucode="${esc(g.code)}" title="Le code a circulé hors du groupe ? Les enfants déjà inscrits restent, l'ancien code ne marche plus" style="color:var(--mute)">↻ changer le code</a></p>
+    <h3>🔑 Codes des enfants (${g.codes.length})</h3>
+    <p class="aide" style="margin:0 0 6px">Un code par enfant : il le saisit dans « Se connecter » → « Avec un code », choisit son pseudo la première fois, et le code seul le reconnecte ensuite, sur n'importe quel ordinateur.</p>
+    <div class="chips">${g.codes.map(x => `<span class="chip"><span class="code">${esc(x.c)}</span> <small style="color:var(--mute)">${x.pseudo ? esc(x.pseudo) : 'libre'}</small> <a href="#" data-codesuppr="${esc(x.c)}" data-groupe="${esc(g.code)}" title="Supprimer ce code${x.pseudo ? ' : ' + esc(x.pseudo) + ' ne pourra plus s\'en servir' : ''}" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Aucun code pour l\'instant.</span>'}</div>
+    <div class="icRow" style="margin-top:6px"><input type="number" min="1" max="50" value="1" class="pseudo" style="max-width:5em" data-ncodes="${esc(g.code)}" title="Combien de codes créer"><button class="sec" data-codesnouveaux="${esc(g.code)}">➕ Créer des codes</button></div>
+    <p class="aide" style="margin:6px 0 0">Code du groupe : <span class="code">${esc(g.code)}</span> — pour qu'un compte e-mail rejoigne le groupe (menu du compte, « Rejoindre un groupe »). <a href="#" data-nouveaucode="${esc(g.code)}" title="Le code a circulé hors du groupe ? Les membres restent, l'ancien code ne marche plus" style="color:var(--mute)">↻ changer</a></p>
     <h3>👤 Joueurs (${g.joueurs.length})</h3>
-    <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <small style="color:var(--mute)" title="tokens IA : aujourd'hui / depuis le début du forfait">⚡${kTok(j.jour || 0)} · ${kTok(j.tokens || 0)}</small> <a href="#" data-mdp="${esc(j.pseudo)}" title="Mot de passe oublié : lui en donner un provisoire" style="color:var(--mute)">🔑</a> <a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
+    <div class="chips">${g.joueurs.map(j => `<span class="chip">${esc(j.pseudo)} <small style="color:var(--mute)" title="tokens IA : aujourd'hui / depuis le début du forfait">⚡${kTok(j.jour || 0)} · ${kTok(j.tokens || 0)}</small> ${j.avecCode ? '' : `<a href="#" data-mdp="${esc(j.pseudo)}" title="Mot de passe oublié : lui en donner un provisoire" style="color:var(--mute)">🔑</a> `}<a href="#" data-liberer="${esc(j.pseudo)}" title="Libérer ce pseudo (l'enfant pourra le reprendre sur un autre ordinateur)" style="color:var(--mute)">✕</a></span>`).join('') || '<span class="vide">Personne n\'a encore rejoint ce groupe.</span>'}</div>
     <h3>🎚 Degré de liberté — c'est toi qui le choisis, les enfants ne peuvent pas le changer</h3>
     <div class="chips" data-age="${esc(g.code)}"><button class="chip ${g.age === 'petits' ? 'on' : ''}" data-agev="petits">🫧 Bulles</button><button class="chip ${g.age === 'petits' ? '' : 'on'}" data-agev="libre">✍️ Libre</button></div>
     <p class="aide" style="margin:4px 0 0">Bulles : on touche des bulles, sans rien écrire. Guidé : on choisit avec des boutons, plus une phrase. Libre : on décrit tout son jeu avec ses mots.</p>
@@ -3624,6 +3645,8 @@ animGroupes.onclick = async e => {
       if (r.length < 2) return alert('Il faut au moins 2 réponses.');
       return questionsDe(t.dataset.qajout, qs => qs.push({ q, r, b }));
     }
+    if (t.dataset.codesnouveaux) return rendreAnim(await api('api/animateur/codes', { code: t.dataset.codesnouveaux, n: t.closest('section').querySelector('[data-ncodes]').value }, session));
+    if (t.dataset.codesuppr) { e.preventDefault(); if (confirm(`Supprimer le code ${t.dataset.codesuppr} ?`)) rendreAnim(await api('api/animateur/codesuppr', { code: t.dataset.groupe, c: t.dataset.codesuppr }, session)); return; }
     if (t.dataset.nouveaucode) { e.preventDefault(); if (confirm('Changer le code du groupe ? L’ancien ne marchera plus.')) rendreAnim(await api('api/animateur/code', { code: t.dataset.nouveaucode }, session)); }
     if (t.dataset.agev) rendreAnim(await api('api/animateur/age', { code: t.closest('[data-age]').dataset.age, age: t.dataset.agev }, session));
     if (t.dataset.masquer) rendreAnim(await api('api/animateur/masquer', { id: t.dataset.masquer, masque: t.dataset.etat === '1' }, session));
@@ -3636,8 +3659,16 @@ animGroupes.onclick = async e => {
 };
 animCmdListe.onclick = async e => { const id = e.target.dataset.expedier; if (id) try { rendreAnim(await api('api/animateur/expedier', { id }, session)); } catch (err) { alert(err.message); } };
 animSortir.onclick = async e => { e.preventDefault(); try { await api('api/animateur/deconnexion', {}, session); } catch {} session = null; ecrire('brique-session', null); rendreAnim(); };
-async function connexionParLien() {                     // arrivée depuis le lien du mail : ?connexion=… -> session boutique (+ animateur s'il l'est)
-  const jeton = new URLSearchParams(location.search).get('connexion'); if (!jeton) return false;
+async function connexionParLien() {                     // arrivée depuis le lien du mail : ?confirmer=… (compte créé), ?reinit=… (nouveau mot de passe) ou ?connexion=… (acheteur)
+  const q = new URLSearchParams(location.search), jeton = q.get('connexion');
+  if (q.get('reinit')) { reinitJeton = q.get('reinit'); history.replaceState(null, '', location.pathname); ouvrirConnexion('re'); return false; }
+  if (q.get('confirmer')) {
+    history.replaceState(null, '', location.pathname);
+    try { connecte(await api('api/confirmer', { jeton: q.get('confirmer') })); alert('✅ Compte confirmé : tu es connecté.'); }
+    catch (e) { ouvrirConnexion('co'); rjDire(e.message); }
+    return false;
+  }
+  if (!jeton) return false;
   history.replaceState(null, '', location.pathname);
   let r;
   try { r = await api('api/animateur/connexion', { jeton }); } catch (e) { animDire(e.message); afficher('anim'); return true; }

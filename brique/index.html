@@ -338,6 +338,11 @@ textarea:focus{outline:none;border-color:var(--acc)}
 #vueScript .agent>h2{padding-right:40px}
 .agent-ligne{display:flex;gap:10px;align-items:stretch}.agent-ligne textarea{flex:1;min-width:0;margin:0}
 .agent-btns{display:flex;flex-direction:column;gap:8px;width:190px;flex:none}
+.agent-suite{display:none;align-items:center;gap:10px}#vueScript.petits .agent-suite{display:flex}   /* petits : « Fabriquer » → « Envoyer sur la console », sur la même ligne */
+.agent-suite i{font-style:normal;font-size:34px;line-height:1;color:var(--acc)}
+.agent-suite .big{margin:0;padding:14px 24px;font-size:20px;border-radius:10px;background:linear-gradient(90deg,#4fbf83,#38a56b)}
+.agent-suite .big:disabled,#scCommun:disabled{opacity:.45;cursor:default;filter:grayscale(1)}
+@media (max-width:600px){.agent-suite{flex-wrap:wrap}}
 .agent-btns .big{width:100%;margin:0;padding:9px 10px;font-size:14px;border-radius:10px;background:linear-gradient(90deg,#4fbf83,#38a56b);box-shadow:0 2px 8px rgba(11,122,65,.2)}
 @media (max-width:600px){.agent-ligne{flex-direction:column}.agent-btns{width:auto}}
 .sc-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
@@ -1940,6 +1945,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="gooey" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur in="SourceGraphic" stdDeviation="7"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter></svg>   <!-- filtre « goutte » : fond la bulle-question et sa réponse en une seule forme -->
     <div id="scBulles" class="hide"></div>         <!-- degré « bulles » (défaut) : la recette (les bulles prises), puis les bulles à toucher ; rien à écrire -->
     <p class="aide" style="margin:8px 0 0">🚀 Ici, on apprend à décrire ce qu'on veut et à améliorer son jeu par petites touches. Pour aller plus loin : demande ton code à ton propre agent IA, modifie-le avec lui, puis colle-le ici (« &lt;/&gt; Voir le code ») pour le mettre sur ta console.</p>
+      <div class="agent-suite"><i aria-hidden="true">➜</i><button id="scMettre2" class="big" disabled>📟 Envoyer sur la console</button></div>   <!-- petits seulement : double de scMettre -->
     <div id="scChoix" class="hide"></div>          <!-- tranche guidée : la question de l'IA et ses 3 boutons ; un clic écrit la phrase dans le champ -->
     <div class="agent-ligne">                    <!-- le champ, en bas ; ses boutons empilés à droite -->
       <textarea id="scDemande" placeholder="Qu'est-ce que tu veux créer ?" style="min-height:76px;font-size:17px"></textarea>
@@ -4070,7 +4076,10 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   rendreImages();
   function majMettre() {                                 // grisé : pas de programme ou l'IA écrit (renvoyer le même reste possible : console redémarrée, plantée ou changée)
     scJeux.disabled = scNouveau.disabled = scRenommer.disabled = scZero.disabled = iaEnCours;   // l'IA écrit dans ce jeu : on n'en change pas
-    scMettre.disabled = iaEnCours || !scCode.value.trim();
+    scMettre.disabled = scMettre2.disabled = iaEnCours || !scCode.value.trim();
+    const ok = scCode.value.includes('var NIV = [');      // le jeu commun n'accepte qu'un niveau de plateforme
+    scCommun.disabled = iaEnCours || !ok;
+    scCommun.title = ok ? 'Ton niveau part à la suite du jeu commun, signé de ton pseudo' : 'Grisé : le jeu commun est une plateforme. Prends un niveau dans Communauté › Le jeu commun, puis change-le.';
   }
   majIA = majIAScript; function majIAScript() {                                     // modèle + ce que l'IA reçoit : les 6 dernières demandes (le serveur coupe au-delà) et le programme (20 000 caractères au plus)
     const n = demandes().length, c = (etat.script || '').length;
@@ -4569,14 +4578,15 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     afficher('creer'); scMettre.scrollIntoView({ behavior: 'smooth', block: 'center' });
     dire('🧱 Le jeu commun entier est prêt : appuie sur « 📟 Envoyer sur la console ».', true);
   };
-  scMettre.onclick = async () => {                       // envoie le programme affiché (de l'IA ou modifié à la main) ; pas encore de console : ce clic ouvre le choix du port
+  scMettre2.onclick = () => scMettre.click();
+  scMettre.onclick = async () => {                     // envoie le programme affiché (de l'IA ou modifié à la main) ; pas encore de console : ce clic ouvre le choix du port
     if (!port && !(await auto())) {
       if (!('serial' in navigator)) return dire('Ce navigateur ne sait pas parler à la console : ouvre la page dans Chrome ou Edge.', false);
       try { if (!(await relier(await navigator.serial.requestPort()))) return; }
       catch (e) { await fermer(); return dire(e.name === 'NotFoundError' ? 'Aucune console choisie.' : 'Câble débranché ou port occupé (ferme l\'IDE Arduino, l\'autre onglet ou la fenêtre d\'installation).', false); }
     }
     garderMain();                                        // modifié à la main : nouvelle version
-    scMettre.disabled = true; let pb;
+    scMettre.disabled = scMettre2.disabled = true; let pb;
     try { pb = await envoyer(etat.script); } catch { pb = 'Câble débranché pendant l\'envoi : rebranche la console et réessaie.'; await fermer(); } finally { majMettre(); }   // sinon le bouton restait grisé pour de bon
     if (pb) { const e = etat.essais.at(-1); if (e) { e.console = pb; e.consoleOk = false; } sauver(); rendre(); }
     else await corriger();

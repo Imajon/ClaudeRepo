@@ -220,6 +220,7 @@ header .compte{margin:0 0 0 auto;width:auto}header .compte summary{color:var(--t
 .sh-ajout{text-align:center;margin-top:18px}
 .compte{position:relative;flex:none}.compte summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}.compte summary::-webkit-details-marker{display:none}
 .compte summary .avatar{width:26px;height:26px;font-size:13px}
+#remarque summary{gap:0}.rem-txt{display:inline-block;max-width:0;overflow:hidden;vertical-align:bottom;transition:max-width .2s,padding .2s}#remarque summary:hover .rem-txt,#remarque summary:focus-visible .rem-txt{max-width:6em;padding-left:6px}   /* 💬 Remarque : icône seule, le texte au survol */
 .compte-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:230px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:6px;z-index:10}
 .compte-menu small{display:block;padding:6px 10px 2px;color:var(--mute);text-transform:uppercase;letter-spacing:1px;font-size:11px}
 .compte-menu a{display:block;padding:7px 10px;border-radius:6px;color:var(--txt);text-decoration:none;cursor:pointer}.compte-menu a:hover{background:var(--chipon)}
@@ -574,10 +575,9 @@ body{overflow-x:clip}                                           /* la bande 100v
     <button id="vSupport">🧰 Support</button>
     <button id="vApropos">👋 À propos</button>
   </nav>
-  <details id="remarque" class="compte hide"><summary title="Une remarque sur le site ? Elle arrive à l'équipe Brique">💬 Remarque</summary>   <!-- comptes connectés seulement : rangée dans les notes (admin), relevée par l'Établi -->
+  <details id="remarque" class="compte hide"><summary title="Une remarque sur le site ? Elle arrive à l'équipe Brique" aria-label="Remarque">💬<span class="rem-txt">Remarque</span></summary>   <!-- comptes connectés seulement : rangée dans les notes (admin), relevée par l'Établi -->
     <div class="compte-menu" style="min-width:280px;padding:10px"><textarea id="remTxt" rows="4" maxlength="500" style="width:100%" placeholder="Un bug, une idée, un texte pas clair… sur cette page. Pas de nom ni de mail."></textarea>
       <button id="remOk" class="sec" style="margin-top:6px">Envoyer</button> <small id="remMsg"></small></div></details>
-  <a href="https://instagram.com/brique_console" target="_blank" rel="noopener" title="Brique sur Instagram" aria-label="Brique sur Instagram" style="display:flex;align-items:center;padding:6px;color:var(--txt)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
   <a id="langue" href="en" title="English version" onclick="location.href=this.href+location.hash;return false" style="padding:6px;color:var(--txt);font:700 13px var(--mono);text-decoration:none">EN</a>   <!-- version anglaise : /en, traduite par en.js (qui change ce lien en FR) -->
   <details id="compte" class="compte"><summary id="compteTete">👤 Mon compte</summary><div id="compteMenu" class="compte-menu"></div></details>   <!-- en haut à droite, comme un site classique : créateur (pseudo) et client (commandes) -->
   <button id="vPanier" class="sec">🧺 Panier<b id="panierNb"></b></button>

@@ -125,3 +125,28 @@ console.log('ok : tir autour x personnage, tirs, ennemis');
   assert(J.saute('compo', { jeu: 'attrape' }) && J.saute('typeEn', { jeu: 'plat-but' }) && J.saute('compo', { genre: 'quiz', jeu: 'quiz' }), 'compo / typeEn : seulement les jeux de tir');
   assert(J.assembler({ jeu: 'tir-haut', compo: 'zigzag' }) !== J.assembler({ jeu: 'tir-haut' }) && J.assembler({ jeu: 'tir-autour', typeEn: 'costauds' }) !== J.assembler({ jeu: 'tir-autour' }) && J.assembler({ jeu: 'attrape', compo: 'zigzag', typeEn: 'rapides' }) === J.assembler({ jeu: 'attrape' }), 'compo / typeEn changent le code des tirs, pas des autres jeux');
   console.log('ok : ennemis des tirs (facon de bouger x types)'); }
+// toits : immeubles a sauter + figure en l'air (rappuyer sur le gros bouton) ; chaque figure x chaque monde joue, la figure change le code, l'etape ne sort que pour ce jeu
+{ const figs = J.ETAPES.find(e => e.id === 'figtoit').bulles.map(b => b.id);
+  assert(!J.saute('figtoit', { jeu: 'toits' }) && J.saute('figtoit', { jeu: 'plat-but' }) && J.saute('figtoit', { jeu: 'cote' }) && J.saute('obst', { jeu: 'toits' }) && J.saute('action', { jeu: 'toits' }), 'figtoit : seulement les toits');
+  assert.strictEqual(J.recetteComplete({ jeu: 'toits', figtoit: 'nimporte' }).figtoit, 'salto', 'figure inconnue : salto');
+  assert(J.assembler({ jeu: 'toits' }).includes('def immeuble') && !J.assembler({ jeu: 'plat-but' }).includes('def figure'), 'toits : immeubles et figure, pas ailleurs');
+  for (const f of figs) for (const [i, monde] of mondes2.entries()) for (const niv of ['un', 'n3']) {
+    const code = J.assembler({ jeu: 'toits', figtoit: f, monde, niv, perso: persos[i] });
+    assert(code.includes(`def figure(`) && code.includes('math.'), `${f} : la figure est dans le code`);
+    for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok && v.ops <= 600 && v.memoire <= 72000, `toits ${f} ${monde} ${niv} : ${v.erreur || v.ops + ' ' + v.memoire}`); }
+  }
+  assert(new Set(figs.map(f => J.assembler({ jeu: 'toits', figtoit: f }))).size === figs.length, 'chaque figure change le code');
+  console.log('ok : toits x figures'); }
+
+// « Message du jeu » : cartel de victoire et mot du saut, joues avec l'ecran de fin (FIN = 1) ; les jeux sans victoire / sans saut sautent ces etapes
+{ let k = 0;
+  for (const jeu of ['plat-but', 'plat-attrape', 'plat-evite', 'plat-course', 'toits', 'cote', 'attrape']) for (const gagne of J.ETAPES.find(e => e.id === 'gagne').bulles.map(b => b.id)) for (const saute of J.ETAPES.find(e => e.id === 'saute').bulles.map(b => b.id)) for (const niv of ['un', 'n3']) {
+    const code = J.assembler({ jeu, gagne, saute, niv });
+    for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${gagne} ${saute} ${niv} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 74000, `${jeu} ${gagne} ${saute} ${niv} : trop lourd (${v.ops}, ${v.memoire})`); k++; }
+  }
+  assert(J.assembler({ jeu: 'plat-but', gagne: 'youpi' }).includes('"YOUPI !"') && !J.assembler({ jeu: 'plat-but', gagne: 'youpi' }).includes('"BRAVO !"'), 'le cartel de victoire change de mot');
+  assert(J.assembler({ jeu: 'plat-but', saute: 'boing' }).includes('"BOING !"') && !J.assembler({ jeu: 'plat-but' }).includes('MSJ'), 'le mot du saut : seulement si choisi');
+  assert(J.assembler({ jeu: 'attrape', saute: 'hop' }).includes('"HOP !"'), 'le mot du saut : chute avec gros bouton saut');
+  assert(!J.assembler({ jeu: 'attrape', action: 'tir', saute: 'hop' }).includes('"HOP !"'), 'pas de mot du saut sans saut');
+  assert(J.saute('gagne', { jeu: 'attrape' }) && J.saute('saute', { jeu: 'tir-haut' }) && J.saute('saute', { jeu: 'quiz', genre: 'quiz' }) && !J.saute('gagne', { jeu: 'toits' }) && !J.saute('saute', { jeu: 'cote', obst: 'avec' }) && J.saute('saute', { jeu: 'cote', obst: 'sans' }), 'gagne / saute : seulement ou ils servent');
+  console.log('ok : message du jeu (' + k + ' jeux joues)'); }

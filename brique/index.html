@@ -4127,7 +4127,9 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   rendreImages();
   function majMettre() {                                 // grisé : pas de programme ou l'IA écrit (renvoyer le même reste possible : console redémarrée, plantée ou changée)
     scJeux.disabled = scNouveau.disabled = scRenommer.disabled = scZero.disabled = iaEnCours;   // l'IA écrit dans ce jeu : on n'en change pas
-    scMettre.disabled = scMettre2.disabled = iaEnCours || !scCode.value.trim();
+    const deja = !iaEnCours && !!etat.script && etat.surConsole === etat.essais.length && scCode.value === etat.script;   // cette version tourne déjà sur la console
+    scMettre.disabled = scMettre2.disabled = iaEnCours || !scCode.value.trim() || deja;
+    scMettre.textContent = scMettre2.textContent = deja ? '✅ Déjà sur la console' : '📟 Envoyer sur la console';
     scPublier.disabled = scPublier2.disabled = iaEnCours || !etat.script || !!etat.erreur || etat.surConsole !== etat.essais.length;   // grisé tant que ce jeu n'est pas sur la console (et sans erreur) : c'est ce que publierScript exige
     scPublier.title = scPublier2.title = scPublier.disabled ? 'Envoie ton jeu sur la console avant de le publier' : '';
     const ok = scCode.value.includes('var NIV = [');      // le jeu commun n'accepte qu'un niveau de plateforme

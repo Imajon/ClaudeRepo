@@ -6,7 +6,7 @@ from shapely.geometry import Polygon, Point, box, LineString
 from shapely.ops import unary_union
 from shapely import affinity
 
-URL = "https://brique.tierslieulecercle.fr"     # plateforme Brique (QR de toutes les cartes)
+URL = "https://brique.kids"     # plateforme Brique (QR de toutes les cartes)
 OUT = Polygon([(1.5, 31.52), (1.5, 46.75), (14.98, 54.18), (14.98, 69.22), (28.80, 76.84), (42.61, 69.23), (56.42, 76.84),
                (70.22, 69.23), (84.02, 76.84), (97.84, 69.22), (97.84, 54.29), (111.51, 46.75), (111.51, 31.52), (98.11, 24.13),
                (98.11, 9.12), (84.29, 1.5), (70.49, 9.11), (56.69, 1.5), (42.87, 9.11), (29.06, 1.5), (15.24, 9.12), (15.24, 23.95)])

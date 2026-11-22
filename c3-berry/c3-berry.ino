@@ -405,6 +405,13 @@ static int f_bouton(bvm *v) { int k = I(v, 1); be_pushbool(v, k >= 0 && k < 3 &&
 static int f_appui(bvm *v) { int k = I(v, 1); be_pushbool(v, k >= 0 && k < 3 && bt[k] && !btAv[k]); be_return(v); }
 static int f_lache(bvm *v) { int k = I(v, 1); be_pushbool(v, k >= 0 && k < 3 && !bt[k] && btAv[k]); be_return(v); }
 static int f_temps(bvm *v) { be_pushreal(v, millis() / 1000.0f); be_return(v); }
+// lecteur de forme (plages IO0 + GND au dos de la carte D, pull-up RPU vers 3V3) : resistance en ohms, 0 = rien de pose. RPU : mesurer la vraie resistance
+static const float RPU = 22000.0f;
+static int f_forme(bvm *v) {
+  static uint32_t t0 = 0; static int r = 0;
+  if (millis() - t0 > 100) { t0 = millis(); uint32_t s = 0; for (int i = 0; i < 8; i++) s += analogReadMilliVolts(0); float mv = s / 8.0f; r = mv >= 3000 ? 0 : (int)(RPU * mv / (3300.0f - mv)); }
+  be_pushint(v, r); be_return(v);
+}
 static int f_hasard(bvm *v) { be_pushint(v, random(I(v, 1), I(v, 2) + 1)); be_return(v); }
 static int f_son(bvm *v) { int f = I(v, 1), ms = I(v, 2, 80); if (f > 0) tone(SND_PIN, f); else noTone(SND_PIN); sonFin = millis() + ms; be_return_nil(v); }
 static int f_envoie(bvm *v) {                    // envoie(chaine) a toutes les consoles autour
@@ -449,7 +456,7 @@ const char *lance(char *mem, size_t o, size_t n, const char *nom = nullptr) {   
   be_regfunc(vm, "fond", f_fond); be_regfunc(vm, "rect", f_rect); be_regfunc(vm, "cadre", f_cadre); be_regfunc(vm, "disque", f_disque);
   be_regfunc(vm, "cercle", f_cercle); be_regfunc(vm, "ligne", f_ligne); be_regfunc(vm, "tri", f_tri); be_regfunc(vm, "texte", f_texte); be_regfunc(vm, "image", f_image);
   be_regfunc(vm, "rgb", f_rgb); be_regfunc(vm, "camera", f_camera); be_regfunc(vm, "bouton", f_bouton); be_regfunc(vm, "appui", f_appui);
-  be_regfunc(vm, "lache", f_lache); be_regfunc(vm, "temps", f_temps); be_regfunc(vm, "hasard", f_hasard); be_regfunc(vm, "son", f_son);
+  be_regfunc(vm, "lache", f_lache); be_regfunc(vm, "temps", f_temps); be_regfunc(vm, "hasard", f_hasard); be_regfunc(vm, "forme", f_forme); be_regfunc(vm, "son", f_son);
   be_regfunc(vm, "envoie", f_envoie); be_regfunc(vm, "recois", f_recois); be_regfunc(vm, "moi", f_moi); be_regfunc(vm, "score", f_score);
   const char *K[3] = { "G", "D", "P3" }; for (int k = 0; k < 3; k++) { be_pushint(vm, k); be_setglobal(vm, K[k]); be_pop(vm, 1); }
   appelDebut = millis();
@@ -507,6 +514,7 @@ void setup() {
   Serial.begin(115200);
   Serial.setTxTimeoutMs(0);                      // sans programme qui lit le port USB, ecrire bloquait le jeu (~10 img/s) : on perd le texte au lieu d'attendre
   for (int k = 0; k < 3; k++) pinMode(BTN[k], INPUT_PULLUP);
+  analogSetPinAttenuation(0, ADC_11db);
   SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
   tft.init(240, 320); tft.setRotation(1); tft.setSPISpeed(80000000);
   buf[0] = (uint16_t *)heap_caps_malloc(W * BH * 2, MALLOC_CAP_DMA); buf[1] = (uint16_t *)heap_caps_malloc(W * BH * 2, MALLOC_CAP_DMA);

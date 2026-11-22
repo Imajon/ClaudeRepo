@@ -2,3 +2,13 @@ mistral.txt
 
 # l Etabli en clair : seul etabli.enc (chiffre) va dans le depot, GitHub Pages sert tout
 brique/etabli/
+
+# images et médias qui ne sont pas du site : jamais dans le dépôt
+_images/
+PadV2.png
+brique/echo-apercu.png
+*.xcf
+c3-tft-meatboy/apercus/
+c3-tft-meatboy/medias/
+c3-tft-meatboy/archives/_snow_apercu.png
+c3-tft-meatboy/materiel/c3-tft-meatboy-polygon-ajoure-D-rectoBW.png

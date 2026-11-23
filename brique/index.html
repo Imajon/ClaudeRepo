@@ -9,14 +9,15 @@
 <link rel="alternate" hreflang="fr" href="__URL__/">
 <link rel="alternate" hreflang="en" href="__URL__/en">
 <link rel="alternate" hreflang="x-default" href="__URL__/">
+<meta name="seo" content="__PAGES__">   <!-- une adresse et un titre par page, posés par server.js (vides hors serveur) -->
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[
 {"@type":"Organization","@id":"__URL__/#org","name":"Bricode","url":"__URL__/","logo":"__URL__/images/console-face.png"},
-{"@type":"Product","name":"Console Bricode (kit à souder)","description":"Console de jeux à souder soi-même, pour créer ses propres jeux avec l'IA. Dès 9 ans.","image":"__URL__/images/apercu-partage.jpg","brand":{"@id":"__URL__/#org"},"offers":{"@type":"Offer","price":"29","priceCurrency":"EUR","url":"__URL__/#boutique"}}]}</script>
+{"@type":"Product","name":"Console Bricode (kit à souder)","description":"Console de jeux à souder soi-même, pour créer ses propres jeux avec l'IA. Dès 9 ans.","image":"__URL__/images/apercu-partage.jpg","brand":{"@id":"__URL__/#org"},"offers":{"@type":"Offer","price":"29","priceCurrency":"EUR","url":"__URL__/boutique"}}]}</script>
 <!-- aperçu quand on partage le lien (messageries, réseaux) : adresses complètes, l'image fait 1200 x 630 -->
 <meta name="description" content="Soude ta console, invente ton jeu avec l'IA, joue seul ou à plusieurs. Kit à souder et ateliers pour les 9-14 ans.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bricode">
-<meta property="og:title" content="Bricode · Moins d'écran, plus de génie.">
+<meta property="og:title" content="Bricode · Moins de pixels, plus de génie.">
 <meta property="og:description" content="Soude ta console, invente ton jeu avec l'IA, joue seul ou à plusieurs. Kit à souder et ateliers pour les 9-14 ans.">
 <meta property="og:url" content="__URL__/">
 <meta property="og:image" content="__URL__/images/apercu-partage.jpg">
@@ -596,12 +597,12 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
 <small id="vTmp" style="position:fixed;top:2px;left:4px;z-index:9999;font:10px var(--mono);opacity:.6;pointer-events:none"></small>   <!-- provisoire : version du site en haut à gauche -->
-<main id="accueil" data-version="1.25">
+<main id="accueil" data-version="1.26">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
     <p class="sh-sur">Console à souder et jeux créés avec l'IA · dès 9 ans</p>
-    <h1 class="sh-titre glitch" data-text="Moins d'écran,&#10;plus de génie.">Moins d'écran,<br>plus de génie.</h1>
+    <h1 class="sh-titre glitch" data-text="Moins de pixels,&#10;plus de génie.">Moins de pixels,<br>plus de génie.</h1>
     <p class="sh-sous">Le cadeau qu'on construit ensemble et qu'on invente par soi-même.</p>
   </div>
   <figure class="sh-photo">
@@ -4801,9 +4802,18 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
 
 // ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
 let vue = 'accueil';
-const TITRE0 = document.title, TITRES = { boutique: ['Boutique', 'Shop'], commu: ['Communauté', 'Community'], creer: ['Créer un jeu', 'Create a game'], profs: ['Atelier', 'Workshop'], support: ['Support', 'Support'], propos: ['À propos', 'About'], partis: ['Nos partis pris', 'Our principles'], cgv: ['Conditions de vente', 'Terms of sale'], panier: ['Panier', 'Cart'], moncompte: ['Mon compte', 'My account'], anim: ['Espace animateur', 'Facilitator area'] };   // titre de l'onglet selon la vue (l'adresse reste la même : les vues sont des # de la page)
+const SEO = (() => { try { return JSON.parse(document.querySelector('meta[name="seo"]').content); } catch { return {}; } })();   // { vue: { slug, titre } } : chaque page publique a son adresse (/boutique, /en/boutique…) et son titre ; vide hors serveur (fichier, GitHub Pages) : les vues restent des #
+const LANG_EN = document.documentElement.lang === 'en', TITRE0 = document.title, AVEC_ADRESSES = !!SEO.accueil;
+const cheminVue = v => SEO[v]?.slug ? '/' + SEO[v].slug : '';
+const urlVue = v => {
+  if (!AVEC_ADRESSES) return location.pathname + (v === 'accueil' ? '' : '#' + v);
+  const base = LANG_EN ? '/en' : '', ch = cheminVue(v);
+  return ch ? base + ch : v === 'accueil' ? base || '/' : (base || '/') + '#' + v;   // accueil : / ou /en ; vues privées (compte, panier, animateur) : un # sur l'accueil
+};
+const vueDeAdresse = () => Object.keys(SEO).find(v => SEO[v].slug && location.pathname.replace(/\/+$/, '') === (LANG_EN ? '/en' : '') + '/' + SEO[v].slug);
 function afficher(v) {
-  vue = v; document.title = TITRES[v] ? TITRES[v][+(document.documentElement.lang === 'en')] + ' · Bricode' : TITRE0;
+  vue = v; document.title = SEO[v]?.titre || TITRE0;
+  if (AVEC_ADRESSES) langue.href = LANG_EN ? cheminVue(v) || '/' : '/en' + cheminVue(v);   // la même page dans l'autre langue (le # de la vue est repris au clic)
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); propos.classList.toggle('hide', v !== 'propos'); cgv.classList.toggle('hide', v !== 'cgv'); vApropos.classList.toggle('on', v === 'propos'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');
@@ -4812,7 +4822,7 @@ function afficher(v) {
   vCommu.classList.toggle('on', v === 'commu'); vCreer.classList.toggle('on', v === 'creer'); vBoutique.classList.toggle('on', v === 'boutique'); vAnim.classList.toggle('on', v === 'anim'); vSupport.classList.toggle('on', v === 'support');
   if (v === 'anim') rendreAnim();
   const m = document.querySelector("main[data-version]:not(.hide)"); sectionVersion.textContent = m ? " · section v" + m.dataset.version : "";   // numéro de la grande section affichée, à monter à la main dans sa balise <main>
-  history.replaceState(null, '', location.pathname + location.search + (v === 'accueil' ? '' : '#' + v));   // la vue reste après actualisation
+  history.replaceState(null, '', urlVue(v) + location.search);   // la vue reste après actualisation
   scrollTo(0, 0);
 }
 vAccueil.onclick = () => afficher('accueil');
@@ -4842,15 +4852,16 @@ ctaCommun.onclick = accCommun.onclick = jcJouer.onclick = async () => {   // le 
 };
 accAjouter.onclick = voirNiveaux;
 document.querySelector('.pied').onclick = e => {      // pied de page : mêmes vues que le menu
-  const a = e.target.closest('a[data-vue],a[data-clic]'); if (!a) return;
+  const a = e.target.closest('a[data-vue],a[data-clic]'); if (!a) return; e.preventDefault();
   if (a.dataset.clic) return document.getElementById(a.dataset.clic).click();
   afficher(a.dataset.vue); if (a.dataset.ancre) document.getElementById(a.dataset.ancre).scrollIntoView();
 };
 piedSite.textContent = location.host;
+if (AVEC_ADRESSES) document.querySelectorAll('a[data-vue]:not([data-ancre])').forEach(a => { if (cheminVue(a.dataset.vue)) a.href = urlVue(a.dataset.vue); });   // vrais liens : les moteurs de recherche suivent les pages
 if (siteVersion.textContent === '__VERSION__') siteVersion.textContent = 'hors ligne';   // page ouverte sans le serveur (fichier, GitHub Pages)
 vTmp.textContent = siteVersion.textContent.replace('site ', '');   // provisoire
 majMoi();
-if (['commu', 'creer', 'moncompte', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos', 'cgv'].includes(location.hash.slice(1))) vue = location.hash.slice(1);   // vue gardée dans l'adresse (#creer…)
+if (['commu', 'creer', 'moncompte', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos', 'cgv'].includes(location.hash.slice(1))) vue = location.hash.slice(1); else if (vueDeAdresse()) vue = vueDeAdresse();   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
 new IntersectionObserver(([e], obs) => {      // vidéo du kit : se lance (et se colore) une fois arrivée à l'écran

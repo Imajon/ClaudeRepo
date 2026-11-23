@@ -1,7 +1,7 @@
 {
   "name": "brique",
   "private": true,
-  "description": "Serveur de l'atelier Brique (page, classement, comptes animateurs)",
+  "description": "Serveur de l'atelier Bricode (page, classement, comptes animateurs)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

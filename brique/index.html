@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Brique</title>
+<title>Bricode</title>
 <!-- aperçu quand on partage le lien (messageries, réseaux) : adresses complètes, l'image fait 1200 x 630 -->
 <meta name="description" content="Soude ta console, invente ton jeu avec l'IA, joue seul ou à plusieurs. Kit à souder et ateliers pour les 9-14 ans.">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Brique">
-<meta property="og:title" content="Brique · Moins d'écran, plus de génie.">
+<meta property="og:site_name" content="Bricode">
+<meta property="og:title" content="Bricode · Moins d'écran, plus de génie.">
 <meta property="og:description" content="Soude ta console, invente ton jeu avec l'IA, joue seul ou à plusieurs. Kit à souder et ateliers pour les 9-14 ans.">
 <meta property="og:url" content="https://brique-p436.onrender.com/">
 <meta property="og:image" content="https://brique-p436.onrender.com/images/apercu-partage.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="La console Brique : circuit vert hexagonal, écran couleur et trois boutons">
+<meta property="og:image:alt" content="La console Bricode : circuit vert hexagonal, écran couleur et trois boutons">
 <meta property="og:locale" content="fr_FR">
 <meta name="twitter:card" content="summary_large_image">
-<!-- Brique V1 : maquette de l'atelier "créer un jeu avec l'IA" (console c3-tft-meatboy).
+<!-- Bricode V1 : maquette de l'atelier "créer un jeu avec l'IA" (console c3-tft-meatboy).
      Génération SIMULÉE en local (mots-clés -> paramètres -> niveau). Le format de niveau est celui du firmware :
      lignes de 20 caractères, tuiles . # S G * R ^ W C I (cf. hand_levels.txt). -->
 <style>
@@ -442,7 +442,7 @@ canvas.pix,img.pix{image-rendering:pixelated;background:repeating-conic-gradient
 #accueil .sh-titre{margin:0 0 6px}
 #accueil .demo-console{max-width:min(988px,calc((100vh - 420px) * 1.78))}   /* la console suit la hauteur de l'écran (rapport de la photo : 1,37) */
 #accueil .sh-apres{padding-top:0}
-.acc-sous-titre{margin:0 0 4px;font-size:clamp(16px,2.2vw,20px);font-weight:600;opacity:.75}   /* sous la photo : ce que Brique apprend */
+.acc-sous-titre{margin:0 0 4px;font-size:clamp(16px,2.2vw,20px);font-weight:600;opacity:.75}   /* sous la photo : ce que Bricode apprend */
 #accueil .sh-apres .cta{margin-top:10px !important}
 .demo-console canvas{position:absolute;left:0;top:0;width:320px;height:240px;max-width:none;transform-origin:0 0;border:0;border-radius:0;background:none}
 .demo-bulle{position:absolute;right:0;top:7%;width:31%;min-height:5.6em;margin:0;padding:.7em .9em;text-align:left;background:#13241a;color:#d9f5e3;
@@ -578,7 +578,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <button id="vSupport">🧰 Support</button>
     <button id="vApropos">👋 À propos</button>
   </nav>
-  <details id="remarque" class="compte hide"><summary title="Une remarque sur le site ? Elle arrive à l'équipe Brique" aria-label="Remarque">💬<span class="rem-txt">Remarque</span></summary>   <!-- comptes connectés seulement : rangée dans les notes (admin), relevée par l'Établi -->
+  <details id="remarque" class="compte hide"><summary title="Une remarque sur le site ? Elle arrive à l'équipe Bricode" aria-label="Remarque">💬<span class="rem-txt">Remarque</span></summary>   <!-- comptes connectés seulement : rangée dans les notes (admin), relevée par l'Établi -->
     <div class="compte-menu" style="min-width:280px;padding:10px"><textarea id="remTxt" rows="4" maxlength="500" style="width:100%" placeholder="Un bug, une idée, un texte pas clair… sur cette page. Pas de nom ni de mail."></textarea>
       <button id="remOk" class="sec" style="margin-top:6px">Envoyer</button> <small id="remMsg"></small></div></details>
   <a id="langue" href="en" title="English version" onclick="location.href=this.href+location.hash;return false" style="padding:6px;color:var(--txt);font:700 13px var(--mono);text-decoration:none">EN</a>   <!-- version anglaise : /en, traduite par en.js (qui change ce lien en FR) -->
@@ -588,7 +588,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
 <small id="vTmp" style="position:fixed;top:2px;left:4px;z-index:9999;font:10px var(--mono);opacity:.6;pointer-events:none"></small>   <!-- provisoire : version du site en haut à gauche -->
-<main id="accueil" data-version="1.23">
+<main id="accueil" data-version="1.24">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -597,7 +597,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   </div>
   <figure class="sh-photo">
     <div id="demoConsole" class="sh-console demo-console">   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->
-      <img src="images/console-v2.jpg" alt="La console Brique : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
+      <img src="images/console-v2.jpg" alt="La console Bricode : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
       <img class="teinte" src="images/console-v2-bleu.jpg" alt="" width="1205" height="880"><img class="teinte" src="images/console-v2-rouge.jpg" alt="" width="1205" height="880"><img class="teinte" src="images/console-v2-violet.jpg" alt="" width="1205" height="880">   <!-- les autres couleurs, même cadrage : fondu l'une après l'autre -->
       <canvas id="demoEcran" width="320" height="240" aria-hidden="true"></canvas>
       <div class="kit" aria-hidden="true" hidden>   <!-- en pause (KIT = 0) ; avant la console : le montage pas à pas (photos prises du même point de vue) -->
@@ -624,13 +624,13 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p>Comme beaucoup de ses camarades, il voulait son premier smartphone. Mais après en avoir discuté avec lui, j'ai compris que c'était surtout pour jouer pendant les trajets en bus.</p>
       <p>Passionné d'électronique, je lui ai alors lancé un défi : <b style="color:var(--txt)">« Et si on fabriquait notre propre console de jeux ? »</b></p>
       <details class="suite"><summary>Lire la suite</summary>
-      <p>Avec l'aide de l'intelligence artificielle, nous pouvions même imaginer et créer nos propres jeux. C'est ainsi que Brique a vu le jour.</p>
+      <p>Avec l'aide de l'intelligence artificielle, nous pouvions même imaginer et créer nos propres jeux. C'est ainsi que Bricode a vu le jour.</p>
       <p>Très vite, son petit frère de 7 ans a voulu la sienne. Mes deux garçons sont devenus mes premiers testeurs. Chaque matin, nous faisions évoluer les jeux au rythme de leurs idées et de leurs envies.</p>
       <p>Puis j'ai tenté une petite expérience : intégrer des questions de culture générale et des leçons de l'école directement dans les jeux. Pour passer au niveau suivant, il fallait répondre correctement. Sinon, on recommençait !</p>
       <p><b style="color:var(--txt)">Et à ma grande surprise, ils ont adoré !</b></p>
       <p>Ils se lançaient des défis, comparaient leurs réponses et apprenaient sans même s'en rendre compte. Le plus jeune cherchait constamment à rivaliser avec son grand frère.</p>
-      <p>C'est là que j'ai compris que Brique pouvait devenir bien plus qu'une simple console.</p>
-      <p>Aujourd'hui, Brique grandit avec cette idée : offrir aux enfants le plaisir de jouer, tout en éveillant leur curiosité et leur envie d'apprendre.</p>
+      <p>C'est là que j'ai compris que Bricode pouvait devenir bien plus qu'une simple console.</p>
+      <p>Aujourd'hui, Bricode grandit avec cette idée : offrir aux enfants le plaisir de jouer, tout en éveillant leur curiosité et leur envie d'apprendre.</p>
       <p>Une aventure née en famille, avec l'envie de proposer une autre façon de jouer.</p>
       </details>
     </article>
@@ -640,7 +640,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section id="assembler" class="chap">
     <div class="chap-tete"><span class="ref">Assembler sa console</span><h2>Comment ça marche ?</h2>
       <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p></div>
-    <div class="chap-video"><video id="videoKit" src="images/kit-prompt.mp4" poster="images/kit-prompt.jpg" muted loop playsinline preload="metadata" width="1280" height="720" aria-label="Le kit Brique : on soude la console, puis on décrit son jeu à l'IA"></video></div>
+    <div class="chap-video"><video id="videoKit" src="images/kit-prompt.mp4" poster="images/kit-prompt.jpg" muted loop playsinline preload="metadata" width="1280" height="720" aria-label="Le kit Bricode : on soude la console, puis on décrit son jeu à l'IA"></video></div>
   <section class="c-console c-soude">           <!-- en atelier : ce sont les enfants qui soudent -->
     <figure><img src="images/atelier-04.jpg" alt="Un enfant soude, le fer d'une main et l'étain de l'autre" width="800" height="800" loading="lazy">
       <figcaption><b>Le fer d'une main</b>, l'étain de l'autre, la plaque tenue par un support</figcaption></figure>
@@ -692,7 +692,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </article>
     <article>
       <span class="ref">Le jeu commun</span><h3>🧱 Un seul grand jeu, où chacun signe son niveau</h3>
-      <p>Chacun y ajoute un niveau, signé de son pseudo. Niveau après niveau, le jeu commun grandit avec tous les joueurs de Brique.</p>
+      <p>Chacun y ajoute un niveau, signé de son pseudo. Niveau après niveau, le jeu commun grandit avec tous les joueurs de Bricode.</p>
       <div class="acc-chiffres"><div><b id="accNivCommun">–</b><span>niveaux dans le jeu commun</span></div><div class="acc-signes"><span>Derniers à l'avoir agrandi</span><small id="accSignes">–</small></div></div>
       <div class="actions" style="justify-content:flex-start"><button id="accCommun" class="sec">🧱 Jouer au jeu commun</button><button id="accAjouter" class="sec">➕ Ajouter mon niveau</button></div>
     </article>
@@ -702,22 +702,22 @@ body{overflow-x:clip}                                           /* la bande 100v
 </div>
 </main>
 
-<!-- ===== À PROPOS : qui fait Brique (bouton « À propos » du menu) ===== -->
-<main id="propos" class="hide" data-version="1.2">
-<div class="shop"><div class="sh-hero page-hero"><p class="sh-sur">À propos</p><h2 class="sh-titre">Qui fait Brique ?</h2></div></div>
+<!-- ===== À PROPOS : qui fait Bricode (bouton « À propos » du menu) ===== -->
+<main id="propos" class="hide" data-version="1.3">
+<div class="shop"><div class="sh-hero page-hero"><p class="sh-sur">À propos</p><h2 class="sh-titre">Qui fait Bricode ?</h2></div></div>
 <div class="commu">
   <section id="apropos" class="acc-commu">
     <article class="apropos">
       <img src="images/apropos.jpg" alt="Jonathan et Anti, bras en arche, dans le vaisseau Arcadia, une de leurs installations de jeu" width="1600" height="1067" loading="lazy">
       <div>
       <span class="ref">À propos de nous</span><h3>Deux artisans du tiers-lieu Le Cercle</h3>
-      <p>Brique est né dans les tiers-lieux, pour rendre l'électronique, la programmation et les outils numériques accessibles à tous.</p>
+      <p>Bricode est né dans les tiers-lieux, pour rendre l'électronique, la programmation et les outils numériques accessibles à tous.</p>
       <div class="acc-commu" style="margin-top:8px">
         <p><b style="color:var(--txt)">Jonathan Moriot</b><br>Concepteur et développeur.</p>
         <p><b style="color:var(--txt)">Anti</b><br>Plasticien, cofondateur du Cercle, où il porte des projets artistiques et techniques.</p>
       </div>
       <p><b style="color:var(--txt)">Le Cercle</b>, c'est un tiers-lieu à Lunery, dans le Cher, à 20 km au sud de Bourges, installé dans l'ancienne cité ouvrière de l'usine de Rosières. Des artistes, des artisans et des créateurs y partagent ateliers, expositions et savoir-faire numérique.</p>
-      <p><b style="color:var(--txt)">C'est tout l'enjeu du Cercle</b> : un lieu ouvert à tous, pour apprendre et créer. Acheter une Brique, ce n'est pas juste acheter un produit de plus, c'est participer à faire grandir ce lieu.</p>
+      <p><b style="color:var(--txt)">C'est tout l'enjeu du Cercle</b> : un lieu ouvert à tous, pour apprendre et créer. Acheter une Bricode, ce n'est pas juste acheter un produit de plus, c'est participer à faire grandir ce lieu.</p>
       <p>Suivez l'aventure sur Instagram : <a href="https://instagram.com/brique_console" target="_blank" rel="noopener">@brique_console</a></p>
       </div>
     </article>
@@ -725,18 +725,18 @@ body{overflow-x:clip}                                           /* la bande 100v
       <span class="ref">Les prototypes</span><h3>De la plaque à trous à la console</h3>
       <p>Trois prototypes en six semaines : le premier le 21 septembre 2026, le troisième terminé le 31 octobre 2026.</p>
       <div class="protos-g">
-      <figure><img src="images/proto1-260921.jpg" alt="Prototype 1 de Brique, 21 sept. 2026" loading="lazy"><figcaption><b>Proto 1</b>21 sept. 2026</figcaption></figure>
-      <figure><img src="images/proto1b-261006.jpg" alt="Prototype 1 de Brique, 6 oct. 2026" loading="lazy"><figcaption><b>Proto 1B</b>6 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto2-261014.jpg" alt="Prototype 2 de Brique, 14 oct. 2026" loading="lazy"><figcaption><b>Proto 2</b>14 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto2b-261014.jpg" alt="Prototype 2 de Brique, 14 oct. 2026" loading="lazy"><figcaption><b>Proto 2B</b>14 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto2c-261014.jpg" alt="Prototype 2 de Brique, 14 oct. 2026" loading="lazy"><figcaption><b>Proto 2C</b>14 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto2d-261015.jpg" alt="Prototype 2 de Brique, 15 oct. 2026" loading="lazy"><figcaption><b>Proto 2D</b>15 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto3-261026.jpg" alt="Prototype 3 de Brique, 26 oct. 2026" loading="lazy"><figcaption><b>Proto 3</b>26 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto3b-261026.jpg" alt="Prototype 3 de Brique, 26 oct. 2026" loading="lazy"><figcaption><b>Proto 3B</b>26 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto3c-261027.jpg" alt="Prototype 3 de Brique, 27 oct. 2026" loading="lazy"><figcaption><b>Proto 3C</b>27 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto3d-261027.jpg" alt="Prototype 3 de Brique, 27 oct. 2026" loading="lazy"><figcaption><b>Proto 3D</b>27 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto3e-261029.jpg" alt="Prototype 3 de Brique, 29 oct. 2026" loading="lazy"><figcaption><b>Proto 3E</b>29 oct. 2026</figcaption></figure>
-      <figure><img src="images/proto3f-261031.jpg" alt="Prototype 3 de Brique, 31 oct. 2026" loading="lazy"><figcaption><b>Proto 3F</b>31 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto1-260921.jpg" alt="Prototype 1 de Bricode, 21 sept. 2026" loading="lazy"><figcaption><b>Proto 1</b>21 sept. 2026</figcaption></figure>
+      <figure><img src="images/proto1b-261006.jpg" alt="Prototype 1 de Bricode, 6 oct. 2026" loading="lazy"><figcaption><b>Proto 1B</b>6 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto2-261014.jpg" alt="Prototype 2 de Bricode, 14 oct. 2026" loading="lazy"><figcaption><b>Proto 2</b>14 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto2b-261014.jpg" alt="Prototype 2 de Bricode, 14 oct. 2026" loading="lazy"><figcaption><b>Proto 2B</b>14 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto2c-261014.jpg" alt="Prototype 2 de Bricode, 14 oct. 2026" loading="lazy"><figcaption><b>Proto 2C</b>14 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto2d-261015.jpg" alt="Prototype 2 de Bricode, 15 oct. 2026" loading="lazy"><figcaption><b>Proto 2D</b>15 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3-261026.jpg" alt="Prototype 3 de Bricode, 26 oct. 2026" loading="lazy"><figcaption><b>Proto 3</b>26 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3b-261026.jpg" alt="Prototype 3 de Bricode, 26 oct. 2026" loading="lazy"><figcaption><b>Proto 3B</b>26 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3c-261027.jpg" alt="Prototype 3 de Bricode, 27 oct. 2026" loading="lazy"><figcaption><b>Proto 3C</b>27 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3d-261027.jpg" alt="Prototype 3 de Bricode, 27 oct. 2026" loading="lazy"><figcaption><b>Proto 3D</b>27 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3e-261029.jpg" alt="Prototype 3 de Bricode, 29 oct. 2026" loading="lazy"><figcaption><b>Proto 3E</b>29 oct. 2026</figcaption></figure>
+      <figure><img src="images/proto3f-261031.jpg" alt="Prototype 3 de Bricode, 31 oct. 2026" loading="lazy"><figcaption><b>Proto 3F</b>31 oct. 2026</figcaption></figure>
       </div>
     </article>
   </section>
@@ -744,7 +744,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CGV : conditions générales de vente et d'utilisation (lien en pied de page et au paiement) ===== -->
-<main id="cgv" class="hide" data-version="1.2">
+<main id="cgv" class="hide" data-version="1.3">
 <div class="shop"><div class="sh-hero page-hero"><p class="sh-sur">Conditions générales</p><h2 class="sh-titre">Conditions de vente et d'utilisation</h2></div></div>
 <div class="commu">
   <section style="grid-column:1/-1;max-width:760px;width:100%;margin:0 auto;line-height:1.6">
@@ -752,10 +752,10 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p class="aide">En vigueur au 12 novembre 2026. En passant commande, vous acceptez ces conditions.</p>
 
       <h3>1. Qui vend</h3>
-      <p>Les consoles Brique sont vendues par la <b>Fondation Brique</b>, au tiers-lieu Le Cercle, 2B rue de l'Église, 18400 Lunery (Cher), France. Contact : par Instagram <a href="https://instagram.com/brique_console" target="_blank" rel="noopener">@brique_console</a>.</p>
+      <p>Les consoles Bricode sont vendues par la <b>Fondation Bricode</b>, au tiers-lieu Le Cercle, 2B rue de l'Église, 18400 Lunery (Cher), France. Contact : par Instagram <a href="https://instagram.com/brique_console" target="_blank" rel="noopener">@brique_console</a>.</p>
 
       <h3>2. Le produit</h3>
-      <p>Brique est un <b>kit électronique éducatif</b>, à souder et à programmer, vendu en kit ou pré-soudé. Comme les cartes Arduino ou Raspberry Pi, c'est un outil d'apprentissage et d'expérimentation : ce n'est pas un jouet fini.</p>
+      <p>Bricode est un <b>kit électronique éducatif</b>, à souder et à programmer, vendu en kit ou pré-soudé. Comme les cartes Arduino ou Raspberry Pi, c'est un outil d'apprentissage et d'expérimentation : ce n'est pas un jouet fini.</p>
       <ul>
         <li>Il contient de <b>petites pièces</b> : ne convient pas aux enfants de moins de 3 ans (risque d'étouffement).</li>
         <li>Âge conseillé : à partir de 9 ans, <b>sous la surveillance d'un adulte</b>.</li>
@@ -787,7 +787,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p>Le site, le firmware de la console et les jeux sont fournis <b>en l'état</b>, sans garantie de fonctionnement continu. Les jeux écrits par l'IA ou partagés par la communauté peuvent contenir des erreurs : ils ne peuvent pas abîmer la console, qui se remet à zéro par une mise à jour depuis le site. Les contenus publiés dans la Communauté restent sous la responsabilité de leurs auteurs ; nous pouvons retirer ceux qui ne conviennent pas à un public d'enfants.</p>
 
       <h3>9. Responsabilité</h3>
-      <p>La Fondation Brique ne saurait être tenue responsable des dommages, blessures ou pertes liés à l'assemblage ou à l'utilisation de la console qui ne respecteraient pas ces conditions et les consignes de sécurité ci-dessus, notamment en l'absence de supervision d'un adulte, ni des dommages indirects (perte de données, matériel branché sur la console). Cette limite ne s'applique pas aux dommages corporels causés par un défaut du produit, ni à ce que la loi interdit d'exclure.</p>
+      <p>La Fondation Bricode ne saurait être tenue responsable des dommages, blessures ou pertes liés à l'assemblage ou à l'utilisation de la console qui ne respecteraient pas ces conditions et les consignes de sécurité ci-dessus, notamment en l'absence de supervision d'un adulte, ni des dommages indirects (perte de données, matériel branché sur la console). Cette limite ne s'applique pas aux dommages corporels causés par un défaut du produit, ni à ce que la loi interdit d'exclure.</p>
 
       <h3>10. Vos données</h3>
       <p>Nous gardons le moins possible : voir <a href="#" onclick="afficher('boutique');setTimeout(()=>donnees.scrollIntoView());return false">Vos données</a>.</p>
@@ -800,13 +800,13 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== PARTIS PRIS : les pages secondaires de l'accueil (IA française, 3 boutons, défi) ===== -->
-<main id="partis" class="hide" data-version="1.2">
+<main id="partis" class="hide" data-version="1.3">
 <div class="shop">
   <div class="sh-hero page-hero"><p class="sh-sur">Nos partis pris</p><h2 class="sh-titre">Des choix faits exprès.</h2></div>
   <section id="ia-francaise" class="acc-ia">     <!-- parti pris : IA spécialisée (Mistral, française), pas un assistant qui parle de tout -->
     <span class="ref">Parti pris · IA française : Mistral AI</span>
     <h3>Une IA qui ne sait faire que des jeux</h3>
-    <p>Brique n'utilise pas un assistant qui discute de tout. L'IA, celle de <b>Mistral AI</b>, une entreprise française, a été cantonnée à un seul travail : transformer la phrase de l'enfant en réglages de jeu. Moins de liberté pour elle, moins de débordements pour les plus jeunes.</p>
+    <p>Bricode n'utilise pas un assistant qui discute de tout. L'IA, celle de <b>Mistral AI</b>, une entreprise française, a été cantonnée à un seul travail : transformer la phrase de l'enfant en réglages de jeu. Moins de liberté pour elle, moins de débordements pour les plus jeunes.</p>
     <ul class="ia-points">
       <li><b>🎮 Elle ne discute pas</b>Pas de conversation, pas de recherche sur Internet, pas d'images : une phrase entre, des réglages de jeu sortent.</li>
       <li><b>🧱 Tout est trié</b>Notre serveur ne garde que les réglages que la console connaît. Le reste est jeté avant d'arriver à l'écran.</li>
@@ -857,7 +857,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== COMMUNAUTÉ : créations, classement, joueurs ===== -->
-<main id="commu" class="commu hide" data-version="1.4">
+<main id="commu" class="commu hide" data-version="1.5">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Communauté · jeux, parties, classement</p>
     <h2 class="sh-titre">Ici tu crées,<br>tu partages, tu découvres.</h2>
@@ -866,7 +866,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <nav id="recap" class="c-recap" aria-label="Sommaire de la Communauté">
     <button class="gros" data-aller="classSec"><b>🎮 Jeux de la communauté</b><i id="rJeux">–</i><small id="rJeuxDer">&nbsp;</small></button>
     <button class="gros" data-aller="communSec"><b>🧱 Niveaux du jeu commun</b><i id="rNiv">–</i><small id="rNivDer">&nbsp;</small></button>
-    <button class="gros" data-aller="exSec"><b>🧩 Jeux de Brique</b><i id="rEx">–</i><small id="rExMeca">&nbsp;</small></button>
+    <button class="gros" data-aller="exSec"><b>🧩 Jeux de Bricode</b><i id="rEx">–</i><small id="rExMeca">&nbsp;</small></button>
     <button data-aller="nouvSec">🆕 Nouveautés</button>
     <button data-aller="tendSec">🔥 Plébiscités</button>
     <button data-aller="defiSec">🎯 Défi <b id="rDefi">–</b></button>
@@ -893,8 +893,8 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section id="classSec" class="c-class"><h2>🏆 Classement des jeux</h2><div id="classement" class="liste"></div></section>
   <section id="nouvSec" class="c-new"><h2>🆕 Nouveaux niveaux</h2><div id="nouveaux" class="cartes"></div></section>
   <section id="tendSec"><h2>🔥 Plébiscités cette semaine</h2><div id="tendance" class="liste"></div></section>
-  <section id="communSec"><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu de plateforme, déjà dans ta console : on grimpe jusqu'au drapeau, puis le niveau suivant, jusqu'au dernier. Chacun y ajoute un niveau signé de son pseudo : prends un niveau, change-le à ta façon et ajoute-le à la suite. Une personne de Brique le regarde avant qu'il rejoigne le jeu.</p><div class="actions" style="justify-content:flex-start;margin:0 0 8px"><button id="jcJouer" class="sec">🎮 Mettre le jeu entier à jour sur ma console</button></div><div id="jcMsg" class="envoi" style="margin:0 0 8px"></div><div id="commun" class="liste"></div></section>
-  <section id="exSec"><h2>🧩 Les jeux de Brique</h2><p class="aide" style="margin-top:0">Des jeux complets écrits par l'équipe Brique. Prends-en un : il arrive dans Créer, tu peux l'envoyer sur ta console ou le changer à ta façon.</p><div id="exMsg" class="envoi" style="margin:0 0 8px"></div><div id="exemples" class="liste"></div></section>
+  <section id="communSec"><h2>🧱 Le jeu commun</h2><p class="aide" style="margin-top:0">Un seul grand jeu de plateforme, déjà dans ta console : on grimpe jusqu'au drapeau, puis le niveau suivant, jusqu'au dernier. Chacun y ajoute un niveau signé de son pseudo : prends un niveau, change-le à ta façon et ajoute-le à la suite. Une personne de Bricode le regarde avant qu'il rejoigne le jeu.</p><div class="actions" style="justify-content:flex-start;margin:0 0 8px"><button id="jcJouer" class="sec">🎮 Mettre le jeu entier à jour sur ma console</button></div><div id="jcMsg" class="envoi" style="margin:0 0 8px"></div><div id="commun" class="liste"></div></section>
+  <section id="exSec"><h2>🧩 Les jeux de Bricode</h2><p class="aide" style="margin-top:0">Des jeux complets écrits par l'équipe Bricode. Prends-en un : il arrive dans Créer, tu peux l'envoyer sur ta console ou le changer à ta façon.</p><div id="exMsg" class="envoi" style="margin:0 0 8px"></div><div id="exemples" class="liste"></div></section>
   <section id="defiSec" class="c-defi">
     <h2>🎯 Le défi : explorer toute la console</h2>
     <p style="margin:0 0 4px">Soyons honnêtes : un ESP32-C3 à 3 € ne vaut pas une Switch. Ni même une PS Vita. Ni même la calculette de ta sœur. 🤏 Sauras-tu en atteindre les limites pour autant ?</p>
@@ -918,7 +918,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== BOUTIQUE (présentation épurée) ===== -->
-<main id="boutique" class="shop hide" data-version="1.8">
+<main id="boutique" class="shop hide" data-version="1.9">
   <div class="sh-hero">
     <h2 class="sh-titre">Un kit simple, à deux,<br>ou un support pédagogique clé en main.</h2>
   </div>
@@ -963,7 +963,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   </div>
 
   <div class="sh-bloc">
-    <h3 class="sh-h">Tu as déjà ta propre brique ?</h3>
+    <h3 class="sh-h">Tu as déjà ta propre Bricode ?</h3>
     <p class="sh-sous">Console montée ou achetée ailleurs : prends seulement l'accès à l'interface (créer, tester et envoyer tes jeux), sans matériel ni livraison.</p>
     <p id="btAccesPrix" class="sh-total"></p>
     <button id="btAcces" class="sh-btn">Ajouter au panier</button>
@@ -971,7 +971,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 
   <div class="sh-bloc hide">                     <!-- acheter = faire grandir un lieu ; masqué pour le moment : retirer « hide » pour le remettre -->
     <h3 class="sh-h">Plus qu'une console.</h3>
-    <p class="sh-sous">Acheter une Brique, ce n'est pas acheter un objet de plus. C'est aider à faire grandir <b>Le Cercle</b>, un tiers-lieu ouvert à tous dans le Cher, où l'on vient apprendre, fabriquer et créer ensemble : souder, programmer, inventer.</p>
+    <p class="sh-sous">Acheter une Bricode, ce n'est pas acheter un objet de plus. C'est aider à faire grandir <b>Le Cercle</b>, un tiers-lieu ouvert à tous dans le Cher, où l'on vient apprendre, fabriquer et créer ensemble : souder, programmer, inventer.</p>
     <p class="sh-sous">Chaque console vendue fait vivre ce lieu, ses ateliers et les prochaines idées qui en sortiront.</p>
     <button class="sec" onclick="afficher('propos')" style="width:auto;margin:16px auto 0">👋 Découvrir Le Cercle</button>
   </div>
@@ -1035,7 +1035,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     <div class="sh-liens">
       <a href="https://github.com/Imajon/ClaudeRepo/tree/main/c3-tft-meatboy" target="_blank" rel="noopener"><b>Firmware</b><span>Le programme de la console</span></a>
       <a href="https://github.com/Imajon/ClaudeRepo/tree/main/c3-tft-meatboy/materiel" target="_blank" rel="noopener"><b>Matériel</b><span>Carte, boîtier, découpes</span></a>
-      <a href="https://github.com/Imajon/ClaudeRepo/tree/main/brique" target="_blank" rel="noopener"><b>Brique</b><span>Ce site et son serveur</span></a>
+      <a href="https://github.com/Imajon/ClaudeRepo/tree/main/brique" target="_blank" rel="noopener"><b>Bricode</b><span>Ce site et son serveur</span></a>
     </div>
     <a class="sh-lien" href="https://github.com/Imajon/ClaudeRepo" target="_blank" rel="noopener">Voir tout le projet sur GitHub ›</a>
   </div>
@@ -1088,7 +1088,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== SUPPORT : notice d'assemblage et de prise en main ===== -->
-<main id="support" class="anim support hide" data-version="1.5">
+<main id="support" class="anim support hide" data-version="1.6">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Support · montage et prise en main</p>
     <h2 class="sh-titre">Besoin d'info ?<br>C'est ici.</h2>
@@ -1117,7 +1117,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 <filter id="fa-rim" x="-2%" y="-2%" width="104%" height="104%"><feMorphology in="SourceAlpha" operator="erode" radius=".4" result="e"/><feComposite in="SourceAlpha" in2="e" operator="out" result="r"/><feFlood flood-color="#7fd9a0" flood-opacity=".5"/><feComposite in2="r" operator="in" result="rr"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="rr"/></feMerge></filter>
 <clipPath id="fa-scr"><rect width="320" height="240"/></clipPath></defs>
 <rect width="1000" height="1414" fill="#fff"/>
-<text x="500.0" y="44.0" font-size="26" font-weight="800" fill="#12233a" text-anchor="middle">Console Brique : dans quel sens monter les pièces</text>
+<text x="500.0" y="44.0" font-size="26" font-weight="800" fill="#12233a" text-anchor="middle">Console Bricode : dans quel sens monter les pièces</text>
 <text x="500.0" y="68.0" font-size="14" font-weight="400" fill="#5a6b82" text-anchor="middle">Carte hexagonale (version D) - l'ESP32 va au VERSO, l'écran et les boutons au RECTO</text>
 <rect x="30" y="88" width="940" height="32" rx="6" fill="#12233a"/>
 <text x="44.0" y="110.0" font-size="17" font-weight="800" fill="#fff" text-anchor="start">1. Repérer les deux faces</text>
@@ -1347,7 +1347,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ol>
   </section>
   <section data-groupe="montage">
-    <h2>La console Brique</h2>
+    <h2>La console Bricode</h2>
     <p>Une console à souder soi-même : un ESP32-C3, un écran TFT 2" et 3 boutons. Une fois montée, elle fait tourner Pixel Run et reçoit par câble USB les niveaux créés ici.</p>
     <p><b>Console pré-soudée ?</b> Elle arrive montée et testée : passe directement au branchement USB et à l'envoi de ton premier jeu. Les étapes de soudure ci-dessous ne concernent que le kit.</p>
     <p class="aide">Environ 1 h 30 de montage pour un enfant accompagné (CM1 → 4ᵉ), puis 10 minutes pour la première programmation.</p>
@@ -1682,9 +1682,9 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== ATELIER : présentation pour les professeurs ===== -->
-<main id="profs" class="anim hide" data-version="1.2">
+<main id="profs" class="anim hide" data-version="1.3">
   <div class="sh-hero page-hero">
-    <p class="sh-sur">Atelier · Brique en classe</p>
+    <p class="sh-sur">Atelier · Bricode en classe</p>
     <h2 class="sh-titre">Ils fabriquent.<br>Ils créent. Ils apprennent.</h2>
     <p class="sh-sous">L'électronique comme support pédagogique, pour un apprentissage amusant.</p>
   </div>
@@ -1698,7 +1698,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p><b>2. Les questions de cours</b> : l'enseignant les ajoute, elles sont insérées automatiquement dans les jeux des enfants. Elles apparaissent entre les niveaux, réussis ou non, et sont indispensables pour progresser.</p></section>
   </div>
   <section>
-    <h2><b>📚</b>Brique en classe : l'atelier</h2>
+    <h2><b>📚</b>Bricode en classe : l'atelier</h2>
     <p style="margin:0;font-size:18px">Les élèves <b>fabriquent leur console</b>, <b>créent leurs jeux en parlant à une IA</b>, et chaque jeu <b>reprend la leçon du jour</b> : vos questions de cours s'affichent entre les niveaux.</p>
     <p class="aide">Du CM1 à la 4ᵉ · par groupes de 8 à 30 · de 1 séance à un projet sur l'année.</p>
   </section>
@@ -1712,9 +1712,9 @@ body{overflow-x:clip}                                           /* la bande 100v
       <figure><img src="images/atelier-05.jpg" alt="L'écran est posé" width="800" height="800" loading="lazy"><figcaption><b>L'écran est posé</b>La console prend forme sur le support.</figcaption></figure>
       <figure><img src="images/atelier-06.jpg" alt="Ça s'allume !" width="800" height="800" loading="lazy"><figcaption><b>Ça s'allume !</b>Le premier jeu tourne sur l'écran : le moment préféré.</figcaption></figure>
       <figure><img src="images/atelier-07.jpg" alt="Les fils dessous" width="800" height="800" loading="lazy"><figcaption><b>Les fils dessous</b>Le câblage vu de dessous : chaque fil relie une broche à l'ESP32-C3.</figcaption></figure>
-      <figure><img src="images/atelier-08.jpg" alt="Le circuit Brique" width="800" height="800" loading="lazy"><figcaption><b>Le circuit Brique</b>Le circuit imprimé hexagonal remplace les fils : plus simple à monter.</figcaption></figure>
+      <figure><img src="images/atelier-08.jpg" alt="Le circuit Bricode" width="800" height="800" loading="lazy"><figcaption><b>Le circuit Bricode</b>Le circuit imprimé hexagonal remplace les fils : plus simple à monter.</figcaption></figure>
       <figure><img src="images/atelier-09.jpg" alt="Les consoles terminées" width="800" height="800" loading="lazy"><figcaption><b>Les consoles terminées</b>Chacun repart avec la sienne, et ses jeux dedans.</figcaption></figure>
-      <figure><img src="images/atelier-10.jpg" alt="La console Brique" width="800" height="709" loading="lazy"><figcaption><b>La console Brique</b>Écran couleur, trois boutons, un cerveau ESP32-C3.</figcaption></figure>
+      <figure><img src="images/atelier-10.jpg" alt="La console Bricode" width="800" height="709" loading="lazy"><figcaption><b>La console Bricode</b>Écran couleur, trois boutons, un cerveau ESP32-C3.</figcaption></figure>
     </div>
   </section>
   <div class="profs-grille">
@@ -1757,10 +1757,10 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== MON COMPTE : infos perso, mes jeux, chat avec le support ===== -->
-<main id="monCompte" class="anim hide" data-version="1.2" style="max-width:1200px">
+<main id="monCompte" class="anim hide" data-version="1.3" style="max-width:1200px">
   <section id="mcSans" class="hide">
     <h2>Mon compte</h2>
-    <p class="aide" style="margin-top:0">Connecte-toi pour retrouver tes infos et tes jeux, et écrire à l'équipe Brique.</p>
+    <p class="aide" style="margin-top:0">Connecte-toi pour retrouver tes infos et tes jeux, et écrire à l'équipe Bricode.</p>
     <div class="actions" style="justify-content:flex-start"><button id="mcConnexion" class="big" style="width:auto;margin:0">👤 Se connecter</button></div>
   </section>
   <div id="mcAvec" class="hide">
@@ -1784,7 +1784,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <div id="mcPublies" class="liste"></div>
     </section>
     <section class="mcBas">
-      <h2>💬 Écrire à l'équipe Brique</h2>
+      <h2>💬 Écrire à l'équipe Bricode</h2>
       <p class="aide" style="margin-top:0">Une question, un bug, une idée ? L'équipe te répond ici (jamais par mail).</p>
       <div id="mcChat" class="chatfil"></div>
       <textarea id="mcChatTxt" maxlength="1000" rows="5" style="min-height:140px;margin-top:8px" placeholder="Ton message"></textarea>
@@ -1979,7 +1979,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.27">
+<main id="vueScript" class="hide" data-version="1.28">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scZero" class="sec" title="Efface ce jeu, son programme et tes essais (pas celui gardé dans la console)">🗑 Supprimer ce jeu</button><select id="scDepart" title="Le jeu de départ : une fiche toute prête que tu changes avec l'IA"><option value="plateforme">🧗 Plateforme</option><option value="casse">🧱 Casse-briques</option><option value="">⬜ Vide</option></select><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
@@ -2013,7 +2013,7 @@ body{overflow-x:clip}                                           /* la bande 100v
   <section class="console">
     <h2>Ma console</h2>
     <div class="sc-console">                     <!-- à droite de la console : connexion, son log, puis l'installation du firmware -->
-      <img src="images/console-face.png" alt="La console Brique" width="1105" height="763">
+      <img src="images/console-face.png" alt="La console Bricode" width="1105" height="763">
       <div class="sc-cote">
         <button id="scBrancher" class="sec" title="Connecter ma console" aria-label="Connecter ma console"><svg class="prises" viewBox="0 0 48 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 10h5"/><rect x="6" y="4" width="9" height="12" rx="2"/><path d="M15 7h4M15 13h4"/><rect x="29" y="4" width="9" height="12" rx="2"/><path d="M38 10h9"/></g></svg></button>
         <div id="scEtat" class="envoi">Console pas connectée. C'est elle qui fait tourner ton jeu.</div>
@@ -2029,7 +2029,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <button id="scPublier" class="sec">📢 Publier</button><button id="scCommun" class="sec" title="Ton niveau part à la suite du jeu commun, signé de ton pseudo">🧱 Ajouter au jeu commun</button>
     </div>
     <div id="scPartage"></div>
-    <details id="scNote" class="hide" style="margin:8px 0"><summary>📝 Laisser une note à l'équipe Brique</summary>   <!-- comptes connectés : observations lues par l'admin (Espace animateur) -->
+    <details id="scNote" class="hide" style="margin:8px 0"><summary>📝 Laisser une note à l'équipe Bricode</summary>   <!-- comptes connectés : observations lues par l'admin (Espace animateur) -->
       <textarea id="scNoteTxt" rows="3" maxlength="500" style="width:100%;margin-top:6px" placeholder="Un bug, une idée, quelque chose de bizarre… dis-nous ce que tu as vu."></textarea>
       <button id="scNoteOk" class="sec">Envoyer la note</button></details>
     <h3 class="code-titre">🖼 Les images de ton jeu <span class="ref" id="scJaugeTxt"></span></h3>
@@ -2069,7 +2069,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 <footer class="pied">                             <!-- pied de page : plan du site -->
   <div class="pied-in">
     <div>
-      <div class="pied-marque">BRIQUE</div>
+      <div class="pied-marque">BRICODE</div>
       <p>La console de jeu qu'on soude et qu'on programme soi-même, seul ou à plusieurs.</p>
       <p>Un projet né au tiers-lieu Le Cercle, pour rendre l'électronique, la programmation et le numérique accessibles à tous.</p>
     </div>
@@ -2088,7 +2088,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
   </div>
-  <div class="pied-bas"><span>© 2026 Brique · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="sectionVersion" title="Version de cette section (data-version de sa balise main)"></span><span id="consoleVersions"></span></span><span><button class="sec theme" title="Mode sombre / mode clair">🌙</button> <a id="piedSite" href="/">brique.studioeya.com</a></span></div>
+  <div class="pied-bas"><span>© 2026 Bricode · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="sectionVersion" title="Version de cette section (data-version de sa balise main)"></span><span id="consoleVersions"></span></span><span><button class="sec theme" title="Mode sombre / mode clair">🌙</button> <a id="piedSite" href="/">brique.studioeya.com</a></span></div>
 </footer>
 
 <script src="arbres-foret.js"></script>
@@ -3167,9 +3167,9 @@ async function publier(commun) {
   try {
     const { id, code } = await api('api/niveaux', { ...ident(), titre: titreIn.value, commun, niv: jeu.niv });
     Object.assign(jeu.niv, { id, code, titre: jeu.niv.titre || titreIn.value });
-    envoi.innerHTML = `<span style="color:var(--ok)">✓ ${commun ? 'Ton niveau est envoyé au jeu commun : il y entrera dès qu\'une personne de Brique l\'aura validé' : 'Ton jeu est publié, signé ' + esc(pseudo())} !</span>
+    envoi.innerHTML = `<span style="color:var(--ok)">✓ ${commun ? 'Ton niveau est envoyé au jeu commun : il y entrera dès qu\'une personne de Bricode l\'aura validé' : 'Ton jeu est publié, signé ' + esc(pseudo())} !</span>
       <div class="partage">Code de ton jeu : <span class="code">${code}</span><br>
-      <small>Donne-le à tes copains : ils le récupèrent sur Brique et vous jouez ensemble dans « Mes jeux ». <b>Renvoie-le sur ta console</b> pour qu'elle connaisse ce code.</small></div>`;
+      <small>Donne-le à tes copains : ils le récupèrent sur Bricode et vous jouez ensemble dans « Mes jeux ». <b>Renvoie-le sur ta console</b> pour qu'elle connaisse ce code.</small></div>`;
     rafraichir();
   } catch (e) { dire(e.message); }
 }
@@ -3569,7 +3569,7 @@ document.addEventListener('click', e => {
   const n = enLigne.find(n => n.id === id); if (n) jouerNiveau(n);
 });
 // ---------- Jeu commun : un seul jeu de plateforme (jeu-commun.be, de base dans la console), niveau après niveau ; « Prendre » copie un niveau dans Créer sans quitter la page ----------
-let JC_BASE = [];                                         // les niveaux d'origine (signés Brique) : lus dans jeu-commun.be, le même fichier que la console a de base
+let JC_BASE = [];                                         // les niveaux d'origine (signés Bricode) : lus dans jeu-commun.be, le même fichier que la console a de base
 const jcMoteur = fetch('jeu-commun.be').then(r => r.ok ? r.text() : Promise.reject());
 function jcRows(n) {                                     // la grille d'un niveau commun, quel que soit son format (Berry, fiche, générateur)
   if (n.niv.script) { const m = /var NIV = \[([\s\S]*?)\]/.exec(n.niv.script); return m ? JSON.parse('[' + m[1] + ']') : null; }
@@ -3582,12 +3582,12 @@ const jcPropre = rows => rows.map(r => (String(r).replace(/[^.#CR^WI*SG]/g, '.')
 const jcJouable = n => { const r = jcRows(n)?.join('') || ''; return r.includes('S') && r.includes('G'); };   // sans départ ou sans drapeau, le jeu entier resterait bloqué
 function jcScript(moteur, niveaux) {                     // le moteur avec ces niveaux : un seul (« Prendre ») ou tous (le jeu entier)
   const L = niveaux.map(n => '[' + jcPropre(jcRows(n)).map(r => JSON.stringify(r)).join(',') + ']');
-  const qui = niveaux.map(n => JSON.stringify(n.base ? 'Brique' : jcAscii(`${n.titre} par ${n.pseudo}`)));
+  const qui = niveaux.map(n => JSON.stringify(n.base ? 'Bricode' : jcAscii(`${n.titre} par ${n.pseudo}`)));
   return moteur.replace(/var NIV = \[[\s\S]*?# fin des niveaux\n/, () => `var NIV = ${L[0]}\nvar NIVS = [NIV${L.slice(1).map(l => ',\n' + l).join('')}]\nvar QUI = [${qui.join(', ')}]\n# fin des niveaux\n`);
 }
 // ponytail: chaque case de ligne est une chaine Berry (~52 Ko pour 11 niveaux, la console tient ~70 Ko) : vers 25 niveaux, une chaine par niveau
 const jcEntier = () => jcMoteur.then(m => jcScript(m, jcNiveaux().filter(jcJouable)));   // le jeu entier : niveaux d'origine puis ceux validés, dans l'ordre
-const jcBase = () => JC_BASE.map((rows, i) => ({ id: 'base' + i, titre: 'Niveau ' + (i + 1), pseudo: 'Brique', code: '', base: true, niv: { rows }, stats: { parties: 0 } }));
+const jcBase = () => JC_BASE.map((rows, i) => ({ id: 'base' + i, titre: 'Niveau ' + (i + 1), pseudo: 'Bricode', code: '', base: true, niv: { rows }, stats: { parties: 0 } }));
 const jcNiveaux = () => [...jcBase(), ...enLigne.filter(n => n.commun && jcRows(n)).sort((a, b) => a.cree - b.cree)];
 function rendreCommun() {
   const pris = lire('brique-pris') || [];
@@ -3604,20 +3604,20 @@ document.addEventListener('click', async e => {
     ouvrirScript({ ...n, niv: { ...n.niv, script } }, true);
     ecrire('brique-pris', [...(lire('brique-pris') || []), id]); rendreCommun();
     jcMsg.innerHTML = `<span style="color:var(--ok)">✓ « ${esc(n.titre)} » de ${esc(n.pseudo)} est dans <a href="#" onclick="afficher('creer');return false" style="color:var(--acc)">Créer</a> : choisis-le dans « Mon jeu », change-le à ta façon, puis « 🧱 Ajouter au jeu commun ».</span>`;
-  } catch { jcMsg.innerHTML = '<span style="color:var(--ko)">Le jeu commun ne se charge pas (serveur Brique éteint ?).</span>'; }
+  } catch { jcMsg.innerHTML = '<span style="color:var(--ko)">Le jeu commun ne se charge pas (serveur Bricode éteint ?).</span>'; }
 });
 
-// ---------- Jeux de Brique : les jeux d'exemple (exemples/*.be), « Prendre » les copie dans Créer ----------
+// ---------- Jeux de Bricode : les jeux d'exemple (exemples/*.be), « Prendre » les copie dans Créer ----------
 let EXEMPLES = [];
 fetch('api/exemples').then(r => r.ok ? r.json() : Promise.reject()).then(l => {
   EXEMPLES = l;
   const meca = new Set(l.flatMap(x => possDans(x.titre + ' ' + x.desc)));   // les mécaniques que les exemples montrent, sur toutes celles de la console
   rEx.textContent = l.length; rExMeca.textContent = `${meca.size} mécanique${meca.size > 1 ? 's' : ''} de jeu sur ${POSS_TOUT.length} montrée${meca.size > 1 ? 's' : ''}`;
-  exemples.innerHTML = l.map((x, i) => `<div class="rang"><span class="pos">${i + 1}</span><div class="qui"><div><b>${esc(x.titre)}</b> <small>par Brique</small></div><small>${esc(x.desc)}</small></div><button class="jouer" data-exemple="${i}">📥 Prendre</button></div>`).join('');
+  exemples.innerHTML = l.map((x, i) => `<div class="rang"><span class="pos">${i + 1}</span><div class="qui"><div><b>${esc(x.titre)}</b> <small>par Bricode</small></div><small>${esc(x.desc)}</small></div><button class="jouer" data-exemple="${i}">📥 Prendre</button></div>`).join('');
 }).catch(() => exSec.classList.add('hide'));
 exemples.onclick = e => {
   const x = EXEMPLES[e.target.dataset?.exemple]; if (!x) return;
-  ouvrirScript({ titre: x.titre, pseudo: 'Brique', code: '', niv: { script: x.script } }, true);
+  ouvrirScript({ titre: x.titre, pseudo: 'Bricode', code: '', niv: { script: x.script } }, true);
   exMsg.innerHTML = `<span style="color:var(--ok)">✓ « ${esc(x.titre)} » est dans <a href="#" onclick="afficher('creer');return false" style="color:var(--acc)">Créer</a> : choisis-le dans « Mon jeu », puis envoie-le sur ta console.</span>`;
 };
 
@@ -3753,7 +3753,7 @@ const mcDire = (t, ok) => mcMsg.innerHTML = `<span style="color:var(--${ok ? 'ok
 const dateHeure = t => new Date(t).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 async function chargerChat(corps = { ouvert: true }) {
   const r = await api('api/support', { ...ident(), ...corps });
-  mcChat.innerHTML = r.messages.map(m => `<div class="m ${m.de === 'moi' ? 'moi' : 'eux'}"><small>${m.de === 'moi' ? 'Moi' : 'Équipe Brique'} · ${dateHeure(m.t)}</small>${esc(m.texte)}</div>`).join('')
+  mcChat.innerHTML = r.messages.map(m => `<div class="m ${m.de === 'moi' ? 'moi' : 'eux'}"><small>${m.de === 'moi' ? 'Moi' : 'Équipe Bricode'} · ${dateHeure(m.t)}</small>${esc(m.texte)}</div>`).join('')
     || '<span class="vide">Pas encore de message : écris-nous, l\'équipe te répond ici.</span>';
   mcChat.scrollTop = mcChat.scrollHeight; supportNonLus = 0; majCompte();
 }
@@ -3825,7 +3825,7 @@ document.querySelectorAll('.sh-pm').forEach(b => b.onclick = () => { btQte.value
 const PIECES = { esp: ['Module ESP32-C3', 5], ecran: ['Écran couleur', 9], bouton: ['Bouton poussoir', 1] };   // ponytail: prix a confirmer
 btPieces.querySelectorAll('[data-prix]').forEach(s => s.textContent = prix(PIECES[s.dataset.prix][1]));
 btPieces.onclick = e => { const k = e.target.dataset.piece; if (!k) return; panier[k] = Math.min(999, panier[k] + 1); suite = false; majPanier(); afficher('panier'); };
-const ACCES = ['Accès à l’interface Brique, 3 mois', 9];   // ponytail: prix a confirmer ; sans console, donc sans livraison (meme prix dans server.js)
+const ACCES = ['Accès à l’interface Bricode, 3 mois', 9];   // ponytail: prix a confirmer ; sans console, donc sans livraison (meme prix dans server.js)
 btAccesPrix.textContent = prix(ACCES[1]) + ' · accès pendant 3 mois';
 btAcces.onclick = () => { panier.acces = Math.min(999, panier.acces + 1); suite = false; majPanier(); afficher('panier'); };
 const resumeCommande = c => [c.kit && c.kit + ' kit', c.presoude && c.presoude + ' pré-soudée', c.acces && c.acces + ' accès interface',
@@ -3845,7 +3845,7 @@ function majPanier() {
   panierLignes.innerHTML = nb ? lignes.map(([k, nom, p]) => `<div class="rang"><div class="qui"><b>${nom}</b><br><small>${prix(p)} pièce</small></div>
     <span class="cmd-qte"><button data-k="${k}" data-d="-1" aria-label="Une de moins">−</button><b>${panier[k]}</b><button data-k="${k}" data-d="1" aria-label="Une de plus">+</button></span>
     <span>${prix(panier[k] * p)}</span><button class="jouer" data-retirer="${k}" aria-label="Retirer">🗑</button></div>`).join('')
-    + (n ? `<div class="rang"><div class="qui"><b>Accès à l'interface Brique pendant 3 mois</b><br><small>La console peut aussi se programmer sans l'interface, avec n'importe quelle IA.</small></div><span class="cmd-inclus">Inclus</span></div>` : '')
+    + (n ? `<div class="rang"><div class="qui"><b>Accès à l'interface Bricode pendant 3 mois</b><br><small>La console peut aussi se programmer sans l'interface, avec n'importe quelle IA.</small></div><span class="cmd-inclus">Inclus</span></div>` : '')
     + `<div class="rang"><div class="qui">Sous-total (${nb} article${nb > 1 ? 's' : ''})</div><span>${prix(sousTotal)}</span></div>
     ${colis ? `<div class="rang"><div class="qui">Livraison en point relais</div><span>${prix(PORT_RELAIS)}</span></div>` : ''}
     <div class="rang cmd-total"><div class="qui">Total TTC</div><span>${prix(total)}</span></div>` : '<p class="vide">Votre panier est vide.</p>';
@@ -4704,9 +4704,9 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     chantiers.liste.splice(chantiers.cur, 1); if (!chantiers.liste.length) chantiers.liste.push({ nom: 'Mon jeu', ...vide() });
     etat = chantiers.liste[chantiers.cur = Math.min(chantiers.cur, chantiers.liste.length - 1)]; scCode.value = etat.script; choisir(chantiers.cur);
   };
-  const partage = (t, code) => scPartage.innerHTML = `<div class="partage">${t} · code <span class="code">${esc(code)}</span><br><small>Tes copains le récupèrent sur Brique avec ce code (Communauté), puis le mettent sur leur console.</small></div>`;
+  const partage = (t, code) => scPartage.innerHTML = `<div class="partage">${t} · code <span class="code">${esc(code)}</span><br><small>Tes copains le récupèrent sur Bricode avec ce code (Communauté), puis le mettent sur leur console.</small></div>`;
   const publierScript = async commun => {                // publier (ou ajouter au jeu commun) : seulement un programme qui tourne sur la console sans erreur
-    if (!EN_LIGNE) return dire('Hors ligne : la publication a besoin du serveur Brique.', false);
+    if (!EN_LIGNE) return dire('Hors ligne : la publication a besoin du serveur Bricode.', false);
     if (!moi) { ouvrirConnexion('co'); return dire(adulte() ? 'Un jeu publié est signé d\'un pseudo : connecte-toi avec ton e-mail et ton mot de passe (ou un code).' : 'Connecte-toi d\'abord (ou crée ton compte).', false); }
     if (!etat.script || etat.erreur || etat.surConsole !== etat.essais.length) return dire('Mets ton jeu sur la console et vérifie qu\'il tourne sans erreur avant de le publier.', false);
     const titre = prompt(commun ? 'Le nom de ton niveau ?' : 'Le nom de ton jeu ?', etat.titre || etat.nom || ''); if (titre === null) return;
@@ -4828,7 +4828,7 @@ accVoirCommu.onclick = () => afficher('commu');
 accVoirDefi.onclick = accBlagueDefi.onclick = () => { afficher('commu'); document.querySelector('.c-defi').scrollIntoView(); };
 const voirNiveaux = () => { afficher('commu'); rendreCommun(); communSec.scrollIntoView({ behavior: 'smooth' }); };   // la liste des niveaux, sans quitter la page
 ctaCommun.onclick = accCommun.onclick = jcJouer.onclick = async () => {   // le jeu entier, niveau après niveau, prêt à partir sur la console
-  try { jouerCommun(await jcEntier()); } catch { voirNiveaux(); jcMsg.innerHTML = '<span style="color:var(--ko)">Le jeu commun ne se charge pas (serveur Brique éteint ?).</span>'; }
+  try { jouerCommun(await jcEntier()); } catch { voirNiveaux(); jcMsg.innerHTML = '<span style="color:var(--ko)">Le jeu commun ne se charge pas (serveur Bricode éteint ?).</span>'; }
 };
 accAjouter.onclick = voirNiveaux;
 document.querySelector('.pied').onclick = e => {      // pied de page : mêmes vues que le menu

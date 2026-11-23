@@ -1,4 +1,4 @@
-// Brique - serveur : sert la page, garde les niveaux signes (pseudo), les parties jouees et en tire classement + stats.
+// Bricode - serveur : sert la page, garde les niveaux signes (pseudo), les parties jouees et en tire classement + stats.
 // `node server.js` (port 8080, ou PORT=...). Donnees : MySQL si DB_HOST est defini (Aiven), sinon data.json a cote (ou DATA=...).
 // Comptes : un seul type de compte, deux entrees. (1) e-mail + pseudo + mot de passe, adresse confirmee par un lien : ce compte est aussi
 // celui de l'animateur (il cree des groupes et leurs codes). (2) un CODE individuel (ex. PANDA-3955) cree par un animateur pour son groupe :
@@ -143,7 +143,7 @@ async function modererImages(images) {                   // { ok, raison } ; san
 }
 // le jeu commun est un seul jeu, de base dans toutes les consoles : chaque niveau ajouté est regardé par un humain avant d'y entrer
 const attenteCommun = n => { n.attente = n.groupe ? 'animateur' : 'admin'; n.raison = (n.raison ? n.raison + ' · ' : '') + 'niveau du jeu commun'; };
-const MSG_COMMUN = 'Ton niveau est envoyé. Une personne de Brique (ou ton animateur) le regarde d\'abord : il rejoindra le jeu commun dès qu\'il sera validé.';
+const MSG_COMMUN = 'Ton niveau est envoyé. Une personne de Bricode (ou ton animateur) le regarde d\'abord : il rejoindra le jeu commun dès qu\'il sera validé.';
 const enLigne = n => !n.masque && !n.attente;           // visible par les autres (pas masque, pas en attente de validation)
 
 // ---------- secrets : on ne garde que des empreintes ----------
@@ -200,7 +200,7 @@ async function envoyerMail(email, sujet, html) {
   const r = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST', signal: AbortSignal.timeout(10000),
     headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sender: { email: process.env.MAIL_FROM, name: 'Brique' }, to: [{ email }], subject: sujet, htmlContent: html }),
+    body: JSON.stringify({ sender: { email: process.env.MAIL_FROM, name: 'Bricode' }, to: [{ email }], subject: sujet, htmlContent: html }),
   });
   if (!r.ok) throw new Error('Brevo ' + r.status + ' ' + (await r.text()).slice(0, 200));
 }
@@ -229,14 +229,14 @@ function sessionsAdulte(email, anim = true) {
 }
 // pieces detachees : [libelle, centimes] ; meme liste que PIECES dans index.html
 const PIECES = { esp: ['Module ESP32-C3 Super Mini', 500], ecran: ['Écran couleur', 900], bouton: ['Bouton poussoir', 100] };   // ponytail: prix a confirmer
-const ACCES = ['Accès à l’interface Brique, 3 mois', 900];   // centimes ; accès sans console : pas de livraison ; meme prix dans index.html
+const ACCES = ['Accès à l’interface Bricode, 3 mois', 900];   // centimes ; accès sans console : pas de livraison ; meme prix dans index.html
 function devis(p) {                                      // { kit, presoude, acces, esp, ecran, bouton } -> lignes [libelle, quantite, centimes] + total, ou null
   const kit = entier(p?.kit, 999) ? p.kit : 0, pre = entier(p?.presoude, 999) ? p.presoude : 0, acces = entier(p?.acces, 999) ? p.acces : 0, n = kit + pre;
   const pieces = Object.fromEntries(Object.keys(PIECES).map(k => [k, entier(p?.[k], 999) ? p[k] : 0]));
   const colis = n || Object.values(pieces).some(Boolean);
   if (n > 999 || !colis && !acces) return null;
   const pu = n && PALIERS.find(([m]) => n >= m)[1];
-  const lignes = [kit && ['Console Brique, kit à souder', kit, Math.round(pu * 100)], pre && ['Console Brique, pré-soudée', pre, Math.round((pu + PRESOUDE) * 100)],
+  const lignes = [kit && ['Console Bricode, kit à souder', kit, Math.round(pu * 100)], pre && ['Console Bricode, pré-soudée', pre, Math.round((pu + PRESOUDE) * 100)],
                   acces && [ACCES[0], acces, ACCES[1]],
                   ...Object.entries(PIECES).map(([k, [nom, c]]) => pieces[k] && [nom, pieces[k], c]),
                   colis && ['Livraison en point relais', 1, PORT_RELAIS]].filter(Boolean);
@@ -1261,10 +1261,10 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
     db.liens[empreinte(jeton)] = { email, anim, boutique: !!b.boutique, exp: Date.now() + 30 * 60000 }; sauver();
     const lien = `${PUBLIC_URL}${racine()}?connexion=${jeton}`;
     try {
-      await envoyerMail(email, anglais() ? 'Your Brique sign-in link' : 'Ton lien de connexion Brique', anglais()
-        ? `<p>Hello,</p><p>To sign in to Brique, click here (valid for 30 minutes):</p><p><a href="${lien}">${lien}</a></p>
+      await envoyerMail(email, anglais() ? 'Your Bricode sign-in link' : 'Ton lien de connexion Bricode', anglais()
+        ? `<p>Hello,</p><p>To sign in to Bricode, click here (valid for 30 minutes):</p><p><a href="${lien}">${lien}</a></p>
          <p>If you did not ask for this, just ignore this email.</p>`
-        : `<p>Bonjour,</p><p>Pour te connecter à Brique, clique ici (valable 30 minutes) :</p><p><a href="${lien}">${lien}</a></p>
+        : `<p>Bonjour,</p><p>Pour te connecter à Bricode, clique ici (valable 30 minutes) :</p><p><a href="${lien}">${lien}</a></p>
          <p>Si tu n'as rien demandé, ignore ce mail.</p>`);
     } catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'Le mail n\'a pas pu partir, réessaie plus tard.' }); }
     return repondre(res, 200, { ok: true });
@@ -1413,7 +1413,7 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
     const jeton = aleatoire(24);
     for (const [k, l] of Object.entries(db.liens)) if (l.exp < Date.now()) delete db.liens[k];
     db.liens[empreinte(jeton)] = { email, creation: { pseudo: b.pseudo, mdp: hacher(mdp) }, exp: Date.now() + 30 * 60000 }; sauver();
-    try { await mailCompte(email, 'confirmer', jeton, ['Confirme ton compte Brique', 'Pour créer ton compte Brique, clique ici'], ['Confirm your Brique account', 'To create your Brique account, click here']); }
+    try { await mailCompte(email, 'confirmer', jeton, ['Confirme ton compte Bricode', 'Pour créer ton compte Bricode, clique ici'], ['Confirm your Bricode account', 'To create your Bricode account, click here']); }
     catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'Le mail n\'a pas pu partir, réessaie plus tard.' }); }
     return repondre(res, 200, { ok: true });
   }
@@ -1423,7 +1423,7 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
     if (limiteMail(req, res, email)) return;
     if (db.joueurs.some(j => j.email === email)) {
       const jeton = aleatoire(24); db.liens[empreinte(jeton)] = { email, reinit: true, exp: Date.now() + 30 * 60000 }; sauver();
-      try { await mailCompte(email, 'reinit', jeton, ['Nouveau mot de passe Brique', 'Pour choisir un nouveau mot de passe, clique ici'], ['New Brique password', 'To choose a new password, click here']); }
+      try { await mailCompte(email, 'reinit', jeton, ['Nouveau mot de passe Bricode', 'Pour choisir un nouveau mot de passe, clique ici'], ['New Bricode password', 'To choose a new password, click here']); }
       catch (e) { console.error(e.message); return repondre(res, 502, { erreur: 'Le mail n\'a pas pu partir, réessaie plus tard.' }); }
     }
     return repondre(res, 200, { ok: true });
@@ -1521,7 +1521,7 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
       if (f.messages.length >= 5 && f.messages.slice(-5).every(m => m.de === 'moi')) return repondre(res, 429, { erreur: 'L\'équipe n\'a pas encore répondu : patiente un peu avant d\'écrire encore.' });
       const inactif = f.messages.at(-1)?.de !== 'moi';     // 1er message d'une serie : on previent l'admin par mail (un seul mail par serie)
       f.messages = [...f.messages, { de: 'moi', texte, t: Date.now() }].slice(-100); (db.support ||= {})[cle] = f;
-      if (inactif) for (const a of ADMINS) envoyerMail(a, 'Brique : message de ' + j.pseudo, `<p>${j.pseudo} écrit au support :</p><p>${texte}</p><p><a href="${PUBLIC_URL}/#anim">Répondre dans l'espace animateur</a></p>`).catch(e => console.error(e.message));
+      if (inactif) for (const a of ADMINS) envoyerMail(a, 'Bricode : message de ' + j.pseudo, `<p>${j.pseudo} écrit au support :</p><p>${texte}</p><p><a href="${PUBLIC_URL}/#anim">Répondre dans l'espace animateur</a></p>`).catch(e => console.error(e.message));
     }
     if ((texte || b.ouvert) && db.support?.[cle]) { f.lu = Date.now(); sauver(); }
     return repondre(res, 200, { messages: f.messages.map(({ de, texte, t }) => ({ de, texte, t })), nonLus: f.messages.filter(m => m.de === 'equipe' && m.t > (f.lu || 0)).length });
@@ -1540,7 +1540,7 @@ Reponds UNIQUEMENT avec un objet JSON : {"questions": [{"l1": "...", "l2": "..."
       if (images.length && !g) { const m = await modererImages(images); if (!m.ok) { n.attente = 'admin'; n.raison = m.raison; } }
       if (n.commun) attenteCommun(n);
       db.niveaux.push(n); sauver();
-      return repondre(res, 200, { id: n.id, code: n.code, attente: n.commun ? MSG_COMMUN : n.attente ? (n.attente === 'animateur' ? 'Ton animateur doit d\'abord regarder tes images : ton jeu apparaîtra dans la communauté dès qu\'il l\'aura validé.' : 'Une personne de Brique doit d\'abord regarder tes images : ton jeu apparaîtra dans la communauté dès qu\'elle l\'aura validé.') : '' });
+      return repondre(res, 200, { id: n.id, code: n.code, attente: n.commun ? MSG_COMMUN : n.attente ? (n.attente === 'animateur' ? 'Ton animateur doit d\'abord regarder tes images : ton jeu apparaîtra dans la communauté dès qu\'il l\'aura validé.' : 'Une personne de Bricode doit d\'abord regarder tes images : ton jeu apparaîtra dans la communauté dès qu\'elle l\'aura validé.') : '' });
     }
     if (!nivValide(b.niv)) return repondre(res, 400, { erreur: 'niveau invalide' });
     const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), code: codeJeu(), pseudo: j.pseudo, groupe: j.groupe, prive: !!db.groupes.find(g => g.code === j.groupe)?.prive, titre, commun: !!b.commun,
@@ -1597,5 +1597,5 @@ charger().then(d => {
   db = { ...VIDE, ...d };
   for (const n of db.niveaux) if (!n.code) n.code = codeJeu();   // jeux publies avant les codes de partage
   purgerBoutique(); setInterval(purgerBoutique, JOUR);
-  serveur.listen(PORT, () => console.log(`Brique sur ${PUBLIC_URL} (données : ${pool ? 'MySQL ' + process.env.DB_HOST : FICHIER})`));
+  serveur.listen(PORT, () => console.log(`Bricode sur ${PUBLIC_URL} (données : ${pool ? 'MySQL ' + process.env.DB_HOST : FICHIER})`));
 }).catch(e => { console.error('Impossible de charger les données :', e.message); process.exit(1); });

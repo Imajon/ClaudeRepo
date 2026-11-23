@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 131 50" width="262" height="100">
+  <defs>
+    <pattern id="pattes" x="10" width="9" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="4" fill="#c99a3c"/>
+    </pattern>
+  </defs>
+  <rect x="10" y="0" width="111" height="4" fill="url(#pattes)"/>
+  <rect x="10" y="46" width="111" height="4" fill="url(#pattes)"/>
+  <rect x="1" y="5" width="129" height="40" rx="5" fill="none" stroke="#0b7a41" stroke-width="2"/>
+  <text x="67.5" y="33" text-anchor="middle" font-family="ui-monospace,'Cascadia Mono',Consolas,monospace" font-weight="800" font-size="19" letter-spacing="3" fill="#13241a">BRI<tspan fill="#0b7a41">CODE</tspan></text>
+</svg>

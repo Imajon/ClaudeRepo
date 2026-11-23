@@ -2,7 +2,7 @@
 
 Page web de l'atelier : décrire un jeu avec l'IA, choisir ses icônes, le publier, le partager par un code et l'envoyer sur la console `c3-tft-meatboy`.
 
-**En ligne :** https://brique-p436.onrender.com (complet) · https://imajon.github.io/ClaudeRepo/brique/ (secours, sans communauté)
+**En ligne :** https://bricode.fr (complet ; ancienne adresse https://brique-p436.onrender.com, redirigée une fois `PUBLIC_URL` posé sur Render) · https://imajon.github.io/ClaudeRepo/brique/ (secours, sans communauté)
 
 ## Ce que fait la page
 

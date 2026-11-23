@@ -1015,10 +1015,31 @@ const serveur = http.createServer(async (req, res) => {
     const o = origineEtabli(req); if (!o) console.log('moteur-bulles : origine refusee', req.headers.origin || '(aucune)'); res.writeHead(o ? 204 : 403, o ? { 'Access-Control-Allow-Origin': o, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Private-Network': 'true', 'Vary': 'Origin' } : {}); return res.end();
   }
   LANGUE.enterWith(req.headers['x-lang'] === 'en' ? 'en' : 'fr');
+  if (req.method === 'GET' && url === '/robots.txt') { res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end(`User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /etabli/
+
+Sitemap: ${PUBLIC_URL}/sitemap.xml
+`); }
+  if (req.method === 'GET' && url === '/sitemap.xml') {   // les deux pages (français, anglais) se renvoient l'une à l'autre (hreflang)
+    const alt = `<xhtml:link rel="alternate" hreflang="fr" href="${PUBLIC_URL}/"/><xhtml:link rel="alternate" hreflang="en" href="${PUBLIC_URL}/en"/><xhtml:link rel="alternate" hreflang="x-default" href="${PUBLIC_URL}/"/>`;
+    res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
+    return res.end(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<url><loc>${PUBLIC_URL}/</loc>${alt}</url>
+<url><loc>${PUBLIC_URL}/en</loc>${alt}</url>
+</urlset>
+`);
+  }
+  if (req.method === 'GET' && process.env.PUBLIC_URL && (url === '/' || url === '/en') && req.headers.host && !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host) && req.headers.host !== new URL(PUBLIC_URL).host) {
+    res.writeHead(301, { Location: PUBLIC_URL + url + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '') }); return res.end();   // un seul domaine pour le référencement (PUBLIC_URL)
+  }
   if (req.method === 'GET' && (url === '/' || url === '/index.html' || url === '/en')) {
     let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
     if (url === '/en') html = (pageEn[0] === html ? pageEn : pageEn = [html, En.traduire(html)])[1];
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return res.end(html.replace('__VERSION__', VERSION)
+    .replace(/__URL__/g, PUBLIC_URL)
     .replace('__TEXTES__', () => JSON.stringify(db.textes).replace(/</g, '\\u003c')));   // textes du mode edition (< echappe : aucun </script> possible)
   }
   const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.(jpg|png|mp4)$/);   // photos et videos du site (nom simple : pas de chemin) ; png = image avec transparence

@@ -90,7 +90,7 @@ function traduire(html) {
   const d = lireDico();
   return page(html, cle => d[cle])
     .replace('<html lang="fr">', '<html lang="en">').replace('content="fr_FR"', 'content="en_GB"')
-    .replace(/(<meta property="og:url" content="[^"]*\/)(">)/, '$1en$2').replace(LIEN_FR, LIEN_EN).replace('>EN</a>', '>FR</a>')
+    .replace(/(<meta property="og:url" content="[^"]*\/)(">)/, '$1en$2').replace('<link rel="canonical" href="__URL__/">', '<link rel="canonical" href="__URL__/en">').replace(LIEN_FR, LIEN_EN).replace('>EN</a>', '>FR</a>')
     .replace('<head>', '<head>\n<script>{ const f = fetch; window.fetch = (u, o = {}) => /^https?:/.test(u) ? f(u, o) : f(u, { ...o, headers: { ...o.headers, "X-Lang": "en" } }); }</script>');
 }
 module.exports = { traduire, page, dico: lireDico };

@@ -1646,5 +1646,7 @@
   "Liberté totale sur le jeu, on comprend ce qu'on envoie.": "Total freedom over the game, you understand what you send.",
   "Il faut savoir lire du code, beaucoup d'allers-retours, pas de test automatique.": "You need to read code, lots of back and forth, no automatic testing.",
   "Le plus rapide et le plus puissant : l'IA écrit, compile, envoie et corrige seule.": "The fastest and most powerful: the AI writes, compiles, sends and fixes on its own.",
-  "Configuration lourde, outils à installer, console et port à identifier, une erreur peut abîmer le projet.": "Heavy setup, tools to install, console and port to identify, a mistake can damage the project."
+  "Configuration lourde, outils à installer, console et port à identifier, une erreur peut abîmer le projet.": "Heavy setup, tools to install, console and port to identify, a mistake can damage the project.",
+  "Bricode · Console à souder et jeux créés avec l'IA, dès 9 ans": "Bricode · Solder-it-yourself console and games made with AI, ages 9+",
+  "Console à souder et jeux créés avec l'IA · dès 9 ans": "Solder-it-yourself console and games made with AI · ages 9+"
 }

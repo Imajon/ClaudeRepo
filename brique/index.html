@@ -3,15 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bricode</title>
+<title>Bricode · Console à souder et jeux créés avec l'IA, dès 9 ans</title>
+<!-- __URL__ : l'adresse publique du site (variable PUBLIC_URL du serveur), mise par server.js -->
+<link rel="canonical" href="__URL__/">
+<link rel="alternate" hreflang="fr" href="__URL__/">
+<link rel="alternate" hreflang="en" href="__URL__/en">
+<link rel="alternate" hreflang="x-default" href="__URL__/">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[
+{"@type":"Organization","@id":"__URL__/#org","name":"Bricode","url":"__URL__/","logo":"__URL__/images/console-face.png"},
+{"@type":"Product","name":"Console Bricode (kit à souder)","description":"Console de jeux à souder soi-même, pour créer ses propres jeux avec l'IA. Dès 9 ans.","image":"__URL__/images/apercu-partage.jpg","brand":{"@id":"__URL__/#org"},"offers":{"@type":"Offer","price":"29","priceCurrency":"EUR","url":"__URL__/#boutique"}}]}</script>
 <!-- aperçu quand on partage le lien (messageries, réseaux) : adresses complètes, l'image fait 1200 x 630 -->
 <meta name="description" content="Soude ta console, invente ton jeu avec l'IA, joue seul ou à plusieurs. Kit à souder et ateliers pour les 9-14 ans.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bricode">
 <meta property="og:title" content="Bricode · Moins d'écran, plus de génie.">
 <meta property="og:description" content="Soude ta console, invente ton jeu avec l'IA, joue seul ou à plusieurs. Kit à souder et ateliers pour les 9-14 ans.">
-<meta property="og:url" content="https://brique-p436.onrender.com/">
-<meta property="og:image" content="https://brique-p436.onrender.com/images/apercu-partage.jpg">
+<meta property="og:url" content="__URL__/">
+<meta property="og:image" content="__URL__/images/apercu-partage.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="La console Bricode : circuit vert hexagonal, écran couleur et trois boutons">
@@ -35,10 +43,10 @@
 body{margin:0;min-height:100vh;color:var(--txt);font:16px/1.45 system-ui,"Segoe UI",sans-serif;background:var(--deco),var(--bg)}
 header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--head);position:sticky;top:0;z-index:5;backdrop-filter:blur(6px);flex-wrap:wrap}
 .theme{width:40px;height:40px;padding:0;font-size:18px;flex:none}
-header h1{margin:0;font:800 22px/1 var(--mono);letter-spacing:4px;padding:8px 12px;border:2px solid var(--acc);border-radius:6px;position:relative}   /* le logo comme une puce : bord et pattes */
-header h1::before,header h1::after{content:"";position:absolute;left:8px;right:8px;height:4px;background:repeating-linear-gradient(90deg,var(--pad) 0 4px,transparent 4px 9px)}
-header h1::before{top:-6px}header h1::after{bottom:-6px}
-header h1 span{color:var(--acc)}
+header .logo{margin:0;font:800 22px/1 var(--mono);letter-spacing:4px;padding:8px 12px;border:2px solid var(--acc);border-radius:6px;position:relative}   /* le logo comme une puce : bord et pattes */
+header .logo::before,header .logo::after{content:"";position:absolute;left:8px;right:8px;height:4px;background:repeating-linear-gradient(90deg,var(--pad) 0 4px,transparent 4px 9px)}
+header .logo::before{top:-6px}header .logo::after{bottom:-6px}
+header .logo span{color:var(--acc)}
 header .pseudo{margin-left:auto}
 header .mode{margin-left:0}
 .mode{margin-left:auto;display:flex;background:var(--panel);border-radius:999px;padding:4px;box-shadow:var(--glow)}
@@ -567,7 +575,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </head>
 <body>
 <header>
-  <h1>BRI<span>CODE</span></h1>
+  <div class="logo">BRI<span>CODE</span></div>
   <button id="burger" aria-label="Menu" aria-expanded="false" onclick="this.setAttribute('aria-expanded',this.parentNode.classList.toggle('ouvert'))">☰</button>
   <nav class="mode" onclick="if(event.target.closest('button')){this.parentNode.classList.remove('ouvert');burger.setAttribute('aria-expanded',false)}">
     <button id="vAccueil" class="on" title="Accueil" style="font-weight:900">B</button>
@@ -588,11 +596,12 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
 <small id="vTmp" style="position:fixed;top:2px;left:4px;z-index:9999;font:10px var(--mono);opacity:.6;pointer-events:none"></small>   <!-- provisoire : version du site en haut à gauche -->
-<main id="accueil" data-version="1.24">
+<main id="accueil" data-version="1.25">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
-    <h2 class="sh-titre glitch" data-text="Moins d'écran,&#10;plus de génie.">Moins d'écran,<br>plus de génie.</h2>
+    <p class="sh-sur">Console à souder et jeux créés avec l'IA · dès 9 ans</p>
+    <h1 class="sh-titre glitch" data-text="Moins d'écran,&#10;plus de génie.">Moins d'écran,<br>plus de génie.</h1>
     <p class="sh-sous">Le cadeau qu'on construit ensemble et qu'on invente par soi-même.</p>
   </div>
   <figure class="sh-photo">
@@ -2088,7 +2097,7 @@ body{overflow-x:clip}                                           /* la bande 100v
     </ul></div>
     <div><h4>Le Cercle</h4><p>Tiers-lieu<br>2B rue de l'Église<br>18400 Lunery (Cher)</p></div>
   </div>
-  <div class="pied-bas"><span>© 2026 Bricode · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="sectionVersion" title="Version de cette section (data-version de sa balise main)"></span><span id="consoleVersions"></span></span><span><button class="sec theme" title="Mode sombre / mode clair">🌙</button> <a id="piedSite" href="/">brique.studioeya.com</a></span></div>
+  <div class="pied-bas"><span>© 2026 Bricode · <span id="siteVersion" title="Version du site">site __VERSION__</span><span id="sectionVersion" title="Version de cette section (data-version de sa balise main)"></span><span id="consoleVersions"></span></span><span><button class="sec theme" title="Mode sombre / mode clair">🌙</button> <a id="piedSite" href="/">bricode.fr</a></span></div>
 </footer>
 
 <script src="arbres-foret.js"></script>
@@ -4792,8 +4801,9 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
 
 // ---------- Vues : Boutique (accueil) / Communauté / Créer / Atelier / Support / Animateur ----------
 let vue = 'accueil';
+const TITRE0 = document.title, TITRES = { boutique: ['Boutique', 'Shop'], commu: ['Communauté', 'Community'], creer: ['Créer un jeu', 'Create a game'], profs: ['Atelier', 'Workshop'], support: ['Support', 'Support'], propos: ['À propos', 'About'], partis: ['Nos partis pris', 'Our principles'], cgv: ['Conditions de vente', 'Terms of sale'], panier: ['Panier', 'Cart'], moncompte: ['Mon compte', 'My account'], anim: ['Espace animateur', 'Facilitator area'] };   // titre de l'onglet selon la vue (l'adresse reste la même : les vues sont des # de la page)
 function afficher(v) {
-  vue = v;
+  vue = v; document.title = TITRES[v] ? TITRES[v][+(document.documentElement.lang === 'en')] + ' · Bricode' : TITRE0;
   profs.classList.toggle('hide', v !== 'profs'); vProfs.classList.toggle('on', v === 'profs');
   accueil.classList.toggle('hide', v !== 'accueil'); partis.classList.toggle('hide', v !== 'partis'); propos.classList.toggle('hide', v !== 'propos'); cgv.classList.toggle('hide', v !== 'cgv'); vApropos.classList.toggle('on', v === 'propos'); vAccueil.classList.toggle('on', v === 'accueil');
   commu.classList.toggle('hide', v !== 'commu'); anim.classList.toggle('hide', v !== 'anim'); boutique.classList.toggle('hide', v !== 'boutique'); vuePanier.classList.toggle('hide', v !== 'panier'); vPanier.classList.toggle('on', v === 'panier'); support.classList.toggle('hide', v !== 'support');

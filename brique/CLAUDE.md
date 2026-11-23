@@ -33,7 +33,7 @@ Site de l'atelier : les enfants (9-14 ans) décrivent un jeu, l'IA (Mistral) le 
 
 ## Lancer / déployer
 - Local : `node server.js` (port 8080). Sans variables : `data.json`, IA remplacée par des mots-clés.
-- En ligne : Render redéploie à chaque push sur `main` (https://brique-p436.onrender.com).
+- En ligne : Render redéploie à chaque push sur `main` (https://bricode.fr ; variable `PUBLIC_URL` = `https://bricode.fr` sur Render : canonique, sitemap, e-mails, redirection de brique-p436.onrender.com).
 
 ## Règles
 - Avant de réécrire `index.html` ou `server.js` en profondeur : copier dans `versions/<nom>-avant-<sujet>.*`.

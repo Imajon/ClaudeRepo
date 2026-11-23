@@ -10,6 +10,40 @@ const En = require('./en.js'), LANGUE = new (require('async_hooks').AsyncLocalSt
 const anglais = () => LANGUE.getStore() === 'en', racine = () => anglais() ? '/en' : '/';
 const tr = t => anglais() && typeof t === 'string' && En.dico()[t] || t;   // meme dictionnaire que la page (en.json) ; sans entree : le texte francais
 const EN_IA = '\n\nLANGUE : cet enfant parle anglais. Ecris en anglais tout ce qu\'il lira : explications, questions, boutons, phrases proposees, et les textes que le jeu affiche sur la console. Les noms de champs, les mots du langage et le format demande ne changent pas.';
+// pages publiques : [vue, adresse, titre FR, description FR, titre EN, description EN] ; sans adresse = vue privée (titre seulement). L'accueil garde le titre et la description de index.html.
+const PAGES = [
+  ['boutique', 'boutique', 'Boutique · Console Bricode en kit à souder, dès 29 €', 'Commande ta console Bricode : kit à souder dès 29 € ou console pré-soudée. Tu soudes, puis tu décris ton jeu à l\'IA.', 'Shop · Bricode console kit, from €29', 'Order your Bricode console: solder-it-yourself kit from €29 or pre-soldered. You solder it, then describe your game to the AI.'],
+  ['commu', 'communaute', 'Communauté · Les jeux des joueurs Bricode', 'Joue aux jeux créés par la communauté Bricode, partage les tiens et récupère les jeux d\'exemple de l\'équipe.', 'Community · Games by Bricode players', 'Play games made by the Bricode community, share yours and pick up the team\'s example games.'],
+  ['creer', 'creer-un-jeu', 'Créer un jeu avec l\'IA · Bricode', 'Décris ton jeu avec des bulles ou en quelques mots : l\'IA le construit et tu l\'envoies sur ta console Bricode.', 'Create a game with AI · Bricode', 'Describe your game with bubbles or a few words: the AI builds it and you send it to your Bricode console.'],
+  ['profs', 'atelier', 'Atelier · Bricode en classe, soudure et jeux avec l\'IA', 'Un atelier clé en main pour les classes et les tiers-lieux : les élèves soudent leur console, créent leurs jeux avec l\'IA et apprennent.', 'Workshop · Bricode in class, soldering and games with AI', 'A ready-to-run workshop for classes and community spaces: students solder their console, create games with AI and learn.'],
+  ['support', 'support', 'Support · Aide et montage pas à pas, Bricode', 'Monter ta console Bricode pas à pas, la connecter, résoudre un souci : l\'aide est ici, et tu peux écrire à l\'équipe.', 'Support · Help and step-by-step assembly, Bricode', 'Assemble your Bricode console step by step, connect it, fix a problem: help is here, and you can write to the team.'],
+  ['propos', 'a-propos', 'À propos · Qui fait Bricode ?', 'Bricode est né dans les tiers-lieux, au Cercle à Lunery (Cher), pour apprendre à souder, programmer et créer avec l\'IA.', 'About · Who makes Bricode?', 'Bricode was born in community spaces, at Le Cercle in Lunery (Cher, France), to learn soldering, programming and creating with AI.'],
+  ['partis', 'partis-pris', 'Nos partis pris · Trois boutons, IA française, vos données', 'Pourquoi trois boutons et pas de croix, pourquoi une IA française, et ce que nous faisons de vos données.', 'Our principles · Three buttons, French AI, your data', 'Why three buttons and no cross, why a French AI, and what we do with your data.'],
+  ['cgv', 'conditions-de-vente', 'Conditions de vente et d\'utilisation · Bricode', 'Conditions générales de vente et d\'utilisation de la console et du site Bricode.', 'Terms of sale and use · Bricode', 'General terms of sale and use for the Bricode console and website.'],
+  ['panier', '', 'Panier · Bricode', '', 'Cart · Bricode', ''],
+  ['moncompte', '', 'Mon compte · Bricode', '', 'My account · Bricode', ''],
+  ['anim', '', 'Espace animateur · Bricode', '', 'Facilitator area · Bricode', ''],
+];
+const escAttr = t => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// une page (/, /en, /boutique, /en/boutique…) : titre, description, canonique et hreflang de SA page ; le client lit la liste des pages dans <meta name="seo">
+function pagePubliqueSeo(html, en, page) {
+  const seo = { accueil: { titre: (/<title>([^<]*)<\/title>/.exec(html) || [])[1] || 'Bricode' } };
+  for (const p of PAGES) seo[p[0]] = { slug: p[1] || undefined, titre: en ? p[4] : p[2] };
+  if (page) {
+    const titre = en ? page[4] : page[2], desc = en ? page[5] : page[3], chemin = '/' + page[1], pre = en ? '/en' : '';
+    const att = (nom, val) => [new RegExp('(' + nom + '=")[^"]*(")'), (m, a, b) => a + val + b];
+    html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escAttr(titre)}</title>`)
+      .replace(...att('<meta name="description" content', escAttr(desc)))
+      .replace(...att('<meta property="og:description" content', escAttr(desc)))
+      .replace(...att('<meta property="og:title" content', escAttr(titre)))
+      .replace(...att('<meta property="og:url" content', '__URL__' + pre + chemin))
+      .replace(...att('<link rel="canonical" href', '__URL__' + pre + chemin))
+      .replace(...att('hreflang="fr" href', '__URL__' + chemin))
+      .replace(...att('hreflang="en" href', '__URL__/en' + chemin))
+      .replace(...att('hreflang="x-default" href', '__URL__' + chemin));
+  }
+  return html.replace('__PAGES__', () => escAttr(JSON.stringify(seo)));
+}
 let pageEn = ['', ''];                                 // [index.html lu, sa traduction] : traduire prend ~150 ms, on ne le refait que si le fichier change
 const PORT = process.env.PORT || 8080, FICHIER = process.env.DATA || path.join(__dirname, 'data.json');
 // adresse publique pour les liens envoyes par mail (jamais l'en-tete Host : il pourrait envoyer un lien piege)
@@ -1010,6 +1044,7 @@ function lireEtabli(rel) {
 const posteLocal = req => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host || '');   // banc du moteur de bulles : jamais en ligne (Render : l'adresse du site n'est pas localhost)
 const origineEtabli = req => /^https:\/\/([a-z0-9-]+\.)*(claude\.ai|claude\.com|claudeusercontent\.com)$/.test(req.headers.origin || '') ? req.headers.origin : '';   // l'Etabli (artifact) peut appeler le banc de bulles de ce poste ; aucune autre page web
 const serveur = http.createServer(async (req, res) => {
+  if (req.url.startsWith('/en/') && req.url.split('?')[0] !== '/en/' && !PAGES.some(p => p[1] && req.url.split('?')[0] === '/en/' + p[1])) req.url = req.url.slice(3);   // /en/images/x.jpg, /en/api/… : les adresses relatives de la page anglaise (/en/boutique) retombent sur les mêmes fichiers
   const url = req.url.split('?')[0];
   if (url === '/api/moteur-bulles' && req.method === 'OPTIONS' && posteLocal(req)) {   // preflight du navigateur (CORS + acces reseau prive)
     const o = origineEtabli(req); if (!o) console.log('moteur-bulles : origine refusee', req.headers.origin || '(aucune)'); res.writeHead(o ? 204 : 403, o ? { 'Access-Control-Allow-Origin': o, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Private-Network': 'true', 'Vary': 'Origin' } : {}); return res.end();
@@ -1022,24 +1057,26 @@ Disallow: /etabli/
 
 Sitemap: ${PUBLIC_URL}/sitemap.xml
 `); }
-  if (req.method === 'GET' && url === '/sitemap.xml') {   // les deux pages (français, anglais) se renvoient l'une à l'autre (hreflang)
-    const alt = `<xhtml:link rel="alternate" hreflang="fr" href="${PUBLIC_URL}/"/><xhtml:link rel="alternate" hreflang="en" href="${PUBLIC_URL}/en"/><xhtml:link rel="alternate" hreflang="x-default" href="${PUBLIC_URL}/"/>`;
+  if (req.method === 'GET' && url === '/sitemap.xml') {   // chaque page en français et en anglais, avec ses liens hreflang
+    const pages = ['', ...PAGES.filter(p => p[1]).map(p => '/' + p[1])];
+    const loc = (ch, en) => `${PUBLIC_URL}${en ? '/en' : ''}${ch || (en ? '' : '/')}`;
+    const alt = ch => `<xhtml:link rel="alternate" hreflang="fr" href="${loc(ch)}"/><xhtml:link rel="alternate" hreflang="en" href="${loc(ch, 1)}"/><xhtml:link rel="alternate" hreflang="x-default" href="${loc(ch)}"/>`;
     res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
-    return res.end(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-<url><loc>${PUBLIC_URL}/</loc>${alt}</url>
-<url><loc>${PUBLIC_URL}/en</loc>${alt}</url>
-</urlset>
-`);
+    return res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${pages.map(ch => [0, 1].map(en => `<url><loc>${loc(ch, en)}</loc>${alt(ch)}</url>`).join('\n')).join('\n')}\n</urlset>\n`);
   }
-  if (req.method === 'GET' && process.env.PUBLIC_URL && (url === '/' || url === '/en') && req.headers.host && !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host) && req.headers.host !== new URL(PUBLIC_URL).host) {
-    res.writeHead(301, { Location: PUBLIC_URL + url + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '') }); return res.end();   // un seul domaine pour le référencement (PUBLIC_URL)
-  }
-  if (req.method === 'GET' && (url === '/' || url === '/index.html' || url === '/en')) {
+  const mp = req.method === 'GET' && /^(\/en)?(\/[a-z-]+)?\/?$/.exec(url), pg = mp && (mp[2] ? PAGES.find(p => p[1] && '/' + p[1] === mp[2]) : true);
+  if ((mp && pg) || (req.method === 'GET' && url === '/index.html')) {   // l'accueil et chaque page publique : le même index.html, avec les balises de leur page
+    const local = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host || '');
+    const autreDomaine = process.env.PUBLIC_URL && req.headers.host && !local && req.headers.host !== new URL(PUBLIC_URL).host;   // un seul domaine pour le référencement (PUBLIC_URL)
+    const slashFinal = url.length > 1 && url.endsWith('/');   // pas de / final : les adresses relatives de la page en dépendent
+    if (autreDomaine || slashFinal) {
+      res.writeHead(301, { Location: (autreDomaine ? PUBLIC_URL : '') + url.replace(/(.)\/+$/, '$1') + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '') }); return res.end();
+    }
+    const en = !!(mp && mp[1]);
     let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-    if (url === '/en') html = (pageEn[0] === html ? pageEn : pageEn = [html, En.traduire(html)])[1];
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return res.end(html.replace('__VERSION__', VERSION)
-    .replace(/__URL__/g, PUBLIC_URL)
+    if (en) html = (pageEn[0] === html ? pageEn : pageEn = [html, En.traduire(html)])[1];
+    html = pagePubliqueSeo(html, en, pg === true ? null : pg);
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return res.end(html.replace('__VERSION__', VERSION).replace(/__URL__/g, PUBLIC_URL)
     .replace('__TEXTES__', () => JSON.stringify(db.textes).replace(/</g, '\\u003c')));   // textes du mode edition (< echappe : aucun </script> possible)
   }
   const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.(jpg|png|mp4)$/);   // photos et videos du site (nom simple : pas de chemin) ; png = image avec transparence

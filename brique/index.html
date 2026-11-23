@@ -554,6 +554,9 @@ body{overflow-x:clip}                                           /* la bande 100v
 .defi-grille small{display:block;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .defi-in{width:100%;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;font-size:14px;resize:vertical}
 .defi-vus{display:flex;flex-wrap:wrap;gap:4px}.defi-vus span{padding:3px 8px;border-radius:12px;background:var(--chipon);font-size:13px}
+#mcAvec{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;width:100%}   /* infos et jeux côte à côte, le chat dessous sur toute la largeur */
+#mcAvec>.mcBas{grid-column:1/-1}
+@media (max-width:800px){#mcAvec{grid-template-columns:1fr}}
 .chatfil{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto;padding:8px;border:1px solid var(--line);border-radius:12px}
 .chatfil .m{max-width:82%;padding:6px 10px;border-radius:12px;background:var(--soft);word-break:break-word}
 .chatfil .m.moi{align-self:flex-end;background:var(--acc);color:#fff}
@@ -1754,17 +1757,13 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== MON COMPTE : infos perso, mes jeux, chat avec le support ===== -->
-<main id="monCompte" class="hide" data-version="1.1">
-  <div class="sh-hero page-hero">
-    <p class="sh-sur">Mon compte</p>
-    <h2 class="sh-titre">Ton espace,<br>tes jeux.</h2>
-  </div>
+<main id="monCompte" class="anim hide" data-version="1.2" style="max-width:1200px">
   <section id="mcSans" class="hide">
     <h2>Mon compte</h2>
     <p class="aide" style="margin-top:0">Connecte-toi pour retrouver tes infos et tes jeux, et écrire à l'équipe Brique.</p>
     <div class="actions" style="justify-content:flex-start"><button id="mcConnexion" class="big" style="width:auto;margin:0">👤 Se connecter</button></div>
   </section>
-  <div id="mcAvec" class="hide" style="display:flex;flex-direction:column;gap:16px">
+  <div id="mcAvec" class="hide">
     <section>
       <h2>👤 Mes infos</h2>
       <div id="mcInfos" class="liste"></div>
@@ -1784,22 +1783,19 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p class="aide" style="margin:0 0 6px">« Rouvrir » copie le jeu dans Créer, à côté de tes autres jeux : tu peux le modifier et le republier.</p>
       <div id="mcPublies" class="liste"></div>
     </section>
-    <section>
+    <section class="mcBas">
       <h2>💬 Écrire à l'équipe Brique</h2>
       <p class="aide" style="margin-top:0">Une question, un bug, une idée ? L'équipe te répond ici (jamais par mail).</p>
       <div id="mcChat" class="chatfil"></div>
-      <div class="icRow" style="margin-top:8px"><input id="mcChatTxt" class="pseudo" maxlength="1000" placeholder="Ton message"><button id="mcChatEnvoyer" class="sec">Envoyer</button></div>
+      <textarea id="mcChatTxt" maxlength="1000" rows="5" style="min-height:140px;margin-top:8px" placeholder="Ton message"></textarea>
+      <div class="actions" style="justify-content:flex-end;margin-top:6px"><button id="mcChatEnvoyer" class="big" style="width:auto;margin:0">Envoyer</button></div>
     </section>
-    <div id="mcMsg" class="envoi"></div>
+    <div id="mcMsg" class="envoi mcBas"></div>
   </div>
 </main>
 
 <!-- ===== ESPACE ANIMATEUR ===== -->
-<main id="anim" class="anim hide" data-version="1.1">
-  <div class="sh-hero page-hero">
-    <p class="sh-sur">Espace animateur</p>
-    <h2 class="sh-titre">Ton groupe,<br>en un coup d'œil.</h2>
-  </div>
+<main id="anim" class="anim hide" data-version="1.2">
   <section id="animConnexion">
     <h2>Espace animateur</h2>
     <p class="aide" style="margin-top:0">L'espace animateur, c'est ton compte : connecte-toi avec ton e-mail et ton mot de passe (ou crée-le). Tu crées ensuite des groupes et un code par enfant : les enfants n'ont besoin ni d'e-mail ni de mot de passe.</p>
@@ -3791,7 +3787,7 @@ mcChatEnvoyer.onclick = async () => {
   const texte = mcChatTxt.value.trim(); if (!texte) return;
   try { await chargerChat({ texte }); mcChatTxt.value = ''; mcDire(''); } catch (err) { mcDire(err.message); }
 };
-mcChatTxt.onkeydown = e => { if (e.key === 'Enter') mcChatEnvoyer.click(); };
+mcChatTxt.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) mcChatEnvoyer.click(); };
 mcMdpOk.onclick = async () => {
   if (mcMdpN.value !== mcMdpN2.value) return mcDire('Les deux nouveaux mots de passe ne sont pas pareils.');
   try { connecte(await api('api/compte/mdp', { ...ident(), ancien: mcMdpA.value, nouveau: mcMdpN.value })); mcMdpA.value = mcMdpN.value = mcMdpN2.value = ''; mcMdpBox.open = false; mcDire('✓ Mot de passe changé.', true); }

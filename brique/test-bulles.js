@@ -118,6 +118,16 @@ console.log('ok : tir autour x personnage, tirs, ennemis');
   assert(r >= 100 && r % 100 <= 3, 'vagues : le pilote marque (' + r + ')');
   assert(J.assembler({ jeu, perso: 'chat' }) !== J.assembler({ jeu, perso: 'robot' }) && J.assembler({ jeu }).startsWith('# Vagues'), 'vagues : le personnage change le code');
   console.log('ok : vagues x mondes, personnages, images, pilote'); }
+// casse-briques : seuls la balle (bon) et le monde se choisissent ; chaque monde x balle joue, et un pilote qui suit la balle casse des briques sans perdre de vie
+{ const { essai } = require('./essai-verif.js'), jeu = 'casse-briques', r0 = { genre: 'casse', jeu };
+  assert(J.genreDe(jeu).id === 'casse' && J.saute('monde', r0) === false && J.saute('bon', r0) === false && ['perso', 'mal', 'compo', 'typeEn', 'action', 'couleur', 'niv'].every(id => J.saute(id, r0)), 'casse : etapes choisies (monde, balle)');
+  assert(J.lib(J.ETAPES.find(e => e.id === 'bon'), r0, 'q') === 'Quelle balle veux-tu ?' && J.lib(J.ETAPES.find(e => e.id === 'bon'), { jeu: 'tir-autour' }, 'q') === 'Avec quoi tires-tu ?', 'casse : la question de la balle');
+  for (const [i, monde] of mondes.entries()) jouer({ monde, bon: formesBon[i % formesBon.length] }, monde, jeu);
+  jouer({ bon: 'img', imgs: { bon: 2 } }, 'balle image', jeu);
+  const r = essai('casse', J.assembler({ jeu }), { scen: 'if k == 2 return int(t * 6) % 2 == 0 end if k == 0 return bx < rx + 26 end return bx > rx + 34', mesure: 'pts * 100 + vies', quand: [8], duree: 8.1 })[0];
+  assert(r >= 3000 && r % 100 === 3, 'casse : le pilote casse des briques sans perdre de vie (' + r + ')');
+  assert(J.assembler({ jeu, monde: 'neige' }) !== J.assembler({ jeu, monde: 'espace' }) && J.assembler({ jeu }).startsWith('# Casse'), 'casse : le monde change le code');
+  console.log('ok : casse-briques x mondes, balles, pilote'); }
 
 // ennemis des 3 tirs (haut, droite, autour) : leur facon de bouger x leurs types, joues avec un pilote automatique (tire sans arret, bouge en va-et-vient) ; propres aux tirs, proposes dans « Que veux-tu personnaliser ? » (opt) sans etre poses d'office
 { const { essai } = require('./essai-verif.js'), TIRS = ['tir-haut', 'tir-perso', 'tir-autour'], pilote = { 'tir-autour': 'if k == 2 return int(t * 6) % 2 == 0 end return k == 1', def: 'if k == 2 return int(t * 6) % 2 == 0 end if k == 0 return int(t / 1.5) % 2 == 0 end return int(t / 1.5) % 2 == 1' };

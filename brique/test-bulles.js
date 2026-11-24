@@ -108,6 +108,17 @@ assert(J.assembler({ jeu: 'tir-autour', perso: 'chat' }) !== J.assembler({ jeu: 
 assert(J.assembler({ jeu: 'tir-autour', mal: 'img', imgs: { mal: 4 } }).includes('image(4,'), 'tir-autour : l image de l ennemi est dans le jeu');
 assert(J.lib(J.ETAPES.find(e => e.id === 'mal'), { jeu: 'tir-autour' }, 'q') !== J.ETAPES.find(e => e.id === 'mal').q && J.lib(J.ETAPES.find(e => e.id === 'mal'), { jeu: 'attrape' }, 'q') === J.ETAPES.find(e => e.id === 'mal').q, 'tir-autour : questions propres a ce jeu');
 console.log('ok : tir autour x personnage, tirs, ennemis');
+// vagues (invader) : perso, tirs, ennemis et monde se choisissent ; pas de facon de bouger ni de types (la formation est fixe) ; chaque monde x perso joue, et un pilote automatique marque des points
+{ const { essai } = require('./essai-verif.js'), jeu = 'tir-vagues';
+  assert(J.genreDe(jeu).id === 'tire' && J.saute('monde', { genre: 'tire', jeu }) === false && ['perso', 'bon', 'mal'].every(id => J.saute(id, { genre: 'tire', jeu }) === false) && ['compo', 'typeEn', 'action'].every(id => J.saute(id, { genre: 'tire', jeu })), 'vagues : etapes choisies');
+  for (const [i, perso] of persos.entries()) jouer({ perso, monde: mondes[i % mondes.length], bon: formesBon[i % formesBon.length], mal: formesMal[(i * 3) % formesMal.length] }, perso, jeu);
+  for (const monde of mondes) jouer({ monde }, monde, jeu);
+  jouer({ perso: 'img', bon: 'img', mal: 'img', imgs: { perso: 1, bon: 2, mal: 3 } }, 'images', jeu);
+  const r = essai('vagues', J.assembler({ jeu }), { scen: 'if k == 2 return int(t * 6) % 2 == 0 end return int(t / 1.5) % 2 == 0', mesure: 'pts * 100 + vies', quand: [8], duree: 8.1 })[0];
+  assert(r >= 100 && r % 100 <= 3, 'vagues : le pilote marque (' + r + ')');
+  assert(J.assembler({ jeu, perso: 'chat' }) !== J.assembler({ jeu, perso: 'robot' }) && J.assembler({ jeu }).startsWith('# Vagues'), 'vagues : le personnage change le code');
+  console.log('ok : vagues x mondes, personnages, images, pilote'); }
+
 // ennemis des 3 tirs (haut, droite, autour) : leur facon de bouger x leurs types, joues avec un pilote automatique (tire sans arret, bouge en va-et-vient) ; propres aux tirs, proposes dans « Que veux-tu personnaliser ? » (opt) sans etre poses d'office
 { const { essai } = require('./essai-verif.js'), TIRS = ['tir-haut', 'tir-perso', 'tir-autour'], pilote = { 'tir-autour': 'if k == 2 return int(t * 6) % 2 == 0 end return k == 1', def: 'if k == 2 return int(t * 6) % 2 == 0 end if k == 0 return int(t / 1.5) % 2 == 0 end return int(t / 1.5) % 2 == 1' };
   const compos = J.ETAPES.find(e => e.id === 'compo').bulles.map(b => b.id), types = J.ETAPES.find(e => e.id === 'typeEn').bulles.map(b => b.id), pts = {};

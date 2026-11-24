@@ -143,6 +143,17 @@ console.log('ok : tir autour x personnage, tirs, ennemis');
   assert(mes('flappy', vise, 'pts * 100 + (fin ? 1 : 0)') >= 300 && mes('flappy', 'return false', '(fin ? 1 : 0)') === 1 && mes('flappy', vise, '(fin ? 1 : 0)') === 0, 'flappy : le pilote passe des tuyaux, le joueur immobile tombe');
   assert(J.assembler({ jeu: 'flappy', perso: 'chat' }) !== J.assembler({ jeu: 'flappy', perso: 'robot' }) && J.assembler({ jeu: 'pong', monde: 'neige' }) !== J.assembler({ jeu: 'pong', monde: 'espace' }), 'pong / flappy : le choix change le code');
   console.log('ok : pong et flappy x mondes, choix, pilotes'); }
+// rythme (guitar hero) : la note (bon) et le monde se choisissent ; un pilote qui appuie quand la note passe sur la ligne (une fois sur deux, appui = front montant) marque et rate peu, un joueur immobile rate toutes les notes
+{ const { essai } = require('./essai-verif.js'), r0 = { genre: 'reagis', jeu: 'rythme' };
+  assert(J.genreDe('rythme').id === 'reagis' && J.saute('monde', r0) === false && J.saute('bon', r0) === false && ['perso', 'mal', 'compo', 'typeEn', 'action', 'couleur', 'niv'].every(id => J.saute(id, r0)), 'rythme : etapes choisies (monde, note)');
+  assert(J.lib(J.ETAPES.find(e => e.id === 'bon'), r0, 'q') === 'Quelles notes tombent ?', 'rythme : la question des notes');
+  for (const [i, monde] of mondes.entries()) jouer({ monde, bon: formesBon[i % formesBon.length] }, monde, 'rythme');
+  jouer({ bon: 'img', imgs: { bon: 2 } }, 'note image', 'rythme');
+  const code = J.assembler({ jeu: 'rythme' }), mes = (scen, mesure) => essai('rythme', code, { scen, mesure, quand: [9], duree: 9.1 })[0];
+  const pilote = 'var l = 2 if k == 0 l = 0 elif k == 2 l = 1 end var ok = false for i: 0 .. 7 if NA[i] && NL[i] == l && NY[i] > 197 && NY[i] < 205 ok = true end end return ok && int(t * 30) % 2 == 0';
+  assert(mes(pilote, 'pts') >= 200 && mes(pilote, 'rates') <= 4 && mes('return false', 'pts') === 0 && mes('return false', 'rates') >= 10, 'rythme : le pilote marque, le joueur immobile rate tout');
+  assert(J.assembler({ jeu: 'rythme', monde: 'neige' }) !== J.assembler({ jeu: 'rythme', monde: 'espace' }) && code.startsWith('# Rythme'), 'rythme : le monde change le code');
+  console.log('ok : rythme x mondes, notes, pilote'); }
 
 // ennemis des 3 tirs (haut, droite, autour) : leur facon de bouger x leurs types, joues avec un pilote automatique (tire sans arret, bouge en va-et-vient) ; propres aux tirs, proposes dans « Que veux-tu personnaliser ? » (opt) sans etre poses d'office
 { const { essai } = require('./essai-verif.js'), TIRS = ['tir-haut', 'tir-perso', 'tir-autour'], pilote = { 'tir-autour': 'if k == 2 return int(t * 6) % 2 == 0 end return k == 1', def: 'if k == 2 return int(t * 6) % 2 == 0 end if k == 0 return int(t / 1.5) % 2 == 0 end return int(t / 1.5) % 2 == 1' };

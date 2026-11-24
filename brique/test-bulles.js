@@ -154,6 +154,27 @@ console.log('ok : tir autour x personnage, tirs, ennemis');
   assert(mes(pilote, 'pts') >= 200 && mes(pilote, 'rates') <= 4 && mes('return false', 'pts') === 0 && mes('return false', 'rates') >= 10, 'rythme : le pilote marque, le joueur immobile rate tout');
   assert(J.assembler({ jeu: 'rythme', monde: 'neige' }) !== J.assembler({ jeu: 'rythme', monde: 'espace' }) && code.startsWith('# Rythme'), 'rythme : le monde change le code');
   console.log('ok : rythme x mondes, notes, pilote'); }
+// tetris (J'empile) : seul le monde se choisit (couleurs des pieces) ; un joueur immobile ne perd pas en 9 s, un joueur qui tient le gros bouton fait descendre vite et perd
+{ const { essai } = require('./essai-verif.js'), r0 = { genre: 'empile', jeu: 'tetris' };
+  assert(J.genreDe('tetris').id === 'empile' && J.saute('monde', r0) === false && ['perso', 'bon', 'mal', 'compo', 'typeEn', 'action', 'couleur', 'niv'].every(id => J.saute(id, r0)), 'tetris : seul le monde est choisi');
+  for (const monde of mondes) jouer({ monde }, monde, 'tetris');
+  const code = J.assembler({ jeu: 'tetris' }), mes = (scen, mesure) => essai('tetris', code, { scen, mesure, quand: [9], duree: 9.1 })[0];
+  assert(mes('return false', '(fin ? 1 : 0)') === 0 && mes('return k == 2', '(fin ? 1 : 0)') === 1, 'tetris : immobile = vivant, gros bouton tenu = descend vite et perd');
+  assert(J.assembler({ jeu: 'tetris', monde: 'neige' }) !== J.assembler({ jeu: 'tetris', monde: 'espace' }) && code.startsWith('# Tetris') && !code.includes('PALETTE'), 'tetris : le monde change les couleurs');
+  console.log('ok : tetris x mondes, pilotes'); }
+// labyrinthe façon Pac-Man (Je me faufile) : monde, heros (perso) et fantomes (mal) se choisissent ; toutes les pastilles sont atteignables ; un joueur immobile mange sa rangee puis se fait prendre par les fantomes
+{ const { essai } = require('./essai-verif.js'), r0 = { genre: 'laby', jeu: 'labyrinthe' };
+  assert(J.genreDe('labyrinthe').id === 'laby' && ['monde', 'perso', 'mal'].every(id => J.saute(id, r0) === false) && ['bon', 'compo', 'typeEn', 'action', 'couleur', 'niv'].every(id => J.saute(id, r0)), 'labyrinthe : etapes choisies (monde, heros, fantomes)');
+  for (const [i, monde] of mondes.entries()) jouer({ monde, perso: persos[i % persos.length], mal: formesBon[i % formesBon.length] }, monde, 'labyrinthe');
+  jouer({ perso: 'img', mal: 'img', imgs: { perso: 3, mal: 2 } }, 'images', 'labyrinthe');
+  const code = J.assembler({ jeu: 'labyrinthe' }), map = JSON.parse(/var MAP = (\[[^\]]*\])/.exec(code)[1]);
+  assert(map.length === 9 && map.every(l => l.length === 13), 'labyrinthe : 13 x 9 cases');
+  const vu = new Set(['6,5']), pile = [[6, 5]]; while (pile.length) { const [x, y] = pile.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const a = x + dx, b = y + dy, k = a + ',' + b; if (map[b]?.[a] && map[b][a] !== '#' && !vu.has(k)) { vu.add(k); pile.push([a, b]); } } }
+  assert(map.every((l, y) => [...l].every((c, x) => c === '#' || vu.has(x + ',' + y))), 'labyrinthe : chaque case libre est atteignable depuis le depart du heros');
+  const mes = (scen, mesure) => essai('labyrinthe', code, { scen, mesure, quand: [9], duree: 9.1 })[0];
+  assert(mes('return false', 'pts') >= 50 && mes('return false', 'vies') <= 2, 'labyrinthe : le heros immobile mange sa rangee puis perd une vie');
+  assert(J.assembler({ jeu: 'labyrinthe', monde: 'neige' }) !== J.assembler({ jeu: 'labyrinthe', monde: 'espace' }) && code.startsWith('# Labyrinthe'), 'labyrinthe : le monde change le code');
+  console.log('ok : labyrinthe x mondes, heros, fantomes, pilote'); }
 
 // ennemis des 3 tirs (haut, droite, autour) : leur facon de bouger x leurs types, joues avec un pilote automatique (tire sans arret, bouge en va-et-vient) ; propres aux tirs, proposes dans « Que veux-tu personnaliser ? » (opt) sans etre poses d'office
 { const { essai } = require('./essai-verif.js'), TIRS = ['tir-haut', 'tir-perso', 'tir-autour'], pilote = { 'tir-autour': 'if k == 2 return int(t * 6) % 2 == 0 end return k == 1', def: 'if k == 2 return int(t * 6) % 2 == 0 end if k == 0 return int(t / 1.5) % 2 == 0 end return int(t / 1.5) % 2 == 1' };

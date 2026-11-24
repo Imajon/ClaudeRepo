@@ -3660,12 +3660,16 @@ async function rendreAnim(donnees) {
     if (!qm) { qm = Object.assign(document.createElement('span'), { id: 'quotasTxt', hidden: true }); document.querySelector('main').prepend(qm); }
     qm.textContent = `QUOTAS⟦${JSON.stringify(q)}⟧ NOTES⟦${JSON.stringify(d.notes || [])}⟧`;   // les notes et remarques aussi, pour l'Établi
   }
+  const u = d.usage, usage = u ? `<section><h2>📈 Usage du site (${u.jours} dernier${u.jours > 1 ? 's' : ''} jour${u.jours > 1 ? 's' : ''})</h2>
+    <p class="aide">Appels par type sur 7 jours (aujourd'hui entre parenthèses) : script = « Fabriquer » en tranche libre, bulles:axe = idées IA, bulle:axe:id = bulle prise.</p>
+    <div class="liste">${u.sept_jours.map(([k, n]) => `<div class="rang"><div class="qui"><div><b>${esc(k)}</b> <small>${n} (${u.auj[k] || 0})</small></div></div></div>`).join('') || '<span class="vide">Rien encore.</span>'}</div>
+    <h3>✍️ Derniers textes écrits</h3><div class="liste">${u.prompts.map(p => `<div class="rang"><div class="qui"><div>${esc(p.d)}</div><small>${esc(p.k)} · ${depuis(p.t)}</small></div></div>`).join('') || '<span class="vide">Aucun.</span>'}</div></section>` : '';
   const notes = d.notes ? `<section><h2>📝 Notes des comptes (${d.notes.length})</h2><div class="liste">${d.notes.map(n => `<div class="rang"><div class="qui"><div>${esc(n.texte)}</div>
     <small>${esc(n.qui)}${n.jeu ? ` · jeu « ${esc(n.jeu)} »` : ''} · ${depuis(n.cree)}</small></div><button class="jouer" data-note="${esc(n.id)}" title="Traitée : l'effacer">✓ Lu</button></div>`).join('') || '<span class="vide">Aucune note.</span>'}</div></section>` : '';
   const support = d.support ? `<section><h2>💬 Support (${d.support.filter(f => f.aRepondre).length} à répondre)</h2><div class="liste">${d.support.map(f => `<div class="rang" style="flex-direction:column;align-items:stretch"><b>${esc(f.pseudo)}${f.aRepondre ? ' <span style="color:var(--ko)">● à répondre</span>' : ''}</b>
     <div class="chatfil">${f.messages.map(m => `<div class="m ${m.de === 'equipe' ? 'moi' : 'eux'}"><small>${m.de === 'equipe' ? 'Équipe' : esc(f.pseudo)} · ${depuis(m.t)}</small>${esc(m.texte)}</div>`).join('')}</div>
     <div class="icRow"><input class="pseudo" maxlength="1000" placeholder="Ta réponse" data-supptxt><button class="sec" data-supprep="${esc(f.pseudo)}">Répondre</button></div></div>`).join('') || '<span class="vide">Aucun message.</span>'}</div></section>` : '';
-  animGroupes.innerHTML = support + notes + quotas + aModerer + d.groupes.map(g => `<section>
+  animGroupes.innerHTML = support + notes + usage + quotas + aModerer + d.groupes.map(g => `<section>
     <h2><b>${esc(g.nom)}</b></h2>
     <h3>🔑 Codes des enfants (${g.codes.length})</h3>
     <p class="aide" style="margin:0 0 6px">Un code par enfant : il le saisit dans « Se connecter » → « Avec un code », choisit son pseudo la première fois, et le code seul le reconnecte ensuite, sur n'importe quel ordinateur.</p>
@@ -4573,6 +4577,7 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     if (b.id === 'img') { if (!await prendreIcone(courant, b)) return; } else if (a.ia) retirerImage(courant);
     const neuf = !recette[courant]; if (!neuf && enBase(courant)) dyn = {};   // une réponse de départ change : les questions suivantes sont à réécrire
     recette[courant] = b; frais = {};
+    try { fetch('api/evt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ k: 'bulle:' + courant + ':' + b.id }), keepalive: true }).catch(() => {}); } catch {}   // statistiques : quelle bulle est prise (aucun texte)
     if (courant === 'genre') { delete recette.jeu; delete recette.action; serie = 0; dyn = {}; for (const [k, v] of Object.entries(b.pre || {})) recette[k] = axeDe(k).bulles.find(x => x.id === v); }   // autre genre : le jeu est à rechoisir parmi les siens ; « Je tire » prend déjà le gros bouton tir
     const avant = courant; courant = apres(avant, neuf); idees = false; scCompris.textContent = AIDE_SUITE; ouvrirAuto();   // on reste sur « comment » : plus de retour à la liste, même après « Fabriquer »
   };

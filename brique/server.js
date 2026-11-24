@@ -373,7 +373,7 @@ function quotasParMail() {
 }
 function espaceAnimateur(email) {
   const test = (process.env.STRIPE_SECRET_KEY || '').startsWith('sk_test') ? 'test/' : '';
-  return { email, quotas: ADMINS.includes(email) ? quotasParMail() : undefined, notes: ADMINS.includes(email) ? (db.notes || []).slice().reverse() : undefined, aModerer: ADMINS.includes(email) ? db.niveaux.filter(n => n.attente === 'admin' && !n.masque).map(aVerifier) : undefined,   // createurs hors groupe : l'admin du site verifie
+  return { email, quotas: ADMINS.includes(email) ? quotasParMail() : undefined, usage: ADMINS.includes(email) ? statsUsage() : undefined, notes: ADMINS.includes(email) ? (db.notes || []).slice().reverse() : undefined, aModerer: ADMINS.includes(email) ? db.niveaux.filter(n => n.attente === 'admin' && !n.masque).map(aVerifier) : undefined,   // createurs hors groupe : l'admin du site verifie
     support: ADMINS.includes(email) ? Object.values(db.support || {}).filter(f => f.messages.length).map(f => ({ pseudo: f.pseudo, messages: f.messages.slice(-30), aRepondre: f.messages.at(-1).de === 'moi', t: f.messages.at(-1).t }))
       .sort((a, b) => b.aRepondre - a.aRepondre || b.t - a.t).slice(0, 50) : undefined,   // chat du support : celles qui attendent une reponse d'abord
     commandes: ADMINS.includes(email) ? db.commandes.filter(c => c.statut !== 'attente').sort((a, b) => b.cree - a.cree)   // admin boutique
@@ -444,6 +444,19 @@ const QUOTA = { essai: +process.env.QUOTA_ESSAI || 60e3, joueur: +process.env.QU
 const FORFAIT = { tokens: +process.env.FORFAIT_TOKENS || 10e6, jours: +process.env.FORFAIT_JOURS || 90 };
 const CONSO = new (require('async_hooks').AsyncLocalStorage)();   // les cles du compte qui demande : mistral() et anthropic() y ajoutent les tokens
 const aujourdhui = () => new Date().toISOString().slice(0, 10);
+// statistiques d'usage : db.usage = { jour: { cle: n } } (90 jours) et db.prompts = les 300 derniers textes ecrits par les enfants (sans pseudo ni IP) ; lus par l'admin dans « Usage du site »
+function trace(k, texte) {
+  const u = ((db.usage ||= {})[aujourdhui()] ||= {});
+  if (u[k] || Object.keys(u).length < 300) u[k] = (u[k] || 0) + 1;   // plafond de cles par jour : /api/evt est public
+  const jours = Object.keys(db.usage).sort(); if (jours.length > 90) delete db.usage[jours[0]];
+  if (texte) { (db.prompts ||= []).push({ t: Date.now(), k, d: court(texte, 200) }); if (db.prompts.length > 300) db.prompts.shift(); }
+  sauver();
+}
+function statsUsage() {
+  const jours = Object.keys(db.usage || {}).sort().slice(-7), tot = {};
+  for (const j of jours) for (const [k, n] of Object.entries(db.usage[j])) tot[k] = (tot[k] || 0) + n;
+  return { jours: jours.length, auj: db.usage?.[aujourdhui()] || {}, sept_jours: Object.entries(tot).sort((a, b) => b[1] - a[1]), prompts: (db.prompts || []).slice(-80).reverse() };
+}
 function conso(k) {                                      // la ligne du compte, remise a zero du jour si on a change de jour
   const c = ((db.conso ||= {})[k] ||= { jour: '', j: 0, t: 0 }), jour = aujourdhui();
   if (c.jour !== jour) { c.jour = jour; c.j = 0; }
@@ -1149,6 +1162,9 @@ Sitemap: ${PUBLIC_URL}/sitemap.xml
   if (req.method !== 'POST' || !url.startsWith('/api/')) return repondre(res, 404, { erreur: 'introuvable' });
   if (tropDeRequetes(ipDe(req))) return repondre(res, 429, { erreur: 'Doucement ! Réessaie dans une minute.' });
   let b; try { b = await lireJSON(req, url === '/api/voix' ? 2e6 : 131072); } catch { return repondre(res, 400, { erreur: 'requête illisible' }); }   // voix : ~1 min de son en base64
+  const TEXTE_DE = { '/api/script': 'texte', '/api/ia': 'texte', '/api/choix': 'texte', '/api/quiz': 'sujet' };   // les routes IA : un compteur, et ce que l'enfant a ecrit
+  if (url === '/api/evt') { const k = court(b.k, 40).replace(/[^\w:.-]/g, '_'); if (/^bulle:/.test(k)) trace(k); return repondre(res, 200, { ok: true }); }   // clic sur une bulle (la page ne l'envoie qu'ici)
+  if (url in TEXTE_DE) trace(url.slice(5), court(b[TEXTE_DE[url]], 200)); else if (['/api/bulles', '/api/paroles', '/api/voix'].includes(url)) trace(url.slice(5) + (url === '/api/bulles' ? ':' + court(b.axe, 12) : ''));
 
   if (url === '/api/edition/connexion' || url === '/api/edition/textes') {   // mode edition des textes de la page (?edition) : code EDIT_CODE
     const pas = codeEdition(b.code); if (pas) return repondre(res, pas.statut, pas);

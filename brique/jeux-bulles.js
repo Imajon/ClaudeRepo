@@ -24,13 +24,14 @@
     // PARCOURS de l'enfant : le type (genre) -> le quoi (perso, ou les questions du quiz) -> le où (monde) -> « comment » sans fin (tout le reste, par 2, puis « aller plus loin ou tester ? »). `pre` : choix déjà faits par la bulle (« Je tire » = invader + gros bouton tir). casse / rebondis : à ajouter avec leur moteur.
     { id: 'genre', h: 210, icone: '🎮', nom: 'Le genre', q: 'Que fais-tu dans ton jeu ?', bulles: [
       { id: 'plateforme', bouton: '🦘 Je saute' }, { id: 'runner', bouton: '💨 J’avance' }, { id: 'invader', bouton: '🧺 J’attrape' }, { id: 'tire', bouton: '💥 Je tire' },
-      { id: 'quiz', bouton: '🧠 J’apprends' }, { id: 'soigne', bouton: '🌱 Je fais grandir' }, { id: 'casse', bouton: '🧱 Je casse' }] },
+      { id: 'quiz', bouton: '🧠 J’apprends' }, { id: 'soigne', bouton: '🌱 Je fais grandir' }, { id: 'casse', bouton: '🧱 Je casse' }, { id: 'rebond', bouton: '🏓 Je rebondis' }] },
     { id: 'jeu', libre: true, h: 235, icone: '🕹', nom: 'Le jeu', q: 'Quel jeu ?', bulles: [
       { id: 'plat-but', genre: 'plateforme', bouton: '🏁 Je cours et je saute jusqu’au drapeau' }, { id: 'plat-attrape', genre: 'plateforme', bouton: '⭐ Je saute pour ramasser toutes les étoiles' }, { id: 'plat-evite', genre: 'plateforme', bouton: '👾 Je saute par-dessus les monstres' }, { id: 'plat-course', genre: 'plateforme', bouton: '⏱ Je cours plus vite que mon rival' }, { id: 'toits', genre: 'plateforme', bouton: '🏙 Je saute par-dessus les immeubles et je fais des figures' }, { id: 'lianes', genre: 'plateforme', bouton: '🌿 Je me balance de liane en liane' },
       { id: 'cote', genre: 'runner', bouton: '🏃 Je cours en sautant les obstacles' }, { id: 'derriere', genre: 'runner', bouton: '🚗 Je conduis et je change de voie' }, { id: 'dessus', genre: 'runner', bouton: '🛰 Je pilote ma voiture sur la piste' }, { id: 'iso', genre: 'runner', bouton: '🧊 Je roule en 3D en diagonale' },
       { id: 'attrape', genre: 'invader', bouton: '🧺 J’attrape ce qui tombe' }, { id: 'esquive', genre: 'invader', bouton: '💨 J’évite ce qui tombe' }, { id: 'pluie', genre: 'invader', bouton: '🌧 J’attrape tout, rien ne doit tomber' },
       { id: 'tir-haut', genre: 'tire', bouton: '⬆️ Je tire vers le haut' }, { id: 'tir-perso', genre: 'tire', bouton: '➡️ Je tire vers la droite' }, { id: 'tir-autour', genre: 'tire', bouton: '🎯 Je tire autour de moi' }, { id: 'tir-vagues', genre: 'tire', bouton: '👾 Je défends contre des vagues' },
       { id: 'casse-briques', genre: 'casse', bouton: '🧱 Je casse un mur de briques avec une balle' },
+      { id: 'pong', genre: 'rebond', bouton: '🏓 Je joue au pong contre la console' }, { id: 'flappy', genre: 'rebond', bouton: '🐦 Je bats des ailes entre les tuyaux' },
       { id: 'quiz', genre: 'quiz', bouton: '❓ Je réponds à des questions' }, { id: 'soigne', genre: 'soigne', bouton: '🐣 Je m’occupe d’un personnage' }] },
     // « toits » seulement : la figure faite en l'air en rappuyant sur le gros bouton (3 points si on retombe après)
     { id: 'figtoit', h: 175, icone: '🤸', nom: 'Ma figure', q: 'Quelle figure fais-tu en l’air ?', bulles: [{ id: 'salto', bouton: '🤸 Un salto' }, { id: 'vrille', bouton: '🌀 Une vrille' }, { id: 'etoile', bouton: '⭐ Une étoile' }] },
@@ -82,17 +83,17 @@
   // un monde par niveau (plateforme à plusieurs niveaux) : monde2 .. monde6, mêmes bulles que « monde » + « comme le niveau 1 » ; libre : le champ « Ce que tu aimes » choisit le monde le plus proche
   for (let k = 2; k <= NIV_MAX; k++) { ETAPES.push({ id: 'monde' + k, v2: true, libre: true, h: 130 + k * 22, icone: ['2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣'][k - 2], nom: 'Monde du niveau ' + k, q: 'Niveau ' + k + ' : où es-tu ?', bulles: [{ id: 'meme', bouton: '↩️ Comme le niveau 1' }, ...ETAPES.find(e => e.id === 'monde').bulles] }); DEFAUT['monde' + k] = 'meme'; }
   const nbNiv = id => NIVEAUX[id] || +String(id || '').slice(1) || 1;   // 'n4' = 4 niveaux ; les anciens 'un', 'trois', 'cinq' marchent encore
-  const MOTS = {'genre/soigne': 'Grandir', 'jeu/plat-but': 'Drapeau', 'jeu/plat-attrape': 'Étoiles', 'jeu/plat-evite': 'Monstres', 'jeu/plat-course': 'Rival', 'jeu/toits': 'Immeubles', 'jeu/lianes': 'Lianes', 'figtoit/salto': 'Salto', 'figtoit/vrille': 'Vrille', 'figtoit/etoile': 'Étoile','jeu/cote': 'Obstacles', 'jeu/derriere': 'Voies', 'jeu/dessus': 'Piste', 'jeu/iso': '3D', 'jeu/attrape': 'Attraper', 'jeu/esquive': 'Éviter', 'jeu/pluie': 'Tout attraper', 'jeu/tir-haut': 'Tir en haut', 'jeu/tir-perso': 'Tir à droite', 'jeu/tir-autour': 'Tir autour', 'jeu/tir-vagues': 'Vagues', 'jeu/casse-briques': 'Briques', 'jeu/quiz': 'Questions', 'jeu/soigne': 'Soigner', 'figure/moto': 'Moto', 'figure/surf': 'Surf', 'perso/chat': 'Chat', 'perso/robot': 'Robot', 'perso/dragon': 'Dragon', 'perso/fusee': 'Fusée', 'perso/fantome': 'Fantôme', 'perso/magicien': 'Magicien', 'perso/grenouille': 'Grenouille', 'perso/hibou': 'Hibou', 'perso/oiseau': 'Oiseau', 'perso/blob': 'Bestiole', 'monde/foret': 'Forêt', 'monde/ville': 'Ville', 'monde/desert': 'Désert', 'compo/droit': 'Tout droit', 'compo/zigzag': 'Zigzag', 'compo/suit': 'Poursuite', 'compo/accel': 'Accélèrent', 'typeEn/pareils': 'Tous pareils', 'typeEn/costauds': 'Costauds', 'typeEn/rapides': 'Rapides', 'typeEn/melange': 'Mélange', 'plan/non': 'Mêmes niveaux', 'plan/oui': 'Niveaux changeants', 'piege/non': 'Pièges égaux', 'piege/oui': 'Pièges en plus'};   // le mot clef d'une réponse longue : le récapitulatif ne garde que lui (la réponse entière se relit en touchant la pastille)
+  const MOTS = {'genre/soigne': 'Grandir', 'jeu/plat-but': 'Drapeau', 'jeu/plat-attrape': 'Étoiles', 'jeu/plat-evite': 'Monstres', 'jeu/plat-course': 'Rival', 'jeu/toits': 'Immeubles', 'jeu/lianes': 'Lianes', 'figtoit/salto': 'Salto', 'figtoit/vrille': 'Vrille', 'figtoit/etoile': 'Étoile','jeu/cote': 'Obstacles', 'jeu/derriere': 'Voies', 'jeu/dessus': 'Piste', 'jeu/iso': '3D', 'jeu/attrape': 'Attraper', 'jeu/esquive': 'Éviter', 'jeu/pluie': 'Tout attraper', 'jeu/tir-haut': 'Tir en haut', 'jeu/tir-perso': 'Tir à droite', 'jeu/tir-autour': 'Tir autour', 'jeu/tir-vagues': 'Vagues', 'jeu/casse-briques': 'Briques', 'jeu/pong': 'Pong', 'jeu/flappy': 'Flappy', 'jeu/quiz': 'Questions', 'jeu/soigne': 'Soigner', 'figure/moto': 'Moto', 'figure/surf': 'Surf', 'perso/chat': 'Chat', 'perso/robot': 'Robot', 'perso/dragon': 'Dragon', 'perso/fusee': 'Fusée', 'perso/fantome': 'Fantôme', 'perso/magicien': 'Magicien', 'perso/grenouille': 'Grenouille', 'perso/hibou': 'Hibou', 'perso/oiseau': 'Oiseau', 'perso/blob': 'Bestiole', 'monde/foret': 'Forêt', 'monde/ville': 'Ville', 'monde/desert': 'Désert', 'compo/droit': 'Tout droit', 'compo/zigzag': 'Zigzag', 'compo/suit': 'Poursuite', 'compo/accel': 'Accélèrent', 'typeEn/pareils': 'Tous pareils', 'typeEn/costauds': 'Costauds', 'typeEn/rapides': 'Rapides', 'typeEn/melange': 'Mélange', 'plan/non': 'Mêmes niveaux', 'plan/oui': 'Niveaux changeants', 'piege/non': 'Pièges égaux', 'piege/oui': 'Pièges en plus'};   // le mot clef d'une réponse longue : le récapitulatif ne garde que lui (la réponse entière se relit en touchant la pastille)
   for (let k = 2; k <= NIV_MAX; k++) { MOTS['monde' + k + '/meme'] = 'Même monde'; for (const w of ['foret', 'ville', 'espace', 'eau', 'desert', 'neige']) MOTS['monde' + k + '/' + w] = { foret: 'Forêt', ville: 'Ville', espace: 'Espace', eau: 'Eau', desert: 'Désert', neige: 'Neige' }[w]; }
   const mot = (axe, b) => { const m = MOTS[axe + '/' + b.id]; return m ? b.bouton.replace(/^(\S+\s).*$/, '$1') + m : b.bouton; };
   const nivBulles = id => { const n = nbNiv(id), bs = [{ id: 'n' + n, bouton: '✋ Rester à ' + n + (n > 1 ? ' niveaux' : ' niveau') }]; if (n < NIV_MAX) bs.unshift({ id: 'n' + (n + 1), bouton: '➕ Ajouter un niveau (ça fera ' + (n + 1) + ')' }); return bs; };
 // L'IA propose d'autres idées pour perso, bon et mal : chacune devient une image (icône de la page, numéro dans r.imgs) et son choix vaut 'img'. Sans image trouvée, retour au dessin du monde.
 const COURSES = { cote: 1, derriere: 1, dessus: 1, iso: 1 }, NOUVEAUX = { 'plat-but': 1, 'plat-attrape': 1, 'plat-evite': 1, 'plat-course': 1, toits: 1, lianes: 1, ...COURSES };   // les nouveaux jeux : le gros bouton a son rôle fixe (sauter, turbo), les obstacles ne comptent que pour les courses
-const FIXES = { 'tir-perso': 1, 'tir-autour': 1, 'tir-vagues': 1, 'casse-briques': 1 }, TIRS = { 'tir-haut': 1, 'tir-perso': 1, 'tir-autour': 1 };   // jeux de tir au vaisseau fixe : seuls le genre, le jeu et le monde se choisissent (le monde donne le fond, les particules et les ennemis)
+const FIXES = { 'tir-perso': 1, 'tir-autour': 1, 'tir-vagues': 1, 'casse-briques': 1, pong: 1, flappy: 1 }, CHOIX = { 'casse-briques': ['bon'], pong: ['bon'], flappy: ['perso'] }, TIRS = { 'tir-haut': 1, 'tir-perso': 1, 'tir-autour': 1 };   // jeux de tir au vaisseau fixe : seuls le genre, le jeu et le monde se choisissent (le monde donne le fond, les particules et les ennemis)
 const SOLO = { quiz: 1, soigne: 1 };   // ces deux jeux n'ont ni obstacles, ni objets, ni gros bouton à choisir
 // tir vers la droite et tir autour : en plus du genre, du jeu et du monde, leur personnage, leurs tirs (bon) et leurs ennemis (mal) se choisissent
 const peutSauter = r => /^plat-|^toits$|^lianes$/.test(r.jeu) || (r.jeu === 'cote' && r.obst !== 'sans') || (['attrape', 'esquive', 'pluie'].includes(r.jeu || DEFAUT.jeu) && (r.action || DEFAUT.action) === 'saut');   // les jeux où le gros bouton fait sauter
-const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (id === 'compo' || id === 'typeEn') return !TIRS[r.jeu]; if (FIXES[r.jeu] && id !== 'genre' && id !== 'jeu' && id !== 'monde') return r.jeu === 'casse-briques' ? id !== 'bon' : !(id === 'perso' || id === 'bon' || id === 'mal'); if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (/^monde[2-6]$/.test(id)) return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) >= +id.slice(5)); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'gagne') return !NOUVEAUX[r.jeu]; if (id === 'saute') return !peutSauter(r); if (id === 'figtoit') return r.jeu !== 'toits'; if (id === 'niv' && r.jeu === 'lianes') return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape' && r.jeu !== 'lianes') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && (!!NOUVEAUX[r.jeu] || r.jeu === 'tir-haut')); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
+const saute = (id, r) => { r = r || {}; if (SOLO[r.genre]) r = { ...r, jeu: r.genre }; if (id === 'compo' || id === 'typeEn') return !TIRS[r.jeu]; if (FIXES[r.jeu] && id !== 'genre' && id !== 'jeu' && id !== 'monde') return !(CHOIX[r.jeu] || ['perso', 'bon', 'mal']).includes(id); if (id === 'quest') return r.jeu !== 'quiz'; if (id === 'plan' || id === 'piege') return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) > 1); if (/^monde[2-6]$/.test(id)) return !(/^plat-/.test(r.jeu) && nbNiv(r.niv) >= +id.slice(5)); if (id === 'jeu') return !!SOLO[r.genre]; if (SOLO[r.jeu] && ['obst', 'bon', 'mal', 'action', 'niv'].includes(id)) return true; if (id === 'gagne') return !NOUVEAUX[r.jeu]; if (id === 'saute') return !peutSauter(r); if (id === 'figtoit') return r.jeu !== 'toits'; if (id === 'niv' && r.jeu === 'lianes') return true; if (id === 'figure') return !COURSES[r.jeu]; return id === 'couleur' || (id === 'bon' && r.jeu !== 'plat-attrape' && r.jeu !== 'lianes') || id === 'mal' || (id === 'obst' && !COURSES[r.jeu]) || (id === 'action' && (!!NOUVEAUX[r.jeu] || r.jeu === 'tir-haut')); };   // une image garde ses couleurs : pas d'étape « couleur »   // une étape sans choix : le jeu marche quand même
 
   const FIG = {"auto":["rect(x - 3, y + 16, 30, 9, C2) rect(x - 3, y + 16, 30, 3, C3) disque(x + 3, y + 25, 4, NO) disque(x + 21, y + 25, 4, NO)","rect(x - 2, y + 16, 28, 10, C2) rect(x - 2, y + 16, 28, 3, C3) rect(x, y + 25, 6, 4, NO) rect(x + 18, y + 25, 6, 4, NO)"],"moto":["disque(x + 2, y + 24, 5, NO) disque(x + 22, y + 24, 5, NO) rect(x + 2, y + 17, 20, 4, C2) rect(x + 18, y + 12, 3, 6, NO)","rect(x + 9, y + 18, 6, 10, NO) rect(x + 4, y + 17, 16, 3, C2)"],"surf":["rect(x - 3, y + 21, 30, 3, C2) tri(x + 27, y + 21, x + 27, y + 24, x + 32, y + 22, C2) rect(x - 4, y + 25, 32, 2, A3)","rect(x + 5, y + 20, 14, 5, C2) rect(x + 3, y + 25, 18, 2, A3)"]};   // le véhicule sous le personnage dans les courses : [vue de côté, vue de derrière / dessus]
   const COULEURS = { rouge: [225, 60, 55], orange: [240, 140, 40], jaune: [245, 205, 50], vert: [80, 190, 90], bleu: [70, 130, 230], violet: [150, 90, 210], rose: [240, 120, 175], blanc: [240, 240, 245] };
@@ -1719,6 +1720,109 @@ def dessine()
 end
 `;
 
+  // pong : ma raquette a gauche (G monte, D descend), la console joue a droite, premier a 5 gagne ; meme Berry que systemes/jeu-pong.be, la balle (bon) et le monde se choisissent
+  const TIR_PONG = `# Pong
+var ry = 100.0 var oy = 100.0 var bx = 160.0 var by = 120.0 var vx = 150.0 var vy = 90.0
+var moi = 0 var lui = 0 var fin = false var gagne = false
+
+def serve(sens)
+  bx = 160.0 by = 120.0 vx = 150.0 * sens vy = real(hasard(-100, 100))
+end
+def reset()
+  ry = 100.0 oy = 100.0 moi = 0 lui = 0 fin = false gagne = false
+  serve(1)
+end
+def debut()
+  reset()
+end
+
+def maj(dt)
+  if fin
+    if appui(P3) reset() end
+    return
+  end
+  if bouton(G) ry -= 180 * dt end
+  if bouton(D) ry += 180 * dt end
+  if ry < 0 ry = 0.0 elif ry > 190 ry = 190.0 end
+  if by > oy + 25 oy += 110 * dt elif by < oy + 25 oy -= 110 * dt end   # la console suit la balle, un peu moins vite
+  if oy < 0 oy = 0.0 elif oy > 190 oy = 190.0 end
+  bx += vx * dt by += vy * dt
+  if by < 8 by = 8.0 vy = -vy elif by > 232 by = 232.0 vy = -vy end
+  if vx < 0 && bx < 26 && bx > 12 && by > ry - 8 && by < ry + 58
+    bx = 26.0 vx = -vx * 1.05 vy = (by - ry - 25) * 5 son(900, 20)   # l'angle depend de l'endroit touche
+  end
+  if vx > 0 && bx > 294 && bx < 308 && by > oy - 8 && by < oy + 58
+    bx = 294.0 vx = -vx * 1.05 vy = (by - oy - 25) * 5 son(900, 20)
+  end
+  if vx > 330 vx = 330.0 elif vx < -330 vx = -330.0 end
+  if bx < -10
+    lui += 1 son(150, 200) serve(1)
+  elif bx > 330
+    moi += 1 score(moi) son(988, 100) serve(-1)
+  end
+  if moi >= 5 fin = true gagne = true elif lui >= 5 fin = true end
+end
+
+def dessine()
+  for i: 0 .. 9 rect(0, i * 24, 320, 24, BAND[i]) end
+  for i: 0 .. 11 rect(158, i * 20 + 4, 4, 10, PT2) end   # filet
+  rect(10, int(ry), 8, 50, TXT) rect(302, int(oy), 8, 50, TIRC)
+  objet(int(bx), int(by), 0)
+  texte(120, 8, str(moi), TXT, 3) texte(184, 8, str(lui), TIRC, 3)
+  if fin
+    if gagne texte(80, 100, "BRAVO !", TIRC, 4) else texte(80, 100, "PERDU !", TIRC, 4) end
+    texte(90, 150, "P3 : rejouer", TXT, 2)
+  end
+end
+`;
+
+  // flappy : P3 bat des ailes, le personnage (perso) tombe tout seul entre des tuyaux aux couleurs du monde qui accelerent ; meme Berry que systemes/jeu-flappy.be
+  const TIR_FLAPPY = `# Flappy
+var y = 110.0 var vy = 0.0 var pts = 0 var fin = false
+var PX = [] var PG = [] var PS = []                 # 3 tuyaux : x, hauteur du haut du trou, deja compte
+
+def reset()
+  y = 110.0 vy = 0.0 pts = 0 fin = false
+  for i: 0 .. 2 PX[i] = 320.0 + i * 120 PG[i] = hasard(40, 120) PS[i] = false end
+end
+def debut()
+  for i: 0 .. 2 PX.push(0.0) PG.push(0) PS.push(false) end
+  reset()
+end
+
+def maj(dt)
+  if fin
+    if appui(P3) reset() end
+    return
+  end
+  if appui(P3) vy = -210.0 son(700, 20) end
+  vy += 700 * dt y += vy * dt
+  if y < 12 y = 12.0 vy = 0.0 end
+  if y > 214 fin = true son(150, 300) end
+  var v = 90.0 + pts * 2
+  if v > 160 v = 160.0 end
+  for i: 0 .. 2
+    PX[i] -= v * dt
+    if PX[i] < -40 PX[i] += 360 PG[i] = hasard(40, 120) PS[i] = false end   # le tuyau sorti revient a droite
+    if !PS[i] && PX[i] + 30 < 68 PS[i] = true pts += 1 score(pts) son(988, 40) end
+    if PX[i] < 92 && PX[i] + 30 > 68 && (y - 10 < PG[i] || y + 10 > PG[i] + 96) fin = true son(150, 300) end   # dans le tuyau, hors du trou
+  end
+end
+
+def dessine()
+  for i: 0 .. 9 rect(0, i * 24, 320, 24, BAND[i]) end
+  rect(0, 226, 320, 14, A3)
+  for i: 0 .. 2
+    var x = int(PX[i])
+    rect(x, 0, 30, PG[i], A1) rect(x - 3, PG[i] - 8, 36, 8, A2)
+    rect(x, PG[i] + 96, 30, 130 - PG[i], A1) rect(x - 3, PG[i] + 96, 36, 8, A2)
+  end
+  perso(68, int(y) - 12)
+  texte(150, 8, str(pts), TXT, 4)
+  if fin texte(80, 100, "PERDU !", TIRC, 4) texte(90, 150, "P3 : rejouer", TXT, 2) end
+end
+`;
+
   // le monde choisi habille un tir fixe : dégradé du ciel, particules, ennemis = le mauvais objet du monde (objet(x, y), rayon 8) ; texte et tirs contrastent avec un ciel clair
   // perso = true (tir autour) : le personnage, les tirs (bon) et les ennemis (mal) se choisissent aussi (dessin du monde ou image) ; sinon look fixe
   const tirMonde = (code, perso, nom = 'Tir ') => r => {
@@ -1728,7 +1832,7 @@ end
       .replace('\ndef debut()\n', (perso ? `\ndef objet(x, y, k)\n  if k == 0\n${objetCode(r, 'bon', mo, im)}\n  else\n${objetCode(r, 'mal', mo, im)}\n  end\nend\ndef perso(x, y)\n${r.perso === 'img' ? `  image(${im.perso}, x, y, 0, 1)` : PERSOS[r.perso]}\nend` : `\ndef objet(x, y)\n${mo.mal}\nend`) + `\ndef debut()\n  COMPO = ${COMPOS.indexOf(r.compo)} TYPE = ${TYPES_EN.indexOf(r.typeEn)}\n${perso ? `  C1 = rgb(${col.join(', ')}) C2 = rgb(${fonce(col).join(', ')}) C3 = rgb(${clair(col).join(', ')}) BL = rgb(255, 255, 255)\n` : ''}  NO = rgb(30, 30, 45) A1 = ${rgb(mo.a[0])} A2 = ${rgb(mo.a[1])} A3 = ${rgb(mo.a[2])} A4 = ${rgb(mo.a[3])}\n  BAND = ${liste(10, i => rgb(mel(mo.ciel[0], mo.ciel[1], i / 9)))}\n  PT1 = ${rgb(c.pt1)} PT2 = ${rgb(c.pt2)} TIRC = ${rgb(c.tir)} TXT = ${rgb(c.txt)}\n`);
   };
 
-  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'tir-haut': chute, 'tir-perso': tirMonde(TIR_PERSO, true), 'tir-autour': tirMonde(TIR_AUTOUR, true), 'tir-vagues': tirMonde(TIR_VAGUES, true, 'Vagues '), 'casse-briques': tirMonde(TIR_CASSE, true, 'Casse '), 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, toits: plateforme, lianes, derriere: course, dessus: course, iso: course };   // jeu -> son système
+  const SYSTEMES = { quiz, soigne, attrape: chute, esquive: chute, pluie: chute, 'tir-haut': chute, 'tir-perso': tirMonde(TIR_PERSO, true), 'tir-autour': tirMonde(TIR_AUTOUR, true), 'tir-vagues': tirMonde(TIR_VAGUES, true, 'Vagues '), 'casse-briques': tirMonde(TIR_CASSE, true, 'Casse '), pong: tirMonde(TIR_PONG, true, 'Pong '), flappy: tirMonde(TIR_FLAPPY, true, 'Flappy '), 'plat-but': plateforme, 'plat-attrape': plateforme, 'plat-evite': plateforme, 'plat-course': plateforme, cote: plateforme, toits: plateforme, lianes, derriere: course, dessus: course, iso: course };   // jeu -> son système
 
   function recetteComplete(r) {   // une étape sans choix (ou un choix inconnu) prend sa valeur par défaut : le jeu marche toujours
     const o = {};
@@ -1865,7 +1969,7 @@ end
 const AIDE_JEU = { 'plat-but': 'G et D pour courir, le gros bouton : il saute. Arrive au drapeau !', 'plat-attrape': 'G et D pour courir, le gros bouton : il saute. Attrape toutes les etoiles !', 'plat-evite': 'G et D pour courir, le gros bouton : il saute. Evite les monstres et arrive au drapeau !', 'plat-course': 'G et D pour courir, le gros bouton : il saute. Arrive au drapeau avant le rival !',
   cote: 'Il court tout seul : D va plus vite, G ralentit, le gros bouton : turbo. Arrive avant le rival !', 'cote-obst': 'Il court tout seul : D va plus vite, G ralentit, le gros bouton : il saute. Saute les obstacles et arrive avant le rival !', derriere: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !', dessus: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !', iso: 'G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !' };
 const AIDE_OBST = { derriere: ' Evite les mauvais objets.', dessus: ' Evite les mauvais objets.', iso: ' Evite les mauvais objets.' };
-AIDE_JEU['tir-perso'] = 'G monte, D descend, le gros bouton : tir. Detruis les ennemis qui arrivent, 3 vies !'; AIDE_JEU['casse-briques'] = 'G et D bougent la raquette, le gros bouton lance la balle. Casse toutes les briques, elle va de plus en plus vite, 3 vies !'; AIDE_JEU['tir-vagues'] = 'G et D pour bouger, le gros bouton : tir (un seul a la fois). Detruis toute la vague avant qu elle arrive en bas, evite les bombes, 3 vies !'; AIDE_JEU['tir-autour'] = 'G et D tournent, le gros bouton : tir dans la direction du vaisseau. Detruis tout ce qui arrive de partout, 3 vies !';
+AIDE_JEU['tir-perso'] = 'G monte, D descend, le gros bouton : tir. Detruis les ennemis qui arrivent, 3 vies !'; AIDE_JEU.pong = 'G monte ta raquette, D la descend. La console joue en face : renvoie la balle, le premier a 5 points gagne !'; AIDE_JEU.flappy = 'Le gros bouton bat des ailes, sinon tu tombes. Passe dans le trou de chaque tuyau, ca va de plus en plus vite !'; AIDE_JEU['casse-briques'] = 'G et D bougent la raquette, le gros bouton lance la balle. Casse toutes les briques, elle va de plus en plus vite, 3 vies !'; AIDE_JEU['tir-vagues'] = 'G et D pour bouger, le gros bouton : tir (un seul a la fois). Detruis toute la vague avant qu elle arrive en bas, evite les bombes, 3 vies !'; AIDE_JEU['tir-autour'] = 'G et D tournent, le gros bouton : tir dans la direction du vaisseau. Detruis tout ce qui arrive de partout, 3 vies !';
 AIDE_JEU.toits = 'Il court tout seul : D va plus vite, G ralentit, le gros bouton : il saute. Rappuie en l air : il fait sa figure, 3 points si tu retombes apres. Saute les immeubles jusqu au drapeau !'; AIDE_JEU.lianes = 'Tu te balances tout seul : G monte sur la liane, D descend, le gros bouton : tu la laches. Rattrape la liane suivante en l air, ramasse les etoiles et arrive sur la plateforme. Attention aux pointes, 3 vies !'; AIDE_JEU.quiz ='Lis la question, puis choisis ta reponse : G (la 1re), le gros bouton (la 2e) ou D (la 3e). 3 vies !'; AIDE_JEU.soigne = 'G : il mange, le gros bouton : il joue, D : il dort. Garde ses 3 jauges pleines pendant 45 secondes !';
 M.aide = r => { const c = recetteComplete(r); if (SOLO[c.jeu] || FIXES[c.jeu]) return AIDE_JEU[c.jeu]; if (NOUVEAUX[c.jeu]) return AIDE_JEU[c.jeu === 'cote' && c.obst === 'avec' ? 'cote-obst' : c.jeu] + (c.obst === 'avec' ? AIDE_OBST[c.jeu] || '' : ''); const a = c.action; return 'G et D pour bouger, le gros bouton : ' + AIDE[a] + '.'; };
 M.EN = {"Placer à la main":"Place things by hand","🧊 Je roule en 3D en diagonale":"🧊 I ride in diagonal 3D","Mon véhicule":"My vehicle","Sur quoi roules-tu ?":"What are you riding?","🚗 En voiture":"🚗 In a car","🏍 En moto de motocross":"🏍 On a motocross bike","🏄 Sur une planche de surf":"🏄 On a surfboard","Modifier ma présentation":"Change my game’s look","Que veux-tu changer ?":"What do you want to change?","Quand je perds":"When I lose","Message du jeu":"Game message","Quand je gagne":"When I win","Que dit le cartel quand tu gagnes ?":"What does the sign say when you win?","👏 BRAVO !":"👏 WELL DONE!","🏆 GAGNÉ !":"🏆 YOU WON!","🥳 YOUPI !":"🥳 YAY!","🥇 CHAMPION":"🥇 CHAMPION","😎 SUPER !":"😎 SUPER!","🤩 WOUHOU !":"🤩 WOOHOO!","Quand je saute":"When I jump","Que dit ton personnage quand il saute ?":"What does your character say when it jumps?","🤐 Rien":"🤐 Nothing","🦘 HOP !":"🦘 HOP!","🌀 BOING !":"🌀 BOING!","🤩 WOUHOU":"🤩 WOOHOO","🤠 HI HA !":"🤠 YEE HAW!","Que dit le cartel quand tu perds ?":"What does the sign say when you lose?","😵 PERDU !":"😵 YOU LOST!","😬 OUPS !":"😬 OOPS!","💀 GAME OVER":"💀 GAME OVER","😸 ENCORE !":"😸 AGAIN!","🔥 RATÉ !":"🔥 MISSED!","🤖 ERREUR":"🤖 ERROR","Les niveaux":"The levels","Combien de niveaux ?":"How many levels?","1️⃣ Un seul niveau":"1️⃣ A single level","🪜 3 niveaux":"🪜 3 levels","🏔 5 niveaux":"🏔 5 levels","❓ Je réponds à des questions":"❓ I answer questions","🐣 Je m’occupe d’un personnage":"🐣 I take care of a character","Lis la question, puis choisis ta reponse : G (la 1re), le gros bouton (la 2e) ou D (la 3e). 3 vies !":"Read the question, then pick your answer: L (1st), big button (2nd) or R (3rd). 3 lives!","G : il mange, le gros bouton : il joue, D : il dort. Garde ses 3 jauges pleines pendant 45 secondes !":"L: it eats, big button: it plays, R: it sleeps. Keep its 3 gauges full for 45 seconds!","🏁 Plateforme : arriver au drapeau":"🏁 Platformer: reach the flag","⭐ Plateforme : tout attraper":"⭐ Platformer: catch everything","👾 Plateforme : éviter les monstres":"👾 Platformer: dodge the monsters","⏱ Plateforme : course":"⏱ Platformer: race","🏃 Course de côté":"🏃 Side-view race","🚗 Course vue de derrière":"🚗 Race seen from behind","🛰 Course vue de dessus":"🛰 Race seen from above","Les obstacles":"The obstacles","Des obstacles sur la route ?":"Any obstacles on the road?","🚧 Avec obstacles":"🚧 With obstacles","🛣 Sans obstacles":"🛣 No obstacles","G et D pour courir, le gros bouton : il saute. Arrive au drapeau !":"L and R to run, big button: it jumps. Reach the flag!","G et D pour courir, le gros bouton : il saute. Attrape toutes les etoiles !":"L and R to run, big button: it jumps. Catch all the stars!","G et D pour courir, le gros bouton : il saute. Evite les monstres et arrive au drapeau !":"L and R to run, big button: it jumps. Dodge the monsters and reach the flag!","G et D pour courir, le gros bouton : il saute. Arrive au drapeau avant le rival !":"L and R to run, big button: it jumps. Reach the flag before the rival!","Il court tout seul : D va plus vite, G ralentit, le gros bouton : il saute. Saute les obstacles et arrive avant le rival !":"It runs by itself: R goes faster, L slows down, big button: it jumps. Jump over the obstacles and get there before the rival!","Il court tout seul : D va plus vite, G ralentit, le gros bouton : turbo. Arrive avant le rival !":"It runs by itself: R goes faster, L slows down, big button: turbo. Get there before the rival!","G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival !":"L and R to change lane, big button: turbo. Pick up the good things and get there before the rival!","G et D pour changer de voie, le gros bouton : turbo. Ramasse les bons objets et arrive avant le rival ! Evite les mauvais objets.":"L and R to change lane, big button: turbo. Pick up the good things and get there before the rival! Avoid the bad things.","Le jeu":"The game","Quel jeu veux-tu ?":"Which game?","🍎 Attraper":"🍎 Catch","💨 Esquiver":"💨 Dodge","🌧 Ne rien rater":"🌧 Miss nothing","Mon personnage":"My character","Qui es-tu ?":"Who are you?","🐱 Un chat":"🐱 A cat","🤖 Un robot":"🤖 A robot","🐉 Un dragon":"🐉 A dragon","🚀 Une fusée":"🚀 A rocket","👻 Un fantôme":"👻 A ghost","🧙 Un magicien":"🧙 A wizard","🐸 Une grenouille":"🐸 A frog","🦉 Un hibou":"🦉 An owl","Sa couleur":"Its colour","De quelle couleur ?":"Which colour?","🔴 Rouge":"🔴 Red","🟠 Orange":"🟠 Orange","🟡 Jaune":"🟡 Yellow","🟢 Vert":"🟢 Green","🔵 Bleu":"🔵 Blue","🟣 Violet":"🟣 Purple","🩷 Rose":"🩷 Pink","⚪ Blanc":"⚪ White","Le monde":"The world","Où es-tu ?":"Where are you?","🌳 Une forêt":"🌳 A forest","🏙 La ville la nuit":"🏙 The city at night","🌌 L’espace":"🌌 Space","🌊 Sous l’eau":"🌊 Underwater","🏜 Un désert":"🏜 A desert","❄️ La neige":"❄️ Snow","Ce que j’attrape":"What I catch","Que veux-tu attraper ?":"What do you want to catch?","🎁 Ceux du monde":"🎁 The ones from this world","Ce que j’évite":"What I avoid","Que veux-tu éviter ?":"What do you want to avoid?","💣 Ceux du monde":"💣 The ones from this world","Le gros bouton":"The big button","Que fait le gros bouton ?":"What does the big button do?","🦘 Sauter":"🦘 Jump","💥 Tirer":"💥 Shoot","🛡 Bouclier":"🛡 Shield","💨 Turbo":"💨 Turbo","🧲 Aimant":"🧲 Magnet","G et D pour bouger, le gros bouton : il saute.":"L and R to move, big button: it jumps.","G et D pour bouger, le gros bouton : il tire.":"L and R to move, big button: it shoots.","G et D pour bouger, le gros bouton : il se protege avec un bouclier.":"L and R to move, big button: it protects itself with a shield.","G et D pour bouger, le gros bouton : il va plus vite.":"L and R to move, big button: it goes faster.","G et D pour bouger, le gros bouton : il attire les bons objets.":"L and R to move, big button: it attracts the good things."};   // la page anglaise (lang="en") traduit les bulles avec ce dictionnaire
@@ -1874,7 +1978,7 @@ Object.assign(M.EN, { "🏙 Je saute par-dessus les immeubles et je fais des fig
 Object.assign(M.EN, { "🌿 Je me balance de liane en liane": "🌿 I swing from vine to vine", "Tu te balances tout seul : G monte sur la liane, D descend, le gros bouton : tu la laches. Rattrape la liane suivante en l air, ramasse les etoiles et arrive sur la plateforme. Attention aux pointes, 3 vies !": "You swing by yourself: L climbs up the vine, R goes down, big button: you let go. Catch the next vine in the air, collect the stars and reach the platform. Watch out for the spikes, 3 lives!" });
 for (let n = 1; n <= NIV_MAX; n++) { M.EN['➕ Ajouter un niveau (ça fera ' + (n + 1) + ')'] = '➕ Add a level (that makes ' + (n + 1) + ')'; M.EN['✋ Rester à ' + n + (n > 1 ? ' niveaux' : ' niveau')] = '✋ Stay at ' + n + (n > 1 ? ' levels' : ' level'); }
 Object.assign(M.EN, { "Les plateformes": "The platforms", "Difficulté : les plateformes des niveaux ?": "Difficulty: the platforms in each level?", "🧱 Les mêmes à chaque niveau": "🧱 The same in every level", "🗺 À des endroits différents à chaque niveau": "🗺 In different places in every level", "Les pièges": "The traps", "Difficulté : et les pièges ?": "Difficulty: and the traps?", "⚖️ Autant de pièges à chaque niveau": "⚖️ The same number of traps", "👾 De plus en plus de pièges": "👾 More and more traps" });
-Object.assign(M.EN, { "⬆️ Je tire vers le haut": "⬆️ I shoot upwards", "➡️ Je tire vers la droite": "➡️ I shoot to the right", "🎯 Je tire autour de moi": "🎯 I shoot all around me", "👾 Je défends contre des vagues": "👾 I defend against waves", "🧱 Je casse": "🧱 I break things", "🧱 Je casse un mur de briques avec une balle": "🧱 I break a brick wall with a ball" });
+Object.assign(M.EN, { "⬆️ Je tire vers le haut": "⬆️ I shoot upwards", "➡️ Je tire vers la droite": "➡️ I shoot to the right", "🎯 Je tire autour de moi": "🎯 I shoot all around me", "👾 Je défends contre des vagues": "👾 I defend against waves", "🧱 Je casse": "🧱 I break things", "🏓 Je rebondis": "🏓 I bounce", "🏓 Je joue au pong contre la console": "🏓 I play pong against the console", "🐦 Je bats des ailes entre les tuyaux": "🐦 I flap between the pipes", "🧱 Je casse un mur de briques avec une balle": "🧱 I break a brick wall with a ball" });
 Object.assign(M.EN, { "Le genre": "The genre", "Quel jeu ?": "Which game?", "🏃 Je saute de plateforme en plateforme": "🏃 I jump from platform to platform", "💨 Je cours tout seul et j’évite les obstacles": "💨 I run on my own and dodge obstacles", "🛸 Je reste en bas, tout vient vers moi": "🛸 I stay at the bottom, everything comes at me", "🧺 J’attrape ce qui tombe": "🧺 I catch what falls" });
 // le niveau 1 de la plateforme tel que le jeu le fait (point de départ de « Placer à la main ») ; null si ce jeu n'est pas une plateforme
 M.platDefaut = r => {
@@ -1892,6 +1996,6 @@ const LIB_TIR = { bon: { nom: 'Mes tirs', q: 'Avec quoi tires-tu ?' }, mal: { no
 Object.assign(M.EN, { "Mes tirs": "My shots", "Avec quoi tires-tu ?": "What do you shoot with?", "Mes ennemis": "My enemies", "Que veux-tu détruire ?": "What do you want to destroy?" });
 Object.assign(M.EN, { "Leur façon de bouger": "How they move", "Comment bougent tes ennemis ?": "How do your enemies move?", "➡️ Tout droit": "➡️ Straight ahead", "〰️ En zigzag": "〰️ Zigzag", "🎯 Ils me poursuivent": "🎯 They chase me", "⚡ Ils accélèrent en approchant": "⚡ They speed up as they come", "Leurs types": "Their types", "Quels ennemis veux-tu ?": "Which enemies do you want?", "👾 Tous pareils": "👾 All the same", "💪 Des costauds : 3 tirs pour les détruire": "💪 Tough ones: 3 shots to destroy them", "💨 Des rapides": "💨 Fast ones", "🎲 Un peu de tout": "🎲 A bit of everything", "Aller plus loin": "Go further" });   // tirs : comment bougent les ennemis, leurs types
 const LIB_CASSE = { bon: { nom: 'Ma balle', q: 'Quelle balle veux-tu ?' } };
-M.lib = (a, r, k) => (r && r.jeu === 'casse-briques' && LIB_CASSE[a.id]?.[k]) || (r && FIXES[r.jeu] && r.jeu !== 'casse-briques' && LIB_TIR[a.id]?.[k]) || a[k];   // k = 'q' ou 'nom' : le texte de l'étape pour ce jeu
+M.lib = (a, r, k) => (r && CHOIX[r.jeu]?.includes('bon') && LIB_CASSE[a.id]?.[k]) || (r && FIXES[r.jeu] && !CHOIX[r.jeu] && LIB_TIR[a.id]?.[k]) || a[k];   // k = 'q' ou 'nom' : le texte de l'étape pour ce jeu
 M.ARBRES = AR.ARBRES; M.ETAPES = ETAPES; M.GROUPES = { msg: { icone: '💬', nom: 'Message du jeu' } }; M.genreDe = jeu => ETAPES[0].bulles.find(b => b.id === GENRE_DE[jeu]); M.saute = saute; M.nivBulles = nivBulles; M.mot = mot; M.nbNiv = nbNiv; M.DEFAUT = DEFAUT; M.recetteComplete = recetteComplete; M.assembler = assembler;
 })(typeof module === 'object' ? module.exports : (window.JeuxBulles = {}));

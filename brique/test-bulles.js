@@ -128,6 +128,21 @@ console.log('ok : tir autour x personnage, tirs, ennemis');
   assert(r >= 3000 && r % 100 === 3, 'casse : le pilote casse des briques sans perdre de vie (' + r + ')');
   assert(J.assembler({ jeu, monde: 'neige' }) !== J.assembler({ jeu, monde: 'espace' }) && J.assembler({ jeu }).startsWith('# Casse'), 'casse : le monde change le code');
   console.log('ok : casse-briques x mondes, balles, pilote'); }
+// pong (la balle et le monde se choisissent) et flappy (le personnage et le monde) : chaque monde x choix joue ; pong : un pilote qui suit la balle ne perd aucun point, un joueur immobile en perd ; flappy : un pilote qui vise le trou passe des tuyaux, un joueur immobile tombe
+{ const { essai } = require('./essai-verif.js'), nonChoisies = ['mal', 'compo', 'typeEn', 'action', 'couleur', 'niv'];
+  const pong = { genre: 'rebond', jeu: 'pong' }, flappy = { genre: 'rebond', jeu: 'flappy' };
+  assert(J.genreDe('pong').id === 'rebond' && J.genreDe('flappy').id === 'rebond', 'rebond : le genre des deux jeux');
+  assert(J.saute('monde', pong) === false && J.saute('bon', pong) === false && J.saute('perso', pong) && nonChoisies.every(id => J.saute(id, pong)), 'pong : etapes choisies (monde, balle)');
+  assert(J.saute('monde', flappy) === false && J.saute('perso', flappy) === false && J.saute('bon', flappy) && nonChoisies.every(id => J.saute(id, flappy)), 'flappy : etapes choisies (monde, personnage)');
+  assert(J.lib(J.ETAPES.find(e => e.id === 'bon'), pong, 'q') === 'Quelle balle veux-tu ?', 'pong : la question de la balle');
+  for (const [i, monde] of mondes.entries()) { jouer({ monde, bon: formesBon[i % formesBon.length] }, monde, 'pong'); jouer({ monde, perso: persos[i % persos.length] }, monde, 'flappy'); }
+  jouer({ bon: 'img', imgs: { bon: 2 } }, 'balle image', 'pong'); jouer({ perso: 'img', imgs: { perso: 3 } }, 'perso image', 'flappy');
+  const mes = (jeu, scen, mesure) => essai(jeu, J.assembler({ jeu }), { scen, mesure, quand: [9], duree: 9.1 })[0];
+  assert(mes('pong', 'return k == 0 && by < ry + 25 || k == 1 && by > ry + 25', 'lui') === 0 && mes('pong', 'return false', 'lui') >= 1, 'pong : le pilote qui suit la balle ne perd pas, le joueur immobile perd');
+  const vise = 'var tg = 140.0 var best = 999.0 for i: 0 .. 2 if PX[i] + 30 > 60 && PX[i] < best best = PX[i] tg = PG[i] + 48.0 end end return k == 2 && y > tg + 8 && int(t * 30) % 2 == 0';
+  assert(mes('flappy', vise, 'pts * 100 + (fin ? 1 : 0)') >= 300 && mes('flappy', 'return false', '(fin ? 1 : 0)') === 1 && mes('flappy', vise, '(fin ? 1 : 0)') === 0, 'flappy : le pilote passe des tuyaux, le joueur immobile tombe');
+  assert(J.assembler({ jeu: 'flappy', perso: 'chat' }) !== J.assembler({ jeu: 'flappy', perso: 'robot' }) && J.assembler({ jeu: 'pong', monde: 'neige' }) !== J.assembler({ jeu: 'pong', monde: 'espace' }), 'pong / flappy : le choix change le code');
+  console.log('ok : pong et flappy x mondes, choix, pilotes'); }
 
 // ennemis des 3 tirs (haut, droite, autour) : leur facon de bouger x leurs types, joues avec un pilote automatique (tire sans arret, bouge en va-et-vient) ; propres aux tirs, proposes dans « Que veux-tu personnaliser ? » (opt) sans etre poses d'office
 { const { essai } = require('./essai-verif.js'), TIRS = ['tir-haut', 'tir-perso', 'tir-autour'], pilote = { 'tir-autour': 'if k == 2 return int(t * 6) % 2 == 0 end return k == 1', def: 'if k == 2 return int(t * 6) % 2 == 0 end if k == 0 return int(t / 1.5) % 2 == 0 end return int(t / 1.5) % 2 == 1' };

@@ -112,7 +112,7 @@ if (require.main === module) {
   manque.forEach(c => console.log('sans traduction : ' + c));
   inutiles.forEach(c => console.log('ne sert plus    : ' + c));
   let ko = 0;
-  for (const m of traduire(html).matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) if (!/\bsrc=|application\/json/.test(m[1]))
+  for (const m of traduire(html).matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) if (!/\bsrc=|application\/(ld\+)?json/.test(m[1]))
     try { new vm.Script(m[2]); } catch (e) { ko++; console.error('ÉCHEC : script de la page anglaise invalide : ' + e.message); }
   console.log(`${vus.size} segments, ${Object.keys(d).length} entrées, ${manque.length} sans traduction, ${inutiles.length} en trop`);
   process.exit(ko ? 1 : 0);

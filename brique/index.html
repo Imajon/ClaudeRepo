@@ -1063,14 +1063,15 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== PANIER : compte, point relais, paiement ===== -->
-<main id="vuePanier" class="shop hide" data-version="1.3">
+<main id="vuePanier" class="shop hide" data-version="1.4">
   <div id="panierBloc" class="sh-bloc sh-panier">
     <h3 class="sh-h">Mon panier.</h3>
     <ol id="cmdEtapes" class="cmd-etapes"><li class="on">1. Panier</li><li>2. Livraison</li><li>3. Paiement</li></ol>
     <div class="sh-etape cmd-recap"><b>Récapitulatif</b>
       <div id="panierLignes"></div>
       <p id="panierSuite" class="cmd-suite">Prochaine étape : <b>la livraison</b> (compte et point relais), ensuite <b>le paiement</b>.</p>
-      <button id="cmdValider" class="sh-btn">Passer à la livraison</button>
+      <button id="cmdValider" class="sh-btn" disabled>Passer à la livraison</button>
+      <p class="cmd-suite">La vente n'est pas encore ouverte : elle sera lancée d'ici quelques jours. Vous pouvez déjà remplir votre panier.</p>
     </div>
     <div id="cmdSuite" class="hide">
     <div class="sh-etape"><b>2. Livraison · mon compte</b>

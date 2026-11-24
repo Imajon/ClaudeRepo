@@ -149,9 +149,35 @@ console.log('ok : tir autour x personnage, tirs, ennemis');
   assert(new Set(figs.map(f => J.assembler({ jeu: 'toits', figtoit: f }))).size === figs.length, 'chaque figure change le code');
   console.log('ok : toits x figures'); }
 
+// lianes : on se balance de liane en liane (G monte, D descend, gros bouton lache) ; chaque monde x perso joue (aussi sur l'ecran de fin) ; un pilote automatique (Berry, boutons scriptes) gagne, un autre perd
+{ const mondes3 = choix[3];
+  assert(J.saute('niv', { jeu: 'lianes' }) && J.saute('figtoit', { jeu: 'lianes' }) && J.saute('action', { jeu: 'lianes' }) && J.saute('obst', { jeu: 'lianes' }) && !J.saute('bon', { jeu: 'lianes' }) && !J.saute('gagne', { jeu: 'lianes' }) && !J.saute('saute', { jeu: 'lianes' }), 'lianes : ni niveaux, ni figure, ni gros bouton a choisir ; les etoiles (bon), le cartel et le mot du saut oui');
+  assert.strictEqual(J.recetteComplete({ jeu: 'lianes', niv: 'n4' }).niv, 'un', 'lianes : un seul niveau');
+  assert.strictEqual(J.genreDe('lianes').id, 'plateforme', 'lianes : dans le genre plateforme');
+  for (const [i, monde] of mondes3.entries()) {
+    const code = J.assembler({ jeu: 'lianes', monde, perso: persos[i], couleur: couleurs[i] });
+    assert(code.includes('math.atan2') && !code.includes('def immeuble'), 'lianes : le balancier, pas les immeubles');
+    for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1'), code.replace(/FIN = 0/g, 'FIN = 2')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok && v.ops <= 600 && v.memoire <= 72000, `lianes ${monde} : ${v.erreur || v.ops + ' ' + v.memoire}`); }
+  }
+  // le pilote lache quand la liane monte vers l'avant (sin(PH) > seuil) et garde la corde vers 80 px ; verif ne joue que ~10 s : on lit l'etat a 9,5 s
+  const pilote = seuil => { const fin = `
+var _m = maj var _t0 = -1.0
+appui = def (k) return k == 2 && AT >= 0 && 0.85 * math.sin(PH) > ${seuil} && math.cos(PH) > 0 end
+bouton = def (k) return AT >= 0 && ((k == 1 && LR < 72.0) || (k == 0 && LR > 92.0)) end
+maj = def (dt)
+  if _t0 < 0 _t0 = temps() end
+  _m(dt)
+  if temps() - _t0 >= 9.5 raise "mesure", str(FIN) + " " + str(PTS) + " " + str(VIES) + " " + str(int(GX)) end
+end
+`; const m = /mesure: (\S+) (\S+) (\S+) (\S+)/.exec(JSON.parse(execFileSync(VERIF, [], { input: J.assembler({ jeu: 'lianes' }) + fin })).erreur || ''); assert(m, 'lianes : pas de mesure ' + seuil); return { fin: +m[1], pts: +m[2], vies: +m[3], x: +m[4] }; };
+  const g = pilote(0.4), p = pilote(0.05);
+  assert(g.fin === 1 && g.vies === 3 && g.pts >= 10 && g.x >= 1920, 'lianes : le pilote qui lache au bon moment arrive sur la plateforme sans perdre de vie : ' + JSON.stringify(g));
+  assert(p.fin === 2 && p.vies === 0, 'lianes : lacher trop tot = tomber dans les pointes, 3 vies perdues : ' + JSON.stringify(p));
+  console.log('ok : lianes (pilote gagnant ' + JSON.stringify(g) + ', perdant ' + JSON.stringify(p) + ')'); }
+
 // « Message du jeu » : cartel de victoire et mot du saut, joues avec l'ecran de fin (FIN = 1) ; les jeux sans victoire / sans saut sautent ces etapes
 { let k = 0;
-  for (const jeu of ['plat-but', 'plat-attrape', 'plat-evite', 'plat-course', 'toits', 'cote', 'attrape']) for (const gagne of J.ETAPES.find(e => e.id === 'gagne').bulles.map(b => b.id)) for (const saute of J.ETAPES.find(e => e.id === 'saute').bulles.map(b => b.id)) for (const niv of ['un', 'n3']) {
+  for (const jeu of ['plat-but', 'plat-attrape', 'plat-evite', 'plat-course', 'toits', 'lianes', 'cote', 'attrape']) for (const gagne of J.ETAPES.find(e => e.id === 'gagne').bulles.map(b => b.id)) for (const saute of J.ETAPES.find(e => e.id === 'saute').bulles.map(b => b.id)) for (const niv of ['un', 'n3']) {
     const code = J.assembler({ jeu, gagne, saute, niv });
     for (const c of [code, code.replace(/FIN = 0/g, 'FIN = 1')]) { const v = JSON.parse(execFileSync(VERIF, [], { input: c })); assert(v.ok, `${jeu} ${gagne} ${saute} ${niv} : ${v.erreur}`); assert(v.ops <= 600 && v.memoire <= 74000, `${jeu} ${gagne} ${saute} ${niv} : trop lourd (${v.ops}, ${v.memoire})`); k++; }
   }

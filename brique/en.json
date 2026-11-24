@@ -1746,5 +1746,10 @@
   "Ce compte s'ouvre avec un code : il n'a pas de mot de passe.": "This account opens with a code: it has no password.",
   "Mot de passe actuel incorrect.": "Current password incorrect.",
   "Tu animes des groupes : écris au support (chat de cette page) pour supprimer ce compte.": "You run groups: write to support (the chat on this page) to delete this account.",
-  "L'équipe n'a pas encore répondu : patiente un peu avant d'écrire encore.": "The team has not answered yet: wait a little before writing again."
+  "L'équipe n'a pas encore répondu : patiente un peu avant d'écrire encore.": "The team has not answered yet: wait a little before writing again.",
+  "Une image qui s'affiche sur la carte de ton jeu dans la Communauté": "An image shown on your game card in the Community",
+  "🖼 Image d'aperçu (facultatif)": "🖼 Preview image (optional)",
+  "image d'aperçu invalide ou trop lourde": "preview image invalid or too large",
+  "Retirer l'image": "Remove the image",
+  "Cette image ne s\\'ouvre pas : essaie un JPG ou un PNG.": "This image will not open: try a JPG or a PNG."
 }

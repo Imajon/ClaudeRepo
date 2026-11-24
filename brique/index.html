@@ -359,6 +359,8 @@ textarea:focus{outline:none;border-color:var(--acc)}
 .sc-actions .sec{flex:1}
 #scZero{color:var(--mute)}#scZero:hover{color:var(--ko);border-color:var(--ko)}
 #scPartage .partage{margin-top:10px}
+.sc-apercu{display:flex;align-items:center;gap:8px;margin:8px 0}.sc-apercu img{height:48px;border-radius:6px}.sc-apercu button.x{padding:2px 8px}
+.vig .apercu{width:100%;height:100%;object-fit:cover}.apercus .apercu-mod{height:60px;border-radius:4px}
 .occupe{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);padding:14px 22px;border-radius:16px;background:var(--panel);color:var(--txt);border:2px solid var(--acc);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:18px;pointer-events:none}
 .occupe small{color:var(--mute);font-size:14px}.occupe small:empty{display:none}
 .occupe ol{flex-basis:100%;margin:4px 0 0;padding:8px 0 0;border-top:1px solid var(--line);list-style:none;font-size:15px}.occupe ol:empty{display:none}
@@ -1990,7 +1992,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== CRÉER (mode script) : tu décris, l'IA écrit le programme Berry, ta console le fait tourner. Aucune liste, aucun choix tout fait. ===== -->
-<main id="vueScript" class="hide" data-version="1.28">
+<main id="vueScript" class="hide" data-version="1.29">
   <div class="sc-barre">                         <!-- sous le menu, au-dessus des cadres : mes jeux en chantier, mon groupe, animateur -->
     <span class="sc-jeux"><label for="scJeux">🎮 Mon jeu</label><select id="scJeux"></select><button id="scRenommer" class="sec" title="Renommer ce jeu">✏️</button><button id="scZero" class="sec" title="Efface ce jeu, son programme et tes essais (pas celui gardé dans la console)">🗑 Supprimer ce jeu</button><select id="scDepart" title="Le jeu de départ : une fiche toute prête que tu changes avec l'IA"><option value="plateforme">🧗 Plateforme</option><option value="casse">🧱 Casse-briques</option><option value="">⬜ Vide</option></select><button id="scNouveau" class="sec">＋ Nouveau jeu</button></span>
     <span id="moiBox" class="moi"><span id="moiTxt"></span><span id="tokTxt"></span><button id="rejoindreBtn" class="sec">👤 Se connecter</button></span>
@@ -2039,6 +2041,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <button id="scMettre" class="big" disabled>📟 Envoyer sur la console</button>
       <button id="scPublier" class="sec">📢 Publier</button><button id="scCommun" class="sec" title="Ton niveau part à la suite du jeu commun, signé de ton pseudo">🧱 Ajouter au jeu commun</button>
     </div>
+    <div class="sc-apercu"><button id="scApercuBtn" class="sec" title="Une image qui s'affiche sur la carte de ton jeu dans la Communauté">🖼 Image d'aperçu (facultatif)</button><input type="file" id="scApercuFic" accept="image/*" class="hide"><span id="scApercuVue"></span></div>
     <div id="scPartage"></div>
     <details id="scNote" class="hide" style="margin:8px 0"><summary>📝 Laisser une note à l'équipe Bricode</summary>   <!-- comptes connectés : observations lues par l'admin (Espace animateur) -->
       <textarea id="scNoteTxt" rows="3" maxlength="500" style="width:100%;margin-top:6px" placeholder="Un bug, une idée, quelque chose de bizarre… dis-nous ce que tu as vu."></textarea>
@@ -3420,7 +3423,7 @@ async function rafraichir() {
       + (n.stats.multi?.courses ? `<br>🏁 ${n.stats.multi.courses} course${n.stats.multi.courses > 1 ? 's' : ''} à plusieurs${n.stats.multi.roi ? ` · 👑 ${esc(n.stats.multi.roi.pseudo)} (${n.stats.multi.roi.victoires} victoire${n.stats.multi.roi.victoires > 1 ? 's' : ''})` : ''}` : ''),
       top[0].stats.parties, n.stats.parties)).join('') || vide('Aucun jeu publié pour l\'instant : sois le premier !');
   nouveaux.innerHTML = [...enLigne].sort((a, b) => b.cree - a.cree).slice(0, 8).map(n => `<div class="carte">
-      <div class="vig">${n.niv.images?.length ? `<img class="mini pix" src="${imgUrl(n.niv.images[0])}" alt="">` : n.niv.script ? '<span style="font-size:40px">📜</span>' : `<img class="mini" src="${vignette(n.niv.fiche ? Fiche.apercu(n.niv).rows : n.niv.rows)}" alt="">`}</div>
+      <div class="vig">${n.apercu ? `<img class="apercu" src="${esc(n.apercu)}" alt="">` : n.niv.images?.length ? `<img class="mini pix" src="${imgUrl(n.niv.images[0])}" alt="">` : n.niv.script ? '<span style="font-size:40px">📜</span>' : `<img class="mini" src="${vignette(n.niv.fiche ? Fiche.apercu(n.niv).rows : n.niv.rows)}" alt="">`}</div>
       <div class="t">${esc(n.titre)}${Date.now() - n.cree < 864e5 ? '<span class="neuf">NEUF</span>' : ''}</div>
       <small class="r" style="color:var(--mute)">par ${esc(n.pseudo)} · ${depuis(n.cree)}${n.commun ? ' · 🧱 commun' : ''}<br>code <b style="color:var(--acc2)">${esc(n.code || '')}</b> · <a href="#" data-signaler="${n.id}" title="Une image ou un texte choquant ? Un adulte va regarder." style="color:var(--mute)">⚑ signaler</a></small>${bouton(n)}</div>`).join('')
     || vide('Aucun niveau pour l\'instant.');
@@ -3645,7 +3648,7 @@ async function rendreAnim(donnees) {
   if (d.commandes) animCmdListe.innerHTML = d.commandes.map(c => `<div class="rang"><div class="qui"><div><b>${resumeCommande(c)}</b> · ${(c.total / 100).toFixed(2)} € · ${STATUT_CMD[c.statut]}</div>
     <small>${new Date(c.cree).toLocaleString('fr-FR')}${c.relais ? ` · relais n° ${esc(c.relais.id)} : ${esc(c.relais.nom)}, ${esc(c.relais.cp)} ${esc(c.relais.ville)}` : ''}${c.stripe ? ` · <a href="${esc(c.stripe)}" target="_blank" rel="noopener">nom et téléphone sur Stripe ›</a>` : ''}</small></div>
     ${c.statut === 'payee' ? `<button class="jouer" data-expedier="${esc(c.id)}">📦 Expédiée</button>` : ''}</div>`).join('') || '<span class="vide">Aucune commande payée pour le moment.</span>';
-  const attenteTxt = n => n.attente ? `<br><b style="color:var(--ko)">⏳ en attente : ${esc(n.raison || 'à vérifier')}${n.signale ? ` · signalé par ${n.signale} joueur${n.signale > 1 ? 's' : ''}` : ''}</b>${n.images?.length ? `<span class="apercus" data-apercu="${n.id}"></span>` : ''}` : '';
+  const attenteTxt = n => n.attente ? `<br><b style="color:var(--ko)">⏳ en attente : ${esc(n.raison || 'à vérifier')}${n.signale ? ` · signalé par ${n.signale} joueur${n.signale > 1 ? 's' : ''}` : ''}</b>${n.images?.length || n.apercu ? `<span class="apercus" data-apercu="${n.id}"></span>` : ''}` : '';
   const validerBtn = n => n.attente ? `<button class="jouer" data-valider="${n.id}" title="J'ai regardé : le jeu part dans la communauté">✓ Valider</button>` : '';
   const aModerer = d.aModerer ? `<section><h2>🛡 À vérifier — créateurs hors groupe (${d.aModerer.length})</h2>
     <p class="aide">L'IA a eu un doute sur leurs images, ou des joueurs les ont signalés. Valider = le jeu part dans la communauté ; masquer = il n'y va pas.</p>
@@ -3699,7 +3702,10 @@ async function rendreAnim(donnees) {
       ${validerBtn(n)}<button class="jouer" data-masquer="${n.id}" data-etat="${n.masque ? 0 : 1}">${n.masque ? '👁 Remontrer' : '🚫 Masquer'}</button></div>`).join('') || '<span class="vide">Aucun niveau pour l\'instant.</span>'}</div>
   </section>`).join('') || support + notes + quotas + aModerer;
   const enAttente = [...(d.aModerer || []), ...d.groupes.flatMap(g => g.niveaux)].filter(n => n.attente);
-  for (const el of animGroupes.querySelectorAll('[data-apercu]')) imgApercus(el, enAttente.find(n => n.id === el.dataset.apercu)?.images, true);
+  for (const el of animGroupes.querySelectorAll('[data-apercu]')) {
+    const n = enAttente.find(n => n.id === el.dataset.apercu); imgApercus(el, n?.images, true);
+    if (n?.apercu) { const i = new Image(); i.src = n.apercu; i.className = 'apercu-mod'; el.prepend(i); }   // l'image d'aperçu choisie par l'enfant
+  }
 }
 grCreer.onclick = async () => { try { rendreAnim(await api('api/animateur/groupe', { nom: grNom.value }, session)); grNom.value = ''; } catch (e) { alert(e.message); } };
 let animDonnees = null;
@@ -4067,7 +4073,7 @@ function imgPaquet(images) {                             // ce qui suit l'octet 
   }
   function choisir(i) {                                  // change de chantier ; un programme modifié à la main n'est pas perdu
     garderMain();
-    chantiers.cur = i; etat = chantiers.liste[i]; mettreCode(etat.script); scPartage.innerHTML = ''; rendreImages(); scCompris.textContent = 'Écris ce que tu veux créer, puis appuie sur « Envoyer à l\'IA ».';
+    chantiers.cur = i; etat = chantiers.liste[i]; mettreCode(etat.script); scPartage.innerHTML = ''; rendreImages(); majApercu(); scCompris.textContent = 'Écris ce que tu veux créer, puis appuie sur « Envoyer à l\'IA ».';
     sauver(); majJeux(); rendre(); majAide();
   }
   const nouveau = (nom, e = vide()) => { chantiers.liste.push({ ...e, nom: unique(nom) }); choisir(chantiers.liste.length - 1); };
@@ -4721,13 +4727,29 @@ if global.contains("dessine") global.dessine = _brique_v(global.dessine) end
     etat = chantiers.liste[chantiers.cur = Math.min(chantiers.cur, chantiers.liste.length - 1)]; scCode.value = etat.script; choisir(chantiers.cur);
   };
   const partage = (t, code) => scPartage.innerHTML = `<div class="partage">${t} · code <span class="code">${esc(code)}</span><br><small>Tes copains le récupèrent sur Bricode avec ce code (Communauté), puis le mettent sur leur console.</small></div>`;
+  scApercuBtn.onclick = () => scApercuFic.click();
+  scApercuFic.onchange = () => {                         // l'image est recadrée en 160x120 et compressée ici : le serveur ne reçoit qu'un petit JPEG
+    const f = scApercuFic.files[0]; scApercuFic.value = ''; if (!f) return;
+    const im = new Image(); im.onerror = () => dire('Cette image ne s\'ouvre pas : essaie un JPG ou un PNG.', false);
+    im.onload = () => {
+      const c = document.createElement('canvas'); c.width = 160; c.height = 120;
+      const k = Math.max(160 / im.width, 120 / im.height), w = im.width * k, h = im.height * k;
+      c.getContext('2d').drawImage(im, (160 - w) / 2, (120 - h) / 2, w, h); URL.revokeObjectURL(im.src);
+      etat.apercu = c.toDataURL('image/jpeg', .75); sauver(); majApercu();
+    };
+    im.src = URL.createObjectURL(f);
+  };
+  function majApercu() {
+    scApercuVue.innerHTML = etat.apercu ? `<img src="${etat.apercu}" alt=""><button class="sec x" id="scApercuX" title="Retirer l'image">✕</button>` : '';
+    if (etat.apercu) scApercuX.onclick = () => { delete etat.apercu; sauver(); majApercu(); };
+  }
   const publierScript = async commun => {                // publier (ou ajouter au jeu commun) : seulement un programme qui tourne sur la console sans erreur
     if (!EN_LIGNE) return dire('Hors ligne : la publication a besoin du serveur Bricode.', false);
     if (!moi) { ouvrirConnexion('co'); return dire(adulte() ? 'Un jeu publié est signé d\'un pseudo : connecte-toi avec ton e-mail et ton mot de passe (ou un code).' : 'Connecte-toi d\'abord (ou crée ton compte).', false); }
     if (!etat.script || etat.erreur || etat.surConsole !== etat.essais.length) return dire('Mets ton jeu sur la console et vérifie qu\'il tourne sans erreur avant de le publier.', false);
     const titre = prompt(commun ? 'Le nom de ton niveau ?' : 'Le nom de ton jeu ?', etat.titre || etat.nom || ''); if (titre === null) return;
     try {
-      const { code, attente } = await api('api/niveaux', { ...ident(), titre, commun, script: etat.script, images: (etat.images || []).map(({ nom, l, h, n, pal, px }) => ({ nom, l, h, n, pal, px })) });
+      const { code, attente } = await api('api/niveaux', { ...ident(), titre, commun, script: etat.script, apercu: etat.apercu, images: (etat.images || []).map(({ nom, l, h, n, pal, px }) => ({ nom, l, h, n, pal, px })) });
       etat.titre = titre; sauver(); partage(`✓ « ${esc(titre || 'Sans titre')} » ${commun ? 'est envoyé au jeu commun' : 'est publié'}, signé ${esc(pseudo())}${attente ? `<br>⏳ ${esc(attente)}` : ''}`, code); rafraichir();
     } catch (e) { dire(e.message, false); }
   };

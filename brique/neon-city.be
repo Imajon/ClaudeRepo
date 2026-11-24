@@ -1,5 +1,6 @@
 # Neon City
 import math
+# Garage (dernier choix du menu) : vehicule, couleur, carte. Objets : caisses ? ramassees en roulant (turbo, bouclier, coeur, temps, obus).
 # Modes (menu G / D, P3 = jouer) : TAXI (clients), COURSE / PERMIS (circuit, tours, rivaux, medailles or / argent / bronze), BATTLE (ballons : G + D ensemble = tirer un obus, caisses ? = munitions). Les scenarios sont dans la liste SC.
 # Un taxi dans une ville de bord de mer au coucher du soleil. G / D = tourner. Gros bouton (P3) tenu = gaz ; double appui = change de vitesse (avant / arriere) ; relache = la voiture ralentit.
 # Prends le client (rond vert), depose-le (rond rose) vite : plus c'est rapide, plus tu gagnes. Chaque course attire des flics. 3 coeurs. 1000 $ = gagne.
@@ -17,6 +18,10 @@ var pv = 3 var argent = 0 var fait = 0 var ph = 0 var tx = 0 var ty = 0 var tl =
 var SC = [["TAXI", "Clients a deposer vite, 1000 $ = gagne", 0, 0, 0, 0, 0, 0, 0, 0], ["PERMIS", "1 tour chrono, petit circuit", 1, 1, 0, 0, 0, 11, 14, 19], ["PERMIS GT", "1 tour chrono, grand circuit", 1, 1, 0, 0, 1, 19, 24, 32], ["COURSE", "3 tours contre 3 rivaux", 1, 3, 3, 90, 0, 0, 0, 0], ["GRAND PRIX", "2 tours contre 5 rivaux rapides", 1, 2, 5, 115, 1, 0, 0, 0], ["BATTLE 2", "Fais eclater les ballons de 2 rivaux", 2, 0, 2, 70, 0, 3, 0, 0], ["BATTLE 4", "Fais eclater les ballons de 4 rivaux", 2, 0, 4, 85, 0, 2, 0, 0]]
 var CIR = [[1, 1, 3, 3], [1, 1, 6, 4]]
 var mode = 0 var sel = 0 var nt = 4 var tours = 0 var nriv = 0 var vriv = 0.0 var cx0 = 0 var cy0 = 0 var cx1 = 0 var cy1 = 0
+# vehicules : nom, vitesse max, virage, acceleration
+var VEH = [["TAXI", 165.0, 1.0, 220], ["SPORT", 190.0, 0.85, 260], ["KART", 150.0, 1.4, 300], ["4X4", 145.0, 1.2, 200]]
+var THEMES = ["COUCHER", "NUIT", "NEIGE"] var VCOL = []
+var ve = 0 var vc = 0 var tm = 0 var gl = 0 var acc = 220 var vir = 1.0 var turbo = 0.0
 var ball = 3 var cp = 0 var rang = 1 var cd = 0.0 var mun = 0 var tir = 0.0 var kills = 0 var ft = "" var fs = "" var fc = 0
 var CK = [] var BR = [] var OX = [] var OY = [] var OA = [] var OL = [] var OQ = [] var IX = [] var IY = []
 var CX = [] var CY = [] var CD = [] var GX = [] var GY = [] var CT = [] var CW = [] var CA = [] var LX = [] var LY = [] var CC = []
@@ -98,11 +103,46 @@ def rival(i)
 end
 
 def caisse(k)
-  IX[k] = hasard(0, NX - 1) * 128 + 24 IY[k] = hasard(0, NY - 1) * 128 + 24
+  if mode == 1                                   # sur le circuit : un point au hasard d un des 4 cotes
+    var c = hasard(0, 3) var w = (cx1 - cx0) * 128 var e = (cy1 - cy0) * 128
+    if c == 0 IX[k] = cx0 * 128 + 24 + hasard(0, w) IY[k] = cy0 * 128 + 24 elif c == 1 IX[k] = cx1 * 128 + 24 IY[k] = cy0 * 128 + 24 + hasard(0, e) elif c == 2 IX[k] = cx0 * 128 + 24 + hasard(0, w) IY[k] = cy1 * 128 + 24 else IX[k] = cx0 * 128 + 24 IY[k] = cy0 * 128 + 24 + hasard(0, e) end
+  else
+    IX[k] = hasard(0, NX - 1) * 128 + 24 IY[k] = hasard(0, NY - 1) * 128 + 24
+  end
+end
+
+# objet ramasse : turbo, bouclier, coeur, temps en plus (taxi avec client), obus (battle)
+def objet()
+  var r = hasard(0, mode == 2 ? 4 : 3)
+  if mode == 1 r = 0 end
+  if r == 0
+    turbo = 3.0 msg = "TURBO !"
+  elif r == 1
+    inv = 5.0 msg = "BOUCLIER !"
+  elif r == 2 || (r == 3 && mode == 0 && ph == 0)
+    if pv < 3 pv += 1 end
+    msg = "+1 COEUR"
+  elif r == 3 && mode == 0
+    tl += 8.0 msg = "+8 s"
+  else
+    if mun < 3 mun += 2 end
+    if mun > 3 mun = 3 end
+    msg = "OBUS +2"
+  end
+  msgt = 1.2 son(1200, 60)
+end
+
+def caisses()
+  var i = 0
+  while i < size(IX)
+    if d2(IX[i], IY[i], x, y) < 500 objet() caisse(i) end
+    i += 1
+  end
 end
 
 def reset()
   var s = SC[sel]
+  VMAX = VEH[ve][1] vir = VEH[ve][2] acc = VEH[ve][3] TAXI = VCOL[vc] turbo = 0.0
   mode = s[2] ball = s[7] tours = s[3] nriv = s[4] vriv = s[5] + 0.0 nt = mode == 0 ? NT : (mode == 2 ? 2 : 0)
   CX = [] CY = [] CD = [] GX = [] GY = [] CT = [] CW = [] CA = [] LX = [] LY = [] CC = [] CK = [] BR = [] OX = [] OY = [] OA = [] OL = [] OQ = [] IX = [0, 0, 0] IY = [0, 0, 0]
   x = 408.0 y = 280.0 h = 0.0 v = 0.0 g = 1 sg = 1 tap = -9.0 pv = 3 argent = 0 fait = 0 ph = 0 inv = 0.0 T = 0.0 cp = 0 rang = 1 cd = 0.0 mun = 2 tir = 0.0 kills = 0
@@ -123,24 +163,43 @@ def reset()
       ph = 1 cd = 2.0
       i = 0
       while i < nriv spawn(3) i += 1 end
-      i = 0
-      while i < 3 caisse(i) i += 1 end
       msg = "BATTLE ! G + D = TIRER"
     end
   end
+  i = 0
+  if mode == 1 && nriv == 0 IX = [] IY = [] end   # permis : pas de caisses, le chrono reste une affaire d adresse
+  while i < size(IX) caisse(i) i += 1 end
   camX = x - 160 camY = y - 120
   msgt = 3.0
   score(0)
 end
 
+# carte : couleurs de la ville (0 coucher de soleil, 1 nuit neon, 2 neige)
+def theme(k)
+  if k == 1
+    ROAD = rgb(14, 12, 28) DASH = rgb(60, 230, 230) SIDE = rgb(40, 34, 70) GRASS = rgb(16, 60, 70) PALM = rgb(10, 90, 90) TRUNK = rgb(70, 50, 60) SHAD = rgb(6, 4, 14)
+    RC = [rgb(255, 40, 150), rgb(0, 220, 255), rgb(255, 120, 0), rgb(160, 60, 255), rgb(120, 255, 120)]
+    RL = [rgb(255, 120, 200), rgb(120, 240, 255), rgb(255, 180, 90), rgb(200, 140, 255), rgb(190, 255, 190)]
+    CIEL = [rgb(4, 2, 20), rgb(10, 4, 34), rgb(20, 6, 50), rgb(36, 10, 70), rgb(60, 14, 90), rgb(90, 20, 100), rgb(130, 30, 110), rgb(170, 50, 120)]
+  elif k == 2
+    ROAD = rgb(70, 76, 96) DASH = rgb(255, 255, 255) SIDE = rgb(225, 235, 248) GRASS = rgb(190, 215, 235) PALM = rgb(120, 170, 200) TRUNK = rgb(120, 100, 90) SHAD = rgb(150, 165, 195)
+    RC = [rgb(120, 170, 255), rgb(255, 150, 150), rgb(255, 210, 120), rgb(150, 210, 170), rgb(200, 170, 240)]
+    RL = [rgb(200, 225, 255), rgb(255, 205, 205), rgb(255, 235, 180), rgb(205, 235, 215), rgb(230, 215, 250)]
+    CIEL = [rgb(120, 150, 200), rgb(140, 170, 215), rgb(160, 190, 225), rgb(180, 205, 235), rgb(200, 220, 242), rgb(215, 230, 248), rgb(230, 240, 252), rgb(245, 248, 255)]
+  else
+    ROAD = rgb(44, 38, 62) DASH = rgb(255, 210, 70) SIDE = rgb(226, 196, 170) GRASS = rgb(40, 150, 90) PALM = rgb(20, 110, 60) TRUNK = rgb(120, 80, 50) SHAD = rgb(30, 24, 46)
+    RC = [rgb(255, 90, 170), rgb(40, 210, 205), rgb(255, 150, 70), rgb(150, 100, 235), rgb(240, 240, 250)]
+    RL = [rgb(255, 150, 210), rgb(130, 240, 235), rgb(255, 200, 130), rgb(200, 170, 255), rgb(200, 205, 225)]
+    CIEL = [rgb(24, 10, 70), rgb(52, 16, 100), rgb(100, 24, 130), rgb(170, 40, 140), rgb(240, 70, 130), rgb(255, 110, 110), rgb(255, 160, 80), rgb(255, 205, 100)]
+  end
+end
+
 def debut()
-  ROAD = rgb(44, 38, 62) DASH = rgb(255, 210, 70) SIDE = rgb(226, 196, 170) GRASS = rgb(40, 150, 90) PALM = rgb(20, 110, 60) TRUNK = rgb(120, 80, 50)
-  SHAD = rgb(30, 24, 46) ROUGE = rgb(240, 40, 60) BLEU = rgb(40, 90, 255) BLANC = rgb(255, 255, 255) NOIR = rgb(10, 8, 20) GRIS = rgb(160, 150, 170)
-  PINK = rgb(255, 70, 170) VERT = rgb(60, 240, 120) GOLD = rgb(255, 215, 60) VITRE = rgb(30, 40, 70) JAUNE = rgb(255, 245, 160) FLIC = rgb(235, 235, 245) TAXI = rgb(255, 205, 40)
-  RC = [rgb(255, 90, 170), rgb(40, 210, 205), rgb(255, 150, 70), rgb(150, 100, 235), rgb(240, 240, 250)]
-  RL = [rgb(255, 150, 210), rgb(130, 240, 235), rgb(255, 200, 130), rgb(200, 170, 255), rgb(200, 205, 225)]
+  ROUGE = rgb(240, 40, 60) BLEU = rgb(40, 90, 255) BLANC = rgb(255, 255, 255) NOIR = rgb(10, 8, 20) GRIS = rgb(160, 150, 170)
+  PINK = rgb(255, 70, 170) VERT = rgb(60, 240, 120) GOLD = rgb(255, 215, 60) VITRE = rgb(30, 40, 70) JAUNE = rgb(255, 245, 160) FLIC = rgb(235, 235, 245)
+  VCOL = [rgb(255, 205, 40), rgb(240, 40, 60), rgb(40, 110, 255), rgb(60, 220, 120), rgb(255, 90, 190), rgb(235, 235, 245)]
   TC = [rgb(60, 120, 255), rgb(240, 90, 90), rgb(60, 200, 150), rgb(200, 90, 230), rgb(250, 250, 250)]
-  CIEL = [rgb(24, 10, 70), rgb(52, 16, 100), rgb(100, 24, 130), rgb(170, 40, 140), rgb(240, 70, 130), rgb(255, 110, 110), rgb(255, 160, 80), rgb(255, 205, 100)]
+  theme(tm)
   reset()
 end
 
@@ -193,13 +252,14 @@ def voitures(dt)
 end
 
 def conduit(dt)
+  var vm = turbo > 0 ? VMAX * 1.35 : VMAX
   if appui(P3)                                   # double appui = change de vitesse (avant / arriere)
     if T - tap < 0.35 g = -g tap = -9.0 son(500, 30) else tap = T end
   end
   if bouton(P3)                                  # gros bouton tenu = gaz (dans la vitesse choisie ; a contre-sens = frein fort)
     if g > 0
-      v += (v < 0 ? 420 : 220) * dt
-      if v > VMAX v = VMAX end
+      v += (v < 0 ? 420 : acc * (turbo > 0 ? 2 : 1)) * dt
+      if v > vm v -= 400 * dt if v < vm v = vm end end
     else
       v -= (v > 0 ? 420 : 140) * dt
       if v < -VR v = -VR end
@@ -216,7 +276,7 @@ def conduit(dt)
   if bouton(D) s += 1 end
   if bouton(G) s -= 1 end
   var oh = h
-  h += s * 2.4 * (0.3 + 0.7 * ab(v) / VMAX) * (v < 0 ? -1 : 1) * dt
+  h += s * 2.4 * vir * (0.3 + 0.7 * ab(v) / VMAX) * (v < 0 ? -1 : 1) * dt
   if !libre(x, y) h = oh end
   var mx = x + math.cos(h) * v * dt var my = y + math.sin(h) * v * dt
   if libre(mx, my)
@@ -345,15 +405,8 @@ def bataille(dt)
   if mun > 0 && tir <= 0 && bouton(G) && bouton(D)
     tire(x + math.cos(h) * 14, y + math.sin(h) * 14, h, 0) mun -= 1 tir = 0.5 son(900, 40)
   end
-  var i = 0
-  while i < 3
-    if d2(IX[i], IY[i], x, y) < 500
-      if mun < 3 mun += 1 end
-      caisse(i) msg = "OBUS +1" msgt = 1.0 son(1200, 60)
-    end
-    i += 1
-  end
   obus(dt)
+  var i = 0
   var n = 0 var bd = 1000000000
   i = nt
   while i < size(CX)
@@ -382,8 +435,24 @@ def maj(dt)
   if etat != 1
     tfin += dt
     if etat == 0
-      if appui(D) sel = (sel + 1) % size(SC) elif appui(G) sel = (sel + size(SC) - 1) % size(SC) end
-      if appui(P3) reset() etat = 1 end
+      var n = size(SC) + 1                       # le dernier choix du menu est le garage
+      if appui(D) sel = (sel + 1) % n elif appui(G) sel = (sel + n - 1) % n end
+      if appui(P3)
+        if sel == n - 1 etat = 4 gl = 0 else reset() etat = 1 end
+      end
+    elif etat == 4
+      var dl = 0
+      if appui(D) dl = 1 elif appui(G) dl = -1 end
+      if dl != 0
+        if gl == 0
+          ve = (ve + dl + size(VEH)) % size(VEH)
+        elif gl == 1
+          vc = (vc + dl + size(VCOL)) % size(VCOL) TAXI = VCOL[vc]
+        else
+          tm = (tm + dl + 3) % 3 theme(tm)
+        end
+      end
+      if appui(P3) gl += 1 if gl > 2 etat = 0 end end
     elif appui(P3) && tfin > 1.0
       etat = 0
     end
@@ -396,8 +465,10 @@ def maj(dt)
     msg = cd > 0 ? str(int(cd) + 1) : "GO !" msgt = 0.8
   else
     T += dt
+    if turbo > 0 turbo -= dt end
     conduit(dt)
     voitures(dt)
+    caisses()
     if mode == 0 mission(dt) elif mode == 1 course(dt) else bataille(dt) end
   end
   var k = 5 * dt if k > 1 k = 1.0 end
@@ -516,6 +587,8 @@ def hud()
     ombre(256, 24, "RIVAUX " + str(nriv - kills), BLANC, 1)
   end
   ombre(6, 218, g > 0 ? "AV" : "AR", g > 0 ? VERT : ROUGE, 2)
+  if turbo > 0 ombre(56, 218, "TURBO", GOLD, 2) end
+  if inv > 1.3 ombre(130, 218, "BOUCLIER", VERT, 2) end
   if mode != 1
     i = 0
     while i < 3
@@ -575,9 +648,9 @@ def jeu()
     end
     i += 1
   end
-  if mode == 2
+  if size(IX) > 0
     i = 0
-    while i < 3
+    while i < size(IX)
       var bx = IX[i] - ox var by = IY[i] - oy
       if bx > -10 && bx < 330 && by > -10 && by < 250 rect(bx - 6, by - 6, 12, 12, GOLD) texte(bx - 3, by - 4, "?", NOIR, 1) end
       i += 1
@@ -592,14 +665,43 @@ def jeu()
   hud()
 end
 
+def garage()
+  fond(CIEL[0])
+  ombre(106, 6, "GARAGE", PINK, 3)
+  var lib = ["VEHICULE", "COULEUR", "CARTE"]
+  var k = 0
+  while k < 3
+    ombre(26, 44 + k * 38, lib[k], k == gl ? GOLD : GRIS, 2)
+    k += 1
+  end
+  ombre(8, 44 + gl * 38, ">", GOLD, 2)
+  ombre(150, 44, "< " + VEH[ve][0] + " >", BLANC, 2)
+  rect(150, 62, int(VEH[ve][1] / 2.5), 4, VERT) rect(150, 68, int(VEH[ve][2] * 50), 4, GOLD)
+  texte(222, 60, "vitesse", GRIS, 1) texte(222, 67, "virage", GRIS, 1)
+  rect(150, 82, 40, 14, VCOL[vc]) texte(196, 84, "< >", GRIS, 1)
+  ombre(150, 120, "< " + THEMES[tm] + " >", BLANC, 2)
+  rect(0, 160, 320, 56, ROAD)
+  var xx = 0
+  while xx < 320 rect(xx, 187, 12, 2, DASH) xx += 24 end
+  rect(0, 160, 320, 6, SIDE) rect(0, 210, 320, 6, SIDE)
+  rect(20, 142, 70, 18, RC[1]) rect(120, 142, 70, 18, RC[2]) rect(220, 142, 70, 18, RC[0]) rect(28, 146, 22, 6, RL[1]) rect(128, 146, 22, 6, RL[2]) rect(228, 146, 22, 6, RL[0])
+  auto(160, 188, 0.0, VCOL[vc], 0)
+  texte(60, 226, "G / D : changer     P3 : suivant", BLANC, 1)
+end
+
 def dessine()
   if etat == 0
-    var nm = SC[sel][0]
-    ecran("NEON CITY", PINK, SC[sel][1], SC[sel][2] == 2 ? "G + D ensemble : tirer   P3 : gaz   (G / D : tourner)" : "G / D : tourner   P3 : gaz   P3 x2 : marche arriere")
+    var n = size(SC)
+    var nm = sel == n ? "GARAGE" : SC[sel][0]
+    var ds = sel == n ? "Vehicule, couleur et carte" : SC[sel][1]
+    var ak = sel == n ? "P3 : ouvrir le garage" : (SC[sel][2] == 2 ? "G + D ensemble : tirer   P3 : gaz   (G / D : tourner)" : "G / D : tourner   P3 : gaz   P3 x2 : marche arriere")
+    ecran("NEON CITY", PINK, ds, ak)
     ombre(160 - size(nm) * 9, 76, nm, BLANC, 3)
     ombre(10, 76, "<", GOLD, 3) ombre(296, 76, ">", GOLD, 3)
-    ombre(150, 106, str(sel + 1) + "/" + str(size(SC)), GRIS, 1)
+    ombre(150, 106, str(sel + 1) + "/" + str(n + 1), GRIS, 1)
     ombre(86, 226, "G / D : choisir   P3 : jouer", BLANC, 1)
+  elif etat == 4
+    garage()
   elif etat != 1
     ecran(ft, fc, fs, "P3 : menu")
   else

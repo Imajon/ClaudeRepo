@@ -600,7 +600,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
 <small id="vTmp" style="position:fixed;top:2px;left:4px;z-index:9999;font:10px var(--mono);opacity:.6;pointer-events:none"></small>   <!-- provisoire : version du site en haut à gauche -->
-<main id="accueil" data-version="1.29">
+<main id="accueil" data-version="1.30">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -654,11 +654,11 @@ body{overflow-x:clip}                                           /* la bande 100v
       <p>Un écran, trois boutons, un cerveau ESP32 : on assemble soi-même le circuit hexagonal, au fer à souder.</p></div>
     <div class="chap-video"><video id="videoKit" src="images/kit-prompt.mp4" poster="images/kit-prompt.jpg" muted loop playsinline preload="metadata" width="1280" height="720" aria-label="Le kit Bricode : on soude la console, puis on décrit son jeu à l'IA"></video></div>
   <section class="c-console c-soude">           <!-- en atelier : ce sont les enfants qui soudent -->
-    <figure><img src="images/atelier-04.jpg" alt="Un enfant soude, le fer d'une main et l'étain de l'autre" width="800" height="800" loading="lazy">
+    <figure><img src="images/soudure-fer-etain.jpg" alt="Une enfant soude la plaque de la console, le fer dans une main, l'autre main sur la plaque" width="800" height="800" loading="lazy">
       <figcaption><b>Le fer d'une main</b>, l'étain de l'autre, la plaque tenue par un support</figcaption></figure>
     <figure><img src="images/atelier-12.jpg" alt="Gros plan sur la soudure d'un connecteur" width="800" height="800" loading="lazy">
       <figcaption><b>Patte par patte</b>, avec soin, encadré par un adulte</figcaption></figure>
-    <figure><img src="images/console-allumee-atelier.jpg" alt="Deux enfants regardent la console qu'ils viennent de souder, allumée sur son premier jeu" width="800" height="800" loading="lazy">
+    <figure><img src="images/console-allumee-atelier.gif" alt="Deux enfants regardent la console qu'ils viennent de souder, allumée sur son premier jeu" width="500" height="500" loading="lazy">
       <figcaption><b>Ça s'allume !</b> Le premier jeu tourne sur la console qu'on vient de souder</figcaption></figure>
   </section>
     <h3 class="chap-h3">Ce qu'il y a dedans</h3>
@@ -1695,7 +1695,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 </main>
 
 <!-- ===== ATELIER : présentation pour les professeurs ===== -->
-<main id="profs" class="anim hide" data-version="1.4">
+<main id="profs" class="anim hide" data-version="1.5">
   <div class="sh-hero page-hero">
     <p class="sh-sur">Atelier · Bricode en classe</p>
     <h2 class="sh-titre">Ils fabriquent.<br>Ils créent. Ils apprennent.</h2>
@@ -1723,7 +1723,7 @@ body{overflow-x:clip}                                           /* la bande 100v
       <figure><img src="images/atelier-04.jpg" alt="Souder" width="800" height="800" loading="lazy"><figcaption><b>Souder</b>Le fer d'une main, l'étain de l'autre, la plaque tenue par un support.</figcaption></figure>
       <figure><img src="images/atelier-12.jpg" alt="Pas à pas" width="800" height="800" loading="lazy"><figcaption><b>Pas à pas</b>Chaque patte soudée, une par une, avec soin.</figcaption></figure>
       <figure><img src="images/atelier-05.jpg" alt="L'écran est posé" width="800" height="800" loading="lazy"><figcaption><b>L'écran est posé</b>La console prend forme sur le support.</figcaption></figure>
-      <figure><img src="images/console-allumee-atelier.jpg" alt="Ça s'allume ! Deux enfants regardent la console allumée sur son premier jeu" width="800" height="800" loading="lazy"><figcaption><b>Ça s'allume !</b>Le premier jeu tourne sur l'écran : le moment préféré.</figcaption></figure>
+      <figure><img src="images/console-allumee-atelier.gif" alt="Ça s'allume ! Deux enfants regardent la console allumée sur son premier jeu" width="500" height="500" loading="lazy"><figcaption><b>Ça s'allume !</b>Le premier jeu tourne sur l'écran : le moment préféré.</figcaption></figure>
       <figure><img src="images/atelier-07.jpg" alt="Les fils dessous" width="800" height="800" loading="lazy"><figcaption><b>Les fils dessous</b>Le câblage vu de dessous : chaque fil relie une broche à l'ESP32-C3.</figcaption></figure>
       <figure><img src="images/atelier-08.jpg" alt="Le circuit Bricode" width="800" height="800" loading="lazy"><figcaption><b>Le circuit Bricode</b>Le circuit imprimé hexagonal remplace les fils : plus simple à monter.</figcaption></figure>
       <figure><img src="images/atelier-09.jpg" alt="Les consoles terminées" width="800" height="800" loading="lazy"><figcaption><b>Les consoles terminées</b>Chacun repart avec la sienne, et ses jeux dedans.</figcaption></figure>
@@ -4892,9 +4892,8 @@ majMoi();
 if (['commu', 'creer', 'moncompte', 'anim', 'boutique', 'panier', 'support', 'profs', 'partis', 'propos', 'cgv'].includes(location.hash.slice(1))) vue = location.hash.slice(1); else if (vueDeAdresse()) vue = vueDeAdresse();   // vue gardée dans l'adresse (#creer…)
 connexionParLien().then(async fait => fait || await retourBoutique() || afficher(vue));   // vue d'accueil : la présentation du projet
 rafraichir(); setInterval(rafraichir, 15000);
-new IntersectionObserver(([e], obs) => {      // vidéo du kit : se lance (et se colore) une fois arrivée à l'écran
-  if (!e.isIntersecting) return;
-  videoKit.classList.add('lancee'); videoKit.play().catch(() => {}); obs.disconnect();
+new IntersectionObserver(([e]) => {      // vidéo du kit : se lance (et se colore) à l'écran, se met en pause dès qu'on en sort
+  if (e.isIntersecting) { videoKit.classList.add('lancee'); videoKit.play().catch(() => {}); } else videoKit.pause();
 }, { threshold: .5 }).observe(videoKit);
 </script>
 </body>

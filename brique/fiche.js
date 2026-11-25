@@ -305,6 +305,118 @@ F.FORMAT_CASSE = 'Unites : cases et secondes. Un CASSE-BRIQUES : la grille "rows
 F.DEPARTS_CASSE = { modele: 'casse', rows: ['BBBBBBBBBB', 'BBBBBBBBBB', 'DDDDDDDDDD', '..........'], heros: { boutons: { G: 'aller_gauche', D: 'aller_droite', P3: 'lancer' }, vitesse: 12, largeur: 3, vies: 3 },
   balle: { vitesse: 10, nombre: 1, acceleration: 0 }, briques: { B: {}, D: { coups: 2 } }, regles: [], but: 'casser_tout' };
 
+// ---------- la nuit des peluches (modele "fnaf") : joue par moteur-fnaf.be (Berry) ----------
+// rows = la MATRICE : une lettre par salle, "." = mur ; deux salles collees (haut, bas, gauche, droite) sont reliees. salles = nom + porte (gauche/droite = la salle donne sur le bureau).
+// peluches = qui se promene, par ou il arrive, a quelle vitesse. Pas de gravite, pas de depart S. Boutons : portes, camera, lampe.
+const ACTIONS_F = { rien: 'rien ne se passe', porte_gauche: 'il ferme ou ouvre la porte de gauche', porte_droite: 'il ferme ou ouvre la porte de droite', camera: 'il ouvre la caméra (et passe à la salle suivante)',
+  camera_suivante: 'il change de salle sur la caméra', lampe: 'il allume la lampe des couloirs (tenu)' };
+const FORMES_F = { ours: 'un ours', lapin: 'un lapin', renard: 'un renard' }, COULEURS_F = ['marron', 'bleu', 'orange', 'jaune', 'violet', 'vert', 'rose', 'gris'], PORTES_F = ['gauche', 'droite'];
+const QUAND_F = ['temps', 'pile', 'nuit'], ALORS_F = ['gagne', 'perd', 'message', 'rage', 'energie'], ALORS_F_ARG = ['message', 'rage', 'energie'], BUTS_F = ['aube', 'regles'];
+TAILLES.fnaf = [1, 6, 2, 8];
+const sallesFnaf = rows => { const m = []; rows.forEach((r, y) => [...r].forEach((c, x) => { if (c !== '.') m.push({ l: c, x, y }); })); return m; };
+function distFnaf(rows, salles, porte) {                 // pas jusqu'a la salle la plus proche qui donne sur cette porte (Infinity = pas de chemin) ; meme calcul que le moteur
+  const m = sallesFnaf(rows), d = {}, file = [];
+  for (const s of m) if (salles[s.l]?.porte === porte) { d[s.l] = 0; file.push(s); }
+  while (file.length) { const s = file.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const v = m.find(t => t.x === s.x + dx && t.y === s.y + dy); if (v && d[v.l] === undefined) { d[v.l] = d[s.l] + 1; file.push(v); } } }
+  return d;
+}
+function nettoyerFnaf(f) {
+  const refus = [], o = { modele: 'fnaf' };
+  const sait = (obj, cles, ou) => { if (obj && typeof obj === 'object') for (const k of Object.keys(obj)) if (!cles.includes(k)) refus.push(`${ou} : je ne connais pas « ${k} »`); };
+  sait(f, ['modele', 'rows', 'salles', 'heros', 'energie', 'nuit', 'peluches', 'regles', 'but'], 'fiche');
+  const T = TAILLES.fnaf;
+  o.rows = (Array.isArray(f.rows) ? f.rows : []).filter(r => typeof r === 'string').slice(0, T[1]).map(r => [...r].slice(0, T[3]).map(c => LETTRE.test(c) || c === '.' ? c : '.').join(''));
+  let n = 0; o.rows = o.rows.map(r => [...r].map(c => c === '.' ? c : ++n <= 12 ? c : '.').join('')); if (n > 12) refus.push('12 salles au plus');
+  const lettres = new Set(o.rows.join('')); lettres.delete('.');
+  o.salles = {};
+  for (const [l, v] of Object.entries(f.salles && typeof f.salles === 'object' ? f.salles : {})) {
+    if (!lettres.has(l)) { refus.push(`salle « ${l} » : elle n'est pas dans la grille`); continue; }
+    const p = {}; sait(v, ['nom', 'porte'], `salle ${l}`);
+    const nom = ascii(v?.nom).slice(0, 12); if (nom) p.nom = nom;
+    if (v?.porte !== undefined) { if (PORTES_F.includes(v.porte)) p.porte = v.porte; else refus.push(`salle ${l} : la porte est « gauche » ou « droite »`); }
+    o.salles[l] = p;
+  }
+  const h = f.heros || {}; sait(h, ['boutons'], 'heros');
+  const b = h.boutons || {}; sait(b, ['G', 'D', 'P3'], 'boutons (seulement G, D et P3)');
+  o.heros = { boutons: {} };
+  for (const k of ['G', 'D', 'P3']) { o.heros.boutons[k] = has(ACTIONS_F, b[k]) ? b[k] : 'rien'; if (b[k] !== undefined && !has(ACTIONS_F, b[k])) refus.push(`bouton ${k} : je ne connais pas « ${b[k]} »`); }
+  const e = f.energie || {}; sait(e, ['base', 'porte', 'camera', 'lampe', 'montee'], 'energie');
+  o.energie = { base: num(e.base, 0, 2) ?? .3, porte: num(e.porte, 0, 2) ?? .5, camera: num(e.camera, 0, 2) ?? .4, lampe: num(e.lampe, 0, 2) ?? .4, montee: num(e.montee, 0, 3) ?? 1 };
+  const nu = f.nuit || {}; sait(nu, ['duree', 'nuits', 'rage'], 'nuit');
+  o.nuit = { duree: Math.round(num(nu.duree, 30, 300) ?? 90), nuits: Math.round(num(nu.nuits, 1, 5) ?? 3), rage: Math.round(num(nu.rage, 0, 5) ?? 2) };
+  const hors = l => !PORTES_F.includes(o.salles[l]?.porte), premiere = [...o.rows.join('')].find(c => c !== '.' && hors(c)) ?? [...lettres][0];
+  o.peluches = {};
+  for (const [k, v] of Object.entries(f.peluches && typeof f.peluches === 'object' ? f.peluches : {})) {
+    const nom = ascii(k).slice(0, 10); if (!nom) { refus.push('une peluche a besoin d\'un nom'); continue; }
+    if (o.peluches[nom]) continue;
+    if (Object.keys(o.peluches).length >= 5) { refus.push('5 peluches au plus'); break; }
+    sait(v, ['forme', 'couleur', 'depart', 'porte', 'agressivite', 'delai', 'attente', 'timide'], `peluche ${nom}`);
+    const p = { forme: has(FORMES_F, v?.forme) ? v.forme : 'ours', couleur: COULEURS_F.includes(v?.couleur) ? v.couleur : COULEURS_F[Object.keys(o.peluches).length % 8], depart: lettres.has(v?.depart) ? v.depart : premiere,
+      porte: PORTES_F.includes(v?.porte) ? v.porte : PORTES_F[Object.keys(o.peluches).length % 2], agressivite: Math.round(num(v?.agressivite, 0, 20) ?? 6), attente: num(v?.attente, 1, 10) ?? 3, timide: v?.timide ? 1 : 0 };
+    if (v?.forme !== undefined && !has(FORMES_F, v.forme)) refus.push(`peluche ${nom} : je ne connais pas la forme « ${v.forme} » (ours, lapin, renard)`);
+    let d = Array.isArray(v?.delai) ? v.delai.map(x => num(x, 1, 20)) : []; if (d.length !== 2 || d.includes(undefined)) d = [3, 7]; p.delai = d[0] <= d[1] ? d : [d[1], d[0]];
+    o.peluches[nom] = p;
+  }
+  o.regles = [];
+  const rg = Array.isArray(f.regles) ? f.regles : [];
+  if (rg.length > 8) refus.push('8 règles au plus');
+  for (const r of rg.slice(0, 8)) {
+    const q = motArg(r?.quand, QUAND_F), a = motArg(r?.alors, ALORS_F);
+    if (!q || !a) { refus.push('une règle dit « quand » et « alors », avec des mots que je connais'); continue; }
+    let [qm, qv] = q, [am, av] = a;
+    if (!ALORS_F_ARG.includes(am)) av = undefined;
+    qv = Math.round(num(+qv, qm === 'pile' ? 0 : 1, qm === 'nuit' ? 5 : qm === 'pile' ? 99 : 600) ?? 10);
+    if (am === 'message') { av = ascii(av).slice(0, 20); if (!av) { refus.push('règle « message » : quel texte ?'); continue; } }
+    if (am === 'rage') av = Math.round(num(+av, 1, 10) ?? 3);
+    if (am === 'energie') av = Math.round(num(+av, -100, 100) ?? 20);
+    o.regles.push({ quand: { [qm]: qv }, alors: av === undefined ? am : { [am]: av } });
+  }
+  o.but = BUTS_F.includes(f.but) ? f.but : 'aube';
+  if (f.but !== undefined && !BUTS_F.includes(f.but)) refus.push(`but : je ne connais pas « ${JSON.stringify(f.but)} » (aube ou regles)`);
+  return { fiche: o, refus };
+}
+function lireFnaf(f) {
+  const phrases = ['🎮 La nuit des peluches : tu es dans le bureau, les peluches arrivent par les portes.'], manques = [], bloquants = [], B = f.heros.boutons, act = Object.values(B), N = f.nuit;
+  for (const k of ['G', 'D', 'P3']) if (B[k] !== 'rien') phrases.push(`🔘 Quand j'appuie sur ${k} : ${ACTIONS_F[B[k]]}.`);
+  const salles = sallesFnaf(f.rows), noms = l => f.salles[l]?.nom || l;
+  phrases.push(`🗺️ La carte a ${salles.length} salle${s(salles.length)} : ${salles.map(x => noms(x.l)).join(', ')}.`);
+  for (const [l, p] of Object.entries(f.salles)) if (p.porte) phrases.push(`🚪 ${noms(l)} donne sur la porte de ${p.porte}.`);
+  phrases.push(`🌙 ${N.nuits} nuit${s(N.nuits)} de ${N.duree} secondes (de minuit à 6 h). Chaque nuit les peluches sont plus pressées${N.rage ? '' : ' (non : rage 0)'}.`);
+  const E = f.energie; phrases.push(`🔋 La pile se vide de ${E.base} % par seconde, et de plus : ${E.porte} par porte fermée, ${E.camera} avec la caméra, ${E.lampe} avec la lampe.`);
+  const pel = Object.entries(f.peluches);
+  for (const [nom, p] of pel) {
+    phrases.push(`🧸 ${nom} (${FORMES_F[p.forme]} ${p.couleur}) part de ${noms(p.depart)}, vient par la porte de ${p.porte}, bouge toutes les ${p.delai[0]} à ${p.delai[1]} s, attend ${p.attente} s devant la porte${p.timide ? ' et ne bouge pas quand on le regarde' : ''}.`);
+    const d = distFnaf(f.rows, f.salles, p.porte);
+    if (!salles.some(x => f.salles[x.l]?.porte === p.porte)) manques.push(`${nom} vient par la porte de ${p.porte} mais aucune salle ne donne dessus : écris { "porte": "${p.porte}" } dans une salle.`);
+    else if (d[p.depart] === undefined) manques.push(`${nom} ne peut pas aller de ${noms(p.depart)} à la porte de ${p.porte} : les salles ne sont pas reliées.`);
+    else if (d[p.depart] === 0) manques.push(`${nom} commence déjà devant sa porte : il ne bougera jamais.`);
+  }
+  for (const r of f.regles) {
+    const [q, qv] = motArg(r.quand, QUAND_F), [a, av] = motArg(r.alors, ALORS_F);
+    const Q = { temps: `Au bout de ${qv} s`, pile: `Quand la pile tombe à ${qv} %`, nuit: `À la nuit ${qv}` }[q];
+    const A = { gagne: 'on gagne la nuit', perd: 'on perd', message: `le message « ${av} » s'affiche`, rage: `toutes les peluches sont plus agressives (+${av})`, energie: `la pile change de ${av} %` }[a];
+    phrases.push(`📜 ${Q}, ${A}.`);
+  }
+  phrases.push('🏁 Pour gagner : ' + (f.but === 'aube' ? `tenir jusqu'à 6 h (${N.duree} s).` : 'ce que disent les règles.'));
+  if (!act.includes('porte_gauche') && !act.includes('porte_droite')) manques.push('Aucun bouton ne ferme une porte : tu ne peux pas te défendre.');
+  if (!act.includes('camera') && !act.includes('camera_suivante')) phrases.push('📷 Pas de caméra : tu ne vois que le bureau.');
+  if (!salles.length) bloquants.push('Il n\'y a aucune salle : dessine la carte dans la grille.');
+  if (!pel.length) manques.push('Il n\'y a aucune peluche : la nuit sera calme !');
+  if (f.but === 'regles' && !f.regles.some(r => (motArg(r.alors, ALORS_F) || [])[0] === 'gagne')) manques.push('Aucune règle ne fait gagner.');
+  const w = Math.max(0, ...f.rows.map(r => r.length));
+  if (f.rows.length < TAILLES.fnaf[0] || f.rows.length > TAILLES.fnaf[1] || w < TAILLES.fnaf[2] || w > TAILLES.fnaf[3]) bloquants.push(`La carte doit faire ${TAILLES.fnaf[0]} à ${TAILLES.fnaf[1]} lignes de ${TAILLES.fnaf[2]} à ${TAILLES.fnaf[3]} cases (elle fait ${f.rows.length} × ${w}).`);
+  return { phrases, manques, bloquants };
+}
+const T0 = i => TAILLES.fnaf[i - 1];
+{ const net = F.nettoyer, lir = F.lire;
+  F.nettoyer = f => f && f.modele === 'fnaf' ? nettoyerFnaf(f) : net(f);
+  F.lire = f => f.modele === 'fnaf' ? lireFnaf(f) : lir(f); }
+F.FORMAT_FNAF = 'Unites : secondes. Une NUIT DES PELUCHES (type Five Nights at Freddy\'s) : tu es dans un bureau avec deux portes (gauche, droite), des peluches viennent par la carte.\nLa MATRICE "rows" = la carte : une lettre par salle, "." = mur, de 1 a 6 lignes et 2 a 8 colonnes, 12 salles au plus ; deux salles collees (haut, bas, gauche, droite) sont reliees.\nCles de la fiche (rien d\'autre n\'existe) :\n modele : fnaf (ne change pas).\n salles : {lettre: {nom (12 caracteres, sans accents), porte gauche|droite = cette salle est devant la porte du bureau}}\n heros : {boutons {G, D, P3} chacun parmi rien, porte_gauche, porte_droite, camera (ouvre, puis salle suivante, puis ferme), camera_suivante, lampe (tenu : eclaire les couloirs des portes)}\n energie : {base, porte, camera, lampe = % de pile par seconde (0-2), montee 0-3 (la pile se vide de plus en plus vite)}\n nuit : {duree 30-300 s (minuit a 6 h), nuits 1-5 (a chaque nuit les peluches sont plus pressees), rage 0-5}\n peluches (5 au plus) : {nom: {forme ours|lapin|renard, couleur marron|bleu|orange|jaune|violet|vert|rose|gris, depart lettre de salle, porte gauche|droite (par ou elle attaque), agressivite 0-20 (6), delai [min,max] 1-20 s entre deux deplacements, attente 1-10 s devant la porte avant d\'attaquer, timide 0/1 = ne bouge pas quand on la regarde a la camera}}\n regles (8 au plus) : [{"quand": {"temps":s} | {"pile":%} | {"nuit":n}, "alors": "gagne" | "perd" | {"message":"texte court"} | {"rage":n peluches plus agressives} | {"energie":+-%}}]\n but : aube (tenir jusqu\'a 6 h) | regles';
+F.DEPARTS_FNAF = { modele: 'fnaf', rows: ['..A..', 'BCDEF'], salles: { A: { nom: 'Scene' }, B: { nom: 'Couloir G', porte: 'gauche' }, C: { nom: 'Cuisine' }, D: { nom: 'Salle jeux' }, E: { nom: 'Reserve' }, F: { nom: 'Couloir D', porte: 'droite' } },
+  heros: { boutons: { G: 'porte_gauche', D: 'porte_droite', P3: 'camera' } }, energie: {}, nuit: { duree: 90, nuits: 3, rage: 2 },
+  peluches: { Biscotte: { forme: 'ours', couleur: 'marron', depart: 'A', porte: 'droite' }, Pixel: { forme: 'lapin', couleur: 'bleu', depart: 'E', porte: 'gauche' }, Foxie: { forme: 'renard', couleur: 'orange', depart: 'A', porte: 'gauche', agressivite: 4, timide: 1 } },
+  regles: [{ quand: { temps: 45 }, alors: { message: 'Il est 3 AM' } }], but: 'aube' };
+
 // ---------- les points de départ ----------
 const STD = { G: 'aller_gauche', D: 'aller_droite', P3: 'sauter' };
 F.DEPARTS = {

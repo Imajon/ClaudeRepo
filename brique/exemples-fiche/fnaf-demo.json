@@ -1,0 +1,75 @@
+{
+ "modele": "fnaf",
+ "rows": [
+  "..A..",
+  "BCDEF"
+ ],
+ "salles": {
+  "A": {
+   "nom": "Scene"
+  },
+  "B": {
+   "nom": "Couloir G",
+   "porte": "gauche"
+  },
+  "C": {
+   "nom": "Cuisine"
+  },
+  "D": {
+   "nom": "Salle jeux"
+  },
+  "E": {
+   "nom": "Reserve"
+  },
+  "F": {
+   "nom": "Couloir D",
+   "porte": "droite"
+  }
+ },
+ "heros": {
+  "boutons": {
+   "G": "porte_gauche",
+   "D": "porte_droite",
+   "P3": "camera"
+  }
+ },
+ "energie": {},
+ "nuit": {
+  "duree": 90,
+  "nuits": 3,
+  "rage": 2
+ },
+ "peluches": {
+  "Biscotte": {
+   "forme": "ours",
+   "couleur": "marron",
+   "depart": "A",
+   "porte": "droite"
+  },
+  "Pixel": {
+   "forme": "lapin",
+   "couleur": "bleu",
+   "depart": "E",
+   "porte": "gauche"
+  },
+  "Foxie": {
+   "forme": "renard",
+   "couleur": "orange",
+   "depart": "A",
+   "porte": "gauche",
+   "agressivite": 4,
+   "timide": 1
+  }
+ },
+ "regles": [
+  {
+   "quand": {
+    "temps": 45
+   },
+   "alors": {
+    "message": "Il est 3 AM"
+   }
+  }
+ ],
+ "but": "aube"
+}

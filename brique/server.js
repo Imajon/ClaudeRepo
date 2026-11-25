@@ -1184,7 +1184,7 @@ Sitemap: ${PUBLIC_URL}/sitemap.xml
   const modeleScript = b => b.methode === 'sonnet' ? process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5' : b.methode === 'devstral' ? process.env.MISTRAL_MODEL_DEVSTRAL || 'devstral-medium-latest'
     : b.methode === 'medium' ? process.env.MISTRAL_MODEL_MEDIUM || 'mistral-medium-latest' : b.auto ? 'codestral-latest' : process.env.MISTRAL_MODEL_SCRIPT || 'mistral-large-2512';   // le modele qui ecrit le programme (affiche dans Creer)
   if (url === '/api/fiche-berry') {                   // la fiche (donnees) -> un jeu Berry (donnees + moteur-fiche.be) pour une console Berry ; sans IA : la fiche est verifiee ici
-    const DEPARTS = { plateforme: 'plateforme-demo', casse: 'casse-demo' };   // « depart » : la fiche par defaut d'un genre (exemples-fiche/), pour « Nouveau jeu » de l'editeur
+    const DEPARTS = { plateforme: 'plateforme-demo', casse: 'casse-demo', fnaf: 'fnaf-demo' };   // « depart » : la fiche par defaut d'un genre (exemples-fiche/), pour « Nouveau jeu » de l'editeur
     const fiche = DEPARTS[b.depart] ? JSON.parse(fs.readFileSync(path.join(__dirname, 'exemples-fiche', DEPARTS[b.depart] + '.json'), 'utf8')) : b.fiche;
     if (!fiche || typeof fiche !== 'object') return repondre(res, 400, { erreur: 'fiche vide' });
     const r = FicheBerry.assembler(fiche); return repondre(res, r.script ? 200 : 400, r);

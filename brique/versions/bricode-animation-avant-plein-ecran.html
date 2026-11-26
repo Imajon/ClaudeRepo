@@ -1,0 +1,264 @@
+<title>Bricode Journey</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one 16:9 stage that plays a 40 s timeline; chapter buttons + scrubber underneath. Single dark bench look. */
+:root{
+  --bg:#0d1511; --panel:#14201a; --line:#26382d; --fg:#e8f3ec; --muted:#93ab9b;
+  --pcb:#0b7a41; --gold:#c99a3c; --ink:#13241a;
+  --display:'Space Grotesk',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--display);padding-block:28px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:980px;margin:0 auto;display:grid;gap:18px}
+.kick{font:800 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+h1{margin:4px 0 0;font:700 clamp(26px,4.4vw,40px)/1.1 var(--display);text-wrap:balance}
+.stage{background:#0a110d;border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+svg{display:block;width:100%;min-width:620px;height:auto}
+.cap{min-height:3.2em;display:grid;gap:2px}
+.cap b{font:700 20px var(--display)} .cap span{color:var(--muted);max-width:62ch}
+.bar{display:flex;gap:12px;align-items:center}
+button{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--gold)} button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#play{min-width:84px;font-weight:700}
+input[type=range]{flex:1;min-width:0;accent-color:var(--gold)}
+#clock{font:500 13px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.tabs button{text-align:left;display:grid;gap:2px;padding:10px 12px;min-width:0}
+.tabs small{font:500 11px var(--mono);color:var(--muted)}
+.tabs button[aria-current=true]{border-color:var(--gold);background:#1b2c22}
+.tabs button[aria-current=true] small{color:var(--gold)}
+.note{font-size:12px;color:var(--muted)}
+@media(max-width:700px){.tabs{grid-template-columns:repeat(3,1fr)}}
+</style>
+
+<main>
+  <div><div class="kick">Bricode</div><h1>From a bag of parts to your own game</h1></div>
+
+  <div class="stage">
+  <svg id="svg" viewBox="0 0 800 450" role="img" aria-label="Animation: assembling and soldering the console, describing a game to the AI, sending the code over USB, then playing the game.">
+    <defs>
+      <radialGradient id="glowg"><stop offset="0" stop-color="#7dffb0" stop-opacity=".55"/><stop offset="1" stop-color="#7dffb0" stop-opacity="0"/></radialGradient>
+      <clipPath id="clipS"><rect x="-69" y="-66" width="138" height="82"/></clipPath><clipPath id="clipB"></clipPath>
+      <linearGradient id="pcbg" gradientUnits="userSpaceOnUse" x1="-140" y1="-100" x2="140" y2="100"><stop offset="0" stop-color="#1f8a4c"/><stop offset=".55" stop-color="#136b3a"/><stop offset="1" stop-color="#0c5230"/></linearGradient>
+      <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6e9ee"/><stop offset=".5" stop-color="#a9b0b9"/><stop offset="1" stop-color="#6d747d"/></linearGradient>
+    </defs>
+
+    <!-- USB cable (global coords) -->
+    <g id="cable" opacity="0"><path id="cpath" fill="none" stroke="#2c3138" stroke-width="7" stroke-linecap="round"/>
+      <rect x="608" y="326" width="24" height="20" rx="3" fill="#3a3f48"/><rect id="cend" width="12" height="16" rx="2" fill="#3a3f48"/>
+      <g id="packets"></g></g>
+
+    <!-- Browser window -->
+    <g id="win" transform="translate(-420 40)">
+      <rect width="420" height="380" rx="10" fill="#eef3ef"/>
+      <path d="M0 10a10 10 0 0 1 10-10h400a10 10 0 0 1 10 10v18H0z" fill="#dce5df"/>
+      <circle cx="16" cy="14" r="4" fill="#e06c5f"/><circle cx="30" cy="14" r="4" fill="#e3b341"/><circle cx="44" cy="14" r="4" fill="#4fb36b"/>
+      <rect x="70" y="5" width="170" height="18" rx="9" fill="#fff"/><text x="82" y="18" font-family="JetBrains Mono,monospace" font-size="11" fill="#4a5f53">bricode.fr/create</text>
+      <text x="16" y="56" font-size="14" font-weight="700" fill="#13241a" font-family="Space Grotesk,sans-serif">Describe your game</text>
+      <rect x="16" y="64" width="388" height="58" rx="6" fill="#fff" stroke="#b9c7bf"/>
+      <text id="p1" x="26" y="88" font-family="JetBrains Mono,monospace" font-size="14" fill="#13241a" style="white-space:pre"></text>
+      <text id="p2" x="26" y="108" font-family="JetBrains Mono,monospace" font-size="14" fill="#13241a" style="white-space:pre"></text>
+      <rect id="caret" width="2" height="16" fill="#0b7a41"/>
+      <rect id="go" x="16" y="134" width="140" height="30" rx="6" fill="#0b7a41"/>
+      <text x="86" y="154" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="Space Grotesk,sans-serif">Create with AI</text>
+      <text id="think" x="170" y="154" font-size="13" fill="#5b7266" font-family="Space Grotesk,sans-serif"></text>
+      <g id="code"><rect x="16" y="176" width="388" height="150" rx="6" fill="#101a14"/><g id="lines" font-family="JetBrains Mono,monospace" font-size="12.5" fill="#bfe7cc" style="white-space:pre"></g></g>
+      <text id="status" x="16" y="350" font-size="13" font-weight="700" fill="#0b7a41" font-family="Space Grotesk,sans-serif"></text>
+      <rect id="trk" x="16" y="358" width="388" height="8" rx="4" fill="#cfdad3"/><rect id="fill" x="16" y="358" width="0" height="8" rx="4" fill="#c99a3c"/>
+    </g>
+
+    <!-- Console: built from the real PCB (mm) in JS -->
+    <g id="con" transform="translate(620 235)">
+      <circle id="glow" r="200" fill="url(#glowg)" opacity="0"/>
+      <g id="flip"><g id="front"></g><g id="back"></g></g>
+      <g id="iron" opacity="0">
+        <g id="smoke" fill="#cfd6d2"><circle r="3"/><circle r="3"/><circle r="3"/></g>
+        <line x1="0" y1="0" x2="46" y2="-70" stroke="#c8cdd4" stroke-width="5" stroke-linecap="round"/>
+        <line x1="40" y1="-60" x2="84" y2="-128" stroke="#2d2f36" stroke-width="12" stroke-linecap="round"/>
+        <circle r="3.5" fill="#ff7a2f"/>
+      </g>
+    </g>
+  </svg>
+  </div>
+
+  <div class="cap" aria-live="polite"><b id="ct"></b><span id="cd"></span></div>
+
+  <div class="bar">
+    <button id="play" type="button">Pause</button>
+    <input id="seek" type="range" min="0" max="41.2" step="0.01" value="0" aria-label="Timeline">
+    <span id="clock">0:00 / 0:41</span>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <p class="note">The code shown on screen is illustrative: the real game is written by the AI from your description.</p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id), NS='http://www.w3.org/2000/svg';
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)), seg=(t,a,b)=>clamp((t-a)/(b-a));
+const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2, lerp=(a,b,p)=>a+(b-a)*p, mod=(x,m)=>((x%m)+m)%m;
+const T=41.2;
+const CH=[
+  [0,'Assemble','The hexagon-shaped board gets its screen, two small buttons and one big red button. The ESP32 module goes on the back.'],
+  [6.6,'Solder','Every pad gets a drop of solder. Twelve small joints hold the buttons to the board.'],
+  [13.7,'Power on','Plug USB-C into the ESP32. The screen lights up and the console says hello.'],
+  [18.7,'Describe','Type the game you imagine. The AI writes the code and tests it for you.'],
+  [28.7,'Send','The game travels down the USB cable. Nothing to install, just the browser.'],
+  [33.7,'Play','It runs on the console you built. Change the words, get a new game.']
+];
+const el=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+
+/* ---- real board (mm, from c3-tft-meatboy-polygon-ajoure-D) -> local px ---- */
+const K=2.55, X=x=>(x-56.5)*K, Y=y=>(y-39.2)*K, Z=v=>v*K, f1=n=>n.toFixed(2);
+const OUT=[[1.5,31.52],[1.5,46.75],[14.98,54.18],[14.98,69.22],[28.8,76.84],[42.61,69.23],[49.5,73.05],[63.4,73.05],[70.22,69.23],[84.02,76.84],[97.84,69.22],[97.84,54.29],[111.51,46.75],[111.51,31.52],[98.1,24.13],[98.1,9.12],[84.29,1.5],[70.49,9.1],[56.69,1.5],[42.87,9.11],[29.06,1.5],[15.24,9.12],[15.24,23.95]];
+const poly=pts=>pts.map(([x,y])=>f1(X(x))+','+f1(Y(y))).join(' ');
+const R=(x,y,w,h,a='')=>`<rect x="${f1(X(x))}" y="${f1(Y(y))}" width="${f1(Z(w))}" height="${f1(Z(h))}" ${a}/>`;
+const C=(x,y,r,a='')=>`<circle cx="${f1(X(x))}" cy="${f1(Y(y))}" r="${f1(Z(r))}" ${a}/>`;
+const line=(x1,y1,x2,y2,w)=>`<line x1="${f1(X(x1))}" y1="${f1(Y(y1))}" x2="${f1(X(x2))}" y2="${f1(Y(y2))}" stroke-width="${f1(Z(w))}"/>`;
+const hex=(x,y,r)=>poly([0,1,2,3,4,5].map(k=>[x+r*Math.cos(Math.PI/3*k+Math.PI/6),y+r*Math.sin(Math.PI/3*k+Math.PI/6)]));
+$('clipB').innerHTML=`<polygon points="${poly(OUT)}"/>`;
+
+// [centre x, centre y, body size, pad centres, pad w/h]
+const BTN=[[28,57.95,6,[[23.75,55.7],[32.25,55.7],[23.75,60.2],[32.25,60.2]],[1.6,1.8]],
+           [40,62.95,6,[[35.75,60.7],[44.25,60.7],[35.75,65.2],[44.25,65.2]],[1.6,1.8]],
+           [80,61.2,12,[[72.75,58.7],[87.25,58.7],[72.75,63.7],[87.25,63.7]],[2,2.2]]];
+const SMD=[29.06,56.69,84.29];
+const GOLD='fill="#d8b25a" stroke="#f0d58c" stroke-width=".6"';
+const HOLE='fill="#0a110d" stroke="#55b57c" stroke-width="1.6"';
+let h=`<polygon points="${poly(OUT)}" fill="url(#pcbg)" stroke="#3fae6b" stroke-width="2.4" stroke-linejoin="round"/>`;
+// gold stripes (copper, no mask), clipped to the outline
+h+=`<g clip-path="url(#clipB)" stroke="#c9a24a" stroke-linecap="butt">`+
+  [[11,27,24,14,2.6],[16,28.5,24.5,20,2.2],[21,26,24,23,1.8],[100,28,108,20,2.4],[101,16,109,8,2.4],[103,23,110,16,2.2],
+   [19,9,24,5,1.4],[34,8,38,4,1.4],[47,8,51,4,1.4],[62,8,66,4,1.4],[75,8,79,4,1.4],[89,8,93,4,1.4]].map(a=>line(...a)).join('')+`</g>`;
+// traces
+h+=`<g fill="none" stroke="#1f9e58" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".8">`+
+  [[[30,66],[48,66],[56,58]],[[22,51],[30,59]],[[44,66],[50,60],[60,60],[66,54]],[[62,73],[62,66],[70,58]],[[26,70],[36,70]],[[76,70],[90,62]],[[60,52],[60,44]],[[56,60],[68,66],[80,66]],[[18,48],[30,48],[34,52]]]
+   .map(p=>`<polyline points="${poly(p)}"/>`).join('')+`</g>`;
+// hexagonal cut-outs (pointy top) and mounting holes
+for(const [x,y] of [[12.2,32.5],[19.2,32.5],[15.7,38.7],[12.2,45],[19.2,45],[98.2,32.5],[98.2,45],[83.4,69.7]])
+  h+=`<polygon points="${hex(x,y,4.04)}" ${HOLE}/>`;
+for(const [x,y] of [[20,15],[94,15],[20,63],[94,63]])h+=C(x,y,1.6,HOLE);
+// wire pads
+for(const [x,y,l,dy] of [[5,35.2,'IO21',-3.4],[5,43.2,'IO20',4.4],[108,35.2,'IO0',-3.4],[108,43.2,'IO8',4.4]])
+  h+=C(x,y,1.9,GOLD)+C(x,y,.6,'fill="#0a110d"')+`<text x="${f1(X(x))}" y="${f1(Y(y+dy))}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="800" font-size="6.5" fill="#eaf5ee">${l}</text>`;
+// SMD pads, button pads
+for(const cx of SMD)for(const dx of[-1.46,1.46])for(const y of[4.6,7.3])h+=R(cx+dx-.56,y-.87,1.12,1.75,GOLD+' rx=".5"');
+for(const [,,,ps,[w,hh]] of BTN)for(const [x,y] of ps)h+=R(x-w/2,y-hh/2,w,hh,GOLD+' rx=".7"');
+// parts: SMD resistor + LED x3
+h+=`<g id="smd">`+SMD.map((cx,i)=>R(cx-1.6,3.75,3.2,1.7,'fill="#15171b" rx=".6"')+R(cx-1.6,6.45,3.2,1.7,'fill="#efe9d8" rx=".6"')+R(cx-.8,6.75,1.6,1.1,`id="ledr${i}" fill="#7a1f1f"`)).join('')+`</g>`;
+// buttons: two small tactile + one big with red cap
+BTN.forEach(([x,y,s],i)=>{h+=`<g id="${['b1','b2','bigB'][i]}">`+R(x-s/2,y-s/2,s,s,'fill="url(#metal)" stroke="#6d747d" stroke-width=".8" rx="1.2"')+
+  (i<2?C(x,y,1.8,'fill="#2a2d33"'):C(x,y,3.75,'id="cap" fill="#d83a35" stroke="#8d1d1a" stroke-width="1.2"')+C(x-1,y-1.2,1.1,'fill="#ff8a80" opacity=".55"'))+`</g>`});
+// screen: 62 x 37.1 mm bezel at (25.5,10.76); display 138 x 82 px
+h+=`<g id="scrm">`+R(25.5,10.76,62,37.1,'fill="#16181d" stroke="#2c3038" stroke-width="1" rx="1.2"')+
+  `<rect x="-69" y="-66" width="138" height="82" fill="#04070a"/><g clip-path="url(#clipS)">`+
+  `<g id="sBoot" opacity="0"><text x="0" y="-30" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="800" font-size="20" fill="#e8f3ec">BRI<tspan fill="#2fd37e">CODE</tspan></text><text id="wait" x="0" y="-12" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8" fill="#6f8a7a">waiting for a game</text></g>`+
+  `<g id="sRecv" opacity="0"><text x="0" y="-40" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="800" font-size="11" fill="#e8f3ec">RECEIVING</text><text x="0" y="-26" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8" fill="#6f8a7a">frog.be</text><rect x="-50" y="-16" width="100" height="7" fill="#1b2c22"/><rect id="rf" x="-50" y="-16" width="0" height="7" fill="#c99a3c"/></g>`+
+  `<g id="sGame" opacity="0" transform="translate(-69 -66)"><rect width="138" height="82" fill="#1b2a5a"/><circle cx="116" cy="14" r="6" fill="#f1ecc6"/><rect y="62" width="138" height="20" fill="#2f9e4f"/><rect y="62" width="138" height="3" fill="#57d27a"/><g id="pits"></g><g id="stars"></g>`+
+  `<g id="frog"><rect x="24" y="54" width="10" height="8" fill="#4aa8ff"/><rect x="26" y="52" width="2" height="2" fill="#fff"/><rect x="30" y="52" width="2" height="2" fill="#fff"/><rect x="27" y="52.5" width="1" height="1" fill="#000"/><rect x="31" y="52.5" width="1" height="1" fill="#000"/></g>`+
+  `<text id="score" x="5" y="11" font-family="JetBrains Mono,monospace" font-weight="800" font-size="8" fill="#ffd54a">★ 0</text></g></g></g>`;
+// USB-C stub at the bottom flat (the module sits on the back)
+h+=`<g id="usbc" opacity="0">`+R(51.9,71.6,9.0,3.6,'fill="url(#metal)" stroke="#6d747d" stroke-width=".6" rx="1.2"')+R(53.4,72.9,6,1,'fill="#222"')+`</g>`;
+// solder blobs, drawn last
+h+=`<g id="blobs">`+BTN.flatMap(([,,,ps,[w,hh]])=>ps.map(([x,y])=>C(x,y,Math.max(w,hh)*.5,'r="0" fill="#dfe3e8" stroke="#fff" stroke-width=".6"'))).join('')+`</g>`;
+$('front').innerHTML=h;
+
+// back: ESP32-C3 SuperMini, USB-C towards the bottom flat (centre 56.42, 61.75)
+const FX=56.42, FY=61.75;
+let bk=`<polygon points="${poly(OUT)}" fill="#0a5a30" stroke="#2f8a57" stroke-width="2.4" stroke-linejoin="round"/>`;
+for(const [x,y] of [[20,15],[94,15],[20,63],[94,63]])bk+=C(x,y,1.6,HOLE);
+for(let i=0;i<8;i++)for(const sx of[-7.62,7.62])bk+=R(FX+sx-1.7,FY-8.89+2.54*i-.65,3.4,1.3,GOLD+' rx=".3"');
+bk+=`<g id="esp">`+R(FX-9,FY-11.25,18,22.5,'fill="#1a1d24" stroke="#3a3f48" stroke-width=".8" rx="1"')+R(FX-5.5,FY-9.8,11,9.6,'fill="url(#metal)" rx=".6"')+
+  R(FX-4.5,FY+10,9,3.4,'fill="url(#metal)" stroke="#6d747d" stroke-width=".6" rx="1.2"')+R(FX-3,FY+11.3,6,1,'fill="#222"')+
+  `<g transform="scale(-1 1)"><text x="0" y="${f1(Y(FY+2))}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="800" font-size="7" fill="#42505c">ESP32-C3</text></g></g>`;
+$('back').innerHTML=bk;
+
+// soldering pass: the 12 button pads
+const P=BTN.flatMap(([,,,ps])=>ps.map(([x,y])=>[X(x),Y(y)]));
+const blob=[...$('blobs').children], N=P.length;
+const smoke=[...$('smoke').children];
+const pitEl=[],starEl=[];
+for(let j=0;j<4;j++){pitEl.push(el('rect',{y:62,width:18,height:20,fill:'#ff5a1f'},$('pits')));
+  starEl.push(el('path',{d:'M0-5L1.5-1.6 5-1.2 2.3 1 3.1 4.6 0 2.7-3.1 4.6-2.3 1-5-1.2-1.5-1.6z',fill:'#ffd54a'},$('stars')))}
+const CODE=['# frog.be','hero = sprite("frog", blue)','lava = zone(pit, orange)','def on_button_a()','  hero.jump(22)','end','def every_tick()','  if hero.touch(lava) restart() end','  if hero.touch(star) score += 1 end','end'];
+const lineEl=CODE.map((_,i)=>el('text',{x:28,y:196+i*14.2,style:'white-space:pre','xml:space':'preserve'},$('lines')));
+const PR=['A blue frog jumps over lava','and collects the stars.'], PN=PR[0].length+PR[1].length;
+const packets=[...Array(8)].map(()=>el('rect',{width:7,height:7,rx:1.5,fill:'#c99a3c'},$('packets')));
+const tabs=CH.map(([s,n],i)=>{const b=document.createElement('button');b.type='button';b.innerHTML=`<small>0${i+1}</small>${n}`;b.onclick=()=>{t=s+.02;play=true;sync()};$('tabs').appendChild(b);return b});
+
+function render(t){
+  const u=Math.max(t-1.2,Math.min(t,5));          // clock of the later scenes (frozen while the board flips)
+  // 1 assemble (front) -> flip -> ESP32 on the back -> flip back
+  for(const [id,a,b,dx,dy,r,cx,cy] of [['smd',.3,.9,0,-70,0,0,-90],['scrm',.8,1.9,0,-170,-10,0,-25],['b1',1.7,2.4,-210,0,-40,X(28),Y(57.95)],['b2',2.1,2.8,0,140,30,X(40),Y(62.95)],['bigB',2.6,3.4,230,0,40,X(80),Y(61.2)]]){
+    const p=seg(t,a,b),e=ease(p);$(id).setAttribute('transform',`translate(${dx*(1-e)} ${dy*(1-e)}) rotate(${r*(1-e)} ${cx} ${cy})`);$(id).style.opacity=Math.min(1,p*4)}
+  const th=t<4.6?0:t<5.4?Math.PI*ease(seg(t,4.6,5.4)):t<5.9?Math.PI:t<6.6?Math.PI+Math.PI*ease(seg(t,5.9,6.6)):2*Math.PI, c=Math.cos(th);
+  $('flip').setAttribute('transform',`scale(${Math.abs(c)<.001?.001:c.toFixed(4)} 1)`);
+  $('front').style.display=c>0?'':'none';$('back').style.display=c<0?'':'none';
+  const ep=ease(seg(t,5.4,5.9));$('esp').setAttribute('transform',`translate(0 ${150*(1-ep)})`);$('esp').style.opacity=Math.min(1,seg(t,5.4,5.6)*3);
+  $('usbc').style.opacity=t>5.9?1:0;
+  // 2 solder
+  const T0=6.3,DT=.46,TE=T0+N*DT, rest=[200,-150];
+  blob.forEach((b,i)=>b.setAttribute('r',(i<8?3.4:4.2)*ease(seg(u,T0+i*DT,T0+i*DT+.25))));
+  let ip=null;
+  if(u>T0-.8&&u<TE+.6){
+    if(u<T0){const e=ease(seg(u,T0-.8,T0));ip=[lerp(rest[0],P[0][0],e),lerp(rest[1],P[0][1],e)]}
+    else if(u<TE){const k=(u-T0)/DT,i=Math.min(N-1,Math.floor(k)),f=k-i,a=P[i],b=P[Math.min(N-1,i+1)],m=ease(seg(f,.55,1));
+      ip=[lerp(a[0],b[0],m),lerp(a[1],b[1],m)-6*Math.sin(Math.PI*m)]}
+    else{const e=ease(seg(u,TE,TE+.6));ip=[lerp(P[N-1][0],rest[0],e),lerp(P[N-1][1],rest[1],e)]}
+  }
+  $('iron').style.opacity=ip?1:0; if(ip)$('iron').setAttribute('transform',`translate(${ip[0]} ${ip[1]})`);
+  smoke.forEach((s,k)=>{const ph=mod(u*1.4+k/3,1);s.setAttribute('cy',-8-ph*30);s.setAttribute('cx',Math.sin(ph*6+k)*4);s.setAttribute('r',2+ph*4);s.style.opacity=ip&&u>=T0&&u<TE?(1-ph)*.45:0});
+  // 3 power on
+  const e3=ease(seg(u,12.5,13.4)), on=seg(u,13.4,13.9)*(1-seg(u,27.8,28.2));
+  const wr=ease(seg(u,17.5,18.5)); $('win').setAttribute('transform',`translate(${20-440*(1-wr)} 40)`);
+  $('win').style.opacity=1-seg(u,32.5,33.5);
+  const ee=ease(seg(u,17.5,18.6)), ex=lerp(700,440-440*(1-wr),ee), ey=lerp(500,392,ee);
+  $('cpath').setAttribute('d',`M620 346C620 410 ${ex+90} ${ey+30} ${ex} ${ey}`);
+  $('cend').setAttribute('x',ex-6);$('cend').setAttribute('y',ey-8);
+  $('cable').setAttribute('transform',`translate(0 ${90*(1-e3)})`);$('cable').style.opacity=Math.min(1,seg(u,12.5,13)*2)*(1-seg(u,32.5,33.3));
+  $('glow').style.opacity=seg(u,13.4,14)*.7;
+  for(let i=0;i<3;i++)$('ledr'+i).setAttribute('fill',u>13.4?'#ff3b30':'#7a1f1f');
+  $('sBoot').style.opacity=on; $('wait').style.opacity=.5+.5*Math.sin(u*5);
+  // 4 describe
+  const n=Math.floor(seg(u,18.8,21)*PN), l1=PR[0].slice(0,n), l2=PR[1].slice(0,Math.max(0,n-PR[0].length));
+  $('p1').textContent=l1;$('p2').textContent=l2;
+  const cl=n>PR[0].length?2:1, ct=cl==1?l1.length:l2.length;
+  $('caret').setAttribute('x',26+ct*8.4);$('caret').setAttribute('y',cl==1?75:95);$('caret').style.opacity=u>18.6&&u<21.2&&Math.sin(u*10)>-.3?1:0;
+  const press=Math.sin(Math.PI*seg(u,21.2,21.5));$('go').setAttribute('fill',press>.2?'#14a85c':'#0b7a41');
+  $('think').textContent=u>21.5&&u<22.4?'AI is writing'+'.'.repeat(1+Math.floor(u*4)%3):'';
+  $('code').style.opacity=seg(u,22.2,22.6);
+  let rem=Math.floor(seg(u,22.4,26.4)*CODE.join('\n').length);
+  CODE.forEach((l,i)=>{lineEl[i].textContent=l.slice(0,Math.max(0,rem));rem-=l.length+1});
+  // 5 send
+  const sp=seg(u,28.2,31.8);
+  $('status').textContent=u<26.6?'':u<28.2?'✓ Game tested':u<31.8?`Sending to console… ${Math.round(sp*100)}%`:u<32.5?'✓ Sent':'';
+  $('trk').style.opacity=$('fill').style.opacity=u>=28&&u<32.5?1:0;$('fill').setAttribute('width',388*sp);
+  $('sRecv').style.opacity=seg(u,28.1,28.5)*(1-seg(u,32.3,32.7));$('rf').setAttribute('width',100*sp);
+  const L=$('cpath').getTotalLength();
+  packets.forEach((r,i)=>{const q=mod(u*.8+i/8,1),pt=$('cpath').getPointAtLength((1-q)*L);r.setAttribute('x',pt.x-3.5);r.setAttribute('y',pt.y-3.5);r.style.opacity=u>=28.2&&u<31.9?1:0});
+  // 6 play
+  const e6=ease(seg(u,32.5,34)), s=lerp(1,1.7,e6);
+  $('con').setAttribute('transform',`translate(${lerp(620,400,e6)} ${lerp(235,225,e6)}) scale(${s})`);
+  const tau=u-33;$('sGame').style.opacity=seg(u,33,33.4);
+  const tt=Math.max(0,tau), d=mod(tt-.667+.933,1.867)-.933, air=tau>0&&Math.abs(d)<.55, q=(d+.55)/1.1, hh=air?22*4*q*(1-q):0, sc=(30*tt)%56;
+  $('frog').setAttribute('transform',`translate(0 ${-hh})`);
+  for(let j=0;j<4;j++){const x=40+56*j-sc;pitEl[j].setAttribute('x',x);pitEl[j].setAttribute('fill',Math.sin(u*9+j*2)>0?'#ff5a1f':'#ff7a2f');
+    starEl[j].setAttribute('transform',`translate(${x+9} 36)`);starEl[j].style.opacity=x+9>32&&x<138?1:0}
+  const sco=tau>0?Math.max(0,Math.floor((30*tau-17)/56)+1):0;$('score').textContent='★ '+sco;
+  const pr=air&&q<.3;$('cap').setAttribute('transform',pr?`translate(0 ${Z(.8)})`:'');$('cap').setAttribute('fill',pr?'#a82a26':'#d83a35');
+}
+
+let t=0,play=true,last=performance.now();
+const fmt=x=>`${Math.floor(x/60)}:${String(Math.floor(x%60)).padStart(2,'0')}`;
+function sync(){
+  render(t);$('seek').value=t;$('clock').textContent=`${fmt(t)} / ${fmt(T)}`;$('play').textContent=play?'Pause':'Play';
+  let c=0;CH.forEach(([s],i)=>{if(t>=s)c=i});tabs.forEach((b,i)=>b.setAttribute('aria-current',i==c));$('ct').textContent=CH[c][1];$('cd').textContent=CH[c][2];
+}
+function tick(now){const dt=(now-last)/1000;last=now;if(play){t+=Math.min(dt,.1);if(t>=T)t=0}sync();requestAnimationFrame(tick)}
+$('play').onclick=()=>{play=!play;sync()};
+$('seek').oninput=e=>{t=+e.target.value;sync()};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){play=false;t=37.2}
+requestAnimationFrame(tick);
+</script>

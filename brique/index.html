@@ -448,11 +448,12 @@ canvas.pix,img.pix{image-rendering:pixelated;background:repeating-conic-gradient
 .sh-photo{width:100vw;margin:0 0 0 calc(50% - 50vw);background:#fff;display:grid;justify-items:center;padding:0 3vw}   /* à fond perdu : bande blanche bord à bord, blanc sur blanc */
 .sh-photo img{display:block;width:100%;height:auto}
 .sh-console{max-width:760px;justify-self:center}
+.sh-process{display:block;width:100%;height:auto;aspect-ratio:16/9}.sh-process[hidden]{display:none}   /* la vidéo du parcours, fond blanc : elle passe avant la console puis lui laisse la place */
 .demo-console{position:relative;width:100%;container-type:inline-size}
 #accueil.shop,#accueil .shop{max-width:1200px}   /* titre sur deux lignes */
 #accueil .sh-hero{padding-top:4px}                    /* accueil : titre, console et boutons visibles d'un coup sur un écran 1920 x 1080 */
 #accueil .sh-titre{margin:0 0 6px}
-#accueil .demo-console{max-width:min(988px,calc((100vh - 420px) * 1.78))}   /* la console suit la hauteur de l'écran (rapport de la photo : 1,37) */
+#accueil .demo-console,#accueil .sh-process{max-width:min(988px,calc((100vh - 420px) * 1.78))}   /* la console suit la hauteur de l'écran (rapport de la photo : 1,37) */
 #accueil .sh-apres{padding-top:0}
 .acc-sous-titre{margin:0 0 4px;font-size:clamp(16px,2.2vw,20px);font-weight:600;opacity:.75}   /* sous la photo : ce que Bricode apprend */
 #accueil .sh-apres .cta{margin-top:10px !important}
@@ -600,7 +601,7 @@ body{overflow-x:clip}                                           /* la bande 100v
 
 <!-- ===== ACCUEIL : comme une page produit, quatre chapitres : titre/photo/prix, l'histoire, assembler sa console, créer ses jeux (le reste : vue PARTIS PRIS) ===== -->
 <small id="vTmp" style="position:fixed;top:2px;left:4px;z-index:9999;font:10px var(--mono);opacity:.6;pointer-events:none"></small>   <!-- provisoire : version du site en haut à gauche -->
-<main id="accueil" data-version="1.31">
+<main id="accueil" data-version="1.32">
 <div class="shop">
   <!-- le titre d'abord, la photo remonte légèrement dessous pour être visible dès l'arrivée (à fond perdu, blanc sur blanc) -->
   <div class="sh-hero">
@@ -609,7 +610,8 @@ body{overflow-x:clip}                                           /* la bande 100v
     <p class="acc-savoirs"><a class="sec" href="#assembler">En savoir plus sur la console</a><a class="sec" href="#creer-jeux">En savoir plus sur les jeux</a></p>
   </div>
   <figure class="sh-photo">
-    <div id="demoConsole" class="sh-console demo-console">   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->
+    <video id="videoProcess" class="sh-process" src="images/accueil-process.mp4" muted autoplay playsinline preload="auto" width="1920" height="1080" aria-label="De l'assemblage de la console au premier jeu, en passant par l'IA"></video>   <!-- d'abord le parcours en vidéo, puis la console actuelle -->
+    <div id="demoConsole" class="sh-console demo-console" hidden>   <!-- on tape une demande, le jeu apparaît sur l'écran de la photo -->
       <img src="images/console-v2.jpg" alt="La console Bricode : circuit hexagonal vert, écran couleur et trois boutons" width="1205" height="880">
       <img class="teinte" src="images/console-v2-bleu.jpg" alt="" width="1205" height="880"><img class="teinte" src="images/console-v2-rouge.jpg" alt="" width="1205" height="880"><img class="teinte" src="images/console-v2-violet.jpg" alt="" width="1205" height="880">   <!-- les autres couleurs, même cadrage : fondu l'une après l'autre -->
       <canvas id="demoEcran" width="320" height="240" aria-hidden="true"></canvas>
@@ -3210,6 +3212,9 @@ function vignette(rows) {                                // le niveau entier en 
 if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('video[autoplay]').forEach(v => { v.removeAttribute('autoplay'); v.pause(); });   // moins d'animations demandé : la vidéo reste sur son image
 // accueil : une demande se tape dans la bulle, puis le jeu se dessine sur l'écran de la photo (vue en perspective)
 (() => {
+  const suite = () => { videoProcess.hidden = true; demoConsole.hidden = false; dispatchEvent(new Event('resize')); };   // la vidéo finie : la console prend la place (et se cale sur sa photo)
+  videoProcess.addEventListener('ended', suite); videoProcess.addEventListener('error', suite);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) suite();
   const img = demoConsole.querySelector('img'), c = demoEcran.getContext('2d');
   const TEXTE = 'Je veux un jeu de plateforme, fond bleu, plateformes roses, avec un personnage arc-en-ciel';
   const COINS = [[427, 266], [783, 191], [854, 438], [485, 519]];   // coins de l'écran sur la photo (1205 x 880) : haut-gauche, haut-droit, bas-droit, bas-gauche

@@ -1095,6 +1095,8 @@ Sitemap: ${PUBLIC_URL}/sitemap.xml
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return res.end(html.replace('__VERSION__', VERSION).replace(/__URL__/g, PUBLIC_URL)
     .replace('__TEXTES__', () => JSON.stringify(db.textes).replace(/</g, '\\u003c')));   // textes du mode edition (< echappe : aucun </script> possible)
   }
+  const racine = req.method === 'GET' && { '/favicon.ico': ['images/favicon.ico', 'image/x-icon'], '/BingSiteAuth.xml': ['BingSiteAuth.xml', 'application/xml; charset=utf-8'] }[url];   // fichiers attendus a la racine : icone, verification Bing
+  if (racine) { res.writeHead(200, { 'Content-Type': racine[1], 'Cache-Control': 'public, max-age=86400' }); return fs.createReadStream(path.join(__dirname, racine[0])).pipe(res); }
   const img = req.method === 'GET' && url.match(/^\/images\/([a-z0-9-]+)\.(jpg|png|gif|mp4)$/);   // photos et videos du site (nom simple : pas de chemin) ; png = image avec transparence
   if (img && fs.existsSync(path.join(__dirname, 'images', img[1] + '.' + img[2]))) {
     const f = path.join(__dirname, 'images', img[1] + '.' + img[2]), taille = fs.statSync(f).size;

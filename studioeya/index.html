@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio Eya — Faites jouer vos invités</title>
+<meta name="description" content="Tableaux lumineux Pixel, bornes rétro, jeux interactifs et IA, et l'atelier Brique : conçus et fabriqués à Bourges. Montage, technicien et démontage compris.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pixelify+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12131c; --bg2:#171925; --panel:#1b1d2a; --line:#2a2d40;
+  --txt:#f3f1ec; --mut:#a9acbd; --amb:#f7b731; --amb-ink:#1a1405;
+  --pix:'Pixelify Sans',monospace; --sans:'DM Sans',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){--bg:#12131c} /* le catalogue est sombre : le site aussi */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{background:var(--bg);color:var(--txt);font:17px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+section{padding:84px 0}
+.alt{background:var(--bg2)}
+.kicker{font:600 13px/1 var(--pix);letter-spacing:.16em;text-transform:uppercase;color:var(--amb);margin-bottom:14px}
+h1,h2,h3{font-family:var(--pix);font-weight:600;line-height:1.08}
+h1{font-size:clamp(40px,6.4vw,76px)}
+h2{font-size:clamp(30px,4.2vw,48px);margin-bottom:14px}
+h3{font-size:22px;margin-bottom:8px}
+.lead{color:var(--mut);font-size:19px;max-width:640px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:40px}
+.head .lead{font-size:16px;max-width:400px;text-align:right}
+
+/* barre */
+header{position:sticky;top:0;z-index:20;background:rgba(18,19,28,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:62px;gap:16px}
+.logo{font:700 20px var(--pix);text-decoration:none;letter-spacing:.04em}
+.logo b{color:var(--amb)}
+nav{display:flex;gap:22px;align-items:center}
+nav a{font-size:14px;text-decoration:none;color:var(--mut);transition:color .15s}
+nav a:hover{color:var(--txt)}
+.btn{display:inline-block;background:var(--amb);color:var(--amb-ink);font-weight:700;font-size:15px;padding:12px 22px;border-radius:8px;text-decoration:none;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--amb)}
+nav .btn{padding:8px 16px;font-size:14px;color:var(--amb-ink)}
+@media(max-width:860px){nav a:not(.btn){display:none}}
+
+/* hero */
+.hero{padding:0;position:relative;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;min-height:620px;padding-top:40px;padding-bottom:40px}
+.hero h1{margin-bottom:22px}
+.hero .lead{margin-bottom:26px}
+.hero .tags{color:var(--amb);font-weight:700;font-size:15px;margin-bottom:32px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+.hero-img{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:1/1.02;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.hero-img img{width:100%;height:100%;object-fit:cover}
+.hero-img::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0,transparent 25%);opacity:.0}
+.badge{position:absolute;left:14px;bottom:14px;background:rgba(18,19,28,.85);border:1px solid var(--amb);color:var(--amb);font:600 12px var(--pix);letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;border-radius:6px}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr;min-height:0}.hero-img{aspect-ratio:4/3}}
+
+/* cartes */
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+@media(max-width:980px){.g5,.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}.head .lead{text-align:left}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card p{color:var(--mut);font-size:15.5px}
+.card .n{font:600 28px var(--pix);color:var(--amb);display:block;margin-bottom:6px}
+.tag{font:600 12px var(--pix);letter-spacing:.14em;text-transform:uppercase;color:var(--amb)}
+.tag.fam{color:var(--mut)}
+.cat{padding:0;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;transition:border-color .15s,transform .15s}
+.cat:hover{border-color:var(--amb);transform:translateY(-3px)}
+.cat img{aspect-ratio:16/10;object-fit:cover;width:100%}
+.cat div{padding:16px 18px 20px}
+.cat h3{margin:6px 0 10px}
+.cat ul{list-style:none;color:var(--mut);font-size:14.5px}
+.cat li{padding-left:14px;position:relative;margin:3px 0}
+.cat li::before{content:"";position:absolute;left:0;top:.6em;width:5px;height:5px;background:var(--amb);border-radius:1px}
+.note{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:15px;color:var(--mut)}
+.note b{color:var(--amb)}
+
+/* split */
+.split{display:grid;grid-template-columns:1fr 1.1fr;gap:48px;align-items:start}
+.split.rev{grid-template-columns:1.1fr 1fr}
+@media(max-width:900px){.split,.split.rev{grid-template-columns:1fr;gap:32px}}
+.pill{display:inline-block;background:var(--amb);color:var(--amb-ink);font:700 12px var(--pix);letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;border-radius:5px;margin:12px 0 18px}
+.steps{list-style:none;margin:18px 0}
+.steps li{display:flex;gap:14px;margin:12px 0;color:var(--mut)}
+.steps li b{font:600 18px var(--pix);color:var(--amb);min-width:16px}
+.chips{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:14.5px;color:var(--txt)}
+.chip b{display:block;font:600 20px var(--pix);color:var(--amb)}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.photos img{border-radius:12px;width:100%;height:100%;object-fit:cover;aspect-ratio:4/3;border:1px solid var(--line)}
+.photos .wide{grid-column:1/-1;aspect-ratio:16/9}
+.cap{font-size:13px;color:var(--mut);margin-top:10px}
+
+/* jeux Pixel */
+.game{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.game canvas{width:100%;aspect-ratio:1;display:block;border-radius:8px;background:#0c0d14}
+.game h3{color:var(--amb);margin:14px 0 6px;font-size:20px}
+.game p{color:var(--mut);font-size:14.5px}
+
+/* Brique */
+.brique{background:linear-gradient(180deg,var(--bg) 0,#101a22 100%)}
+.brique .steps li b{color:#5fd4a0}
+.brique .kicker{color:#5fd4a0}
+.brique .pill{background:#5fd4a0}
+.brique .btn{background:#5fd4a0}
+.brique .chip b{color:#5fd4a0}
+.brique .card .n{color:#5fd4a0}
+
+/* prix */
+.price{text-align:left}
+.price .big{font:700 38px var(--pix);color:var(--amb);margin:8px 0 2px}
+.price small{color:var(--mut)}
+.price ul{list-style:none;margin:16px 0;color:var(--mut);font-size:15px}
+.price li{margin:6px 0;padding-left:16px;position:relative}
+.price li::before{content:"";position:absolute;left:0;top:.6em;width:6px;height:6px;background:var(--amb);border-radius:1px}
+.price.star{border-color:var(--amb)}
+
+/* FAQ */
+details{border-bottom:1px solid var(--line);padding:16px 0}
+summary{cursor:pointer;font:600 20px var(--pix);list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::after{content:"+";color:var(--amb)}
+details[open] summary::after{content:"–"}
+details p{color:var(--mut);margin-top:10px}
+
+/* contact */
+.contact{text-align:center}
+.contact .big{font:700 clamp(28px,4vw,44px) var(--pix);margin:18px 0}
+.contact .big a{text-decoration:none;color:var(--amb)}
+footer{border-top:1px solid var(--line);padding:30px 0;color:var(--mut);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="#top">STUDIO <b>EYA</b></a>
+    <nav>
+      <a href="#pixel">Modules Pixel</a>
+      <a href="#brique">Brique</a>
+      <a href="#sign">Sign</a>
+      <a href="#arcade">Arcade et VR</a>
+      <a href="#formules">Formules</a>
+      <a class="btn" href="#contact">Demander un devis</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <div class="kicker">Catalogue 2026-2027</div>
+      <h1>Faites jouer<br>vos invités.</h1>
+      <p class="lead">Tableaux lumineux, bornes rétro et jeux interactifs, conçus et fabriqués dans nos ateliers de Bourges. Montage, technicien sur place et démontage compris.</p>
+      <p class="tags">Modules Pixel · Sign · Arcade · Interactif et IA · Atelier Brique</p>
+      <div class="cta">
+        <a class="btn" href="#contact">Demander un devis</a>
+        <a class="btn ghost" href="#pixel">Découvrir les Modules Pixel</a>
+      </div>
+    </div>
+    <div class="hero-img">
+      <img src="images/pixel-module.jpg" alt="Un Module Pixel sur pied, écran en pixels allumé, dans une salle aux boiseries vertes" fetchpriority="high">
+      <span class="badge">Module Pixel · 64 × 64 points</span>
+    </div>
+  </div>
+</section>
+
+<!-- POURQUOI -->
+<section class="alt">
+  <div class="wrap">
+    <div class="kicker">Pourquoi Studio Eya</div>
+    <h2>Nous codons et fabriquons<br>ce que nous installons.</h2>
+    <p class="lead" style="margin-bottom:40px">Pour votre événement, cela change quatre choses.</p>
+    <div class="grid g4">
+      <div class="card"><span class="n">01</span><h3>À votre image</h3><p>Logo, messages, mots, couleurs : nous dessinons vos visuels en pixels. Le même objet habille la salle et fait jouer vos invités.</p></div>
+      <div class="card"><span class="n">02</span><h3>Des jeux faits maison</h3><p>Les Modules Pixel et leurs jeux sont conçus, codés et assemblés dans nos ateliers. Vos invités ne les ont vus nulle part ailleurs.</p></div>
+      <div class="card"><span class="n">03</span><h3>Clés en main</h3><p>Montage, technicien sur place et démontage compris. Les Modules Pixel sont sur batterie : aucun câble à tirer.</p></div>
+      <div class="card"><span class="n">04</span><h3>Un seul interlocuteur</h3><p>Du premier appel au démontage, un chef de projet vous suit. Vous savez qui appeler.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CATALOGUE -->
+<section>
+  <div class="wrap">
+    <div class="head">
+      <div><div class="kicker">Le catalogue</div><h2>Nos animations<br>en un coup d’œil</h2></div>
+      <p class="lead">Trois animations phares, deux familles pour compléter. Tout se combine librement.</p>
+    </div>
+    <div class="grid g5">
+      <a class="card cat" href="#pixel"><img src="images/pixel-duo.jpg" alt="Borne Pixel duo"><div><span class="tag">Phare</span><h3>Modules Pixel</h3><ul><li>Bornes duo sur pied</li><li>Bornes solo sur table</li><li>Mode déco, mode jeu</li><li>Sur batterie</li></ul></div></a>
+      <a class="card cat" href="#sign"><img src="images/vr.jpg" alt="Animation Sign" style="object-position:center 30%"><div><span class="tag">Phare</span><h3>Sign</h3><ul><li>Langue des signes</li><li>Reconnaissance par IA</li><li>Mots personnalisés</li><li>Avec animateur</li></ul></div></a>
+      <a class="card cat" href="#arcade"><img src="images/cockpit.jpg" alt="Simulateur cockpit"><div><span class="tag">Phare</span><h3>Arcade et rétro</h3><ul><li>Bornes d’arcade</li><li>Flipper numérique</li><li>Game &amp; Watch géant</li><li>Simulateur cockpit</li></ul></div></a>
+      <a class="card cat" href="#interactif"><img src="images/vr.jpg" alt="Escape game VR"><div><span class="tag fam">Famille</span><h3>Interactif et IA</h3><ul><li>HoverGame</li><li>Escape games VR et Pixel</li><li>Led Game, Sumo robots</li><li>Face Art, Photo émotion</li></ul></div></a>
+      <a class="card cat" href="#brique"><img src="images/brique-console-main.jpg" alt="Console Brique tenue en main" style="object-position:center 55%"><div><span class="tag fam">Famille</span><h3>Atelier Brique</h3><ul><li>On soude sa console</li><li>On crée son jeu avec l’IA</li><li>2 h, 10 participants</li><li>On repart avec</li></ul></div></a>
+    </div>
+    <div class="note"><b>★</b> Et sur demande, à l’intérieur de nos formules : baby-foot, air hockey, machines à pince, jeux forains, jeux sportifs, borne photo.</div>
+  </div>
+</section>
+
+<!-- PIXEL -->
+<section id="pixel" class="alt">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <div class="kicker">Animation phare</div>
+        <h2>Modules Pixel</h2>
+        <span class="pill">Création Studio Eya</span>
+        <p class="lead">Au repos, les matrices habillent l’espace. Dès qu’on s’approche, elles se jouent.</p>
+        <div class="kicker" style="margin-top:28px">Comment ça marche</div>
+        <ol class="steps">
+          <li><b>1</b><span>On pose les bornes, sur table ou sur pied. Sur batterie, rien à brancher.</span></li>
+          <li><b>2</b><span>Elles s’animent seules : vos visuels, votre logo, vos messages.</span></li>
+          <li><b>3</b><span>On appuie sur un bouton : la borne devient un jeu, en solo ou en duel.</span></li>
+        </ol>
+        <div class="chips">
+          <div class="chip"><b>2 + 1</b>joueurs : duo sur pied, solo sur table</div>
+          <div class="chip"><b>8 h</b>d’autonomie sur batterie</div>
+          <div class="chip"><b>64 × 64</b>points</div>
+        </div>
+      </div>
+      <div class="photos">
+        <img class="wide" src="images/pixel-duo.jpg" alt="Borne Pixel duo : écran en pixels, joysticks et boutons">
+        <img class="wide" src="images/pixel-module.jpg" alt="Module Pixel sur pied" style="object-position:center 60%">
+        <p class="cap" style="grid-column:1/-1;margin-top:0">Mode déco : au repos, vos visuels. Mode jeu : un bouton, et la borne devient un jeu.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:72px">
+      <div class="kicker">Pixel · mode jeu</div>
+      <h2>Un bouton suffit pour jouer</h2>
+      <p class="lead" style="margin-bottom:32px">Pas de notice : on comprend en regardant son voisin. Duels, parties libres, et en tournoi le classement s’affiche sur une tablette.</p>
+      <div class="grid g4">
+        <div class="game"><canvas id="g-snake" width="240" height="240" role="img" aria-label="Animation du jeu Snake"></canvas><h3>Snake</h3><p>Guidez le serpent et gobez les pommes. Ne vous mordez pas la queue !</p></div>
+        <div class="game"><canvas id="g-briques" width="240" height="240" role="img" aria-label="Animation du jeu Briques"></canvas><h3>Briques</h3><p>Empilez les briques et complétez des lignes pour tenir le plus longtemps.</p></div>
+        <div class="game"><canvas id="g-chenille" width="240" height="240" role="img" aria-label="Animation du jeu Chenillard"></canvas><h3>Chenillard</h3><p>Visez la tête de la chenille avec la bonne couleur pour la détruire.</p></div>
+        <div class="game"><canvas id="g-palet" width="240" height="240" role="img" aria-label="Animation du jeu Palet"></canvas><h3>Palet</h3><p>Le duel : renvoyez le palet au bon moment. Le premier à 5 manches gagne.</p></div>
+      </div>
+    </div>
+
+    <div style="margin-top:72px">
+      <div class="kicker">Pixel · mode déco</div>
+      <h2>Vos couleurs, votre logo, vos messages</h2>
+      <p class="lead">Quand personne ne joue, les tableaux s’animent seuls. Nous dessinons les visuels avec vous, vous les validez 7 jours avant l’événement. Avec la formule Pixel Plus, dix visuels à vos couleurs sont compris.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BRIQUE -->
+<section id="brique" class="brique">
+  <div class="wrap">
+    <div class="split rev">
+      <div class="photos">
+        <img class="wide" src="images/brique-soudure.jpg" alt="Un jeune soude sa console au fer à souder" style="aspect-ratio:16/10;object-position:center 30%">
+        <img src="images/brique-console-main.jpg" alt="La console Brique allumée en main" style="object-position:center 55%">
+        <img src="images/brique-console-bleue.jpg" alt="Console Brique, carte hexagonale bleue" style="object-fit:contain;background:#fff">
+      </div>
+      <div>
+        <div class="kicker">Nouveau · Atelier électronique, jeu vidéo, agent IA</div>
+        <h2>Brique : la console qu’on assemble, les jeux qu’on invente.</h2>
+        <span class="pill">Atelier « Ma Console »</span>
+        <p class="lead">Des jeunes soudent leur console, puis créent leur jeu en le décrivant à une IA. Sessions de 2 h, 10 participants. Chacun repart avec sa console, et ses jeux dedans.</p>
+        <div class="chips">
+          <div class="chip"><b>2 h</b>par session</div>
+          <div class="chip"><b>10</b>participants</div>
+          <div class="chip"><b>CM1 → adultes</b>trois niveaux</div>
+        </div>
+        <p style="margin-top:26px"><a class="btn" href="https://bricode.fr" target="_blank" rel="noopener">Découvrir Brique sur bricode.fr</a></p>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:56px">
+      <div class="card"><span class="n">01 · Électronique</span><h3>Fabriquer</h3><p>Fer à souder en main, patte par patte, on assemble sa console : un écran couleur, trois boutons, un cerveau ESP32-C3. Encadré par un adulte, lunettes sur le nez.</p></div>
+      <div class="card"><span class="n">02 · Jeu vidéo</span><h3>Comprendre</h3><p>Des commandes, des règles « quand… alors… », un but, un univers. Avec trois boutons, la contrainte fait inventer.</p></div>
+      <div class="card"><span class="n">03 · Agent IA</span><h3>Créer</h3><p>On décrit son jeu, l’agent l’écrit, le teste et l’envoie sur la console par le câble USB. On joue, on corrige, on recommence.</p></div>
+    </div>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card"><h3>Guidé · CM1, CM2</h3><p>Des boutons d’aide pour lancer son premier jeu. La console peut arriver déjà montée et testée.</p></div>
+      <div class="card"><h3>Libre · 6e, 4e</h3><p>Tout part de la phrase qu’on écrit : aucune liste, aucun jeu tout fait.</p></div>
+      <div class="card"><h3>Sous le capot · ados et adultes</h3><p>On lit le programme écrit par l’IA, on le modifie, on peut brancher son propre agent.</p></div>
+    </div>
+    <div class="note"><b>Une IA cadrée.</b> Celle de Mistral AI, qui ne sert ici qu’à créer des jeux. Aucune donnée personnelle : un pseudo et le code du groupe, ni nom, ni mail, ni photo. L’animateur garde la main sur tout ce qui est publié.</div>
+  </div>
+</section>
+
+<!-- SIGN -->
+<section id="sign">
+  <div class="wrap">
+    <div class="kicker">Animation phare</div>
+    <h2>Sign</h2>
+    <p class="lead" style="margin-bottom:36px">En deux minutes, vos invités apprennent à épeler un mot en langue des signes française, guidés par une intelligence artificielle. Un vrai sujet pour vos actions RSE, vos journées inclusion et vos stands.</p>
+    <div class="grid g3">
+      <div class="card"><span class="n">1 · La borne montre</span><p>Le signe de la lettre à reproduire s’affiche.</p></div>
+      <div class="card"><span class="n">2 · Le joueur signe</span><p>L’IA reconnaît son geste en temps réel.</p></div>
+      <div class="card"><span class="n">3 · Le mot est épelé</span><p>Chaque mot réussi fait gagner des points. Photo souvenir envoyée par mail.</p></div>
+    </div>
+    <div class="chips">
+      <div class="chip"><b>25 à 30</b>joueurs par heure, 2 min chacun</div>
+      <div class="chip"><b>Vos mots</b>valeurs, produits, ville</div>
+      <div class="chip"><b>Animateur</b>compris, prise 220 V</div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCADE -->
+<section id="arcade" class="alt">
+  <div class="wrap">
+    <div class="head">
+      <div><div class="kicker">Animation phare</div><h2>Arcade et rétro</h2></div>
+      <p class="lead">En libre-service toute la soirée. Joystick, boutons, jeux rétro : tout le monde sait jouer. 1 à 2 joueurs par machine, prise 220 V.</p>
+    </div>
+    <div class="split" style="align-items:center">
+      <div class="grid g2">
+        <div class="card"><h3>Bornes d’arcade</h3><p>Sur pied ou sur table, les classiques qu’on connaît tous. Plusieurs bornes côte à côte pour les tournois.</p></div>
+        <div class="card"><h3>Flipper numérique</h3><p>Le flipper sans limites : des dizaines de tables, à un ou deux joueurs.</p></div>
+        <div class="card"><h3>Game &amp; Watch géant</h3><p>Une console de poche rétro, en version géante sur pied. Elle attire l’œil de loin.</p></div>
+        <div class="card"><h3>Simulateur cockpit</h3><p>Une borne d’arcade dans un cockpit fermé : on s’installe, on pilote.</p></div>
+      </div>
+      <div class="photos">
+        <img class="wide" src="images/arcade-salle.jpg" alt="Deux joueurs devant une borne d'arcade dans un pop-up arcade">
+        <img src="images/cockpit.jpg" alt="Simulateur cockpit">
+        <img src="images/pixel-duo.jpg" alt="Borne d'arcade avec joysticks">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIF -->
+<section id="interactif">
+  <div class="wrap">
+    <div class="head">
+      <div><div class="kicker">Famille</div><h2>Interactif et IA</h2></div>
+      <p class="lead">Des jeux qui se jouent avec la main, le corps ou le visage. Chacun tient sur une table ou un pied, prise 220 V.</p>
+    </div>
+    <div class="grid g4">
+      <div class="card"><h3>HoverGame</h3><p>Une borne qui se joue sans la toucher : un capteur suit le survol de la main. 1 ou 2 joueurs, 2 min.</p></div>
+      <div class="card"><h3>Escape game VR</h3><p>Coopérez pour vous en sortir, casque sur la tête. 2 à 4 joueurs, 15 à 30 min.</p></div>
+      <div class="card"><h3>Escape game Pixel</h3><p>Cinq énigmes pour ouvrir la mallette en pixels. 1 à 3 joueurs.</p></div>
+      <div class="card"><h3>Led Game</h3><p>Refaites la séquence de couleurs, ou duel façon pong. 1 ou 2 joueurs.</p></div>
+      <div class="card"><h3>Sumo robots</h3><p>Poussez l’adversaire hors de l’arène. Une manette chacun, 1 min par combat.</p></div>
+      <div class="card"><h3>Face Art</h3><p>Un robot vous photographie puis dessine votre portrait sous vos yeux. 5 min.</p></div>
+      <div class="card"><h3>Photo émotion</h3><p>La borne photo qui se déclenche sur vos expressions. Votre mosaïque, envoyée par mail.</p></div>
+      <div class="card" style="border-color:var(--amb)"><span class="tag">Et ce qui n’existe pas encore</span><p style="margin-top:8px">Un thème, un message, un public particulier ? Nous concevons et fabriquons l’expérience qui manque.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONSEILS -->
+<section class="alt">
+  <div class="wrap">
+    <div class="head">
+      <div><div class="kicker">Nos conseils</div><h2>Quelle animation<br>pour quel moment ?</h2></div>
+      <p class="lead">Ce que nous proposons le plus souvent. Tout se combine selon le lieu et le public.</p>
+    </div>
+    <div class="grid g3">
+      <div class="card"><h3>Cocktail et accueil</h3><p>Modules Pixel en mode déco, logo en pixels. Sign avec animateur. Photo émotion, un souvenir dès l’arrivée.</p></div>
+      <div class="card"><h3>Dîner assis</h3><p>Bornes solo sur les tables, en mode déco. Un message sur tous les tableaux à l’heure dite. Mode jeu au dessert, sans rien déplacer.</p></div>
+      <div class="card"><h3>Soirée et afterwork</h3><p>Duels Pixel toute la nuit. Arcade, flipper et Game &amp; Watch en libre-service. Simulateur cockpit.</p></div>
+      <div class="card"><h3>Séminaire et pauses</h3><p>HoverGame et Led Game : 2 minutes, beaucoup de passage. Sumo robots pour les duels entre équipes. Escape game Pixel ou VR.</p></div>
+      <div class="card"><h3>Salon et stand</h3><p>Modules Pixel à vos couleurs, visibles de loin. Sign pour porter un message d’inclusion.</p></div>
+      <div class="card"><h3>Fête publique, famille et jeunes</h3><p>Arcade et Modules Pixel en libre-service. Face Art et Sumo robots. Atelier Brique pour les jeunes.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEROULEMENT -->
+<section>
+  <div class="wrap">
+    <div class="kicker">Comment ça se passe</div>
+    <h2>De votre demande au démontage</h2>
+    <p class="lead" style="margin-bottom:36px">Le jour J, vous profitez de vos invités : le montage, l’exploitation et le démontage, c’est nous.</p>
+    <div class="grid g5">
+      <div class="card"><span class="n">1</span><h3>Votre demande</h3><p>Date, lieu, public attendu, envie. Un appel suffit pour cadrer la formule.</p></div>
+      <div class="card"><span class="n">2</span><h3>Le devis</h3><p>Devis détaillé, valable 30 jours. La date est bloquée à la signature.</p></div>
+      <div class="card"><span class="n">3</span><h3>J-14</h3><p>Logo, couleurs, messages, mots de Sign. Nous dessinons les visuels en pixels.</p></div>
+      <div class="card"><span class="n">4</span><h3>J-7</h3><p>Vous validez les visuels sur simulation. Plus rien à faire de votre côté.</p></div>
+      <div class="card"><span class="n">5</span><h3>Le jour J</h3><p>Nous livrons, montons et testons. Un technicien reste pendant l’exploitation, puis démonte.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FORMULES -->
+<section id="formules" class="alt">
+  <div class="wrap">
+    <div class="head">
+      <div><div class="kicker">Les formules Pixel</div><h2>Choisissez votre formule</h2></div>
+      <p class="lead">Prix « à partir de », HT, TVA 20 % en sus. Sign seul, avec animateur : à partir de 1 300 € HT.</p>
+    </div>
+    <div class="grid g3">
+      <div class="card price"><h3>Pixel</h3><p>4 bornes Pixel</p><div class="big">1 867 € HT</div><small>soit 2 240,40 € TTC</small>
+        <ul><li>2 bornes duo, 2 bornes solo</li><li>6 joueurs en même temps</li><li>Mode déco et mode jeu</li><li>Visuels standards</li></ul></div>
+      <div class="card price"><h3>Pixel Plus</h3><p>8 bornes Pixel, à vos couleurs</p><div class="big">2 467 € HT</div><small>soit 2 960,40 € TTC</small>
+        <ul><li>4 bornes duo, 4 bornes solo</li><li>12 joueurs en même temps</li><li>Mode déco et mode jeu</li><li>10 visuels à vos couleurs</li></ul></div>
+      <div class="card price"><h3>Sur mesure</h3><p>Toutes nos animations, dans la composition de votre choix</p><div class="big">Sur devis</div><small>Plusieurs jours, tournée, installation fixe</small>
+        <ul><li>Jeu Pixel créé pour votre événement</li><li>Scénographie, objet lumineux</li><li>Atelier Brique</li></ul></div>
+    </div>
+    <div class="note"><b>Dans les deux formules :</b> montage et tests avant l’ouverture, un technicien sur place, jusqu’à 8 h d’exploitation, démontage après la fermeture, transport en Île-de-France et autour de Bourges. Animations à ajouter (Face Art, Sumo, Photo émotion, Led Game, escape games) : 300 € HT chacune.</div>
+  </div>
+</section>
+
+<!-- REFERENCES + FAQ -->
+<section>
+  <div class="wrap">
+    <div class="kicker">Références</div>
+    <h2>Ils ont déjà joué avec nous</h2>
+    <div class="grid g2" style="margin:32px 0 64px">
+      <div class="card"><span class="tag">Environ 700 invités · Soirée d’entreprise</span><h3 style="margin-top:8px">Les 40 ans d’une banque</h3><p>L’Illiade (Grand Est), 2026. Modules Pixel en mode déco puis en mode jeu, logo et frise de l’entreprise dessinés en pixels.</p></div>
+      <div class="card"><span class="tag">Un week-end ouvert à tous · Événement public</span><h3 style="margin-top:8px">Arcadia, pop-up arcade</h3><p>Loir-et-Cher, mai 2026. Bornes d’arcade, structures recyclées et jeux maison, ouverts à tous le temps d’un week-end.</p></div>
+    </div>
+
+    <div class="kicker">Questions fréquentes</div>
+    <h2>Ce qu’on nous demande en premier</h2>
+    <div style="margin-top:24px;max-width:820px">
+      <details><summary>Combien ça coûte ?</summary><p>À partir de 1 867 € HT pour la formule Pixel, technicien et 8 h d’exploitation compris. Options de 200 à 600 € HT. Exemple : une soirée de 300 invités à 2 967 € HT.</p></details>
+      <details><summary>Combien de temps avant ?</summary><p>La date est bloquée au devis signé. Pour des visuels à vos couleurs : vos éléments 14 jours avant, votre validation 7 jours avant.</p></details>
+      <details><summary>Et en extérieur ?</summary><p>Sous abri uniquement. Les Modules Pixel sont sur batterie ; Sign, l’arcade et les autres bornes ont besoin d’une prise 220 V.</p></details>
+      <details><summary>Que devez-vous fournir ?</summary><p>Un accès pour décharger, du plain-pied ou un ascenseur, des tables pour les bornes solo, des prises 220 V pour les bornes sur secteur, un plan ou un repérage.</p></details>
+      <details><summary>Et si une borne tombe en panne ?</summary><p>Un technicien reste sur place pendant toute l’exploitation. Il intervient sans arrêter la soirée.</p></details>
+      <details><summary>Travaillez-vous avec les agences ?</summary><p>Oui, en marque blanche. Plusieurs jours, tournée ou hors Île-de-France et Bourges : sur devis.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="alt contact">
+  <div class="wrap">
+    <div class="kicker">Contact</div>
+    <h2>Parlons de votre événement</h2>
+    <p class="lead" style="margin:0 auto">Vous nous donnez la date, le lieu et le nombre d’invités. Nous vous envoyons une formule et un devis détaillé. Devis signé : votre date est bloquée.</p>
+    <p class="big"><a href="tel:+33628413458">06 28 41 34 58</a></p>
+    <p><a href="mailto:contact@jonathanj.net" style="font-size:20px">contact@jonathanj.net</a></p>
+    <p class="cap" style="margin-top:14px">Jonathan Jullien, chef de projet</p>
+    <p style="margin-top:28px"><a class="btn" href="mailto:contact@jonathanj.net?subject=Demande%20de%20devis">Demander un devis</a></p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Studio Eya · Bourges</span>
+    <span>Conçu et fabriqué dans nos ateliers · Création Le Cercle</span>
+  </div>
+</footer>
+
+<script>
+/* Quatre mini-jeux dessinés en points, comme sur une matrice Pixel. */
+(function(){
+  const N=24, reduit=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function matrice(id, etape){
+    const cv=document.getElementById(id), c=cv.getContext('2d'), s=cv.width/N;
+    const g=Array.from({length:N},()=>Array(N).fill(null));
+    const set=(x,y,col)=>{ if(x>=0&&x<N&&y>=0&&y<N) g[y][x]=col; };
+    let t=0;
+    function dessine(){
+      g.forEach(r=>r.fill(null)); etape(t++,set,g);
+      c.fillStyle='#0c0d14'; c.fillRect(0,0,cv.width,cv.height);
+      for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+        c.fillStyle=g[y][x]||'#1b1d2b';
+        c.beginPath(); c.arc(x*s+s/2,y*s+s/2,s*(g[y][x]?.4:.17),0,7); c.fill();
+      }
+    }
+    dessine();
+    if(!reduit) setInterval(dessine,140);
+  }
+
+  // Snake : boucle autour d'un rectangle, pomme au centre
+  const boucle=[]; for(let x=4;x<=19;x++)boucle.push([x,5]); for(let y=6;y<=17;y++)boucle.push([19,y]);
+  for(let x=18;x>=4;x--)boucle.push([x,17]); for(let y=16;y>=6;y--)boucle.push([4,y]);
+  matrice('g-snake',(t,set)=>{
+    for(let i=0;i<9;i++){const p=boucle[(t-i+boucle.length*9)%boucle.length]; set(p[0],p[1],i?'#34d27a':'#a7ffcf');}
+    set(12,11,t%6<3?'#ff4d5e':'#c23646');
+  });
+
+  // Briques : blocs 2x2 qui tombent dans 12 colonnes et s'empilent ; la pile repart à zéro
+  const cols=['#f7b731','#ff4d5e','#4db8ff','#34d27a','#b56bff'];
+  let pile=[], piece=null, haut=Array(12).fill(0);
+  matrice('g-briques',(t,set)=>{
+    if(!piece) piece={x:Math.floor(Math.random()*12),y:0,c:cols[Math.floor(Math.random()*5)]};
+    if(piece.y>=N-2-haut[piece.x]*2){
+      pile.push(piece); haut[piece.x]++; piece=null;
+      if(haut[pile[pile.length-1].x]>=8){pile=[];haut=Array(12).fill(0);}
+    } else piece.y++;
+    pile.concat(piece?[piece]:[]).forEach(p=>{for(let i=0;i<4;i++)set(p.x*2+i%2,p.y+(i>>1),p.c);});
+  });
+
+  // Chenillard : une chenille de boules colorées qui ondule, un tireur en bas
+  matrice('g-chenille',(t,set)=>{
+    const k=['#ff4d5e','#f7b731','#b56bff','#4db8ff','#34d27a','#f7b731'];
+    for(let i=0;i<6;i++){const x=(t/2+i*3)%N, y=4+Math.round(Math.sin((t/2+i*3)/3)*2); set(Math.floor(x),y,k[i]); set(Math.floor(x)+1,y,k[i]);}
+    const tx=12+Math.round(Math.sin(t/12)*7); set(tx,21,'#e8e8f0'); set(tx-1,22,'#e8e8f0'); set(tx,22,'#e8e8f0'); set(tx+1,22,'#e8e8f0');
+    for(let y=9+(t%10);y<20;y+=10) set(tx,y,'#4db8ff');
+  });
+
+  // Palet : deux raquettes, une balle qui rebondit
+  matrice('g-palet',(t,set)=>{
+    const p=(t%66), bx=p<33?2+p*0.667:24-(p-33)*0.667, by=11+Math.round(Math.sin(t/5)*8);
+    for(let y=0;y<N;y+=3) set(12,y,'#4a4e66');
+    for(let i=-2;i<=2;i++){ set(1,Math.round(by)+i,'#4db8ff'); set(22,Math.round(by)+i,'#ff5fa8'); }
+    set(Math.round(bx),Math.round(by),'#f7b731');
+    set(5,2,'#4db8ff'); set(18,2,'#ff5fa8');
+  });
+})();
+</script>
+</body>
+</html>

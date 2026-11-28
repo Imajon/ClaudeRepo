@@ -4,178 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Studio Eya — Faites jouer vos invités</title>
-<meta name="description" content="Tableaux lumineux Pixel, bornes rétro, jeux interactifs et IA, et l'atelier Brique : conçus et fabriqués à Bourges. Montage, technicien et démontage compris.">
+<meta name="description" content="Tableaux lumineux Pixel, bornes rétro, jeux interactifs et IA, et l&#x27;atelier Brique : conçus et fabriqués à Bourges. Montage, technicien et démontage compris.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pixelify+Sans:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#12131c; --bg2:#171925; --panel:#1b1d2a; --line:#2a2d40;
-  --txt:#f3f1ec; --mut:#a9acbd; --amb:#f7b731; --amb-ink:#1a1405;
-  --pix:'Pixelify Sans',monospace; --sans:'DM Sans',system-ui,sans-serif;
-}
-@media (prefers-color-scheme: light){
-  :root:not([data-theme="dark"]){--bg:#12131c} /* le catalogue est sombre : le site aussi */
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;scroll-padding-top:70px}
-body{background:var(--bg);color:var(--txt);font:17px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
-img{max-width:100%;display:block}
-a{color:inherit}
-.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
-section{padding:84px 0}
-.alt{background:var(--bg2)}
-.kicker{font:600 13px/1 var(--pix);letter-spacing:.16em;text-transform:uppercase;color:var(--amb);margin-bottom:14px}
-h1,h2,h3{font-family:var(--pix);font-weight:600;line-height:1.08}
-h1{font-size:clamp(40px,6.4vw,76px)}
-h2{font-size:clamp(30px,4.2vw,48px);margin-bottom:14px}
-h3{font-size:22px;margin-bottom:8px}
-.lead{color:var(--mut);font-size:19px;max-width:640px}
-.head{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:40px}
-.head .lead{font-size:16px;max-width:400px;text-align:right}
-
-/* barre */
-header{position:sticky;top:0;z-index:20;background:rgba(18,19,28,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-header .wrap{display:flex;align-items:center;justify-content:space-between;height:62px;gap:16px}
-.logo{font:700 20px var(--pix);text-decoration:none;letter-spacing:.04em}
-.logo b{color:var(--amb)}
-nav{display:flex;gap:22px;align-items:center}
-nav a{font-size:14px;text-decoration:none;color:var(--mut);transition:color .15s}
-nav a:hover{color:var(--txt)}
-.btn{display:inline-block;background:var(--amb);color:var(--amb-ink);font-weight:700;font-size:15px;padding:12px 22px;border-radius:8px;text-decoration:none;transition:transform .15s}
-.btn:hover{transform:translateY(-2px)}
-.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
-.btn.ghost:hover{border-color:var(--amb)}
-nav .btn{padding:8px 16px;font-size:14px;color:var(--amb-ink)}
-@media(max-width:860px){nav a:not(.btn){display:none}}
-
-/* hero */
-.hero{padding:0;position:relative;overflow:hidden}
-.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;min-height:620px;padding-top:40px;padding-bottom:40px}
-.hero h1{margin-bottom:22px}
-.hero .lead{margin-bottom:26px}
-.hero .tags{color:var(--amb);font-weight:700;font-size:15px;margin-bottom:32px}
-.hero .cta{display:flex;gap:12px;flex-wrap:wrap}
-.hero-img{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:1/1.02;box-shadow:0 30px 80px rgba(0,0,0,.5)}
-.hero-img img{width:100%;height:100%;object-fit:cover}
-.hero-img::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0,transparent 25%);opacity:.0}
-.badge{position:absolute;left:14px;bottom:14px;background:rgba(18,19,28,.85);border:1px solid var(--amb);color:var(--amb);font:600 12px var(--pix);letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;border-radius:6px}
-@media(max-width:860px){.hero .wrap{grid-template-columns:1fr;min-height:0}.hero-img{aspect-ratio:4/3}}
-
-/* cartes */
-.grid{display:grid;gap:18px}
-.g2{grid-template-columns:repeat(2,1fr)}
-.g3{grid-template-columns:repeat(3,1fr)}
-.g4{grid-template-columns:repeat(4,1fr)}
-.g5{grid-template-columns:repeat(5,1fr)}
-@media(max-width:980px){.g5,.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr 1fr}}
-@media(max-width:620px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}.head .lead{text-align:left}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
-.card p{color:var(--mut);font-size:15.5px}
-.card .n{font:600 28px var(--pix);color:var(--amb);display:block;margin-bottom:6px}
-.tag{font:600 12px var(--pix);letter-spacing:.14em;text-transform:uppercase;color:var(--amb)}
-.tag.fam{color:var(--mut)}
-.cat{padding:0;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;transition:border-color .15s,transform .15s}
-.cat:hover{border-color:var(--amb);transform:translateY(-3px)}
-.cat img{aspect-ratio:16/10;object-fit:cover;width:100%}
-.cat div{padding:16px 18px 20px}
-.cat h3{margin:6px 0 10px}
-.cat ul{list-style:none;color:var(--mut);font-size:14.5px}
-.cat li{padding-left:14px;position:relative;margin:3px 0}
-.cat li::before{content:"";position:absolute;left:0;top:.6em;width:5px;height:5px;background:var(--amb);border-radius:1px}
-.note{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:15px;color:var(--mut)}
-.note b{color:var(--amb)}
-
-/* split */
-.split{display:grid;grid-template-columns:1fr 1.1fr;gap:48px;align-items:start}
-.split.rev{grid-template-columns:1.1fr 1fr}
-@media(max-width:900px){.split,.split.rev{grid-template-columns:1fr;gap:32px}}
-.pill{display:inline-block;background:var(--amb);color:var(--amb-ink);font:700 12px var(--pix);letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;border-radius:5px;margin:12px 0 18px}
-.steps{list-style:none;margin:18px 0}
-.steps li{display:flex;gap:14px;margin:12px 0;color:var(--mut)}
-.steps li b{font:600 18px var(--pix);color:var(--amb);min-width:16px}
-.chips{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
-.chip{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:14.5px;color:var(--txt)}
-.chip b{display:block;font:600 20px var(--pix);color:var(--amb)}
-.photos{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.photos img{border-radius:12px;width:100%;height:100%;object-fit:cover;aspect-ratio:4/3;border:1px solid var(--line)}
-.photos .wide{grid-column:1/-1;aspect-ratio:16/9}
-.cap{font-size:13px;color:var(--mut);margin-top:10px}
-
-/* jeux Pixel */
-.game{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
-.game canvas{width:100%;aspect-ratio:1;display:block;border-radius:8px;background:#0c0d14}
-.game h3{color:var(--amb);margin:14px 0 6px;font-size:20px}
-.game p{color:var(--mut);font-size:14.5px}
-
-/* Brique */
-.brique{background:linear-gradient(180deg,var(--bg) 0,#101a22 100%)}
-.brique .steps li b{color:#5fd4a0}
-.brique .kicker{color:#5fd4a0}
-.brique .pill{background:#5fd4a0}
-.brique .btn{background:#5fd4a0}
-.brique .chip b{color:#5fd4a0}
-.brique .card .n{color:#5fd4a0}
-
-/* prix */
-.price{text-align:left}
-.price .big{font:700 38px var(--pix);color:var(--amb);margin:8px 0 2px}
-.price small{color:var(--mut)}
-.price ul{list-style:none;margin:16px 0;color:var(--mut);font-size:15px}
-.price li{margin:6px 0;padding-left:16px;position:relative}
-.price li::before{content:"";position:absolute;left:0;top:.6em;width:6px;height:6px;background:var(--amb);border-radius:1px}
-.price.star{border-color:var(--amb)}
-
-/* FAQ */
-details{border-bottom:1px solid var(--line);padding:16px 0}
-summary{cursor:pointer;font:600 20px var(--pix);list-style:none;display:flex;justify-content:space-between;gap:16px}
-summary::after{content:"+";color:var(--amb)}
-details[open] summary::after{content:"–"}
-details p{color:var(--mut);margin-top:10px}
-
-/* contact */
-.contact{text-align:center}
-.contact .big{font:700 clamp(28px,4vw,44px) var(--pix);margin:18px 0}
-.contact .big a{text-decoration:none;color:var(--amb)}
-.zoom .acc{color:var(--txt);font-weight:500;margin-bottom:10px}
-.zoom .meta{font-size:13.5px;color:var(--amb);margin-top:6px}
-.zoom .use{font-size:14.5px;margin-top:10px;font-style:italic}
-.zoom .steps{margin:12px 0}
-.ul{list-style:none;color:var(--mut);font-size:15px}
-.ul li{padding-left:14px;position:relative;margin:6px 0}
-.ul li::before{content:"";position:absolute;left:0;top:.6em;width:5px;height:5px;background:var(--amb);border-radius:1px}
-.form{display:grid;gap:14px;position:relative}
-.form label{display:grid;gap:6px;font-size:14px;color:var(--mut)}
-.form input,.form textarea{background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:11px 12px;font:16px var(--sans);width:100%}
-.form input:focus,.form textarea:focus{outline:2px solid var(--amb);outline-offset:1px}
-.form .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.form fieldset{border:1px solid var(--line);border-radius:8px;padding:10px 14px 6px;display:flex;flex-wrap:wrap;gap:4px 18px}
-.form legend{font-size:14px;color:var(--mut);padding:0 6px}
-.form .ck{display:flex;align-items:center;gap:8px;color:var(--txt);padding:4px 0}
-.form .ck input{width:auto}
-.form button{border:0;cursor:pointer;font-family:var(--sans)}
-footer{border-top:1px solid var(--line);padding:30px 0;color:var(--mut);font-size:14px}
-footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <header>
   <div class="wrap">
-    <a class="logo" href="#top">STUDIO <b>EYA</b></a>
+    <a class="logo" href="index.html">STUDIO <b>EYA</b></a>
     <nav>
-      <a href="#pixel">Modules Pixel</a>
-      <a href="#brique">Brique</a>
-      <a href="#sign">Sign</a>
-      <a href="#arcade">Arcade et VR</a>
-      <a href="#formules">Formules</a>
-      <a class="btn" href="#contact">Demander un devis</a>
+      <a href="index.html#catalogue">Animations</a>
+      <a href="animations/modules-pixel.html">Pixel</a>
+      <a href="animations/brique.html">Brique</a>
+      <a href="index.html#formules">Formules</a>
+      <a class="btn" href="index.html#contact">Demander un devis</a>
     </nav>
   </div>
 </header>
 
 <main id="top">
-
 <!-- HERO -->
 <section class="hero">
   <div class="wrap">
@@ -186,7 +35,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <p class="tags">Modules Pixel · Sign · Arcade · Interactif et IA · Atelier Brique</p>
       <div class="cta">
         <a class="btn" href="#contact">Demander un devis</a>
-        <a class="btn ghost" href="#pixel">Découvrir les Modules Pixel</a>
+        <a class="btn ghost" href="animations/modules-pixel.html">Découvrir les Modules Pixel</a>
       </div>
     </div>
     <div class="hero-img">
@@ -212,169 +61,17 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 </section>
 
 <!-- CATALOGUE -->
-<section>
+<section id="catalogue">
   <div class="wrap">
     <div class="head">
       <div><div class="kicker">Le catalogue</div><h2>Nos animations<br>en un coup d’œil</h2></div>
-      <p class="lead">Trois animations phares, deux familles pour compléter. Tout se combine librement.</p>
+      <p class="lead">Chaque animation a sa page : comment ça marche, pour quel moment, ce qu’il faut prévoir. Tout se combine librement.</p>
     </div>
-    <div class="grid g5">
-      <a class="card cat" href="#pixel"><img src="images/pixel-duo.jpg" alt="Borne Pixel duo"><div><span class="tag">Phare</span><h3>Modules Pixel</h3><ul><li>Bornes duo sur pied</li><li>Bornes solo sur table</li><li>Mode déco, mode jeu</li><li>Sur batterie</li></ul></div></a>
-      <a class="card cat" href="#sign"><img src="images/vr.jpg" alt="Animation Sign" style="object-position:center 30%"><div><span class="tag">Phare</span><h3>Sign</h3><ul><li>Langue des signes</li><li>Reconnaissance par IA</li><li>Mots personnalisés</li><li>Avec animateur</li></ul></div></a>
-      <a class="card cat" href="#arcade"><img src="images/cockpit.jpg" alt="Simulateur cockpit"><div><span class="tag">Phare</span><h3>Arcade et rétro</h3><ul><li>Bornes d’arcade</li><li>Flipper numérique</li><li>Game &amp; Watch géant</li><li>Simulateur cockpit</li></ul></div></a>
-      <a class="card cat" href="#interactif"><img src="images/vr.jpg" alt="Escape game VR"><div><span class="tag fam">Famille</span><h3>Interactif et IA</h3><ul><li>HoverGame</li><li>Escape games VR et Pixel</li><li>Led Game, Sumo robots</li><li>Face Art, Photo émotion</li></ul></div></a>
-      <a class="card cat" href="#brique"><img src="images/brique-console-main.jpg" alt="Console Brique tenue en main" style="object-position:center 55%"><div><span class="tag fam">Famille</span><h3>Atelier Brique</h3><ul><li>On soude sa console</li><li>On crée son jeu avec l’IA</li><li>2 h, 10 participants</li><li>On repart avec</li></ul></div></a>
-    </div>
+    <h3 class="grp">À la une</h3><div class="grid g3"><a class="card cat" href="animations/modules-pixel.html"><img src="images/pixel-module.jpg" alt="Un Module Pixel sur pied, écran en pixels allumé" loading="lazy" style="object-position:center 55%"><div><span class="tag">Animation phare</span><h3>Modules Pixel</h3><p>Au repos, les matrices habillent l’espace. Dès qu’on s’approche, elles se jouent.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/sign.html"><img src="images/sign.jpg" alt="Un joueur signe devant la borne Sign" loading="lazy" style="object-position:center 30%"><div><span class="tag">Animation phare</span><h3>Sign</h3><p>En deux minutes, vos invités apprennent à épeler un mot en langue des signes française, guidés par une intelligence artificielle.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/brique.html"><img src="images/brique-console-main.jpg" alt="La console Brique allumée, tenue en main" loading="lazy" style="object-position:center 55%"><div><span class="tag">Atelier · Nouveau</span><h3>Brique</h3><p>La console qu’on assemble, les jeux qu’on invente.</p><span class="plus">Voir l’animation →</span></div></a></div>
+<h3 class="grp">Arcade et rétro</h3><div class="grid g3"><a class="card cat" href="animations/bornes-arcade.html"><img src="images/arcade.jpg" alt="Un joueur devant une borne d’arcade" loading="lazy" style="object-position:center 40%"><div><span class="tag">Arcade et rétro</span><h3>Bornes d’arcade</h3><p>Sur pied ou sur table, les classiques qu’on connaît tous.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/flipper-numerique.html"><img src="images/flipper.jpg" alt="Le flipper numérique jaune" loading="lazy" style="object-position:center 40%"><div><span class="tag">Arcade et rétro</span><h3>Flipper numérique</h3><p>Le flipper sans limites : des dizaines de tables, à un ou deux joueurs.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/game-watch-geant.html"><img src="images/game-watch.jpg" alt="La console Game &amp; Watch géante sur pied" loading="lazy" style="object-position:center 50%"><div><span class="tag">Arcade et rétro</span><h3>Game &amp; Watch géant</h3><p>Une console de poche rétro, en version géante sur pied. Elle attire l’œil de loin.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/simulateur-cockpit.html"><img src="images/cockpit.jpg" alt="Un joueur dans le simulateur cockpit" loading="lazy" style="object-position:center 50%"><div><span class="tag">Arcade et rétro</span><h3>Simulateur cockpit</h3><p>Une borne d’arcade dans un cockpit fermé : on s’installe, on pilote.</p><span class="plus">Voir l’animation →</span></div></a></div>
+<h3 class="grp">Interactif et IA</h3><div class="grid g3"><a class="card cat" href="animations/hovergame.html"><img src="images/hovergame.jpg" alt="Une main au-dessus de la borne HoverGame" loading="lazy" style="object-position:center 40%"><div><span class="tag">Interactif et IA</span><h3>HoverGame</h3><p>Une borne qui se joue sans la toucher : un capteur suit le survol de la main.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/escape-game-vr.html"><img src="images/vr.jpg" alt="Un joueur casque VR sur la tête, manette en main" loading="lazy" style="object-position:center 30%"><div><span class="tag">Interactif et IA</span><h3>Escape game VR</h3><p>Coopérez pour vous en sortir, entre monde virtuel et réalité.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/escape-game-pixel.html"><img src="images/escape-pixel.jpg" alt="La mallette de l’escape game Pixel ouverte" loading="lazy" style="object-position:center 40%"><div><span class="tag">Interactif et IA</span><h3>Escape game Pixel</h3><p>Des énigmes à résoudre en équipe, autour d’une mallette en pixels.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/led-game.html"><img src="images/led-game.jpg" alt="Illustration : neuf boutons lumineux" loading="lazy" style="object-position:center"><div><span class="tag">Interactif et IA</span><h3>Led Game</h3><p>Mémoire et réflexes, sur neuf boutons lumineux.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/sumo-robots.html"><img src="images/sumo-robots.jpg" alt="Illustration : deux robots dans une arène ronde" loading="lazy" style="object-position:center"><div><span class="tag">Interactif et IA</span><h3>Sumo robots</h3><p>Poussez l’adversaire hors de l’arène.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/face-art.html"><img src="images/face-art.jpg" alt="Illustration : un portrait dessiné au feutre" loading="lazy" style="object-position:center"><div><span class="tag">Interactif et IA</span><h3>Face Art</h3><p>Un robot vous photographie, puis dessine votre portrait sous vos yeux.</p><span class="plus">Voir l’animation →</span></div></a><a class="card cat" href="animations/photo-emotion.html"><img src="images/photo-emotion.jpg" alt="Illustration : mosaïque de quatre expressions" loading="lazy" style="object-position:center"><div><span class="tag">Interactif et IA</span><h3>Photo Émotion</h3><p>La borne photo qui se déclenche sur vos émotions.</p><span class="plus">Voir l’animation →</span></div></a></div>
+
     <div class="note"><b>★</b> Et sur demande, à l’intérieur de nos formules : baby-foot, air hockey, machines à pince, jeux forains, jeux sportifs, borne photo.</div>
-  </div>
-</section>
-
-<!-- PIXEL -->
-<section id="pixel" class="alt">
-  <div class="wrap">
-    <div class="split">
-      <div>
-        <div class="kicker">Animation phare</div>
-        <h2>Modules Pixel</h2>
-        <span class="pill">Création Studio Eya</span>
-        <p class="lead">Au repos, les matrices habillent l’espace. Dès qu’on s’approche, elles se jouent.</p>
-        <div class="kicker" style="margin-top:28px">Comment ça marche</div>
-        <ol class="steps">
-          <li><b>1</b><span>On pose les bornes, sur table ou sur pied. Sur batterie, rien à brancher.</span></li>
-          <li><b>2</b><span>Elles s’animent seules : vos visuels, votre logo, vos messages.</span></li>
-          <li><b>3</b><span>On appuie sur un bouton : la borne devient un jeu, en solo ou en duel.</span></li>
-        </ol>
-        <div class="chips">
-          <div class="chip"><b>2 + 1</b>joueurs : duo sur pied, solo sur table</div>
-          <div class="chip"><b>8 h</b>d’autonomie sur batterie</div>
-          <div class="chip"><b>64 × 64</b>points</div>
-        </div>
-      </div>
-      <div class="photos">
-        <img class="wide" src="images/pixel-duo.jpg" alt="Borne Pixel duo : écran en pixels, joysticks et boutons">
-        <img class="wide" src="images/pixel-module.jpg" alt="Module Pixel sur pied" style="object-position:center 60%">
-        <p class="cap" style="grid-column:1/-1;margin-top:0">Mode déco : au repos, vos visuels. Mode jeu : un bouton, et la borne devient un jeu.</p>
-      </div>
-    </div>
-
-    <div style="margin-top:72px">
-      <div class="kicker">Pixel · mode jeu</div>
-      <h2>Un bouton suffit pour jouer</h2>
-      <p class="lead" style="margin-bottom:32px">Pas de notice : on comprend en regardant son voisin. Duels, parties libres, et en tournoi le classement s’affiche sur une tablette.</p>
-      <div class="grid g4">
-        <div class="game"><canvas id="g-snake" width="240" height="240" role="img" aria-label="Animation du jeu Snake"></canvas><h3>Snake</h3><p>Guidez le serpent et gobez les pommes. Ne vous mordez pas la queue !</p></div>
-        <div class="game"><canvas id="g-briques" width="240" height="240" role="img" aria-label="Animation du jeu Briques"></canvas><h3>Briques</h3><p>Empilez les briques et complétez des lignes pour tenir le plus longtemps.</p></div>
-        <div class="game"><canvas id="g-chenille" width="240" height="240" role="img" aria-label="Animation du jeu Chenillard"></canvas><h3>Chenillard</h3><p>Visez la tête de la chenille avec la bonne couleur pour la détruire.</p></div>
-        <div class="game"><canvas id="g-palet" width="240" height="240" role="img" aria-label="Animation du jeu Palet"></canvas><h3>Palet</h3><p>Le duel : renvoyez le palet au bon moment. Le premier à 5 manches gagne.</p></div>
-      </div>
-    </div>
-
-    <div style="margin-top:72px">
-      <div class="kicker">Pixel · mode déco</div>
-      <h2>Vos couleurs, votre logo, vos messages</h2>
-      <p class="lead">Quand personne ne joue, les tableaux s’animent seuls. Nous dessinons les visuels avec vous, vous les validez 7 jours avant l’événement. Avec la formule Pixel Plus, dix visuels à vos couleurs sont compris.</p>
-    </div>
-  </div>
-</section>
-
-<!-- BRIQUE -->
-<section id="brique" class="brique">
-  <div class="wrap">
-    <div class="split rev">
-      <div class="photos">
-        <img class="wide" src="images/brique-soudure.jpg" alt="Un jeune soude sa console au fer à souder" style="aspect-ratio:16/10;object-position:center 30%">
-        <img src="images/brique-console-main.jpg" alt="La console Brique allumée en main" style="object-position:center 55%">
-        <img src="images/brique-console-bleue.jpg" alt="Console Brique, carte hexagonale bleue" style="object-fit:contain;background:#fff">
-      </div>
-      <div>
-        <div class="kicker">Nouveau · Atelier électronique, jeu vidéo, agent IA</div>
-        <h2>Brique : la console qu’on assemble, les jeux qu’on invente.</h2>
-        <span class="pill">Atelier « Ma Console »</span>
-        <p class="lead">Des jeunes soudent leur console, puis créent leur jeu en le décrivant à une IA. Sessions de 2 h, 10 participants. Chacun repart avec sa console, et ses jeux dedans.</p>
-        <div class="chips">
-          <div class="chip"><b>2 h</b>par session</div>
-          <div class="chip"><b>10</b>participants</div>
-          <div class="chip"><b>CM1 → adultes</b>trois niveaux</div>
-        </div>
-        <p style="margin-top:26px"><a class="btn" href="https://bricode.fr" target="_blank" rel="noopener">Découvrir Brique sur bricode.fr</a></p>
-      </div>
-    </div>
-
-    <div class="grid g3" style="margin-top:56px">
-      <div class="card"><span class="n">01 · Électronique</span><h3>Fabriquer</h3><p>Fer à souder en main, patte par patte, on assemble sa console : un écran couleur, trois boutons, un cerveau ESP32-C3. Encadré par un adulte, lunettes sur le nez.</p></div>
-      <div class="card"><span class="n">02 · Jeu vidéo</span><h3>Comprendre</h3><p>Des commandes, des règles « quand… alors… », un but, un univers. Avec trois boutons, la contrainte fait inventer.</p></div>
-      <div class="card"><span class="n">03 · Agent IA</span><h3>Créer</h3><p>On décrit son jeu, l’agent l’écrit, le teste et l’envoie sur la console par le câble USB. On joue, on corrige, on recommence.</p></div>
-    </div>
-
-    <div class="grid g3" style="margin-top:18px">
-      <div class="card"><h3>Guidé · CM1, CM2</h3><p>Des boutons d’aide pour lancer son premier jeu. La console peut arriver déjà montée et testée.</p></div>
-      <div class="card"><h3>Libre · 6e, 4e</h3><p>Tout part de la phrase qu’on écrit : aucune liste, aucun jeu tout fait.</p></div>
-      <div class="card"><h3>Sous le capot · ados et adultes</h3><p>On lit le programme écrit par l’IA, on le modifie, on peut brancher son propre agent.</p></div>
-    </div>
-    <div class="note"><b>Une IA cadrée.</b> Celle de Mistral AI, qui ne sert ici qu’à créer des jeux. Aucune donnée personnelle : un pseudo et le code du groupe, ni nom, ni mail, ni photo. L’animateur garde la main sur tout ce qui est publié.</div>
-  </div>
-</section>
-
-<!-- SIGN -->
-<section id="sign">
-  <div class="wrap">
-    <div class="kicker">Animation phare</div>
-    <h2>Sign</h2>
-    <p class="lead" style="margin-bottom:36px">En deux minutes, vos invités apprennent à épeler un mot en langue des signes française, guidés par une intelligence artificielle. Un vrai sujet pour vos actions RSE, vos journées inclusion et vos stands.</p>
-    <div class="grid g3">
-      <div class="card"><span class="n">1 · La borne montre</span><p>Le signe de la lettre à reproduire s’affiche.</p></div>
-      <div class="card"><span class="n">2 · Le joueur signe</span><p>L’IA reconnaît son geste en temps réel.</p></div>
-      <div class="card"><span class="n">3 · Le mot est épelé</span><p>Chaque mot réussi fait gagner des points. Photo souvenir envoyée par mail.</p></div>
-    </div>
-    <div class="chips">
-      <div class="chip"><b>25 à 30</b>joueurs par heure, 2 min chacun</div>
-      <div class="chip"><b>Vos mots</b>valeurs, produits, ville</div>
-      <div class="chip"><b>Animateur</b>compris, prise 220 V</div>
-    </div>
-  </div>
-</section>
-
-<!-- ARCADE -->
-<section id="arcade" class="alt">
-  <div class="wrap">
-    <div class="head">
-      <div><div class="kicker">Animation phare</div><h2>Arcade et rétro</h2></div>
-      <p class="lead">En libre-service toute la soirée. Joystick, boutons, jeux rétro : tout le monde sait jouer. 1 à 2 joueurs par machine, prise 220 V.</p>
-    </div>
-    <div class="split" style="align-items:center">
-      <div class="grid g2">
-        <div class="card"><h3>Bornes d’arcade</h3><p>Sur pied ou sur table, les classiques qu’on connaît tous. Plusieurs bornes côte à côte pour les tournois.</p></div>
-        <div class="card"><h3>Flipper numérique</h3><p>Le flipper sans limites : des dizaines de tables, à un ou deux joueurs.</p></div>
-        <div class="card"><h3>Game &amp; Watch géant</h3><p>Une console de poche rétro, en version géante sur pied. Elle attire l’œil de loin.</p></div>
-        <div class="card"><h3>Simulateur cockpit</h3><p>Une borne d’arcade dans un cockpit fermé : on s’installe, on pilote.</p></div>
-      </div>
-      <div class="photos">
-        <img class="wide" src="images/arcade-salle.jpg" alt="Deux joueurs devant une borne d'arcade dans un pop-up arcade">
-        <img src="images/cockpit.jpg" alt="Simulateur cockpit">
-        <img src="images/pixel-duo.jpg" alt="Borne d'arcade avec joysticks">
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- INTERACTIF -->
-<section id="interactif">
-  <div class="wrap">
-    <div class="head">
-      <div><div class="kicker">Famille</div><h2>Interactif et IA</h2></div>
-      <p class="lead">Des jeux qui se jouent avec la main, le corps ou le visage. Personne n’a besoin d’explication : on comprend en regardant jouer la personne d’avant.</p>
-    </div>
-    <div class="grid g2">
-      <article class="card zoom"><h3>HoverGame</h3><p class="acc">Une borne qui se joue sans la toucher : un capteur suit le survol de la main.</p><ol class="steps"><li><b>1</b><span>On tend la main au-dessus de la borne : la partie démarre.</span></li><li><b>2</b><span>On avance, on recule, on penche la main pour diriger.</span></li><li><b>3</b><span>Deux minutes de course, puis au suivant.</span></li></ol><p class="meta">Course ou pilotage, plusieurs décors · 1 ou 2 joueurs, 2 min chacun · sur table ou sur pied, prise 220 V</p></article>
-      <article class="card zoom"><img src="images/vr.jpg" alt="Un joueur casque VR sur la tête" style="aspect-ratio:16/8;object-fit:cover;object-position:center 30%;border-radius:10px;margin-bottom:14px"><h3>Escape game VR</h3><p class="acc">Coopérez pour vous en sortir, entre monde virtuel et réalité.</p><p>Casque sur la tête, votre équipe entre dans un environnement original et déconcertant. Quatre énigmes à résoudre ensemble, en se parlant et en se coordonnant.</p><ol class="steps"><li><b>1</b><span>On s’équipe : un casque et deux manettes par joueur, dans un espace délimité.</span></li><li><b>2</b><span>L’équipe observe, manipule et déduit : chaque énigme résolue ouvre la suivante.</span></li><li><b>3</b><span>Mission réussie ou non, on en reparle toute la soirée.</span></li></ol><p class="meta">2 à 4 joueurs, 4 casques · 15 à 30 min par session · encadré par notre technicien, prise 220 V</p><p class="use">Team building, séminaire, soirée d’entreprise : l’épreuve qui se gagne en parlant.</p></article>
-      <article class="card zoom"><h3>Escape game Pixel</h3><p class="acc">Des énigmes à résoudre en équipe, autour d’une mallette en pixels.</p><p>Une mallette fabriquée dans nos ateliers : des écrans en pixels, des boutons, une histoire. Cinq énigmes à résoudre pour ouvrir la boîte.</p><ol class="steps"><li><b>1</b><span>L’équipe ouvre la mallette : un message s’affiche, la mission commence.</span></li><li><b>2</b><span>Observer, manipuler, déduire : chaque bonne réponse déverrouille la suite.</span></li><li><b>3</b><span>Cinq énigmes plus tard, la boîte s’ouvre.</span></li></ol><p class="meta">1 à 3 joueurs, autour d’une table · scénario de la mallette, ou le vôtre sur devis · conçu et fabriqué à Bourges</p><p class="use">Séminaire, soirée d’entreprise, événement public : un défi d’équipe entre deux animations.</p></article>
-      <article class="card zoom"><h3>Led Game</h3><p class="acc">Mémoire et réflexes, sur neuf boutons lumineux.</p><p>Deux jeux dans une borne. Seul, on refait la séquence de couleurs, qui s’allonge à chaque tour. À deux, on se bat façon pong : la lumière file d’un camp à l’autre, il faut la renvoyer au bon moment.</p><ol class="steps"><li><b>1</b><span>Mode séquence : les boutons s’allument dans un ordre, à vous de le refaire.</span></li><li><b>2</b><span>Mode pong : à deux, renvoyez la lumière dans le camp adverse.</span></li><li><b>3</b><span>Parties courtes, chacun son tour : la borne tourne toute seule.</span></li></ol><p class="meta">Sans explication, sans animateur · 1 ou 2 joueurs · prise 220 V</p><p class="use">Stand de salon, file d’attente, soirée : le jeu qui attire du monde et libère vite la place.</p></article>
-      <article class="card zoom"><h3>Sumo robots</h3><p class="acc">Poussez l’adversaire hors de l’arène.</p><p>Deux petits robots, une arène ronde, une commande chacun. Le combat dure une minute : stratégie, feintes et coups de pression pour éjecter l’autre.</p><ol class="steps"><li><b>1</b><span>Chaque joueur prend sa commande et son robot.</span></li><li><b>2</b><span>Au signal, on pousse, on esquive, on contourne.</span></li><li><b>3</b><span>Le premier robot sorti de l’arène a perdu. Revanche immédiate.</span></li></ol><p class="meta">2 joueurs, 1 min par combat · tournoi possible entre collègues · tient sur une table</p><p class="use">Pause de séminaire, stand, soirée : le duel qui fait des spectateurs.</p></article>
-      <article class="card zoom"><h3>Face Art</h3><p class="acc">Un robot vous photographie, puis dessine votre portrait sous vos yeux.</p><p>Un dispositif robotique doté d’une intelligence artificielle : la photo est transformée en croquis, puis le bras trace le portrait au feutre, sur papier. Chaque invité repart avec le sien.</p><ol class="steps"><li><b>1</b><span>On s’installe face à l’appareil : une photo.</span></li><li><b>2</b><span>L’IA transforme la photo en croquis.</span></li><li><b>3</b><span>Le bras robotisé dessine, on regarde, on repart avec le papier.</span></li></ol><p class="meta">5 min par personne · un croquis à emporter · prise 220 V</p><p class="use">Salon, inauguration, soirée : l’animation qui fait s’arrêter les passants et laisse un objet.</p></article>
-      <article class="card zoom"><h3>Photo Émotion</h3><p class="acc">La borne photo qui se déclenche sur vos émotions.</p><p>Une intelligence artificielle lit l’expression du visage. Elle demande une émotion, attend qu’elle apparaisse et prend la photo au bon moment. Pas de bouton : c’est l’expression qui déclenche.</p><ol class="steps"><li><b>1</b><span>La borne demande une expression : surprise, joie, tristesse, air sérieux.</span></li><li><b>2</b><span>L’IA reconnaît l’émotion sur le visage et déclenche la photo.</span></li><li><b>3</b><span>Quatre expressions font une mosaïque : votre portrait par une IA, envoyé par mail.</span></li></ol><p class="meta">1 min par personne · émotions choisies avec vous, impression possible · sur table ou sur pied, prise 220 V</p><p class="use">Accueil de salon, soirée d’entreprise, lancement : l’animation qui fait rire la file d’attente et casse la glace entre collègues.</p></article>
-      <article class="card zoom" style="border-color:var(--amb)"><span class="tag">Et ce qui n’existe pas encore</span><h3 style="margin-top:10px">Une idée sur mesure ?</h3><p>Un thème, un message, un public particulier ? Nous concevons et fabriquons l’expérience qui manque, dans nos ateliers.</p>
-        <p><a class="btn" href="#contact" style="margin-top:14px">Nous en parler</a></p></article>
-    </div>
   </div>
 </section>
 
@@ -519,8 +216,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </div>
 </section>
 
-</main>
 
+</main>
 <footer>
   <div class="wrap">
     <span>Studio Eya · Bourges</span>
@@ -528,78 +225,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </div>
 </footer>
 
-<script>
-/* Quatre mini-jeux dessinés en points, comme sur une matrice Pixel. */
-(function(){
-  const N=24, reduit=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function matrice(id, etape){
-    const cv=document.getElementById(id), c=cv.getContext('2d'), s=cv.width/N;
-    const g=Array.from({length:N},()=>Array(N).fill(null));
-    const set=(x,y,col)=>{ if(x>=0&&x<N&&y>=0&&y<N) g[y][x]=col; };
-    let t=0;
-    function dessine(){
-      g.forEach(r=>r.fill(null)); etape(t++,set,g);
-      c.fillStyle='#0c0d14'; c.fillRect(0,0,cv.width,cv.height);
-      for(let y=0;y<N;y++)for(let x=0;x<N;x++){
-        c.fillStyle=g[y][x]||'#1b1d2b';
-        c.beginPath(); c.arc(x*s+s/2,y*s+s/2,s*(g[y][x]?.4:.17),0,7); c.fill();
-      }
-    }
-    dessine();
-    if(!reduit) setInterval(dessine,140);
-  }
-
-  // Snake : boucle autour d'un rectangle, pomme au centre
-  const boucle=[]; for(let x=4;x<=19;x++)boucle.push([x,5]); for(let y=6;y<=17;y++)boucle.push([19,y]);
-  for(let x=18;x>=4;x--)boucle.push([x,17]); for(let y=16;y>=6;y--)boucle.push([4,y]);
-  matrice('g-snake',(t,set)=>{
-    for(let i=0;i<9;i++){const p=boucle[(t-i+boucle.length*9)%boucle.length]; set(p[0],p[1],i?'#34d27a':'#a7ffcf');}
-    set(12,11,t%6<3?'#ff4d5e':'#c23646');
-  });
-
-  // Briques : blocs 2x2 qui tombent dans 12 colonnes et s'empilent ; la pile repart à zéro
-  const cols=['#f7b731','#ff4d5e','#4db8ff','#34d27a','#b56bff'];
-  let pile=[], piece=null, haut=Array(12).fill(0);
-  matrice('g-briques',(t,set)=>{
-    if(!piece) piece={x:Math.floor(Math.random()*12),y:0,c:cols[Math.floor(Math.random()*5)]};
-    if(piece.y>=N-2-haut[piece.x]*2){
-      pile.push(piece); haut[piece.x]++; piece=null;
-      if(haut[pile[pile.length-1].x]>=8){pile=[];haut=Array(12).fill(0);}
-    } else piece.y++;
-    pile.concat(piece?[piece]:[]).forEach(p=>{for(let i=0;i<4;i++)set(p.x*2+i%2,p.y+(i>>1),p.c);});
-  });
-
-  // Chenillard : une chenille de boules colorées qui ondule, un tireur en bas
-  matrice('g-chenille',(t,set)=>{
-    const k=['#ff4d5e','#f7b731','#b56bff','#4db8ff','#34d27a','#f7b731'];
-    for(let i=0;i<6;i++){const x=(t/2+i*3)%N, y=4+Math.round(Math.sin((t/2+i*3)/3)*2); set(Math.floor(x),y,k[i]); set(Math.floor(x)+1,y,k[i]);}
-    const tx=12+Math.round(Math.sin(t/12)*7); set(tx,21,'#e8e8f0'); set(tx-1,22,'#e8e8f0'); set(tx,22,'#e8e8f0'); set(tx+1,22,'#e8e8f0');
-    for(let y=9+(t%10);y<20;y+=10) set(tx,y,'#4db8ff');
-  });
-
-  // Palet : deux raquettes, une balle qui rebondit
-  matrice('g-palet',(t,set)=>{
-    const p=(t%66), bx=p<33?2+p*0.667:24-(p-33)*0.667, by=11+Math.round(Math.sin(t/5)*8);
-    for(let y=0;y<N;y+=3) set(12,y,'#4a4e66');
-    for(let i=-2;i<=2;i++){ set(1,Math.round(by)+i,'#4db8ff'); set(22,Math.round(by)+i,'#ff5fa8'); }
-    set(Math.round(bx),Math.round(by),'#f7b731');
-    set(5,2,'#4db8ff'); set(18,2,'#ff5fa8');
-  });
-})();
-
-/* Formulaire : envoi par fetch vers FormSubmit (le 1er envoi demande une confirmation par e-mail à bonjour@). */
-(function(){
-  const f=document.getElementById('form'), etat=document.getElementById('form-etat');
-  f.addEventListener('submit',async e=>{
-    e.preventDefault();
-    etat.textContent='Envoi…';
-    try{
-      const r=await fetch(f.action,{method:'POST',body:new FormData(f),headers:{Accept:'application/json'}});
-      const j=await r.json(); if(!r.ok||j.success==='false') throw 0;
-      f.reset(); etat.textContent='Merci, votre demande est envoyée. Nous vous répondons rapidement.';
-    }catch(_){ etat.textContent='L’envoi a échoué. Réessayez dans un instant.'; }
-  });
-})();
-</script>
+<script src="main.js"></script>
 </body>
 </html>

@@ -162,6 +162,37 @@ console.log('ok : tir autour x personnage, tirs, ennemis');
   assert(mes('return false', '(fin ? 1 : 0)') === 0 && mes('return k == 2', '(fin ? 1 : 0)') === 1, 'tetris : immobile = vivant, gros bouton tenu = descend vite et perd');
   assert(J.assembler({ jeu: 'tetris', monde: 'neige' }) !== J.assembler({ jeu: 'tetris', monde: 'espace' }) && code.startsWith('# Tetris') && !code.includes('PALETTE'), 'tetris : le monde change les couleurs');
   console.log('ok : tetris x mondes, pilotes'); }
+// alignement (je reagis) : seul le monde se choisit ; un joueur immobile ne perd pas, un joueur qui s'arrete au bon endroit monte la tour, un joueur qui appuie sans viser perd (et recommence)
+{ const { essai } = require('./essai-verif.js'), r0 = { genre: 'reagis', jeu: 'alignement' };
+  assert(J.genreDe('alignement').id === 'reagis' && J.saute('monde', r0) === false && ['perso', 'bon', 'mal', 'compo', 'typeEn', 'action', 'couleur', 'niv'].every(id => J.saute(id, r0)), 'alignement : seul le monde est choisi');
+  for (const monde of mondes) jouer({ monde }, monde, 'alignement');
+  const code = J.assembler({ jeu: 'alignement' }), mes = (scen, mesure) => essai('alignement', code, { scen, mesure, quand: [9], duree: 9.1 })[0];
+  const pilote = 'return k == 2 && int(t * 60) % 2 == 0 && bx > PX[etage - 1] - 14 && bx < PX[etage - 1] + 14';   // appui = front montant : une impulsion d'une image des que la plateforme passe sur la precedente
+  assert(mes('return false', 'etage') === 1 && mes('return false', 'fin') === 0, 'alignement : immobile = rien ne se passe');
+  assert(mes(pilote, 'etage') >= 4 && mes(pilote, 'fin') === 0, 'alignement : le pilote monte la tour sans perdre');
+  assert(mes('return k == 2 && int(t * 60) % 2 == 0', 'etage') === 1, 'alignement : appuyer a tout bout de champ perd (la partie recommence a l etage 1)');
+  assert(J.assembler({ jeu: 'alignement', monde: 'neige' }) !== J.assembler({ jeu: 'alignement', monde: 'espace' }) && code.startsWith('# Alignement'), 'alignement : le monde change les couleurs');
+  console.log('ok : alignement x mondes, pilotes'); }
+// plateforme qui casse (je casse) : le personnage et ce que cachent les caisses se choisissent, plus le monde ; un joueur immobile ne trouve rien, un pilote qui court et saute casse des caisses
+{ const { essai } = require('./essai-verif.js'), r0 = { genre: 'casse', jeu: 'plateforme-casse' };
+  assert(J.genreDe('plateforme-casse').id === 'casse' && J.saute('monde', r0) === false && J.saute('perso', r0) === false && J.saute('bon', r0) === false && ['mal', 'compo', 'typeEn', 'action', 'couleur', 'niv'].every(id => J.saute(id, r0)), 'plateforme casse : etapes choisies (monde, personnage, objets caches)');
+  assert(J.lib(J.ETAPES.find(e => e.id === 'bon'), r0, 'q') === 'Que cachent les caisses ?', 'plateforme casse : la question des objets');
+  for (const [i, monde] of mondes.entries()) jouer({ monde, perso: persos[i % persos.length], bon: formesBon[i % formesBon.length] }, monde, 'plateforme-casse');
+  jouer({ perso: 'img', bon: 'img', imgs: { perso: 3, bon: 2 } }, 'images', 'plateforme-casse');
+  const code = J.assembler({ jeu: 'plateforme-casse' }), mes = (scen, mesure) => essai('plateforme-casse', code, { scen, mesure, quand: [9], duree: 9.1 })[0];
+  const pilote = 'return (k == 1 && int(t * 0.5) % 2 == 0) || (k == 0 && int(t * 0.5) % 2 == 1) || (k == 2 && int(t * 60) % 20 == 0)';
+  assert(mes('return false', 'pts') === 0 && mes(pilote, 'pts') >= 2, 'plateforme casse : immobile = 0 objet, le pilote en trouve');
+  assert(J.assembler({ jeu: 'plateforme-casse', monde: 'neige' }) !== J.assembler({ jeu: 'plateforme-casse', monde: 'espace' }) && code.startsWith('# Caisses'), 'plateforme casse : le monde change le code');
+  console.log('ok : plateforme qui casse x mondes, personnages, objets, pilote'); }
+// plateforme qui rebondit (je rebondis) : le personnage et le monde se choisissent ; rien a faire pour rebondir, un joueur immobile monte un peu et ne perd pas tout de suite
+{ const { essai } = require('./essai-verif.js'), r0 = { genre: 'rebond', jeu: 'plateforme-rebond' };
+  assert(J.genreDe('plateforme-rebond').id === 'rebond' && J.saute('monde', r0) === false && J.saute('perso', r0) === false && ['bon', 'mal', 'compo', 'typeEn', 'action', 'couleur', 'niv'].every(id => J.saute(id, r0)), 'plateforme rebond : etapes choisies (monde, personnage)');
+  for (const [i, monde] of mondes.entries()) jouer({ monde, perso: persos[i % persos.length] }, monde, 'plateforme-rebond');
+  jouer({ perso: 'img', imgs: { perso: 3 } }, 'perso image', 'plateforme-rebond');
+  const code = J.assembler({ jeu: 'plateforme-rebond' }), mes = (scen, mesure) => essai('plateforme-rebond', code, { scen, mesure, quand: [3], duree: 3.1 })[0];
+  assert(mes('return false', 'haut') > 0 && mes('return false', '(fin ? 1 : 0)') === 0, 'plateforme rebond : le personnage rebondit seul et monte');
+  assert(J.assembler({ jeu: 'plateforme-rebond', monde: 'neige' }) !== J.assembler({ jeu: 'plateforme-rebond', monde: 'espace' }) && code.startsWith('# Rebond'), 'plateforme rebond : le monde change le code');
+  console.log('ok : plateforme qui rebondit x mondes, personnages'); }
 // labyrinthe façon Pac-Man (Je me faufile) : monde, heros (perso) et fantomes (mal) se choisissent ; toutes les pastilles sont atteignables ; un joueur immobile mange sa rangee puis se fait prendre par les fantomes
 { const { essai } = require('./essai-verif.js'), r0 = { genre: 'laby', jeu: 'labyrinthe' };
   assert(J.genreDe('labyrinthe').id === 'laby' && ['monde', 'perso', 'mal'].every(id => J.saute(id, r0) === false) && ['bon', 'compo', 'typeEn', 'action', 'couleur', 'niv'].every(id => J.saute(id, r0)), 'labyrinthe : etapes choisies (monde, heros, fantomes)');

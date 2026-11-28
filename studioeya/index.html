@@ -490,7 +490,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <li><b>3</b><span>Devis signé : votre date est bloquée.</span></li>
         </ol>
       </div>
-      <form id="form" class="card form" action="https://formspree.io/f/VOTRE_ID" method="POST">
+      <form id="form" class="card form" action="https://formsubmit.co/ajax/bonjour@studioeya.com" method="POST">
         <label>Nom<input name="nom" required autocomplete="name"></label>
         <label>Société ou organisation<input name="societe" autocomplete="organization"></label>
         <label>E-mail<input type="email" name="email" required autocomplete="email"></label>
@@ -509,7 +509,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <label class="ck"><input type="checkbox" name="animations" value="Sur mesure"> Sur mesure</label>
         </fieldset>
         <label>Votre message<textarea name="message" rows="4"></textarea></label>
-        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+        <input type="text" name="_honey" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+        <input type="hidden" name="_subject" value="Demande de devis — site Studio Eya">
+        <input type="hidden" name="_template" value="table">
         <button class="btn" type="submit">Envoyer ma demande</button>
         <p id="form-etat" role="status" class="cap"></p>
       </form>
@@ -585,16 +587,15 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   });
 })();
 
-/* Formulaire : envoi par fetch vers l'adresse du champ action (service de formulaires). */
+/* Formulaire : envoi par fetch vers FormSubmit (le 1er envoi demande une confirmation par e-mail à bonjour@). */
 (function(){
   const f=document.getElementById('form'), etat=document.getElementById('form-etat');
   f.addEventListener('submit',async e=>{
     e.preventDefault();
-    if(f.action.includes('VOTRE_ID')){ etat.textContent='Formulaire pas encore relié à une adresse de réception.'; return; }
     etat.textContent='Envoi…';
     try{
       const r=await fetch(f.action,{method:'POST',body:new FormData(f),headers:{Accept:'application/json'}});
-      if(!r.ok) throw 0;
+      const j=await r.json(); if(!r.ok||j.success==='false') throw 0;
       f.reset(); etat.textContent='Merci, votre demande est envoyée. Nous vous répondons rapidement.';
     }catch(_){ etat.textContent='L’envoi a échoué. Réessayez dans un instant.'; }
   });
